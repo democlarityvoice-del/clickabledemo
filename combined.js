@@ -8,7 +8,6 @@
   const MAX_RETRIES = 12;                    // ~12 * 250ms ≈ 3s
   const RETRY_INTERVAL_MS = 250;
   const LOG = false;                         // set true to debug
-
   const log = (...args) => LOG && console.log('[DemoCalls]', ...args);
 
   // ===== SRC_DOC APP =====
@@ -66,67 +65,54 @@
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
   }
 
-function injectIframe() {
-  if (document.getElementById(IFRAME_ID)) return;
+  function injectIframe() {
+    if (document.getElementById(IFRAME_ID)) return;
 
-  const slot = document.querySelector(SLOT_SELECTOR);
-  if (!slot) return;
+    const slot = document.querySelector(SLOT_SELECTOR);
+    if (!slot) return;
 
-  // 1) Find the native table container to anchor ABOVE it
-  const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+    // 1) Find the native table container to anchor ABOVE it
+    const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
 
-  // 2) (Optional) hide the native empty table
-  const HIDE_NATIVE = true;
-  if (HIDE_NATIVE && anchor instanceof HTMLElement) {
-    anchor.style.display = 'none';
+    // 2) (Optional) hide the native empty table
+    const HIDE_NATIVE = true;
+    if (HIDE_NATIVE && anchor instanceof HTMLElement) {
+      anchor.style.display = 'none';
+    }
+
+    // 3) Create the iframe
+    const iframe = document.createElement('iframe');
+    iframe.id = IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;';
+    iframe.srcdoc = buildSrcdoc();
+
+    // 4) Insert BEFORE the native container (higher on the page)
+    if (anchor && anchor.parentNode === slot) {
+      slot.insertBefore(iframe, anchor);
+    } else {
+      // fallback: prepend to slot
+      slot.insertBefore(iframe, slot.firstChild);
+    }
+
+    // 5) Auto-size AFTER it’s in the DOM
+    let ro;
+    function observeHeight(slotElem, iframeElem) {
+      if (ro) try { ro.disconnect(); } catch {}
+      ro = new ResizeObserver(() => {
+        const h = Math.max(360, Math.floor(slotElem.getBoundingClientRect().height - 100)); // header padding
+        iframeElem.style.height = h + 'px';
+      });
+      ro.observe(slotElem);
+    }
+    observeHeight(slot, iframe);
   }
-
-  // 3) Create the iframe
-  const iframe = document.createElement('iframe');
-  iframe.id = IFRAME_ID;
-  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;';
-  iframe.srcdoc = buildSrcdoc();
-
-  // 4) Insert BEFORE the native container (higher on the page)
-  if (anchor && anchor.parentNode === slot) {
-    slot.insertBefore(iframe, anchor);
-  } else {
-    slot.insertBefore(iframe, slot.firstChild);
-  }
-
-  // 5) Auto-size AFTER it’s in the DOM
-  let ro;
-  function observeHeight(slotElem, iframeElem) {
-    if (ro) try { ro.disconnect(); } catch {}
-    ro = new ResizeObserver(() => {
-      const h = Math.max(360, Math.floor(slotElem.getBoundingClientRect().height - 100)); // header padding
-      iframeElem.style.height = h + 'px';
-    });
-    ro.observe(slotElem);
-  }
-  observeHeight(slot, iframe);
-}
-
-
-  // keep using srcdoc (no external loads / CSP-safe)
-  iframe.srcdoc = buildSrcdoc();
-
-  // 4) Insert BEFORE the native container (higher on the page)
-  if (anchor && anchor.parentNode === slot) {
-    slot.insertBefore(iframe, anchor);
-  } else {
-    // fallback: prepend to slot
-    slot.insertBefore(iframe, slot.firstChild);
-  }
-}
-
 
   // Wait for #omp-active-body to exist and be stable
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
-      // Optional: ensure it’s laid out (has size) to avoid early injection
-      requestAnimationFrame(() => requestAnimationFrame(() => injectIframeOnce(slot)));
+      // ensure layout, then inject
+      requestAnimationFrame(() => requestAnimationFrame(() => injectIframe()));
       return;
     }
     if (tries >= MAX_RETRIES) { log('Slot not found; giving up'); return; }
@@ -180,5 +166,3 @@ function injectIframe() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
-
-
