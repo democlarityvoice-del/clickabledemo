@@ -116,7 +116,8 @@
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
-<script>
+<\/script>
+
 (function(){
   const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels"];
   const first = ["Nick","Sarah","Mike","Lisa","Tom"];
@@ -262,6 +263,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
