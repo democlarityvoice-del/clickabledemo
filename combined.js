@@ -66,16 +66,51 @@
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
   }
 
-  function injectIframeOnce(slot) {
-    if (document.getElementById(IFRAME_ID)) return;
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;height:360px;display:block;';
-    iframe.setAttribute('scrolling','yes');
-    iframe.srcdoc = buildSrcdoc(); // no external requests (CSP-proof)
-    slot.appendChild(iframe);
-    log('Injected iframe');
+function injectIframe() {
+  if (document.getElementById(IFRAME_ID)) return;
+
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
+
+  // 1) Find the native table container to anchor ABOVE it
+  const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+
+  // 2) (Optional) hide the native empty table
+  const HIDE_NATIVE = true;
+  if (HIDE_NATIVE && anchor instanceof HTMLElement) {
+    anchor.style.display = 'none';
   }
+
+  // 3) Create the iframe
+  const iframe = document.createElement('iframe');
+  iframe.id = IFRAME_ID;
+  // a bit taller so it fills that top panel area nicely
+let ro;
+function observeHeight(slot, iframe){
+  if (ro) try { ro.disconnect(); } catch {}
+  ro = new ResizeObserver(() => {
+    const h = Math.max(360, Math.floor(slot.getBoundingClientRect().height - 100)); // header padding
+    iframe.style.height = h + 'px';
+  });
+  ro.observe(slot);
+}
+
+// call after slot.insertBefore(...)
+observeHeight(slot, iframe);
+
+
+  // keep using srcdoc (no external loads / CSP-safe)
+  iframe.srcdoc = buildSrcdoc();
+
+  // 4) Insert BEFORE the native container (higher on the page)
+  if (anchor && anchor.parentNode === slot) {
+    slot.insertBefore(iframe, anchor);
+  } else {
+    // fallback: prepend to slot
+    slot.insertBefore(iframe, slot.firstChild);
+  }
+}
+
 
   // Wait for #omp-active-body to exist and be stable
   function waitForSlotAndInject(tries = 0) {
@@ -136,3 +171,4 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
