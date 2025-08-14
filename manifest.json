@@ -1,0 +1,15 @@
+{
+  "name": "Clarity Portal Demo Tools",
+  "version": "1.0",
+  "description": "Injects demo simulations into the Clarity Voice portal.",
+  "manifest_version": 3,
+  "host_permissions": [
+    "https://portal02.clarityvoice.net/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": ["https://portal02.clarityvoice.net/portal/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
