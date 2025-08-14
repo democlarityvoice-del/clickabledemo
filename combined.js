@@ -84,19 +84,28 @@ function injectIframe() {
   // 3) Create the iframe
   const iframe = document.createElement('iframe');
   iframe.id = IFRAME_ID;
-  // a bit taller so it fills that top panel area nicely
-let ro;
-function observeHeight(slot, iframe){
-  if (ro) try { ro.disconnect(); } catch {}
-  ro = new ResizeObserver(() => {
-    const h = Math.max(360, Math.floor(slot.getBoundingClientRect().height - 100)); // header padding
-    iframe.style.height = h + 'px';
-  });
-  ro.observe(slot);
-}
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;';
+  iframe.srcdoc = buildSrcdoc();
 
-// call after slot.insertBefore(...)
-observeHeight(slot, iframe);
+  // 4) Insert BEFORE the native container (higher on the page)
+  if (anchor && anchor.parentNode === slot) {
+    slot.insertBefore(iframe, anchor);
+  } else {
+    slot.insertBefore(iframe, slot.firstChild);
+  }
+
+  // 5) Auto-size AFTER it’s in the DOM
+  let ro;
+  function observeHeight(slotElem, iframeElem) {
+    if (ro) try { ro.disconnect(); } catch {}
+    ro = new ResizeObserver(() => {
+      const h = Math.max(360, Math.floor(slotElem.getBoundingClientRect().height - 100)); // header padding
+      iframeElem.style.height = h + 'px';
+    });
+    ro.observe(slotElem);
+  }
+  observeHeight(slot, iframe);
+}
 
 
   // keep using srcdoc (no external loads / CSP-safe)
@@ -171,4 +180,5 @@ observeHeight(slot, iframe);
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
