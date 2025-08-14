@@ -12,13 +12,16 @@
 
   // ===== SRC_DOC APP =====
 function buildSrcdoc() {
+  const ICON_URL = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
 <style>
-  :root {
-    --icon-muted: #9aa0a6;   /* grey */
-    --icon-active: #000000;  /* black */
+  :root{
+    --icon-muted: rgba(0,0,0,.38);
+    --icon-hover: rgba(0,0,0,.60);
+    --icon-active:#000;
+    --icon-size:18px;
   }
   body { font-family: Arial, sans-serif; margin:0; background:#fff; color:#000; }
   .call-container {
@@ -26,32 +29,59 @@ function buildSrcdoc() {
     box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%;
   }
   table { width:100%; border-collapse:collapse; background:#fff; }
+  thead th {
+    font-weight:700; padding:10px 12px; font-size:14px; text-align:left;
+    border-bottom:1px solid #ddd;
+  }
   td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
   tr:hover { background:#f5f5f5; }
 
-  /* Listen button */
+  /* Listen button wrapper */
   .listen-btn {
     display:inline-flex; align-items:center; justify-content:center;
     width:24px; height:24px; border:0; background:transparent; padding:0;
     cursor:pointer; border-radius:4px;
   }
-  .listen-btn:focus { outline: none; }
-  .listen-btn svg { width:18px; height:18px; opacity:.38; transition:opacity .15s linear, fill .15s linear; fill: var(--icon-muted); }
-  tr:hover .listen-btn svg { opacity:.6; }
-  .listen-btn.is-active svg { opacity:1; fill: var(--icon-active); }
+  .listen-btn:focus { outline:none; }
 
-  /* Simple tooltip on hover using title attr fallback; optional custom tooltip if desired */
+  /* Fallback inline SVG (always available) */
+  .svgbak { width:var(--icon-size); height:var(--icon-size); display:inline-block; }
+  .svgbak path { fill: var(--icon-muted); opacity:.9; transition: fill .15s linear, opacity .15s linear; }
+  tr:hover .svgbak path { fill: var(--icon-hover); }
+  .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+
+  /* Preferred mask icon using your sprite (enabled when body.use-mask is set) */
+  .maskicon { display:none; }
+  body.use-mask .maskicon {
+    display:inline-block; width:var(--icon-size); height:var(--icon-size);
+    background-color: var(--icon-muted);
+    -webkit-mask: url('${ICON_URL}') no-repeat center / contain;
+            mask: url('${ICON_URL}') no-repeat center / contain;
+    transition: background-color .15s linear;
+  }
+  body.use-mask tr:hover .maskicon { background-color: var(--icon-hover); }
+  body.use-mask .listen-btn.is-active .maskicon { background-color: var(--icon-active); }
+  body.use-mask .svgbak { display:none; } /* hide fallback when mask is available */
 </style>
 </head><body>
   <div class="call-container">
     <table>
+      <thead>
+        <tr>
+          <th>From</th>
+          <th>CNAM</th>
+          <th>Dialed</th>
+          <th>To</th>
+          <th>Duration</th>
+          <th style="width:28px;"></th>
+        </tr>
+      </thead>
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
-
 <script>
 (function(){
-  // ==== data generation (unchanged) ====
+  // ---- data generation (same as before) ----
   const names=["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
   const first=["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
   const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -67,6 +97,7 @@ function buildSrcdoc() {
   const timer=s=>()=>{const d=Date.now()-s,m=Math.min(4,Math.floor(d/60000)),sec=Math.floor((d%60000)/1000);return \`\${m}:\${fmt(sec)}\`};
   const newCall=()=>{const vm=Math.random()<0.05, viaSpeak=vm&&Math.random()<0.03; return {from:cname(), cnam:num(), dialed:viaSpeak?'SpeakAccount':(vm?'VMail':'CallQueue'), to:\`Ext. \${pick(exts)} (\${extname()})\`, startedAt:Date.now(), t:timer(Date.now()), viaSpeak, state:'active'};}
   const tick=c=>{ if(c.viaSpeak && Date.now()-c.startedAt>2000){c.dialed='VMail'; c.viaSpeak=false;} if(Date.now()-c.startedAt>(4*60+32)*1000){c.state='ended';}};
+
   function render(){
     const tb=document.getElementById('callsTableBody'); if(!tb) return;
     tb.innerHTML='';
@@ -80,46 +111,50 @@ function buildSrcdoc() {
         <td>\${c.t()}</td>
         <td style="width:28px">
           <button class="listen-btn" type="button" title="Listen in" aria-pressed="false" data-index="\${i}">
-            <svg viewBox="0 0 24 24" role="img" aria-label="Listen in">
+            <span class="maskicon" aria-hidden="true"></span>
+            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
               <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
               <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-              <path d="M17.5 0.5a.75.75 0 0 1 1.06 0c5 5 5 13 0 18a.75.75 0 1 1-1.06-1.06c4.1-4.1 4.1-10.78 0-14.88a.75.75 0 0 1 0-1.06z"></path>
+              <path d="M17.5 .5a.75.75 0 0 1 1.06 0c5 5 5 13 0 18a.75.75 0 1 1-1.06-1.06c4.1-4.1 4.1-10.78 0-14.88a.75.75 0 0 1 0-1.06z"></path>
             </svg>
           </button>
         </td>\`;
       tb.appendChild(tr);
     });
   }
+
   function loop(){
     if(calls.length<MAX && Math.random()<0.7) calls.push(newCall());
     else if(calls.length>0 && Math.random()<0.3) calls.shift();
     for(let i=calls.length-1;i>=0;i--){ tick(calls[i]); if(calls[i].state==='ended') calls.splice(i,1); }
     render();
   }
-  calls.push(newCall());
-  render();
-  setInterval(loop,1000);
 
-  // ===== Listen-in behavior (single-active) =====
+  // Seed + animate
+  calls.push(newCall()); render(); setInterval(loop,1000);
+
+  // Single-active toggle
   document.addEventListener('click', (e)=>{
     const btn = e.target.closest('.listen-btn');
     if(!btn) return;
-
-    // deactivate others
-    document.querySelectorAll('.listen-btn.is-active').forEach(b=>{
-      b.classList.remove('is-active');
-      b.setAttribute('aria-pressed','false');
+    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b=>{
+      b.classList.remove('is-active'); b.setAttribute('aria-pressed','false');
     });
-
-    // activate this one
-    btn.classList.add('is-active');
-    btn.setAttribute('aria-pressed','true');
-    // native tooltip already says "Listen in"; keeping it simple per your spec
+    btn.classList.add('is-active'); btn.setAttribute('aria-pressed','true');
   });
+
+  // Try to enable mask sprite (uses your URL). If blocked by CSP, fallback stays.
+  (function tryEnableMask(){
+    const img = new Image();
+    img.onload = ()=> document.body.classList.add('use-mask');
+    img.onerror = ()=> {}; // fallback (inline svg) remains visible
+    img.src = '${ICON_URL}';
+  })();
 })();
 </script>
 </body></html>`;
 }
+
 
 
   // ===== IFRAME MANAGEMENT =====
@@ -230,6 +265,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
