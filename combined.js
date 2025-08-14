@@ -11,255 +11,226 @@
   const log = (...args) => LOG && console.log('[DemoCalls]', ...args);
 
   // ===== SRC_DOC APP =====
-function buildSrcdoc() {
-  return `<!doctype html><html><head><meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Current Active Calls</title>
-  <style>
-    * { box-sizing: border-box; }
-    html, body { width: 100%; overflow-x: hidden; }
-    :root {
-      --icon-muted: rgba(0,0,0,.38);
-      --icon-hover: rgba(0,0,0,.60);
-      --icon-active: #000;
-      --icon-size: 18px;
-    }
-    body {
-      font-family: Arial, sans-serif;
-      margin: 0;
-      background: #fff;
-      color: #000;
-    }
-    .call-container {
-      background: #fff;
-      padding: 0 16px 20px;
-      border-radius: 6px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-      width: 100%;
-      max-width: 100%;
-      position: relative;
-    }
-    table {
-      width: 100%;
-      table-layout: auto;
-      border-collapse: collapse;
-      background: #fff;
-    }
-    thead th {
-      font-weight: 700;
-      padding: 10px 12px;
-      font-size: 14px;
-      text-align: left;
-      border-bottom: 1px solid #ddd;
-      white-space: nowrap;
-    }
-    td {
-      padding: 10px 12px;
-      text-align: left;
-      font-size: 14px;
-      border-bottom: 1px solid #ddd;
-      white-space: nowrap;
-    }
-    tr:hover { background: #f5f5f5; }
+  function buildSrcdoc() {
+    return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Current Active Calls</title>
+<style>
+  * { box-sizing: border-box; }
+  html, body { width: 100%; overflow-x: hidden; }
+  :root {
+    --icon-muted: rgba(0,0,0,.38);
+    --icon-hover: rgba(0,0,0,.60);
+    --icon-active: #000;
+    --icon-size: 18px;
+  }
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #fff;
+    color: #000;
+  }
+  .call-container {
+    background: #fff;
+    padding: 0 16px 20px;
+    border-radius: 6px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+  }
+  table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+    background: #fff;
+  }
+  thead th {
+    font-weight: 700;
+    padding: 10px 12px;
+    font-size: 14px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+  }
+  td {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 14px;
+    border-bottom: 1px solid #ddd;
+    white-space: nowrap;
+  }
+  tr:hover { background: #f5f5f5; }
 
-    /* listen button */
-    .listen-btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 28px;
-      height: 28px;
-      background: #f0f0f0;
-      border-radius: 50%;
-      border: none;
-      cursor: pointer;
-      position: relative;
-      z-index: 2;
-    }
-    .listen-btn:focus { outline: none; }
-    .svgbak { width: var(--icon-size); height: var(--icon-size); }
-    .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
-    tr:hover .svgbak path { fill: var(--icon-hover); }
-    .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+  .listen-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 28px;
+    background: #f0f0f0;
+    border-radius: 50%;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    z-index: 2;
+  }
+  .listen-btn:focus { outline: none; }
+  .svgbak { width: var(--icon-size); height: var(--icon-size); }
+  .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
+  tr:hover .svgbak path { fill: var(--icon-hover); }
+  .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
 
-    /* toolbar + popout */
-    .call-toolbar{
-      display:flex; justify-content:flex-end; align-items:center;
-      gap:8px; padding:8px 2px 6px;
-    }
-    .pop-btn{
-      appearance:none; border:1px solid #d0d0d0; background:#fff; cursor:pointer;
-      padding:6px 10px; border-radius:6px; font-size:12px; line-height:1;
-      box-shadow:0 1px 2px rgba(0,0,0,.06);
-    }
-    .pop-btn:hover{ background:#f7f7f7; }
+  .call-toolbar {
+    display: flex; justify-content: flex-end; align-items: center;
+    gap: 8px; padding: 8px 2px 6px;
+  }
+  .pop-btn {
+    appearance: none; border: 1px solid #d0d0d0; background: #fff; cursor: pointer;
+    padding: 6px 10px; border-radius: 6px; font-size: 12px; line-height: 1;
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+  .pop-btn:hover { background: #f7f7f7; }
 
-    .backdrop{
-      position:fixed; inset:0; background:rgba(0,0,0,.28); opacity:0; pointer-events:none;
-      transition:opacity .18s ease; z-index:9997;
-    }
-    .backdrop.show{ opacity:1; pointer-events:auto; }
+  .backdrop {
+    position: fixed; inset: 0; background: rgba(0,0,0,.28); opacity: 0; pointer-events: none;
+    transition: opacity .18s ease; z-index: 9997;
+  }
+  .backdrop.show { opacity: 1; pointer-events: auto; }
 
-    .call-container.enlarged{
-      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-      width:min(1100px, 95vw);
-      max-height:85vh; overflow:auto;
-      padding:18px 20px;
-      z-index:9998;
-      box-shadow:0 20px 50px rgba(0,0,0,.25);
-    }
-    .call-container.enlarged table td,
-    .call-container.enlarged thead th { font-size:15px; }
-    .call-container.enlarged .listen-btn{ width:30px; height:30px; }
-  </style>
-  </head><body>
-    <div class="call-container">
-      <div class="call-toolbar">
-        <button class="pop-btn" id="popToggle" aria-pressed="false" aria-controls="callsTableBody">Enlarge</button>
-      </div>
-      <table>
-        <thead>
-          <tr>
-            <th>From</th>
-            <th>CNAM</th>
-            <th>Dialed</th>
-            <th>To</th>
-            <th>Duration</th>
-            <th></th>
-          </tr>
-        </thead>
-        <tbody id="callsTableBody"></tbody>
-      </table>
-    </div>
-  <script>
-  (function(){
-    // ---- demo data model ----
-    const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
-    const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
-    const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-    const area = ["900","700","999","888","511","600","311","322","456"];
-    const exts = Array.from({length:49},(_,i)=>201+i);
-    const usedNums = new Set(), usedNames = new Set(), calls = [];
-    const MAX = 5;
+  .call-container.enlarged {
+    position: fixed; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: min(1100px, 95vw);
+    max-height: 85vh; overflow: auto;
+    padding: 18px 20px;
+    z-index: 9998;
+    box-shadow: 0 20px 50px rgba(0,0,0,.25);
+  }
+  .call-container.enlarged table td,
+  .call-container.enlarged thead th { font-size: 15px; }
+  .call-container.enlarged .listen-btn { width: 30px; height: 30px; }
+</style>
+</head><body>
+<div class="call-container">
+  <div class="call-toolbar">
+    <button class="pop-btn" id="popToggle" aria-pressed="false" aria-controls="callsTableBody">Enlarge</button>
+  </div>
+  <table>
+    <thead>
+      <tr><th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th></tr>
+    </thead>
+    <tbody id="callsTableBody"></tbody>
+  </table>
+</div>
+<script>
+(function(){
+  const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks"];
+  const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate"];
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+  const area = ["900","700","999","888","511"];
+  const exts = Array.from({length:49},(_,i)=>201+i);
+  const usedNums = new Set(), usedNames = new Set(), calls = [];
+  const MAX = 5;
+  const pick = a => a[Math.floor(Math.random()*a.length)];
+  const num = () => {
+    let n;
+    do { n = pick(area)+"-"+Math.floor(100+Math.random()*900)+"-"+Math.floor(1000+Math.random()*9000); }
+    while (usedNums.has(n) || /666/.test(n));
+    usedNums.add(n); return n;
+  };
+  const cname = () => {
+    let n, g=0;
+    do { n = pick(names); g++; } while (usedNames.has(n) && g<50);
+    usedNames.add(n); return n;
+  };
+  const extname = () => pick(first) + " " + pick(alphabet) + ".";
+  const fmt = s => s.toString().padStart(2,"0");
+  const timer = s => () => {
+    const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000);
+    return m+":"+fmt(sec);
+  };
+  const newCall = () => ({
+    from: cname(),
+    cnam: num(),
+    dialed: "CallQueue",
+    to: "Ext. " + pick(exts) + " (" + extname() + ")",
+    startedAt: Date.now(),
+    t: timer(Date.now()),
+    state: "active"
+  });
 
-    const pick = a => a[Math.floor(Math.random() * a.length)];
-    const num = () => {
-      let n;
-      do {
-        n = pick(area) + "-" + Math.floor(100 + Math.random()*900) + "-" + Math.floor(1000 + Math.random()*9000);
-      } while (usedNums.has(n) || /666/.test(n));
-      usedNums.add(n);
-      return n;
-    };
-    const cname = () => {
-      let n, g=0;
-      do { n = pick(names); g++; } while (usedNames.has(n) && g<50);
-      usedNames.add(n);
-      return n;
-    };
-    const extname = () => pick(first) + " " + pick(alphabet) + ".";
-    const fmt = s => s.toString().padStart(2, "0");
-    const timer = s => () => {
-      const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000);
-      return m + ":" + fmt(sec);
-    };
-    const newCall = () => ({
-      from: cname(),
-      cnam: num(),
-      dialed: "CallQueue",
-      to: "Ext. " + pick(exts) + " (" + extname() + ")",
-      startedAt: Date.now(),
-      t: timer(Date.now()),
-      state: "active"
+  const tick = c => {
+    if (Date.now()-c.startedAt > 3*60*1000) c.state = "ended";
+  };
+
+  function render(){
+    const tb = document.getElementById("callsTableBody");
+    if (!tb) return;
+    tb.innerHTML = "";
+    calls.forEach((c,i)=>{
+      const tr = document.createElement("tr");
+      tr.innerHTML =
+        "<td>"+c.from+"</td><td>"+c.cnam+"</td><td>"+c.dialed+"</td><td>"+c.to+"</td><td>"+c.t()+"</td>" +
+        '<td><button class="listen-btn" aria-pressed="false" title="Listen in">' +
+        '<svg class="svgbak" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 5V5L7 10H3z"></path>' +
+        '<path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>' +
+        '</svg></button></td>';
+      tb.appendChild(tr);
     });
+  }
 
-    // age out calls after ~3 minutes
-    const tick = c => {
-      if (Date.now() - c.startedAt > 3 * 60 * 1000) c.state = "ended";
-    };
-
-    function render() {
-      const tb = document.getElementById("callsTableBody");
-      if (!tb) return;
-      tb.innerHTML = "";
-      calls.forEach((c, i) => {
-        const tr = document.createElement("tr");
-        tr.innerHTML =
-          "<td>"+c.from+"</td>" +
-          "<td>"+c.cnam+"</td>" +
-          "<td>"+c.dialed+"</td>" +
-          "<td>"+c.to+"</td>" +
-          "<td>"+c.t()+"</td>" +
-          '<td><button class="listen-btn" aria-pressed="false" title="Listen in">' +
-            '<svg class="svgbak" viewBox="0 0 24 24" aria-hidden="true" focusable="false">' +
-              '<path d="M3 10v4h4l5 5V5L7 10H3z"></path>' +
-              '<path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>' +
-            "</svg>" +
-          "</button></td>";
-        tb.appendChild(tr);
-      });
+  function loop(){
+    if (calls.length < MAX && Math.random() < 0.35) calls.push(newCall());
+    for (let i = calls.length-1; i >= 0; i--) {
+      tick(calls[i]);
+      if (calls[i].state === "ended") calls.splice(i,1);
     }
-
-    function loop() {
-      // gentle activity: add sometimes, age and remove ended
-      if (calls.length < MAX && Math.random() < 0.35) calls.push(newCall());
-      for (let i = calls.length - 1; i >= 0; i--) {
-        tick(calls[i]);
-        if (calls[i].state === "ended") calls.splice(i, 1);
-      }
-      render();
-    }
-
-    // seed at least one call and start heartbeat
-    calls.push(newCall());
     render();
-    const _iv = setInterval(loop, 3000);
+  }
 
-    // one-active "Listen in" behavior
-    document.addEventListener("click", (e) => {
-      const btn = e.target.closest(".listen-btn");
-      if (!btn) return;
-      document.querySelectorAll(".listen-btn").forEach(b => {
-        const isThis = b === btn;
-        b.classList.toggle("is-active", isThis);
-        b.setAttribute("aria-pressed", isThis ? "true" : "false");
-      });
+  calls.push(newCall());
+  render();
+  setInterval(loop, 3000);
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest(".listen-btn");
+    if (!btn) return;
+    document.querySelectorAll(".listen-btn").forEach(b => {
+      const isThis = b === btn;
+      b.classList.toggle("is-active", isThis);
+      b.setAttribute("aria-pressed", isThis ? "true" : "false");
     });
+  });
 
-    // --- Enlarge / pop-out ---
-    (function popoutInit(){
-      const container = document.querySelector(".call-container");
-      const btn = document.getElementById("popToggle");
+  (function popoutInit(){
+    const container = document.querySelector(".call-container");
+    const btn = document.getElementById("popToggle");
+    const backdrop = document.createElement("div");
+    backdrop.className = "backdrop";
+    document.body.appendChild(backdrop);
 
-      // backdrop at body level for easy click-out
-      const backdrop = document.createElement("div");
-      backdrop.className = "backdrop";
-      document.body.appendChild(backdrop);
-
-      function setEnlarged(on){
-        container.classList.toggle("enlarged", on);
-        backdrop.classList.toggle("show", on);
-        if (btn) {
-          btn.setAttribute("aria-pressed", on ? "true" : "false");
-          btn.textContent = on ? "Restore" : "Enlarge";
-        }
-      }
-
+    function setEnlarged(on){
+      container.classList.toggle("enlarged", on);
+      backdrop.classList.toggle("show", on);
       if (btn) {
-        btn.addEventListener("click", () => {
-          setEnlarged(!container.classList.contains("enlarged"));
-        });
+        btn.setAttribute("aria-pressed", on ? "true" : "false");
+        btn.textContent = on ? "Restore" : "Enlarge";
       }
-      backdrop.addEventListener("click", () => setEnlarged(false));
-      document.addEventListener("keydown", (e)=>{
-        if (e.key === "Escape" && container.classList.contains("enlarged")) setEnlarged(false);
-      });
-    })();
+    }
 
+    if (btn) {
+      btn.addEventListener("click", () => setEnlarged(!container.classList.contains("enlarged")));
+    }
+    backdrop.addEventListener("click", () => setEnlarged(false));
+    document.addEventListener("keydown", (e)=>{
+      if (e.key === "Escape" && container.classList.contains("enlarged")) {
+        setEnlarged(false);
+      }
+    });
   })();
-  </script></body></html>`;
-}
-    
+})();
+</script></body></html>`;
+  }
 
   // ===== IFRAME INJECTION =====
   function removeIframe() {
@@ -273,13 +244,18 @@ function buildSrcdoc() {
     if (!slot) return;
     const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
     if (anchor instanceof HTMLElement) anchor.style.display = 'none';
+
     const iframe = document.createElement('iframe');
     iframe.id = IFRAME_ID;
     iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
     iframe.setAttribute('scrolling', 'yes');
     iframe.srcdoc = buildSrcdoc();
-    if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
-    else slot.insertBefore(iframe, slot.firstChild);
+
+    if (anchor && anchor.parentNode === slot) {
+      slot.insertBefore(iframe, anchor);
+    } else {
+      slot.insertBefore(iframe, slot.firstChild);
+    }
   }
 
   function waitForSlotAndInject(tries = 0) {
@@ -340,13 +316,3 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
-
-
-
-
-
-
-
-
-
-
