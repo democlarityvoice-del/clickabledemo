@@ -84,13 +84,21 @@ tr:hover {
   justify-content: center;
   width: 24px;
   height: 24px;
-  border: 0;
-  background: transparent;
+  border-radius: 50%;
+  border: 1px solid var(--icon-muted);
+  background-color: #f0f0f0;
   padding: 0;
   cursor: pointer;
-  border-radius: 4px;
+  transition: background 0.2s ease, border-color 0.2s ease;
 }
-.listen-btn:focus { outline: none; }
+.listen-btn:hover {
+  background-color: #e0e0e0;
+  border-color: var(--icon-hover);
+}
+.listen-btn:focus {
+  outline: none;
+}
+
 
 /* Fallback inline SVG (always available) */
 .svgbak {
@@ -311,6 +319,7 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
