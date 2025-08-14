@@ -16,6 +16,10 @@ function buildSrcdoc() {
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
 <style>
+  :root {
+    --icon-muted: #9aa0a6;   /* grey */
+    --icon-active: #000000;  /* black */
+  }
   body { font-family: Arial, sans-serif; margin:0; background:#fff; color:#000; }
   .call-container {
     background:#fff; padding:0 30px 20px; border-radius:6px;
@@ -24,8 +28,19 @@ function buildSrcdoc() {
   table { width:100%; border-collapse:collapse; background:#fff; }
   td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
   tr:hover { background:#f5f5f5; }
-  .speaker-icon { cursor:pointer; opacity:.4; transition:opacity .2s; }
-  tr:hover .speaker-icon { opacity:.7; } .speaker-icon:hover { opacity:1; }
+
+  /* Listen button */
+  .listen-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border:0; background:transparent; padding:0;
+    cursor:pointer; border-radius:4px;
+  }
+  .listen-btn:focus { outline: none; }
+  .listen-btn svg { width:18px; height:18px; opacity:.38; transition:opacity .15s linear, fill .15s linear; fill: var(--icon-muted); }
+  tr:hover .listen-btn svg { opacity:.6; }
+  .listen-btn.is-active svg { opacity:1; fill: var(--icon-active); }
+
+  /* Simple tooltip on hover using title attr fallback; optional custom tooltip if desired */
 </style>
 </head><body>
   <div class="call-container">
@@ -33,8 +48,10 @@ function buildSrcdoc() {
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
+
 <script>
 (function(){
+  // ==== data generation (unchanged) ====
   const names=["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
   const first=["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
   const alphabet='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
@@ -50,9 +67,55 @@ function buildSrcdoc() {
   const timer=s=>()=>{const d=Date.now()-s,m=Math.min(4,Math.floor(d/60000)),sec=Math.floor((d%60000)/1000);return \`\${m}:\${fmt(sec)}\`};
   const newCall=()=>{const vm=Math.random()<0.05, viaSpeak=vm&&Math.random()<0.03; return {from:cname(), cnam:num(), dialed:viaSpeak?'SpeakAccount':(vm?'VMail':'CallQueue'), to:\`Ext. \${pick(exts)} (\${extname()})\`, startedAt:Date.now(), t:timer(Date.now()), viaSpeak, state:'active'};}
   const tick=c=>{ if(c.viaSpeak && Date.now()-c.startedAt>2000){c.dialed='VMail'; c.viaSpeak=false;} if(Date.now()-c.startedAt>(4*60+32)*1000){c.state='ended';}};
-  const render=()=>{const tb=document.getElementById('callsTableBody'); if(!tb) return; tb.innerHTML=''; calls.forEach(c=>{const tr=document.createElement('tr'); tr.innerHTML=\`<td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td><td><span class="speaker-icon" title="Listen in">🔊</span></td>\`; tb.appendChild(tr);});};
-  function loop(){ if(calls.length<MAX && Math.random()<0.7) calls.push(newCall()); else if(calls.length>0 && Math.random()<0.3) calls.shift(); for(let i=calls.length-1;i>=0;i--){tick(calls[i]); if(calls[i].state==='ended') calls.splice(i,1);} render(); }
-  calls.push(newCall()); render(); setInterval(loop,1000);
+  function render(){
+    const tb=document.getElementById('callsTableBody'); if(!tb) return;
+    tb.innerHTML='';
+    calls.forEach((c,i)=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=\`
+        <td>\${c.from}</td>
+        <td>\${c.cnam}</td>
+        <td>\${c.dialed}</td>
+        <td>\${c.to}</td>
+        <td>\${c.t()}</td>
+        <td style="width:28px">
+          <button class="listen-btn" type="button" title="Listen in" aria-pressed="false" data-index="\${i}">
+            <svg viewBox="0 0 24 24" role="img" aria-label="Listen in">
+              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+              <path d="M17.5 0.5a.75.75 0 0 1 1.06 0c5 5 5 13 0 18a.75.75 0 1 1-1.06-1.06c4.1-4.1 4.1-10.78 0-14.88a.75.75 0 0 1 0-1.06z"></path>
+            </svg>
+          </button>
+        </td>\`;
+      tb.appendChild(tr);
+    });
+  }
+  function loop(){
+    if(calls.length<MAX && Math.random()<0.7) calls.push(newCall());
+    else if(calls.length>0 && Math.random()<0.3) calls.shift();
+    for(let i=calls.length-1;i>=0;i--){ tick(calls[i]); if(calls[i].state==='ended') calls.splice(i,1); }
+    render();
+  }
+  calls.push(newCall());
+  render();
+  setInterval(loop,1000);
+
+  // ===== Listen-in behavior (single-active) =====
+  document.addEventListener('click', (e)=>{
+    const btn = e.target.closest('.listen-btn');
+    if(!btn) return;
+
+    // deactivate others
+    document.querySelectorAll('.listen-btn.is-active').forEach(b=>{
+      b.classList.remove('is-active');
+      b.setAttribute('aria-pressed','false');
+    });
+
+    // activate this one
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-pressed','true');
+    // native tooltip already says "Listen in"; keeping it simple per your spec
+  });
 })();
 </script>
 </body></html>`;
@@ -66,39 +129,47 @@ function buildSrcdoc() {
   }
 
   function injectIframe() {
-    if (document.getElementById(IFRAME_ID)) return;
+  if (document.getElementById(IFRAME_ID)) return;
 
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (!slot) return;
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
 
-    // Find the native table container to anchor ABOVE it
-const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+  // 1) Find the native table container to anchor ABOVE it
+  const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
 
-// Hide the native empty table (keep the header visible)
-if (anchor instanceof HTMLElement) {
-  anchor.style.display = 'none';
-}
-
-// Insert our iframe BEFORE that hidden container
-if (anchor && anchor.parentNode === slot) {
-  slot.insertBefore(iframe, anchor);
-} else {
-  slot.insertBefore(iframe, slot.firstChild);
-}
-
-
-    // 5) Auto-size AFTER it’s in the DOM
-    let ro;
-    function observeHeight(slotElem, iframeElem) {
-      if (ro) try { ro.disconnect(); } catch {}
-      ro = new ResizeObserver(() => {
-        const h = Math.max(360, Math.floor(slotElem.getBoundingClientRect().height - 100)); // header padding
-        iframeElem.style.height = h + 'px';
-      });
-      ro.observe(slotElem);
-    }
-    observeHeight(slot, iframe);
+  // 2) Hide the native empty table (keep the native header visible)
+  if (anchor instanceof HTMLElement) {
+    anchor.style.display = 'none';
   }
+
+  // 3) Create the iframe (you were missing this)
+  const iframe = document.createElement('iframe');
+  iframe.id = IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;'; // give it an initial height
+  iframe.setAttribute('scrolling', 'yes');
+  iframe.srcdoc = buildSrcdoc(); // no external loads (CSP-safe)
+
+  // 4) Insert BEFORE the native container (higher on the page)
+  if (anchor && anchor.parentNode === slot) {
+    slot.insertBefore(iframe, anchor);
+  } else {
+    slot.insertBefore(iframe, slot.firstChild);
+  }
+
+  // 5) Auto-size AFTER it’s in the DOM
+  let ro;
+  function observeHeight(slotElem, iframeElem) {
+    if (ro) try { ro.disconnect(); } catch {}
+    ro = new ResizeObserver(() => {
+      const panelH = Math.floor(slotElem.getBoundingClientRect().height);
+      const h = Math.max(360, panelH ? (panelH - 90) : 360); // leave room for header padding
+      iframeElem.style.height = h + 'px';
+    });
+    ro.observe(slotElem);
+  }
+  observeHeight(slot, iframe);
+}
+
 
   // Wait for #omp-active-body to exist and be stable
   function waitForSlotAndInject(tries = 0) {
@@ -159,5 +230,6 @@ if (anchor && anchor.parentNode === slot) {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
