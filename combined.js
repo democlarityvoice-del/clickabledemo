@@ -12,7 +12,6 @@
 
   // ===== SRC_DOC APP =====
   function buildSrcdoc() {
-    const ICON_URL = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
     return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
@@ -110,31 +109,50 @@
           <th>Dialed</th>
           <th>To</th>
           <th>Duration</th>
-          <th></th>
+          <th style="width:28px;"></th>
         </tr>
       </thead>
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
-<\/script>
-
+<script>
 (function(){
-  const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels"];
-  const first = ["Nick","Sarah","Mike","Lisa","Tom"];
+  const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
+  const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
   const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-  const area = ["900","700","999"];
+  const area = ["900","700","999","888","511","600","311","322","456"];
   const exts = Array.from({length:49},(_,i)=>201+i);
   const usedNums = new Set(), usedNames = new Set(), calls = [];
   const MAX = 5;
 
   const pick = a => a[Math.floor(Math.random() * a.length)];
-  const num = () => { let n; do { n = `${pick(area)}-${Math.floor(100+Math.random()*900)}-${Math.floor(1000+Math.random()*9000)}`; } while (usedNums.has(n)); usedNums.add(n); return n; };
-  const cname = () => { let n; do { n = pick(names); } while (usedNames.has(n)); usedNames.add(n); return n; };
-  const extname = () => `${pick(first)} ${pick(alphabet)}.`;
+  const num = () => { let n; do { n = \`\${pick(area)}-\${Math.floor(100+Math.random()*900)}-\${Math.floor(1000+Math.random()*9000)}\`; } while (usedNums.has(n) || /666/.test(n)); usedNums.add(n); return n; };
+  const cname = () => { let n, g = 0; do { n = pick(names); g++; } while (usedNames.has(n) && g < 50); usedNames.add(n); return n; };
+  const extname = () => \`\${pick(first)} \${pick(alphabet)}.\`;
   const fmt = s => s.toString().padStart(2, '0');
-  const timer = s => () => { const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000); return `${m}:${fmt(sec)}`; };
-  const newCall = () => ({ from: cname(), cnam: num(), dialed: 'CallQueue', to: `Ext. ${pick(exts)} (${extname()})`, startedAt: Date.now(), t: timer(Date.now()), state: 'active' });
-  const tick = c => { if (Date.now()-c.startedAt > 180000) c.state = 'ended'; };
+  const timer = s => () => { const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000); return \`\${m}:\${fmt(sec)}\`; };
+  const newCall = () => {
+    const vm = Math.random() < 0.05, viaSpeak = vm && Math.random() < 0.03;
+    return {
+      from: cname(),
+      cnam: num(),
+      dialed: viaSpeak ? 'SpeakAccount' : (vm ? 'VMail' : 'CallQueue'),
+      to: \`Ext. \${pick(exts)} (\${extname()})\`,
+      startedAt: Date.now(),
+      t: timer(Date.now()),
+      viaSpeak,
+      state: 'active'
+    };
+  };
+  const tick = c => {
+    if (c.viaSpeak && Date.now() - c.startedAt > 2000) {
+      c.dialed = 'VMail';
+      c.viaSpeak = false;
+    }
+    if (Date.now() - c.startedAt > (4 * 60 + 32) * 1000) {
+      c.state = 'ended';
+    }
+  };
 
   function render(){
     const tb = document.getElementById('callsTableBody');
@@ -142,27 +160,28 @@
     tb.innerHTML = '';
     calls.forEach((c, i) => {
       const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td>${c.from}</td>
-        <td>${c.cnam}</td>
-        <td>${c.dialed}</td>
-        <td>${c.to}</td>
-        <td>${c.t()}</td>
+      tr.innerHTML = \`
+        <td>\${c.from}</td>
+        <td>\${c.cnam}</td>
+        <td>\${c.dialed}</td>
+        <td>\${c.to}</td>
+        <td>\${c.t()}</td>
         <td>
-          <button class="listen-btn" aria-pressed="false">
+          <button class="listen-btn" type="button" title="Listen in" aria-pressed="false" data-index="\${i}">
             <span class="tooltip">Listen in</span>
-            <svg class="svgbak" viewBox="0 0 24 24">
+            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
               <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
               <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
             </svg>
           </button>
-        </td>`;
+        </td>\`;
       tb.appendChild(tr);
     });
   }
 
   function loop() {
-    if (calls.length < MAX && Math.random() < 0.3) calls.push(newCall());
+    if (calls.length < MAX && Math.random() < 0.7) calls.push(newCall());
+    else if (calls.length > 0 && Math.random() < 0.3) calls.shift();
     for (let i = calls.length - 1; i >= 0; i--) {
       tick(calls[i]);
       if (calls[i].state === 'ended') calls.splice(i, 1);
@@ -172,13 +191,18 @@
 
   calls.push(newCall()); // Ensure at least one call on load
   render();
-  setInterval(loop, 3000);
+  setInterval(loop, 1000);
 
+  // Single "Listen in" active button logic
   document.addEventListener('click', (e) => {
     const btn = e.target.closest('.listen-btn');
     if (!btn) return;
-    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => b.classList.remove('is-active'));
+    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
+      b.classList.remove('is-active');
+      b.setAttribute('aria-pressed', 'false');
+    });
     btn.classList.add('is-active');
+    btn.setAttribute('aria-pressed', 'true');
   });
 })();
 </script></body></html>`;
@@ -191,21 +215,19 @@
   }
 
   function injectIframe() {
-  if (document.getElementById(IFRAME_ID)) return;
-  const slot = document.querySelector(SLOT_SELECTOR);
-  if (!slot) return;
-  const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
-  if (anchor instanceof HTMLElement) anchor.style.display = 'none';
-
-  const iframe = document.createElement('iframe');  // ✅ ADD THIS LINE
-  iframe.id = IFRAME_ID;
-  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-  iframe.setAttribute('scrolling', 'yes');
-  iframe.srcdoc = buildSrcdoc();
-
-  if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
-  else slot.insertBefore(iframe, slot.firstChild);
-}
+    if (document.getElementById(IFRAME_ID)) return;
+    const slot = document.querySelector(SLOT_SELECTOR);
+    if (!slot) return;
+    const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+    if (anchor instanceof HTMLElement) anchor.style.display = 'none';
+    const iframe = document.createElement('iframe');
+    iframe.id = IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+    iframe.setAttribute('scrolling', 'yes');
+    iframe.srcdoc = buildSrcdoc();
+    if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
+    else slot.insertBefore(iframe, slot.firstChild);
+  }
 
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
@@ -265,9 +287,6 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
-
-
-
 
 
 
