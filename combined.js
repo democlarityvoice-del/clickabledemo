@@ -11,24 +11,25 @@
   const log = (...args) => LOG && console.log('[DemoCalls]', ...args);
 
   // ===== SRC_DOC APP =====
-  function buildSrcdoc() {
-    return `<!doctype html><html><head><meta charset="utf-8">
+function buildSrcdoc() {
+  return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
 <style>
   body { font-family: Arial, sans-serif; margin:0; background:#fff; color:#000; }
-  .call-container { background:#fff; padding:20px 30px; border-radius:6px;
-    box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%; }
-  h1 { font-size:16px; color:#a8a8a8; text-transform:uppercase; font-weight:600; margin:0 0 12px; }
+  .call-container {
+    background:#fff; padding:12px 30px 20px; border-radius:6px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%;
+  }
   table { width:100%; border-collapse:collapse; background:#fff; }
   th,td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
+  thead { background:#fff; }
   tr:hover { background:#f5f5f5; }
   .speaker-icon { cursor:pointer; opacity:.4; transition:opacity .2s; }
   tr:hover .speaker-icon { opacity:.7; } .speaker-icon:hover { opacity:1; }
 </style>
 </head><body>
   <div class="call-container">
-    <h1>Current Active Calls</h1>
     <table>
       <thead><tr><th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th></tr></thead>
       <tbody id="callsTableBody"></tbody>
@@ -53,11 +54,8 @@
   const tick=c=>{ if(c.viaSpeak && Date.now()-c.startedAt>2000){c.dialed='VMail'; c.viaSpeak=false;} if(Date.now()-c.startedAt>(4*60+32)*1000){c.state='ended';}};
   const render=()=>{const tb=document.getElementById('callsTableBody'); if(!tb) return; tb.innerHTML=''; calls.forEach(c=>{const tr=document.createElement('tr'); tr.innerHTML=\`<td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td><td><span class="speaker-icon" title="Listen in">🔊</span></td>\`; tb.appendChild(tr);});};
   function loop(){ if(calls.length<MAX && Math.random()<0.7) calls.push(newCall()); else if(calls.length>0 && Math.random()<0.3) calls.shift(); for(let i=calls.length-1;i>=0;i--){tick(calls[i]); if(calls[i].state==='ended') calls.splice(i,1);} render(); }
-  calls.push(newCall()); render(); setInterval(loop,1000);
-})();
-</script>
-</body></html>`;
-  }
+  calls.push(newCall()); render(); setInterval(lo
+
 
   // ===== IFRAME MANAGEMENT =====
   function removeIframe() {
@@ -71,28 +69,21 @@
     const slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
 
-    // 1) Find the native table container to anchor ABOVE it
-    const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+    // Find the native table container to anchor ABOVE it
+const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
 
-    // 2) (Optional) hide the native empty table
-    const HIDE_NATIVE = true;
-    if (HIDE_NATIVE && anchor instanceof HTMLElement) {
-      anchor.style.display = 'none';
-    }
+// Hide the native empty table (keep the header visible)
+if (anchor instanceof HTMLElement) {
+  anchor.style.display = 'none';
+}
 
-    // 3) Create the iframe
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;';
-    iframe.srcdoc = buildSrcdoc();
+// Insert our iframe BEFORE that hidden container
+if (anchor && anchor.parentNode === slot) {
+  slot.insertBefore(iframe, anchor);
+} else {
+  slot.insertBefore(iframe, slot.firstChild);
+}
 
-    // 4) Insert BEFORE the native container (higher on the page)
-    if (anchor && anchor.parentNode === slot) {
-      slot.insertBefore(iframe, anchor);
-    } else {
-      // fallback: prepend to slot
-      slot.insertBefore(iframe, slot.firstChild);
-    }
 
     // 5) Auto-size AFTER it’s in the DOM
     let ro;
@@ -166,3 +157,4 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
