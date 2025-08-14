@@ -11,8 +11,7 @@
   const log = (...args) => LOG && console.log('[DemoCalls]', ...args);
 
   // ===== SRC_DOC APP =====
-  function buildSrcdoc() {
-  const ICON_URL = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Current Active Calls</title>
@@ -38,6 +37,7 @@
       box-shadow: 0 2px 5px rgba(0,0,0,0.1);
       width: 100%;
       max-width: 100%;
+      position: relative;
     }
     table {
       width: 100%;
@@ -62,6 +62,7 @@
     }
     tr:hover { background: #f5f5f5; }
 
+    /* listen button */
     .listen-btn {
       display: inline-flex;
       align-items: center;
@@ -76,38 +77,46 @@
       z-index: 2;
     }
     .listen-btn:focus { outline: none; }
-    .listen-btn .tooltip {
-      display: none;
-      position: absolute;
-      bottom: -24px;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: #fff;
-      padding: 2px 6px;
-      font-size: 11px;
-      border-radius: 4px;
-      white-space: nowrap;
-    }
-    .listen-btn:hover .tooltip { display: block; }
+    .svgbak { width: var(--icon-size); height: var(--icon-size); }
+    .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
+    tr:hover .svgbak path { fill: var(--icon-hover); }
+    .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
 
-    .svgbak {
-      width: var(--icon-size);
-      height: var(--icon-size);
+    /* toolbar + popout */
+    .call-toolbar{
+      display:flex; justify-content:flex-end; align-items:center;
+      gap:8px; padding:8px 2px 6px;
     }
-    .svgbak path {
-      fill: var(--icon-muted);
-      transition: fill .2s ease;
+    .pop-btn{
+      appearance:none; border:1px solid #d0d0d0; background:#fff; cursor:pointer;
+      padding:6px 10px; border-radius:6px; font-size:12px; line-height:1;
+      box-shadow:0 1px 2px rgba(0,0,0,.06);
     }
-    tr:hover .svgbak path {
-      fill: var(--icon-hover);
+    .pop-btn:hover{ background:#f7f7f7; }
+
+    .backdrop{
+      position:fixed; inset:0; background:rgba(0,0,0,.28); opacity:0; pointer-events:none;
+      transition:opacity .18s ease; z-index:9997;
     }
-    .listen-btn.is-active .svgbak path {
-      fill: var(--icon-active);
+    .backdrop.show{ opacity:1; pointer-events:auto; }
+
+    .call-container.enlarged{
+      position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+      width:min(1100px, 95vw);
+      max-height:85vh; overflow:auto;
+      padding:18px 20px;
+      z-index:9998;
+      box-shadow:0 20px 50px rgba(0,0,0,.25);
     }
+    .call-container.enlarged table td,
+    .call-container.enlarged thead th { font-size:15px; }
+    .call-container.enlarged .listen-btn{ width:30px; height:30px; }
   </style>
   </head><body>
     <div class="call-container">
+      <div class="call-toolbar">
+        <button class="pop-btn" id="popToggle" aria-pressed="false" aria-controls="callsTableBody">Enlarge</button>
+      </div>
       <table>
         <thead>
           <tr>
@@ -124,50 +133,56 @@
     </div>
   <script>
   (function(){
-    const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels"];
-    const first = ["Nick","Sarah","Mike","Lisa","Tom"];
+    // ---- demo data model ----
+    const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
+    const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
     const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const area = ["900","700","999"];
+    const area = ["900","700","999","888","511","600","311","322","456"];
     const exts = Array.from({length:49},(_,i)=>201+i);
     const usedNums = new Set(), usedNames = new Set(), calls = [];
     const MAX = 5;
 
     const pick = a => a[Math.floor(Math.random() * a.length)];
-    const num = () => { let n; do { n = \`\${pick(area)}-\${Math.floor(100+Math.random()*900)}-\${Math.floor(1000+Math.random()*9000)}\`; } while (usedNums.has(n)); usedNums.add(n); return n; };
-    const cname = () => { let n; do { n = pick(names); } while (usedNames.has(n)); usedNames.add(n); return n; };
+    const num = () => { let n; do { n = \`\${pick(area)}-\${Math.floor(100+Math.random()*900)}-\${Math.floor(1000+Math.random()*9000)}\`; } while (usedNums.has(n) || /666/.test(n)); usedNums.add(n); return n; };
+    const cname = () => { let n, g=0; do { n = pick(names); g++; } while (usedNames.has(n) && g<50); usedNames.add(n); return n; };
     const extname = () => \`\${pick(first)} \${pick(alphabet)}.\`;
     const fmt = s => s.toString().padStart(2, '0');
     const timer = s => () => { const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000); return \`\${m}:\${fmt(sec)}\`; };
     const newCall = () => ({ from: cname(), cnam: num(), dialed: 'CallQueue', to: \`Ext. \${pick(exts)} (\${extname()})\`, startedAt: Date.now(), t: timer(Date.now()), state: 'active' });
-    const tick = c => { if (Date.now()-c.startedAt > 180000) c.state = 'ended'; };
+        // end of: const newCall = () => ({ ... });
 
-    function render(){
-  const tb = document.getElementById('callsTableBody');
-  if (!tb) return;
-  tb.innerHTML = '';
-  calls.forEach((c,i)=>{
-    const tr = document.createElement('tr');
-    tr.innerHTML = `
-      <td>${c.from}</td>
-      <td>${c.cnam}</td>
-      <td>${c.dialed}</td>
-      <td>${c.to}</td>
-      <td>${c.t()}</td>
-      <td>
-        <button class="listen-btn" aria-pressed="false" title="Listen in">
-          <svg class="svgbak" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-            <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-            <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-          </svg>
-        </button>
-      </td>`;
-    tb.appendChild(tr);
-  });
-}
+    // age out calls after ~3 minutes
+    const tick = c => {
+      if (Date.now() - c.startedAt > 3 * 60 * 1000) c.state = 'ended';
+    };
 
+    function render() {
+      const tb = document.getElementById('callsTableBody');
+      if (!tb) return;
+      tb.innerHTML = '';
+      calls.forEach((c, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${c.from}</td>
+          <td>${c.cnam}</td>
+          <td>${c.dialed}</td>
+          <td>${c.to}</td>
+          <td>${c.t()}</td>
+          <td>
+            <button class="listen-btn" aria-pressed="false" title="Listen in">
+              <svg class="svgbak" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+                <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+              </svg>
+            </button>
+          </td>`;
+        tb.appendChild(tr);
+      });
+    }
 
     function loop() {
-      if (calls.length < MAX && Math.random() < 0.3) calls.push(newCall());
+      // gentle activity: add sometimes, age and remove ended
+      if (calls.length < MAX && Math.random() < 0.35) calls.push(newCall());
       for (let i = calls.length - 1; i >= 0; i--) {
         tick(calls[i]);
         if (calls[i].state === 'ended') calls.splice(i, 1);
@@ -175,20 +190,58 @@
       render();
     }
 
-    calls.push(newCall()); // Ensure at least one call on load
+    // seed at least one call and start heartbeat
+    calls.push(newCall());
     render();
-    setInterval(loop, 3000);
+    const _iv = setInterval(loop, 3000);
 
+    // one-active "Listen in" behavior
     document.addEventListener('click', (e) => {
       const btn = e.target.closest('.listen-btn');
       if (!btn) return;
-      document.querySelectorAll('.listen-btn').forEach(b => b.classList.remove('is-active'));
-      btn.classList.add('is-active');
+      document.querySelectorAll('.listen-btn').forEach(b => {
+        const isThis = b === btn;
+        b.classList.toggle('is-active', isThis);
+        b.setAttribute('aria-pressed', isThis ? 'true' : 'false');
+      });
     });
+
+    // --- Enlarge / pop-out ---
+    (function popoutInit(){
+      const container = document.querySelector('.call-container');
+      const btn = document.getElementById('popToggle');
+
+      // backdrop at body level for easy click-out
+      const backdrop = document.createElement('div');
+      backdrop.className = 'backdrop';
+      document.body.appendChild(backdrop);
+
+      function setEnlarged(on){
+        container.classList.toggle('enlarged', on);
+        backdrop.classList.toggle('show', on);
+        if (btn) {
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+          btn.textContent = on ? 'Restore' : 'Enlarge';
+        }
+      }
+
+      if (btn) {
+        btn.addEventListener('click', () => {
+          setEnlarged(!container.classList.contains('enlarged'));
+        });
+      }
+      backdrop.addEventListener('click', () => setEnlarged(false));
+      document.addEventListener('keydown', (e)=>{
+        if (e.key === 'Escape' && container.classList.contains('enlarged')) setEnlarged(false);
+      });
+    })();
+
   })();
   </script></body></html>`;
 }
 
+
+    
 
   // ===== IFRAME INJECTION =====
   function removeIframe() {
@@ -269,6 +322,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
