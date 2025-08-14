@@ -265,8 +265,3 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
-
-
-
-
-
