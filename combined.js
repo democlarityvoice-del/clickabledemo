@@ -18,12 +18,11 @@ function buildSrcdoc() {
 <style>
   body { font-family: Arial, sans-serif; margin:0; background:#fff; color:#000; }
   .call-container {
-    background:#fff; padding:12px 30px 20px; border-radius:6px;
+    background:#fff; padding:0 30px 20px; border-radius:6px;
     box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%;
   }
   table { width:100%; border-collapse:collapse; background:#fff; }
-  th,td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
-  thead { background:#fff; }
+  td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
   tr:hover { background:#f5f5f5; }
   .speaker-icon { cursor:pointer; opacity:.4; transition:opacity .2s; }
   tr:hover .speaker-icon { opacity:.7; } .speaker-icon:hover { opacity:1; }
@@ -31,7 +30,6 @@ function buildSrcdoc() {
 </head><body>
   <div class="call-container">
     <table>
-      <thead><tr><th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th></tr></thead>
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
@@ -54,7 +52,11 @@ function buildSrcdoc() {
   const tick=c=>{ if(c.viaSpeak && Date.now()-c.startedAt>2000){c.dialed='VMail'; c.viaSpeak=false;} if(Date.now()-c.startedAt>(4*60+32)*1000){c.state='ended';}};
   const render=()=>{const tb=document.getElementById('callsTableBody'); if(!tb) return; tb.innerHTML=''; calls.forEach(c=>{const tr=document.createElement('tr'); tr.innerHTML=\`<td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td><td><span class="speaker-icon" title="Listen in">🔊</span></td>\`; tb.appendChild(tr);});};
   function loop(){ if(calls.length<MAX && Math.random()<0.7) calls.push(newCall()); else if(calls.length>0 && Math.random()<0.3) calls.shift(); for(let i=calls.length-1;i>=0;i--){tick(calls[i]); if(calls[i].state==='ended') calls.splice(i,1);} render(); }
-  calls.push(newCall()); render(); setInterval(lo
+  calls.push(newCall()); render(); setInterval(loop,1000);
+})();
+</script>
+</body></html>`;
+}
 
 
   // ===== IFRAME MANAGEMENT =====
@@ -157,4 +159,5 @@ if (anchor && anchor.parentNode === slot) {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
