@@ -16,6 +16,7 @@ function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
+
 // ===== STYLE =====
 <style>
 * {
@@ -69,6 +70,12 @@ td {
 tr:hover {
   background: #f5f5f5;
 }
+
+.listen-btn,
+.listen-btn * {
+  pointer-events: auto !important;
+}
+
 // ===== LISTEN IN WRAPPER =====
 /* Listen button wrapper */
 .listen-btn {
@@ -304,6 +311,7 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
