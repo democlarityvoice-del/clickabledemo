@@ -191,19 +191,21 @@
   }
 
   function injectIframe() {
-    if (document.getElementById(IFRAME_ID)) return;
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (!slot) return;
-    const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
-    if (anchor instanceof HTMLElement) anchor.style.display = 'none';
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling', 'yes');
-    iframe.srcdoc = buildSrcdoc();
-    if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
-    else slot.insertBefore(iframe, slot.firstChild);
-  }
+  if (document.getElementById(IFRAME_ID)) return;
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
+  const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
+  if (anchor instanceof HTMLElement) anchor.style.display = 'none';
+
+  const iframe = document.createElement('iframe');  // ✅ ADD THIS LINE
+  iframe.id = IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+  iframe.setAttribute('scrolling', 'yes');
+  iframe.srcdoc = buildSrcdoc();
+
+  if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
+  else slot.insertBefore(iframe, slot.firstChild);
+}
 
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
@@ -263,6 +265,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
