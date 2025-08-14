@@ -1,76 +1,16 @@
 (function () {
-  const targetUrl = 'https://portal02.clarityvoice.net/portal/home';
-  const expectedName = 'Mike Johnson';
-  const expectedExt = '200';
+  const CONTAINER_ID = 'omp-active-body';
+  const OVERLAY_ID = 'fake-call-overlay';
+  const OVERLAY_BODY_ID = 'callsTableBody';
 
-  const currentUrl = window.location.href;
-  if (!currentUrl.startsWith(targetUrl)) return;
+  function injectOverlay() {
+    if (document.getElementById(OVERLAY_BODY_ID)) return;
 
-  const waitForUserElement = setInterval(() => {
-    const userEl = document.querySelector('.account-dropdown');
-    if (userEl) {
-      const userText = userEl.textContent.trim();
-      const match = userText.match(/^(.+?)\s+\((\d+)\)$/);
-      if (match) {
-        const actualName = match[1];
-        const actualExt = match[2];
-        if (actualName === expectedName && actualExt === expectedExt) {
-          clearInterval(waitForUserElement);
-          runHomeSimulation();
-        }
-      } else {
-        clearInterval(waitForUserElement);
-      }
-    }
-  }, 300);
+    const target = document.getElementById(CONTAINER_ID);
+    if (!target) return;
 
-  function runHomeSimulation() {
-    if (document.getElementById("callsTableBody")) return;
-
-    const style = document.createElement("style");
+    const style = document.createElement('style');
     style.textContent = `
-      body {
-        font-family: Arial, sans-serif;
-        background-color: #f4f4f4;
-        margin: 0;
-        padding: 20px;
-      }
-      h1 {
-        font-size: 16px;
-        color: #a8a8a8;
-        text-transform: uppercase;
-        font-weight: bold;
-        margin-bottom: 12px;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        background-color: white;
-        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      }
-      th, td {
-        padding: 10px 12px;
-        text-align: left;
-        font-size: 14px;
-        border-bottom: 1px solid #ddd;
-      }
-      thead {
-        background-color: white;
-      }
-      .speaker-icon {
-        cursor: pointer;
-        transition: all 0.3s ease;
-        opacity: 0.4;
-      }
-      .speaker-icon:hover {
-        opacity: 1;
-      }
-      tr:hover {
-        background-color: #f5f5f5;
-      }
-      tr:hover .speaker-icon {
-        opacity: 0.7;
-      }
       .call-container {
         background: white;
         padding: 20px 30px;
@@ -92,16 +32,38 @@
         margin-bottom: 12px;
         text-transform: uppercase;
       }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background-color: white;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      }
+      th, td {
+        padding: 10px 12px;
+        text-align: left;
+        font-size: 14px;
+        border-bottom: 1px solid #ddd;
+      }
+      .speaker-icon {
+        cursor: pointer;
+        opacity: 0.4;
+        transition: opacity 0.3s ease;
+      }
+      .speaker-icon:hover {
+        opacity: 1;
+      }
+      tr:hover {
+        background-color: #f5f5f5;
+      }
+      tr:hover .speaker-icon {
+        opacity: 0.7;
+      }
     `;
     document.head.appendChild(style);
 
-    const container = document.querySelector('#omp-active-body');
-    const killBox = document.querySelector('.portlet-container');
-    if (!container) return;
-    if (killBox) killBox.style.display = 'none';
-
-    const div = document.createElement("div");
-    div.className = "call-container";
+    const div = document.createElement('div');
+    div.className = 'call-container';
+    div.id = OVERLAY_ID;
     div.innerHTML = `
       <h1>Current Active Calls</h1>
       <table>
@@ -115,104 +77,126 @@
             <th></th>
           </tr>
         </thead>
-        <tbody id="callsTableBody"></tbody>
+        <tbody id="${OVERLAY_BODY_ID}"></tbody>
       </table>
     `;
-    container.appendChild(div);
+    target.appendChild(div);
 
-    const names = ["Grace Smith", "Jason Tran", "Chloe Bennett", "Mike Johnson", "Raj Patel", "Ava Daniels", "Luis Santiago", "Emily Reyes", "Zoe Miller", "Derek Zhang", "Noah Brooks", "Liam Hayes", "Nina Clarke", "Omar Wallace", "Sara Bloom", "Connor Reed", "Ella Graham", "Miles Turner", "Ruby Foster", "Leo Knight"];
-    const firstNames = ["Nick", "Sarah", "Mike", "Lisa", "Tom", "Jenny", "Alex", "Maria", "John", "Kate", "David", "Emma", "Chris", "Anna", "Steve", "Beth", "Paul", "Amy", "Mark", "Jess"];
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const areaCodes = ["900", "700", "999", "888", "511", "600", "311", "322", "456"];
-    const extensions = Array.from({ length: 49 }, (_, i) => 201 + i);
+    startSimulation();
+  }
 
-    const usedNumbers = new Set();
-    const usedNames = new Set();
-    let calls = [];
+  // -- Simulation logic --
+  const names = [/* list trimmed for brevity */ "Grace Smith", "Mike Johnson", "Zoe Miller"];
+  const firstNames = ["Nick", "Emma", "Mark", "Sarah"];
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const areaCodes = ["900", "700", "888", "600"];
+  const extensions = Array.from({ length: 49 }, (_, i) => 201 + i);
 
-    function generatePhoneNumber() {
-      let number;
-      do {
-        const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-        const mid = Math.floor(100 + Math.random() * 900);
-        const end = Math.floor(1000 + Math.random() * 9000);
-        number = `${area}-${mid}-${end}`;
-      } while (usedNumbers.has(number));
-      usedNumbers.add(number);
-      return number;
-    }
+  const usedNumbers = new Set();
+  const usedNames = new Set();
+  let calls = [];
 
-    function getRandomName() {
-      let name;
-      do {
-        name = names[Math.floor(Math.random() * names.length)];
-      } while (usedNames.has(name));
-      usedNames.add(name);
-      return name;
-    }
+  function generatePhoneNumber() {
+    let number;
+    do {
+      const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+      const mid = Math.floor(100 + Math.random() * 900);
+      const end = Math.floor(1000 + Math.random() * 9000);
+      number = `${area}-${mid}-${end}`;
+    } while (usedNumbers.has(number));
+    usedNumbers.add(number);
+    return number;
+  }
 
-    function getRandomExtensionName() {
-      const first = firstNames[Math.floor(Math.random() * firstNames.length)];
-      const initial = alphabet[Math.floor(Math.random() * alphabet.length)];
-      return `${first} ${initial}.`;
-    }
+  function getRandomName() {
+    let name;
+    do {
+      name = names[Math.floor(Math.random() * names.length)];
+    } while (usedNames.has(name));
+    usedNames.add(name);
+    return name;
+  }
 
-    function getRandomExtension() {
-      return extensions[Math.floor(Math.random() * extensions.length)];
-    }
+  function getRandomExtensionName() {
+    const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+    const initial = alphabet[Math.floor(Math.random() * alphabet.length)];
+    return `${first} ${initial}.`;
+  }
 
-    function getRandomDuration() {
-      const minutes = Math.floor(Math.random() * 4);
-      const seconds = Math.floor(Math.random() * 60);
-      return `${minutes}:${seconds.toString().padStart(2, '0')}`;
-    }
+  function getRandomDuration() {
+    const min = Math.floor(Math.random() * 4);
+    const sec = Math.floor(Math.random() * 60);
+    return `${min}:${sec.toString().padStart(2, '0')}`;
+  }
 
-    function createCallRow(call) {
-      const row = document.createElement("tr");
-      row.innerHTML = `
-        <td>${call.from}</td>
-        <td>${call.cnam}</td>
-        <td>${call.dialed}</td>
-        <td>${call.to}</td>
-        <td>${call.duration}</td>
-        <td><span class="speaker-icon" title="Listen in">🔊</span></td>
-      `;
-      return row;
-    }
+  function createCallRow(call) {
+    const row = document.createElement("tr");
+    row.innerHTML = `
+      <td>${call.from}</td>
+      <td>${call.cnam}</td>
+      <td>${call.dialed}</td>
+      <td>${call.to}</td>
+      <td>${call.duration}</td>
+      <td><span class="speaker-icon" title="Listen in">🔊</span></td>
+    `;
+    return row;
+  }
 
-    function updateTable() {
-      const tbody = document.getElementById("callsTableBody");
-      tbody.innerHTML = '';
-      calls.forEach(call => {
-        call.duration = getRandomDuration();
-        tbody.appendChild(createCallRow(call));
-      });
-    }
+  function updateTable() {
+    const tbody = document.getElementById(OVERLAY_BODY_ID);
+    if (!tbody) return;
+    tbody.innerHTML = '';
+    calls.forEach(call => {
+      call.duration = getRandomDuration();
+      tbody.appendChild(createCallRow(call));
+    });
+  }
 
-    function addNewCall() {
-      if (calls.length >= 5) return;
-      calls.push({
-        from: getRandomName(),
-        cnam: generatePhoneNumber(),
-        dialed: 'SpeakAccount',
-        to: getRandomExtensionName(),
-        duration: getRandomDuration()
-      });
-    }
+  function addNewCall() {
+    if (calls.length >= 5) return;
+    calls.push({
+      from: getRandomName(),
+      cnam: generatePhoneNumber(),
+      dialed: 'SpeakAccount',
+      to: getRandomExtensionName(),
+      duration: getRandomDuration()
+    });
+  }
 
-    function scheduleNextUpdate() {
-      setInterval(() => {
-        if (calls.length < 5 && Math.random() < 0.7) {
-          addNewCall();
-        } else if (calls.length > 0 && Math.random() < 0.3) {
-          calls.shift();
-        }
-        updateTable();
-      }, 3000);
-    }
+  function scheduleNextUpdate() {
+    setInterval(() => {
+      if (calls.length < 5 && Math.random() < 0.7) {
+        addNewCall();
+      } else if (calls.length > 0 && Math.random() < 0.3) {
+        calls.shift();
+      }
+      updateTable();
+    }, 3000);
+  }
 
+  function startSimulation() {
     addNewCall();
     updateTable();
     scheduleNextUpdate();
   }
+
+  // -- Hook into Home button clicks --
+  function waitForHomeClick() {
+    const homeBtn = document.querySelector('#nav-home a') || document.querySelector('#nav-home');
+    if (!homeBtn) return setTimeout(waitForHomeClick, 300);
+    homeBtn.addEventListener('click', () => {
+      setTimeout(() => {
+        if (window.location.href.includes('/portal/home')) {
+          injectOverlay();
+        }
+      }, 500);
+    });
+  }
+
+  // Inject on initial load if already on home
+  if (window.location.href.includes('/portal/home')) {
+    setTimeout(injectOverlay, 500);
+  }
+
+  waitForHomeClick();
 })();
