@@ -219,7 +219,7 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
   // 3) Create the iframe (you were missing this)
   const iframe = document.createElement('iframe');
   iframe.id = IFRAME_ID;
-  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;'; // give it an initial height
+  iframe.style.cssText = 'border:none;width:100%;max-width:100%;display:block;margin-top:0;height:360px;';
   iframe.setAttribute('scrolling', 'yes');
   iframe.srcdoc = buildSrcdoc(); // no external loads (CSP-safe)
 
@@ -304,5 +304,6 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
