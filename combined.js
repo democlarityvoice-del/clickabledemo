@@ -55,8 +55,8 @@ function buildSrcdoc() {
   body.use-mask .maskicon {
     display:inline-block; width:var(--icon-size); height:var(--icon-size);
     background-color: var(--icon-muted);
-    -webkit-mask: url('${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}') no-repeat center / contain;
-            mask: url('${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}') no-repeat center / contain;
+    -  -webkit-mask: url('https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg') no-repeat center / contain;
+          mask: url('https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg') no-repeat center / contain;
     transition: background-color .15s linear;
   }
   body.use-mask tr:hover .maskicon { background-color: var(--icon-hover); }
@@ -148,7 +148,7 @@ function buildSrcdoc() {
     const img = new Image();
     img.onload = ()=> document.body.classList.add('use-mask');
     img.onerror = ()=> {}; // fallback (inline svg) remains visible
-    img.src = '${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}';
+    img.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   })();
 })();
 </script>
@@ -265,3 +265,4 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
