@@ -12,24 +12,27 @@
 
   // ===== SRC_DOC APP =====
   function buildSrcdoc() {
-    return `<!doctype html><html><head><meta charset="utf-8">
+  return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
 <style>
   * { box-sizing: border-box; }
   html, body { width: 100%; overflow-x: hidden; }
+
   :root {
     --icon-muted: rgba(0,0,0,.38);
     --icon-hover: rgba(0,0,0,.60);
     --icon-active: #000;
     --icon-size: 18px;
   }
+
   body {
     font-family: Arial, sans-serif;
     margin: 0;
     background: #fff;
     color: #000;
   }
+
   .call-container {
     background: #fff;
     padding: 0 16px 20px;
@@ -39,12 +42,14 @@
     max-width: 100%;
     position: relative;
   }
+
   table {
     width: 100%;
     table-layout: auto;
     border-collapse: collapse;
     background: #fff;
   }
+
   thead th {
     font-weight: 700;
     padding: 10px 12px;
@@ -53,6 +58,7 @@
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
   }
+
   td {
     padding: 10px 12px;
     text-align: left;
@@ -60,6 +66,7 @@
     border-bottom: 1px solid #ddd;
     white-space: nowrap;
   }
+
   tr:hover { background: #f5f5f5; }
 
   .listen-btn {
@@ -73,29 +80,58 @@
     border: none;
     cursor: pointer;
     position: relative;
-    z-index: 2;
   }
+
   .listen-btn:focus { outline: none; }
-  .svgbak { width: var(--icon-size); height: var(--icon-size); }
-  .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
+
+  .svgbak {
+    width: var(--icon-size);
+    height: var(--icon-size);
+  }
+
+  .svgbak path {
+    fill: var(--icon-muted);
+    transition: fill 0.2s ease;
+  }
+
   tr:hover .svgbak path { fill: var(--icon-hover); }
+
   .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+
+  .tooltip {
+    display: none;
+    position: absolute;
+    bottom: -24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 2px 6px;
+    font-size: 11px;
+    border-radius: 4px;
+    white-space: nowrap;
+  }
+
+  .listen-btn:hover .tooltip { display: block; }
 
   .call-toolbar {
     display: flex; justify-content: flex-end; align-items: center;
     gap: 8px; padding: 8px 2px 6px;
   }
+
   .pop-btn {
     appearance: none; border: 1px solid #d0d0d0; background: #fff; cursor: pointer;
     padding: 6px 10px; border-radius: 6px; font-size: 12px; line-height: 1;
     box-shadow: 0 1px 2px rgba(0,0,0,.06);
   }
+
   .pop-btn:hover { background: #f7f7f7; }
 
   .backdrop {
     position: fixed; inset: 0; background: rgba(0,0,0,.28); opacity: 0; pointer-events: none;
     transition: opacity .18s ease; z-index: 9997;
   }
+
   .backdrop.show { opacity: 1; pointer-events: auto; }
 
   .call-container.enlarged {
@@ -106,8 +142,10 @@
     z-index: 9998;
     box-shadow: 0 20px 50px rgba(0,0,0,.25);
   }
+
   .call-container.enlarged table td,
   .call-container.enlarged thead th { font-size: 15px; }
+
   .call-container.enlarged .listen-btn { width: 30px; height: 30px; }
 </style>
 </head><body>
@@ -117,12 +155,23 @@
   </div>
   <table>
     <thead>
-      <tr><th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th></tr>
+      <tr>
+        <th>From</th>
+        <th>CNAM</th>
+        <th>Dialed</th>
+        <th>To</th>
+        <th>Duration</th>
+        <th></th>
+      </tr>
     </thead>
     <tbody id="callsTableBody"></tbody>
   </table>
 </div>
 <script>
+`;
+}
+
+
 (function(){
   const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks"];
   const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate"];
@@ -316,3 +365,4 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
