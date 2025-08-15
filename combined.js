@@ -4,8 +4,6 @@ const HOME_SELECTOR = '#nav-home a, #nav-home';
 const SLOT_SELECTOR = '#omp-active-body';
 const IFRAME_ID = 'cv-demo-calls-iframe';
 
-// follow with: removeIframe(), injectIframe(), etc.
-
 // -------- BUILD SOURCE -------- //
 function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
@@ -74,8 +72,6 @@ function buildSrcdoc() {
   .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
   tr:hover .svgbak path { fill: var(--icon-hover); }
   .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
-
-/* -------- CALL SIMULATION: UTILITIES -------- */
 </style>
 </head><body>
   <div class="call-container">
@@ -97,34 +93,128 @@ function buildSrcdoc() {
 <!-- -------- CALL SIMULATION: CALL STRUCTURE -------- -->
 <script>
 (function(){
-  // existing JS logic
+  const names = ["Carlos Rivera", "Emily Tran", "Mike Johnson", "Ava Chen", "Sarah Patel", "Liam Nguyen", "Monica Alvarez"];
+  const extensions = [201, 203, 204, 207, 211, 215];
+  const areaCodes = ["989", "517", "248", "810", "313"];
+  const callQueue = "CallQueue";
+  const voicemail = "VMail";
+  const speakAccount = "SpeakAccount";
+
+  function randomName() {
+    let name;
+    do {
+      name = names[Math.floor(Math.random() * names.length)];
+    } while (calls.some(c => c.cnam === name));
+    return name;
+  }
+
+  function randomPhone() {
+    let num;
+    do {
+      const ac = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+      const rest = Math.floor(Math.random() * 9000000 + 1000000).toString();
+      num = \`\${ac}-\${rest.slice(0,3)}-\${rest.slice(3)}\`;
+    } while (calls.some(c => c.from === num));
+    return num;
+  }
+
+  function randomDialed() {
+    return "800-" + Math.floor(Math.random() * 900 + 100) + "-" + Math.floor(Math.random() * 9000 + 1000);
+  }
+
+  function randomExtension() {
+    let ext;
+    do {
+      ext = extensions[Math.floor(Math.random() * extensions.length)];
+    } while (calls.some(c => c.to.includes(ext)));
+    return ext;
+  }
+
+  function generateCall() {
+    const from = randomPhone();
+    const cnam = randomName();
+    const dialed = randomDialed();
+    const ext = randomExtension();
+    const to = Math.random() < 0.05
+      ? (Math.random() < 0.03 ? speakAccount : voicemail)
+      : callQueue;
+
+    const start = Date.now();
+    return {
+      from,
+      cnam,
+      dialed,
+      to,
+      ext,
+      t: () => {
+        const s = Math.floor((Date.now() - start) / 1000);
+        const min = Math.floor(s / 60);
+        const sec = s % 60;
+        return \`\${min}:\${sec.toString().padStart(2, '0')}\`;
+      },
+      start,
+      updated: Date.now()
+    };
+  }
+
+  const calls = [];
+
+  function updateCalls() {
+    // Remove old calls
+    if (calls.length > 5 || Math.random() < 0.3) {
+      calls.splice(Math.floor(Math.random() * calls.length), 1);
+    }
+
+    // Add new calls
+    if (calls.length < 5) {
+      const newCall = generateCall();
+      calls.push(newCall);
+    }
+
+    // Promote callQueue to extension
+    calls.forEach(c => {
+      if (c.to === callQueue && Date.now() - c.start > 5000) {
+        c.to = \`Ext. \${c.ext} (\${c.cnam.split(" ")[0]})\`;
+      }
+
+      if (c.to === speakAccount && Date.now() - c.start > 2000) {
+        c.to = voicemail;
+      }
+    });
+  }
+
   function render() {
     const tb = document.getElementById('callsTableBody');
     if (!tb) return;
     tb.innerHTML = '';
     calls.forEach((c) => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = \`
-    <td>\${c.from}</td>
-    <td>\${c.cnam}</td>
-    <td>\${c.dialed}</td>
-    <td>\${c.to}</td>
-    <td>\${c.t()}</td>
-    <td>
-      <button class="listen-btn" aria-pressed="false" title="Listen in">
-        <svg class="svgbak" viewBox="0 0 24 24">
-          <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-          <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-        </svg>
-      </button>
-    </td>\`;
-  tb.appendChild(tr);
-});
-})(); // ← end of IIFE
+      const tr = document.createElement('tr');
+      tr.innerHTML = \`
+        <td>\${c.from}</td>
+        <td>\${c.cnam}</td>
+        <td>\${c.dialed}</td>
+        <td>\${c.to}</td>
+        <td>\${c.t()}</td>
+        <td>
+          <button class="listen-btn" aria-pressed="false" title="Listen in">
+            <svg class="svgbak" viewBox="0 0 24 24">
+              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+            </svg>
+          </button>
+        </td>\`;
+      tb.appendChild(tr);
+    });
+  }
+
+  setInterval(() => {
+    updateCalls();
+    render();
+  }, 1500);
+})();
 <\/script>
 </body></html>`;
-
-
+}
 
 // -------- REMOVE IFRAME -------- //
   function removeIframe() {
@@ -211,6 +301,7 @@ function buildSrcdoc() {
 
         if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+
 
 
 
