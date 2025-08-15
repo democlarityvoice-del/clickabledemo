@@ -151,7 +151,7 @@ function buildSrcdoc() {
     img.src = '${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}';
   })();
 })();
-</script></body></html>`; 
+<\/script></body></html>`; 
 }
 
   // ===== IFRAME MANAGEMENT =====
@@ -238,6 +238,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
