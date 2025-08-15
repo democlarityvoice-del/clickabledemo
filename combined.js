@@ -327,46 +327,47 @@ if (!window.__cvGridStatsInit) {
 
   // -------- GRID: Card HTML (no duplicate header, labels above values) -------- //
   function buildGridStatsCardHTML() {
-    return `
-      <div id="${CARD_ID}" class="cv-metrics" style="box-sizing:border-box;margin:0;padding:0;">
-        <style>
-          .cv-metrics{width:100%;max-width:100%;margin:0;padding:0;}
-          .cv-row{display:flex;gap:12px;margin:0 0 12px 0;}
-          .cv-tile{flex:1 1 0;border-radius:8px;padding:12px 0 10px;text-align:center;
-                   box-shadow:0 2px 5px rgba(0,0,0,.1);background:#7fff7f;}
-          .cv-tile.yellow{background:#ffeb3b;}
-          .cv-label{display:flex;align-items:center;justify-content:center;gap:6px;
-                    font-weight:700;font-size:13px;color:#000;line-height:1;margin:0 0 6px;}
-          .cv-value{font-size:28px;line-height:1;font-weight:700;color:#000;}
-          .cv-info{display:inline-block;width:14px;height:14px;border-radius:50%;
-                   border:1px solid rgba(0,0,0,.35);font-size:10px;line-height:14px;
-                   text-align:center;opacity:.6;}
-          .cv-tile:hover .cv-info{opacity:1;}
-        </style>
+  return `
+    <div id="${CARD_ID}" class="cv-metrics" style="box-sizing:border-box;margin:0;padding:0;">
+      <style>
+        .cv-metrics{width:100%;max-width:100%;margin:0;padding:0;}
+        .cv-row{display:flex;gap:12px;margin:0 0 12px 0;}
+        .cv-col{flex:1 1 0;min-width:0;}
+        .cv-label{display:flex;align-items:center;gap:6px;justify-content:center;
+                  font-weight:700;font-size:13px;color:#000;line-height:1;margin:0 0 6px;}
+        .cv-info{display:inline-block;width:14px;height:14px;border-radius:50%;
+                 border:1px solid rgba(0,0,0,.35);font-size:10px;line-height:14px;
+                 text-align:center;opacity:.6;}
+        .cv-tile{border-radius:8px;padding:12px 0 10px;text-align:center;
+                 box-shadow:0 2px 5px rgba(0,0,0,.1);background:#7fff7f;}
+        .cv-tile.yellow{background:#ffeb3b;}
+        .cv-value{font-size:28px;line-height:1;font-weight:700;color:#000;}
+        .cv-col:hover .cv-info{opacity:1;}
+      </style>
 
-        <div class="cv-row">
-          <div class="cv-tile">
-            <div class="cv-label">CW <span class="cv-info" title="Calls Waiting">i</span></div>
-            <div class="cv-value">2</div>
-          </div>
-          <div class="cv-tile">
-            <div class="cv-label">AWT <span class="cv-info" title="Average Wait Time">i</span></div>
-            <div class="cv-value">2:42</div>
-          </div>
+      <div class="cv-row">
+        <div class="cv-col">
+          <div class="cv-label">CW <span class="cv-info" title="Calls Waiting">i</span></div>
+          <div class="cv-tile"><div class="cv-value">2</div></div>
         </div>
+        <div class="cv-col">
+          <div class="cv-label">AWT <span class="cv-info" title="Average Wait Time">i</span></div>
+          <div class="cv-tile"><div class="cv-value">2:42</div></div>
+        </div>
+      </div>
 
-        <div class="cv-row" style="margin-bottom:0;">
-          <div class="cv-tile yellow">
-            <div class="cv-label">AHT <span class="cv-info" title="Average Handle Time">i</span></div>
-            <div class="cv-value">3:14</div>
-          </div>
-          <div class="cv-tile">
-            <div class="cv-label">CA <span class="cv-info" title="Calls Answered">i</span></div>
-            <div class="cv-value">27</div>
-          </div>
+      <div class="cv-row" style="margin-bottom:0;">
+        <div class="cv-col">
+          <div class="cv-label">AHT <span class="cv-info" title="Average Handle Time">i</span></div>
+          <div class="cv-tile yellow"><div class="cv-value">3:14</div></div>
         </div>
-      </div>`;
-  }
+        <div class="cv-col">
+          <div class="cv-label">CA <span class="cv-info" title="Calls Answered">i</span></div>
+          <div class="cv-tile"><div class="cv-value">27</div></div>
+        </div>
+      </div>
+    </div>`;
+}
 
   // -------- GRID: Inject / remove -------- //
   function injectGridStatsCard() {
@@ -464,6 +465,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
