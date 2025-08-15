@@ -80,7 +80,7 @@ if (!window.__cvDemoInit) {
 
   function render(){
     const tb=document.getElementById('callsTableBody'); if(!tb) return;
-    tb.inner='';
+    tb.innerHTML='';
     calls.forEach(c=>{
       const tr=document.createElement('tr');
       tr.inner=\`
@@ -464,6 +464,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
