@@ -208,9 +208,10 @@ function buildSrcdoc() {
       if (e.target.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
     });
 
-    if (HOME_REGEX.test(location.href)) onHomeEnter();
+        if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
-})();
+
+
 
 
 
