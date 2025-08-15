@@ -220,6 +220,7 @@ if (!window.__cvDemoInit) {
 
 
 // ==============================
+// ==============================
 // Clarity Voice Grid Stats Inject (CALL CENTER MANAGER) — inject INTO inner iframe
 // ==============================
 if (!window.__cvGridStatsInit) {
@@ -283,41 +284,39 @@ if (!window.__cvGridStatsInit) {
   }
 
   function injectGridStatsCard() {
-  const found = findGridInnerDoc();
-  if (!found) return;
+    const found = findGridInnerDoc();
+    if (!found) return;
 
-  const { doc, bodyContainer } = found;
-  if (!doc || !bodyContainer) return;
-  if (doc.getElementById(CARD_ID)) return; // already injected
+    const { doc, table, bodyContainer } = found;
+    if (doc.getElementById(CARD_ID)) return;
 
-  // Optional: add minimal stylesheet
-  if (!doc.getElementById(CARD_STYLE_ID)) {
-    const styleEl = doc.createElement('style');
-    styleEl.id = CARD_STYLE_ID;
-    styleEl.textContent = `/* reserved for future styles */`;
-    if (doc.head) doc.head.appendChild(styleEl);
-  }
-
-  // 💣 THIS is what replaces the real content
-  while (bodyContainer.firstChild) {
-    bodyContainer.removeChild(bodyContainer.firstChild);
-  }
-
-    // Build and insert your replacement card
-  const wrap = doc.createElement('div');
-  wrap.innerHTML = buildGridStatsCardHTML();
-  const card = wrap.firstElementChild;
-  bodyContainer.appendChild(card); // ⬅ Insert INTO the original container
-
-  // Set up a MutationObserver to re-inject if removed
-  const observer = new MutationObserver(() => {
-    if (!doc.getElementById(CARD_ID)) {
-      observer.disconnect();
-      requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsCard()));
+    if (!doc.getElementById(CARD_STYLE_ID)) {
+      const styleEl = doc.createElement('style');
+      styleEl.id = CARD_STYLE_ID;
+      styleEl.textContent = `/* reserved for future styles */`;
+      if (doc.head) doc.head.appendChild(styleEl);
     }
-  });
-  observer.observe(bodyContainer, { childList: true });
 
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildGridStatsCardHTML();
+    const card = wrap.firstElementChild;
+
+    // Place BEFORE the whole dash body; fallback: before first table; last resort: end of body
+    if (bodyContainer && bodyContainer.parentNode) {
+      bodyContainer.parentNode.insertBefore(card, bodyContainer);
+    } else if (table && table.parentNode) {
+      table.parentNode.insertBefore(card, table);
+    } else {
+      doc.body.appendChild(card);
+    }
+  }
+
+  function removeGridStatsCard() {
+    for (const doc of getSameOriginDocs()) {
+      const card = doc.getElementById(CARD_ID);
+      if (card) card.remove();
+    }
+  }
 
   function waitForGridStatsAndInject(tries = 0) {
     const found = findGridInnerDoc();
@@ -365,12 +364,6 @@ if (!window.__cvGridStatsInit) {
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-        if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
-  })(); // closes watchGridStatsURLChanges
-} // ✅ This was missing — closes __cvGridStatsInit
-
-
-
-
-
-
+    if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
+  })();
+} // closes __cvGridStatsInit
