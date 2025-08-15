@@ -1,17 +1,12 @@
-// Top-level constants
+// -------- DECLARE CONSTANTS -------- //
 const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
 const HOME_SELECTOR = '#nav-home a, #nav-home';
 const SLOT_SELECTOR = '#omp-active-body';
 const IFRAME_ID = 'cv-demo-calls-iframe';
 
-function buildSrcdoc() {
-  return `<!doctype html><html>...your full HTML...`;
-}
-
 // follow with: removeIframe(), injectIframe(), etc.
 
-
-
+// -------- BUILD SOURCE -------- //
 function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -127,12 +122,13 @@ function buildSrcdoc() {
 </script></body></html>`;
 }
 
-
+// -------- REMOVE IFRAME -------- //
   function removeIframe() {
     const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
   }
 
+// -------- INJECT IFRAME -------- //
   function injectIframe() {
     if (document.getElementById(IFRAME_ID)) return;
     const slot = document.querySelector(SLOT_SELECTOR);
@@ -150,6 +146,7 @@ function buildSrcdoc() {
     else slot.insertBefore(iframe, slot.firstChild);
   }
 
+// -------- WAIT AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
@@ -160,10 +157,12 @@ function buildSrcdoc() {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
+// -------- HOME ROUTING -------- //
   function onHomeEnter() {
     setTimeout(() => waitForSlotAndInject(), 600);
   }
 
+// -------- ROUTE CHANGE HANDLER -------- //
   function handleRouteChange(prevHref, nextHref) {
     const wasHome = HOME_REGEX.test(prevHref);
     const isHome = HOME_REGEX.test(nextHref);
@@ -171,6 +170,7 @@ function buildSrcdoc() {
     if (wasHome && !isHome) removeIframe();
   }
 
+// -------- WATCH URL CHANGES -------- //
   (function watchURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -208,6 +208,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
