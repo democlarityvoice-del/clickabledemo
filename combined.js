@@ -94,7 +94,7 @@ function buildSrcdoc() {
     </table>
   </div>
 
-// -------- CALL SIMULATION: CALL STRUCTURE -------- //
+<!-- -------- CALL SIMULATION: CALL STRUCTURE -------- -->
 <script>
 (function(){
   // existing JS logic
@@ -210,6 +210,7 @@ function buildSrcdoc() {
 
         if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+
 
 
 
