@@ -427,15 +427,16 @@ if (window.__cvGridStatsInit) {
   
   
   // -------- WAIT AND INJECT -------- //
-  function waitForSlotAndInject(tries = 0) {
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (slot && slot.isConnected) {
-      requestAnimationFrame(() => requestAnimationFrame(() => injectIframe()));
-      return;
-    }
-    if (tries >= 12) return;
-    setTimeout(() => waitForSlotAndInject(tries + 1), 250);
+  function waitForGridSlotAndInject(tries = 0) {
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (slot && slot.isConnected) {
+    requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsIframe()));
+    return;
   }
+  if (tries >= 10) return;
+  setTimeout(() => waitForGridSlotAndInject(tries + 1), 300);
+}
+
 
   // -------- HOME ROUTING -------- //
   function onHomeEnter() {
@@ -489,6 +490,7 @@ if (window.__cvGridStatsInit) {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 }
+
 
 
 
