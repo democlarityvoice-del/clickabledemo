@@ -235,122 +235,172 @@ if (!window.__cvDemoInit) {
 } // closes __cvDemoInit
 
 
-
-// ==============================
 // ==============================
 // Clarity Voice Grid Stats Inject (CALL CENTER MANAGER) — inject INTO inner iframe
 // ==============================
+
 // -------- GRID: Init Guard -------- //
 if (!window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
-// -------- GRID: Constants -------- //
-  const GRID_STATS_REGEX    = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  // -------- GRID STATS CONSTANTS -------- //
+  const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const GRID_STATS_IFRAME_ID = 'cv-grid-iframe';
+  const GRID_BODY_SELECTOR = '#dash-stats-body';
   const GRID_TABLE_SELECTOR = '.dash-stats-grid-table';
-  const GRID_BODY_SELECTOR  = '#dash-stats-body';
-  const CARD_ID             = 'cv-grid-stats-card';
-  const CARD_STYLE_ID       = 'cv-grid-stats-style';
+  const CARD_ID = 'cv-grid-stats-card';
+  const CARD_STYLE_ID = 'cv-grid-stats-style';
 
-// -------- GRID: Card HTML -------- //
-  function buildGridStatsCardHTML() {
-    return `
-      <div id="${CARD_ID}" style="box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:12px 16px;width:260px;margin:10px 10px 14px 10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);font-family:Arial,sans-serif;background:#fff;">
-        <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px;font-size:13px;">
-          <span>ALL QUEUES</span>
-          <span style="color:#2196F3;cursor:default;">GRID SETTINGS</span>
-        </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
-            <div>2</div><div style="font-size:12px;color:#555;font-weight:normal;">CW</div>
-          </div>
-          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
-            <div>2:42</div><div style="font-size:12px;color:#555;font-weight:normal;">AWT</div>
-          </div>
-          <div style="background:#ffeb3b;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
-            <div>3:14</div><div style="font-size:12px;color:#555;font-weight:normal;">AHT</div>
-          </div>
-          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
-            <div>27</div><div style="font-size:12px;color:#555;font-weight:normal;">CA</div>
-          </div>
-        </div>
-      </div>`;
+  // -------- HELPERS: SCHEDULER + VISIBILITY + OBSERVER -------- //
+  function scheduleInject(fn) {
+    let fired = false;
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(() => requestAnimationFrame(() => { fired = true; fn(); }));
+    }
+    setTimeout(() => { if (!fired) fn(); }, 64);
   }
 
-// -------- GRID: Document Utilities -------- //
+  function hideGridOriginals(doc) {
+    const nodes = doc.querySelectorAll(`${GRID_BODY_SELECTOR}, ${GRID_TABLE_SELECTOR}`);
+    nodes.forEach(n => {
+      if (n && !n.hasAttribute('data-cv-hidden')) {
+        n.setAttribute('data-cv-hidden', '1');
+        n.style.display = 'none';
+      }
+    });
+  }
+
+  function unhideGridOriginals(doc) {
+    const nodes = doc.querySelectorAll('[data-cv-hidden="1"]');
+    nodes.forEach(n => { n.style.display = ''; n.removeAttribute('data-cv-hidden'); });
+  }
+
+  function attachGridDocObserver(doc) {
+    if (doc.__cvGridStatsMO) return;
+    const mo = new MutationObserver(() => {
+      if (!GRID_STATS_REGEX.test(location.href)) return;
+
+      const card = doc.getElementById(CARD_ID);
+      hideGridOriginals(doc); // re-hide if SPA re-adds grid
+      const gridPresent = doc.querySelector(`${GRID_BODY_SELECTOR} ${GRID_TABLE_SELECTOR}`) ||
+                          doc.querySelector(GRID_TABLE_SELECTOR);
+      if (!card && gridPresent) scheduleInject(injectGridStatsCard);
+    });
+    mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
+    doc.__cvGridStatsMO = mo;
+  }
+
+  function detachGridDocObserver(doc) {
+    if (doc.__cvGridStatsMO) {
+      try { doc.__cvGridStatsMO.disconnect(); } catch {}
+      delete doc.__cvGridStatsMO;
+    }
+  }
+
+  // -------- GRID STATS DOM HELPERS -------- //
   function getSameOriginDocs() {
     const docs = [document];
     const iframes = document.querySelectorAll('iframe');
-    for (const ifr of iframes) {
+    for (const iframe of iframes) {
       try {
-        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (idoc) docs.push(idoc);
-      } catch { /* cross-origin — ignore */ }
+        if (iframe.contentDocument && iframe.contentWindow.location.hostname === location.hostname) {
+          docs.push(iframe.contentDocument);
+        }
+      } catch (e) {}
     }
     return docs;
   }
 
   function findGridInnerDoc() {
-    for (const doc of getSameOriginDocs()) {
-      const tableInBody = doc.querySelector(`${GRID_BODY_SELECTOR} ${GRID_TABLE_SELECTOR}`);
-      const anyTable    = tableInBody || doc.querySelector(GRID_TABLE_SELECTOR);
-      if (anyTable) {
-        return {
-          doc,
-          table: anyTable,
-          bodyContainer: anyTable.closest(GRID_BODY_SELECTOR) || null
-        };
-      }
+    const docs = getSameOriginDocs();
+    for (const doc of docs) {
+      const table = doc.querySelector(GRID_TABLE_SELECTOR);
+      const bodyContainer = doc.querySelector(GRID_BODY_SELECTOR);
+      if (table || bodyContainer) return { doc, table, bodyContainer };
     }
     return null;
   }
 
-// -------- GRID: Inject and Remove -------- //
+  // -------- BUILD GRID STATS HTML -------- //
+  function buildGridStatsCardHTML() {
+    return `
+<div id="${CARD_ID}" style="padding:12px 16px;border:1px solid #ccc;border-radius:8px;box-shadow:0 2px 5px rgba(0,0,0,0.1);margin:12px;width:270px;font-family:Arial,sans-serif;font-size:14px;background:#fff;">
+  <div style="display:flex;justify-content:space-between;font-weight:bold;font-size:13px;margin-bottom:8px;">
+    <span>ALL QUEUES</span>
+    <span style="color:#2196F3;cursor:pointer;">GRID SETTINGS</span>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+    <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+      <div>2</div><div style="font-size:12px;color:#555;">CW</div>
+    </div>
+    <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+      <div>2:42</div><div style="font-size:12px;color:#555;">AWT</div>
+    </div>
+    <div style="background:#ffeb3b;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+      <div>3:14</div><div style="font-size:12px;color:#555;">AHT</div>
+    </div>
+    <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+      <div>27</div><div style="font-size:12px;color:#555;">CA</div>
+    </div>
+  </div>
+</div>`;
+  }
+
+  // -------- GRID STATS INJECTOR -------- //
   function injectGridStatsCard() {
-  const found = findGridInnerDoc();
-  if (!found) return;
+    const found = findGridInnerDoc();
+    if (!found) return;
 
-  const { doc, table, bodyContainer } = found;
-  if (doc.getElementById(CARD_ID)) return;
+    const { doc, table, bodyContainer } = found;
+    if (doc.getElementById(CARD_ID)) return;
 
-  if (!doc.getElementById(CARD_STYLE_ID)) {
-    const styleEl = doc.createElement('style');
-    styleEl.id = CARD_STYLE_ID;
-    styleEl.textContent = `/* reserved for future styles */`;
-    if (doc.head) doc.head.appendChild(styleEl);
+    if (!doc.getElementById(CARD_STYLE_ID)) {
+      const styleEl = doc.createElement('style');
+      styleEl.id = CARD_STYLE_ID;
+      styleEl.textContent = `/* reserved for future styles */`;
+      if (doc.head) doc.head.appendChild(styleEl);
+    }
+
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildGridStatsCardHTML();
+    const card = wrap.firstElementChild;
+
+    if (bodyContainer && bodyContainer.parentNode) {
+      bodyContainer.parentNode.insertBefore(card, bodyContainer);
+    } else if (table && table.parentNode) {
+      table.parentNode.insertBefore(card, table);
+    } else {
+      doc.body.appendChild(card);
+    }
+
+    hideGridOriginals(doc);
+    attachGridDocObserver(doc);
   }
 
-  const wrap = doc.createElement('div');
-  wrap.innerHTML = buildGridStatsCardHTML();
-  const card = wrap.firstElementChild;
-
-  // Place BEFORE the whole dash body; fallback: before first table; last resort: end of body
-  if (bodyContainer && bodyContainer.parentNode) {
-    bodyContainer.replaceWith(card);
-  } else if (table && table.parentNode) {
-    table.replaceWith(card);
-  } else {
-    doc.body.appendChild(card);
+  function removeGridStatsCard() {
+    for (const doc of getSameOriginDocs()) {
+      const card = doc.getElementById(CARD_ID);
+      if (card) card.remove();
+      unhideGridOriginals(doc);
+      detachGridDocObserver(doc);
+    }
   }
 
-  // 🔒 Attach observer to restore if rerendered
-  attachGridDocObserver(doc);
-}
-
-
-// -------- GRID: Retry logic -------- //
+  // -------- GRID STATS PAGE ROUTING -------- //
   function waitForGridStatsAndInject(tries = 0) {
     const found = findGridInnerDoc();
     if (found && (found.bodyContainer || tries >= 3)) {
-      requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsCard()));
+      scheduleInject(injectGridStatsCard);
       return;
     }
     if (tries >= 12) return;
     setTimeout(() => waitForGridStatsAndInject(tries + 1), 300);
   }
 
-  function onGridStatsPageEnter() { waitForGridStatsAndInject(); }
+  function onGridStatsPageEnter() {
+    waitForGridStatsAndInject();
+  }
 
-// -------- GRID: Route Handling -------- //
   function handleGridStatsRouteChange(prevHref, nextHref) {
     const wasOn = GRID_STATS_REGEX.test(prevHref);
     const isOn  = GRID_STATS_REGEX.test(nextHref);
@@ -358,7 +408,7 @@ if (!window.__cvGridStatsInit) {
     if ( wasOn && !isOn) removeGridStatsCard();
   }
 
-// -------- GRID: Watch URL & SPA navigation -------- //
+  // -------- GRID STATS URL WATCHER -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -388,7 +438,8 @@ if (!window.__cvGridStatsInit) {
 
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
-} // closes __cvGridStatsInit
+}  // closes __cvGridStatsInit
+
 
 
 
