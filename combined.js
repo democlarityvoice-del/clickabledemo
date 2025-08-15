@@ -280,38 +280,33 @@ if (!window.__cvGridStatsInit) {
   }
 
   function injectGridStatsCard() {
-    const found = findGridInnerDoc();
-    if (!found) return;
+  const found = findGridInnerDoc();
+  if (!found) return;
 
-    const { doc, table, bodyContainer } = found;
-    if (doc.getElementById(CARD_ID)) return;
+  const { doc, bodyContainer } = found;
+  if (!doc || !bodyContainer) return;
+  if (doc.getElementById(CARD_ID)) return; // already injected
 
-    if (!doc.getElementById(CARD_STYLE_ID)) {
-      const styleEl = doc.createElement('style');
-      styleEl.id = CARD_STYLE_ID;
-      styleEl.textContent = `/* reserved for future styles */`;
-      if (doc.head) doc.head.appendChild(styleEl);
-    }
-
-    const wrap = doc.createElement('div');
-    wrap.innerHTML = buildGridStatsCardHTML();
-    const card = wrap.firstElementChild;
-
-    if (bodyContainer && bodyContainer.parentNode) {
-      bodyContainer.parentNode.insertBefore(card, bodyContainer);
-    } else if (table && table.parentNode) {
-      table.parentNode.insertBefore(card, table);
-    } else {
-      doc.body.appendChild(card);
-    }
+  // Optional: add minimal stylesheet
+  if (!doc.getElementById(CARD_STYLE_ID)) {
+    const styleEl = doc.createElement('style');
+    styleEl.id = CARD_STYLE_ID;
+    styleEl.textContent = `/* reserved for future styles */`;
+    if (doc.head) doc.head.appendChild(styleEl);
   }
 
-  function removeGridStatsCard() {
-    for (const doc of getSameOriginDocs()) {
-      const card = doc.getElementById(CARD_ID);
-      if (card) card.remove();
-    }
+  // 💣 THIS is what replaces the real content
+  while (bodyContainer.firstChild) {
+    bodyContainer.removeChild(bodyContainer.firstChild);
   }
+
+  // Build and insert your replacement card
+  const wrap = doc.createElement('div');
+  wrap.innerHTML = buildGridStatsCardHTML();
+  const card = wrap.firstElementChild;
+  bodyContainer.appendChild(card); // ⬅ Insert INTO the original container
+}
+
 
   function waitForGridStatsAndInject(tries = 0) {
     const found = findGridInnerDoc();
@@ -362,3 +357,4 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
