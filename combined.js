@@ -278,8 +278,8 @@
     });
   })();
 })();
-<\/script></body></html>`; 
-}
+<\\/script></body></html>`;
+
 
 
 
@@ -367,6 +367,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
