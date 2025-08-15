@@ -173,9 +173,9 @@ if (window.__cvDemoInit) {
 </body></html>`;
   }
 
-  // -------- REMOVE HOME IFRAME -------- //
-  function removeIframe() {
-    const ifr = document.getElementById(IFRAME_ID);
+  // -------- REMOVE HOME  -------- //
+  function remove() {
+    const ifr = document.getElementById(_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
     // unhide the exact element we hid (if any)
@@ -189,9 +189,9 @@ if (window.__cvDemoInit) {
     }
   }
 
-  // -------- INJECT HOME IFRAME -------- //
-  function injectIframe() {
-    if (document.getElementById(IFRAME_ID)) return;
+  // -------- INJECT HOME  -------- //
+  function inject() {
+    if (document.getElementById(_ID)) return;
     const slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
 
@@ -213,21 +213,21 @@ if (window.__cvDemoInit) {
       anchor.setAttribute('data-cv-demo-hidden', '1');
     }
 
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling', 'yes');
-    iframe.srcdoc = buildSrcdoc();
+    const  = document.createElement('');
+    .id = _ID;
+    .style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+    .setAttribute('scrolling', 'yes');
+    .srcdoc = buildSrcdoc();
 
-    if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
-    else slot.appendChild(iframe);
+    if (anchor && anchor.parentNode === slot) slot.insertBefore(, anchor);
+    else slot.appendChild();
   }
 
   // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
-      requestAnimationFrame(() => requestAnimationFrame(() => injectIframe()));
+      requestAnimationFrame(() => requestAnimationFrame(() => inject()));
       return;
     }
     if (tries >= 12) return;
@@ -241,7 +241,7 @@ if (window.__cvDemoInit) {
     const wasHome = HOME_REGEX.test(prevHref);
     const isHome  = HOME_REGEX.test(nextHref);
     if (!wasHome && isHome) onHomeEnter();
-    if ( wasHome && !isHome) removeIframe();
+    if ( wasHome && !isHome) remove();
   }
 
   (function watchURLChanges() {
@@ -291,8 +291,8 @@ if (window.__cvGridStatsInit) {
 
   // -------- GRID STATS CONSTANTS -------- //
   const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const GRID_STATS_SELECTOR = '.dash-stats-grid-table';  // targets any of the actual tables
-  const GRID_STATS_IFRAME_ID = 'cv-grid-stats-iframe';
+  const GRID_STATS_SELECTOR = '.dash-stats-grid-table';   // targets any of the actual tables
+  const GRID_STATS__ID = 'cv-grid-stats-';
 
   // -------- BUILD GRID STATS SRCDOC -------- //
   function buildGridStatsSrcdoc() {
@@ -324,28 +324,59 @@ if (window.__cvGridStatsInit) {
 
   // -------- GRID STATS INJECT -------- //
   function injectGridStatsIframe() {
-    if (document.getElementById(GRID_STATS_IFRAME_ID)) return;
-    const slot = document.querySelector(GRID_STATS_SELECTOR);
-    if (!slot) return;
+  if (document.getElementById(GRID_STATS_IFRAME_ID)) return;
 
-    const iframe = document.createElement('iframe');
-    iframe.id = GRID_STATS_IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
-    iframe.srcdoc = buildGridStatsSrcdoc();
+  // Prefer a table inside #dash-stats-body; otherwise fall back to any matching table
+  const table =
+    document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
+    document.querySelector(GRID_STATS_SELECTOR);
 
-    slot.closest('#dash-stats-body').parentNode.insertBefore(iframe, slot.closest('#dash-stats-body'));
+  if (!table) return; // table not mounted yet
+
+  const body = table.closest('#dash-stats-body');
+
+  const iframe = document.createElement('iframe');
+  iframe.id = GRID_STATS_IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
+  iframe.srcdoc = buildGridStatsSrcdoc();
+
+  if (body && body.parentNode) {
+    // Insert the iframe directly BEFORE the whole dash body container (fixes “append at bottom” + scroll)
+    body.parentNode.insertBefore(iframe, body);
+  } else if (table.parentNode) {
+    // Fallback: insert before the table itself
+    table.parentNode.insertBefore(iframe, table);
+  } else {
+    // Last resort: append near top-level container to avoid bottom-of-page append
+    (document.querySelector('#omp-active-body') ||
+     document.querySelector('.page-container') ||
+     document.body
+    ).appendChild(iframe);
   }
+}
+
 
   // -------- WAIT GRID AND INJECT -------- //
   function waitForGridStatsSlotAndInject(tries = 0) {
-    const slot = document.querySelector(GRID_STATS_SELECTOR);
-    if (slot && slot.isConnected) {
-      requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsIframe()));
-      return;
-    }
-    if (tries >= 10) return;
-    setTimeout(() => waitForGridStatsSlotAndInject(tries + 1), 300);
+  const table =
+    document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
+    document.querySelector(GRID_STATS_SELECTOR);
+
+  const body = table && table.closest('#dash-stats-body');
+
+  if (table && (body || tries >= 3)) {
+    // if body isn’t ready after ~1 second, proceed with the table fallback
+    requestAnimationFrame(() =>
+      requestAnimationFrame(() => injectGridStatsIframe())
+    );
+    return;
   }
+
+  if (tries >= 10) return;
+
+  setTimeout(() => waitForGridStatsSlotAndInject(tries + 1), 300);
+}
+
 
   // -------- PAGE GRID ENTRY -------- //
   function onGridStatsPageEnter() {
@@ -394,6 +425,7 @@ if (window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
