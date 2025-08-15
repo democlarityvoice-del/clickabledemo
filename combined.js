@@ -422,8 +422,7 @@ if (window.__cvGridStatsInit) {
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-    if (PAGE_REGEX.test(location.href)) onPageEnter();
-  })();
+    if (PAGE_REGEX.test(location.href)) onGridStatsPageEnter();
 }
   
   
@@ -490,6 +489,7 @@ if (window.__cvGridStatsInit) {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 }
+
 
 
 
