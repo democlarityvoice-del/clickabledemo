@@ -425,6 +425,8 @@ if (window.__cvGridStatsInit) {
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-    if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
+        if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
-}
+} // CLOSES the else { from window.__cvGridStatsInit
+
+
