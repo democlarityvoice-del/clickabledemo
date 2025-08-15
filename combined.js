@@ -292,7 +292,7 @@ if (window.__cvGridStatsInit) {
   // -------- GRID STATS CONSTANTS -------- //
   const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   const GRID_STATS_SELECTOR = '.dash-stats-grid-table';   // targets any of the actual tables
-  const GRID_STATS__ID = 'cv-grid-stats-';
+  const GRID_STATS_IFRAME_ID = 'cv-grid-stats-';
 
   // -------- BUILD GRID STATS SRCDOC -------- //
   function buildGridStatsSrcdoc() {
@@ -425,6 +425,7 @@ if (window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
