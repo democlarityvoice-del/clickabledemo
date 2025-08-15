@@ -12,20 +12,30 @@
 
   // ===== SRC_DOC APP =====
   function buildSrcdoc() {
-    return `<!DOCTYPE html>
+  return `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Current Active Calls</title>
   <style>
-    /* styles omitted here for brevity; you can reinsert your latest working version */
+    body { font-family: Arial, sans-serif; margin: 0; padding: 10px; }
+    .call-container { border: 1px solid #ccc; border-radius: 6px; padding: 10px; }
+    .call-toolbar { margin-bottom: 8px; }
+    .pop-btn { padding: 5px 12px; font-size: 14px; }
+    table { width: 100%; border-collapse: collapse; }
+    th { text-align: left; font-weight: bold; padding-bottom: 6px; color: #666; }
+    td { padding: 6px 4px; border-top: 1px solid #ddd; }
+    .listen-btn { background: none; border: none; cursor: pointer; padding: 2px; }
+    .listen-btn svg { width: 20px; height: 20px; fill: #ccc; }
+    .listen-btn:hover svg { fill: #333; }
+    .listen-btn.is-active svg { fill: #000; }
   </style>
 </head>
 <body>
 <div class="call-container">
   <div class="call-toolbar">
-    <button class="pop-btn" id="popToggle" aria-pressed="false" aria-controls="callsTableBody">Enlarge</button>
+    <button class="pop-btn" id="popToggle" aria-pressed="false">Enlarge</button>
   </div>
   <table>
     <thead>
@@ -41,74 +51,98 @@
     <tbody id="callsTableBody"></tbody>
   </table>
 </div>
+
 <script>
 (function(){
-  const names = ["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks"];
-  const first = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate"];
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-  const area = ["900","700","999","888","511"];
-  const exts = Array.from({length:49},(_,i)=>201+i);
-  const usedNums = new Set(), usedNames = new Set(), calls = [];
   const MAX = 5;
-  const pick = a => a[Math.floor(Math.random()*a.length)];
-  const num = () => {
+  const CALLQUEUE_DISPLAY_TIME = 5000;
+  const names = ["Grace Smith", "Jason Tran", "Chloe Bennett", "Raj Patel", "Ava Daniels", "Luis Santiago"];
+  const area = ["900", "700", "888", "511"];
+  const exts = Array.from({length: 40}, (_, i) => 200 + i);
+  const usedNums = new Set(), usedNames = new Set();
+  const calls = [];
+
+  function pick(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+  }
+
+  function generatePhone() {
     let n;
-    do { n = pick(area)+"-"+Math.floor(100+Math.random()*900)+"-"+Math.floor(1000+Math.random()*9000); }
-    while (usedNums.has(n) || /666/.test(n));
+    do {
+      n = \`\${pick(area)}-\${Math.floor(100+Math.random()*900)}-\${Math.floor(1000+Math.random()*9000)}\`;
+    } while (usedNums.has(n) || /666/.test(n));
     usedNums.add(n); return n;
-  };
-  const cname = () => {
-    let n, g=0;
-    do { n = pick(names); g++; } while (usedNames.has(n) && g<50);
+  }
+
+  function generateName() {
+    let n;
+    do { n = pick(names); } while (usedNames.has(n));
     usedNames.add(n); return n;
-  };
-  const extname = () => pick(first) + " " + pick(alphabet) + ".";
-  const fmt = s => s.toString().padStart(2,"0");
-  const timer = s => () => {
-    const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000);
-    return m+":"+fmt(sec);
-  };
-  const newCall = () => ({
-    from: cname(),
-    cnam: num(),
-    dialed: "CallQueue",
-    to: "Ext. " + pick(exts) + " (" + extname() + ")",
-    startedAt: Date.now(),
-    t: timer(Date.now()),
-    state: "active"
-  });
+  }
 
-  const tick = c => {
-    if (Date.now()-c.startedAt > 3*60*1000) c.state = "ended";
-  };
+  function generateExt() {
+    return \`Ext. \${pick(exts)}\`;
+  }
 
-  function render(){
-    const tb = document.getElementById("callsTableBody");
-    if (!tb) return;
-    tb.innerHTML = "";
-    calls.forEach((c,i)=>{
+  function generateToName() {
+    const firsts = ["Alex", "Maria", "Tom", "Lisa", "John"];
+    const initials = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+    return \`\${pick(firsts)} \${pick(initials)}.\`;
+  }
+
+  function newCall() {
+    const start = Date.now();
+    return {
+      from: generatePhone(),
+      cnam: generateName(),
+      dialed: generatePhone(),
+      to: "CallQueue",
+      targetExt: \`\${generateExt()} (\${generateToName()})\`,
+      startedAt: start,
+      get duration() {
+        const d = Date.now() - this.startedAt;
+        const m = Math.floor(d / 60000);
+        const s = Math.floor((d % 60000) / 1000);
+        return \`\${m}:\${s.toString().padStart(2, '0')}\`;
+      },
+      get displayTo() {
+        const age = Date.now() - this.startedAt;
+        return age < CALLQUEUE_DISPLAY_TIME ? "CallQueue" : this.targetExt;
+      }
+    };
+  }
+
+  function render() {
+    const tbody = document.getElementById("callsTableBody");
+    if (!tbody) return;
+    tbody.innerHTML = "";
+    calls.forEach((call) => {
       const tr = document.createElement("tr");
-      tr.innerHTML =
-        "<td>"+c.from+"</td><td>"+c.cnam+"</td><td>"+c.dialed+"</td><td>"+c.to+"</td><td>"+c.t()+"</td>" +
-        '<td><button class="listen-btn" aria-pressed="false" title="Listen in">' +
-        '<svg class="svgbak" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 5V5L7 10H3z"></path>' +
-        '<path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>' +
-        '</svg></button></td>';
-      tb.appendChild(tr);
+      tr.innerHTML = \`
+        <td>\${call.from}</td>
+        <td>\${call.cnam}</td>
+        <td>\${call.dialed}</td>
+        <td>\${call.displayTo}</td>
+        <td>\${call.duration}</td>
+        <td><button class="listen-btn" title="Listen in" aria-pressed="false">
+          <svg viewBox="0 0 24 24"><path d="M3 10v4h4l5 5V5L7 10H3z"></path><path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path></svg>
+        </button></td>
+      \`;
+      tbody.appendChild(tr);
     });
   }
 
-  function loop(){
-    if (calls.length < MAX && Math.random() < 0.35) calls.push(newCall());
-    for (let i = calls.length-1; i >= 0; i--) {
-      tick(calls[i]);
-      if (calls[i].state === "ended") calls.splice(i,1);
+  function loop() {
+    if (calls.length < MAX && Math.random() < 0.5) calls.push(newCall());
+    for (let i = calls.length - 1; i >= 0; i--) {
+      if ((Date.now() - calls[i].startedAt) > 4.5 * 60 * 1000) {
+        calls.splice(i, 1);
+      }
     }
     render();
   }
 
   calls.push(newCall());
-  render();
   setInterval(loop, 3000);
 
   document.addEventListener("click", (e) => {
@@ -116,15 +150,8 @@
     if (!btn) return;
     document.querySelectorAll(".listen-btn").forEach(b => {
       const isThis = b === btn;
-      b.classList.toggle("is-active", isThis);
-      b.setAttribute("aria-pressed", isThis ? "true" : "false");
-    });
-  });
-})();
-</script>
-</body>
-</html>`;
-  }
+      b.classList.toggle("is-
+
 
   // ===== IFRAME INJECTION =====
   function removeIframe() {
@@ -210,6 +237,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
