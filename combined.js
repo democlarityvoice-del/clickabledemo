@@ -149,10 +149,10 @@ function buildSrcdoc() {
     img.onload = ()=> document.body.classList.add('use-mask');
     img.onerror = ()=> {}; // fallback (inline svg) remains visible
     img.src = '${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}';
-  })();
+    });
 })();
-<\/script></body></html>`; 
-}
+</script></body></html>`;
+  }
 
   // ===== IFRAME MANAGEMENT =====
   function removeIframe() {
@@ -238,6 +238,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
