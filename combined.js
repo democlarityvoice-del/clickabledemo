@@ -16,92 +16,53 @@ function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Current Active Calls</title>
-// ===== STYLE =====
 <style>
-* {
-  box-sizing: border-box;
-}
-html, body {
-  width: 100%;
-  overflow-x: hidden;
-}
-:root {
-  --icon-muted: rgba(0,0,0,.38);
-  --icon-hover: rgba(0,0,0,.60);
-  --icon-active: #000;
-  --icon-size: 18px;
-}
-body {
-  font-family: Arial, sans-serif;
-  margin: 0;
-  background: #fff;
-  color: #000;
-}
-.call-container {
-  background: #fff;
-  padding: 0 16px 20px; /* reduced padding */
-  border-radius: 6px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-  width: 100%;
-  max-width: 100%;
-}
-table {
-  width: 100%;
-  table-layout: auto;
-  border-collapse: collapse;
-  background: #fff;
-}
-thead th {
-  font-weight: 700;
-  padding: 10px 12px;
-  font-size: 14px;
-  text-align: left;
-  border-bottom: 1px solid #ddd;
-  white-space: nowrap;
-}
-td {
-  padding: 10px 12px;
-  text-align: left;
-  font-size: 14px;
-  border-bottom: 1px solid #ddd;
-  white-space: nowrap;
-}
-tr:hover {
-  background: #f5f5f5;
-}
-// ===== LISTEN IN WRAPPER =====
-/* Listen button wrapper */
-.listen-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: 0;
-  background: transparent;
-  padding: 0;
-  cursor: pointer;
-  border-radius: 4px;
-}
-.listen-btn:focus { outline: none; }
+  :root{
+    --icon-muted: rgba(0,0,0,.38);
+    --icon-hover: rgba(0,0,0,.60);
+    --icon-active:#000;
+    --icon-size:18px;
+  }
+  body { font-family: Arial, sans-serif; margin:0; background:#fff; color:#000; }
+  .call-container {
+    background:#fff; padding:0 30px 20px; border-radius:6px;
+    box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%;
+  }
+  table { width:100%; border-collapse:collapse; background:#fff; }
+  thead th {
+    font-weight:700; padding:10px 12px; font-size:14px; text-align:left;
+    border-bottom:1px solid #ddd;
+  }
+  td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; }
+  tr:hover { background:#f5f5f5; }
 
-/* Fallback inline SVG (always available) */
-.svgbak {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  display: inline-block;
-}
-.svgbak path {
-  fill: var(--icon-muted);
-  opacity: .9;
-  transition: fill .15s linear, opacity .15s linear;
-}
-tr:hover .svgbak path { fill: var(--icon-hover); }
-.listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+  /* Listen button wrapper */
+  .listen-btn {
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border:0; background:transparent; padding:0;
+    cursor:pointer; border-radius:4px;
+  }
+  .listen-btn:focus { outline:none; }
 
-/* Preferred mask icon using your sprite (enabled when body.use-mask is se*
+  /* Fallback inline SVG (always available) */
+  .svgbak { width:var(--icon-size); height:var(--icon-size); display:inline-block; }
+  .svgbak path { fill: var(--icon-muted); opacity:.9; transition: fill .15s linear, opacity .15s linear; }
+  tr:hover .svgbak path { fill: var(--icon-hover); }
+  .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
 
-// ===== CALL CONTAINER =====
+  /* Preferred mask icon using your sprite (enabled when body.use-mask is set) */
+  .maskicon { display:none; }
+  body.use-mask .maskicon {
+    display:inline-block; width:var(--icon-size); height:var(--icon-size);
+    background-color: var(--icon-muted);
+    -webkit-mask: url('${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}') no-repeat center / contain;
+            mask: url('${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}') no-repeat center / contain;
+    transition: background-color .15s linear;
+  }
+  body.use-mask tr:hover .maskicon { background-color: var(--icon-hover); }
+  body.use-mask .listen-btn.is-active .maskicon { background-color: var(--icon-active); }
+  body.use-mask .svgbak { display:none; } /* hide fallback when mask is available */
+</style>
 </head><body>
   <div class="call-container">
     <table>
@@ -119,8 +80,6 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     </table>
   </div>
 <script>
-
-// ===== FAKE DATA GEN =====
 (function(){
   // ---- data generation (same as before) ----
   const names=["Grace Smith","Jason Tran","Chloe Bennett","Raj Patel","Ava Daniels","Luis Santiago","Emily Reyes","Zoe Miller","Derek Zhang","Noah Brooks","Liam Hayes","Nina Clarke","Omar Wallace","Sara Bloom","Connor Reed","Ella Graham","Miles Turner","Ruby Foster","Leo Knight"];
@@ -173,7 +132,7 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
 
   // Seed + animate
   calls.push(newCall()); render(); setInterval(loop,1000);
-// ===== LISTEN =====
+
   // Single-active toggle
   document.addEventListener('click', (e)=>{
     const btn = e.target.closest('.listen-btn');
@@ -189,15 +148,14 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     const img = new Image();
     img.onload = ()=> document.body.classList.add('use-mask');
     img.onerror = ()=> {}; // fallback (inline svg) remains visible
-    img.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+    img.src = '${https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg}';
   })();
 })();
 </script>
 </body></html>`;
 }
 
-
-  // ===== IFRAME INJECTION =====
+  // ===== IFRAME MANAGEMENT =====
   function removeIframe() {
     const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
@@ -281,6 +239,7 @@ tr:hover .svgbak path { fill: var(--icon-hover); }
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
