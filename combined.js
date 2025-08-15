@@ -119,10 +119,10 @@ function buildSrcdoc() {
           </button>
         </td>\`;
       tb.appendChild(tr);
-    });
-  }
+ })();
 })();
-</script></body></html>`;
+<\/script>
+</body></html>`;
 }
 
 // -------- REMOVE IFRAME -------- //
@@ -210,6 +210,7 @@ function buildSrcdoc() {
 
         if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+
 
 
 
