@@ -276,6 +276,157 @@ if (window.__cvDemoInit) {
     else slot.insertBefore(iframe, slot.firstChild);
   }
 
+// ==============================
+// Clarity Voice Grid Stats Inject
+// ==============================
+if (window.__cvGridStatsInit) {
+  // already initialized
+} else {
+  window.__cvGridStatsInit = true;
+
+  const PAGE_REGEX = /\/portal\/agents\/manager(?:[/?#]|$)/;
+  const SLOT_SELECTOR = '.page-container'; // Safe large container on the Call Center page
+  const IFRAME_ID = 'cv-grid-stats-iframe';
+
+  function buildGridStatsSrcdoc() {
+    return `<!doctype html><html><head><meta charset="utf-8">
+<style>
+  body {
+    font-family: Arial, sans-serif;
+    margin: 0;
+    background: #fff;
+  }
+  .grid-box {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 12px 16px;
+    width: 260px;
+    margin: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    font-size: 14px;
+  }
+  .header-row {
+    display: flex;
+    justify-content: space-between;
+    font-weight: bold;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .metric-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .stat {
+    background: #7fff7f;
+    padding: 10px;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: bold;
+    font-size: 16px;
+  }
+  .stat.yellow {
+    background: #ffeb3b;
+  }
+  .label {
+    font-size: 12px;
+    color: #555;
+  }
+</style>
+</head><body>
+  <div class="grid-box">
+    <div class="header-row">
+      <span>ALL QUEUES</span>
+      <span style="color:#2196F3;cursor:pointer;">GRID SETTINGS</span>
+    </div>
+    <div class="metric-row">
+      <div class="stat"><div>2</div><div class="label">CW</div></div>
+      <div class="stat"><div>2:42</div><div class="label">AWT</div></div>
+      <div class="stat yellow"><div>3:14</div><div class="label">AHT</div></div>
+      <div class="stat"><div>27</div><div class="label">CA</div></div>
+    </div>
+  </div>
+</body></html>`;
+  }
+
+  function injectGridStatsIframe() {
+    if (document.getElementById(IFRAME_ID)) return;
+    const slot = document.querySelector(SLOT_SELECTOR);
+    if (!slot) return;
+
+    const iframe = document.createElement('iframe');
+    iframe.id = IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
+    iframe.srcdoc = buildGridStatsSrcdoc(); 
+
+
+    slot.appendChild(iframe);
+  }
+
+  function waitForGridSlotAndInject(tries = 0) {
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (slot && slot.isConnected) {
+    requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsIframe()));
+    return;
+  }
+  if (tries >= 10) return;
+  setTimeout(() => waitForGridSlotAndInject(tries + 1), 300);
+}
+
+
+  function onGridStatsPageEnter() {
+  waitForGridSlotAndInject();
+}
+
+
+
+  function handleGridStatsRouteChange(prevHref, nextHref) {
+    const wasOn = PAGE_REGEX.test(prevHref);
+    const isOn = PAGE_REGEX.test(nextHref);
+    if (!wasOn && isOn) onGridStatsPageEnter();
+    if (wasOn && !isOn) {
+      const ifr = document.getElementById(IFRAME_ID);
+      if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+    }
+  }
+
+  (function watchGridStatsURLChanges() {
+    let last = location.href;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
+
+    history.pushState = function () {
+      const prev = last;
+      const ret = origPush.apply(this, arguments);
+      const now = location.href;
+      last = now;
+      handleGridStatsRouteChange(prev, now);
+      return ret;
+    };
+    history.replaceState = function () {
+      const prev = last;
+      const ret = origReplace.apply(this, arguments);
+      const now = location.href;
+      last = now;
+      handleGridStatsRouteChange
+(prev, now);
+      return ret;
+    };
+
+    new MutationObserver(() => {
+      if (location.href !== last) {
+        const prev = last, now = location.href;
+        last = now;
+        handleGridStatsRouteChange
+(prev, now);
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    if (PAGE_REGEX.test(location.href)) onPageEnter();
+  })();
+}
+  
+  
   // -------- WAIT AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
@@ -339,6 +490,7 @@ if (window.__cvDemoInit) {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 }
+
 
 
 
