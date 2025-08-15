@@ -6,13 +6,13 @@ if (window.__cvDemoInit) {
 } else {
   window.__cvDemoInit = true;
 
-  // -------- DECLARE CONSTANTS -------- //
+  // -------- DECLARE HOME CONSTANTS -------- //
   const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
   const HOME_SELECTOR = '#nav-home a, #nav-home';
   const SLOT_SELECTOR = '#omp-active-body';
   const IFRAME_ID = 'cv-demo-calls-iframe';
 
-  // -------- BUILD SOURCE -------- //
+  // -------- BUILD HOME SOURCE -------- //
   function buildSrcdoc() {
     return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -55,7 +55,7 @@ if (window.__cvDemoInit) {
     </table>
   </div>
 
-<!-- -------- CALL SIMULATION: CALL STRUCTURE -------- -->
+<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function(){
   // Pools — names, extensions, and area codes (area code is real, but 555-01xx makes the full number fictional)
@@ -173,7 +173,7 @@ if (window.__cvDemoInit) {
 </body></html>`;
   }
 
-  // -------- REMOVE IFRAME -------- //
+  // -------- REMOVE HOME IFRAME -------- //
   function removeIframe() {
     const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
@@ -189,7 +189,7 @@ if (window.__cvDemoInit) {
     }
   }
 
-  // -------- INJECT IFRAME -------- //
+  // -------- INJECT HOME IFRAME -------- //
   function injectIframe() {
     if (document.getElementById(IFRAME_ID)) return;
     const slot = document.querySelector(SLOT_SELECTOR);
@@ -223,7 +223,7 @@ if (window.__cvDemoInit) {
     else slot.appendChild(iframe);
   }
 
-  // -------- WAIT AND INJECT -------- //
+  // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
@@ -289,12 +289,12 @@ if (window.__cvGridStatsInit) {
 } else {
   window.__cvGridStatsInit = true;
 
-  // -------- CONSTANTS -------- //
+  // -------- GRID STATS CONSTANTS -------- //
   const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   const GRID_STATS_SELECTOR = '.page-container';
   const GRID_STATS_IFRAME_ID = 'cv-grid-stats-iframe';
 
-  // -------- BUILD SRCDOC -------- //
+  // -------- BUILD GRID STATS SRCDOC -------- //
   function buildGridStatsSrcdoc() {
     return `<!doctype html><html><head><meta charset="utf-8">
 <style>
@@ -322,7 +322,7 @@ if (window.__cvGridStatsInit) {
 </body></html>`;
   }
 
-  // -------- INJECT -------- //
+  // -------- GRID STATS INJECT -------- //
   function injectGridStatsIframe() {
     if (document.getElementById(GRID_STATS_IFRAME_ID)) return;
     const slot = document.querySelector(GRID_STATS_SELECTOR);
@@ -336,7 +336,7 @@ if (window.__cvGridStatsInit) {
     slot.appendChild(iframe);
   }
 
-  // -------- WAIT AND INJECT -------- //
+  // -------- WAIT GRID AND INJECT -------- //
   function waitForGridStatsSlotAndInject(tries = 0) {
     const slot = document.querySelector(GRID_STATS_SELECTOR);
     if (slot && slot.isConnected) {
@@ -347,12 +347,12 @@ if (window.__cvGridStatsInit) {
     setTimeout(() => waitForGridStatsSlotAndInject(tries + 1), 300);
   }
 
-  // -------- PAGE ENTRY -------- //
+  // -------- PAGE GRID ENTRY -------- //
   function onGridStatsPageEnter() {
     waitForGridStatsSlotAndInject();
   }
 
-  // -------- ROUTE CHANGE -------- //
+  // -------- ROUTE GRID STATS CHANGE -------- //
   function handleGridStatsRouteChange(prevHref, nextHref) {
     const wasOn = GRID_STATS_REGEX.test(prevHref);
     const isOn  = GRID_STATS_REGEX.test(nextHref);
@@ -363,7 +363,7 @@ if (window.__cvGridStatsInit) {
     }
   }
 
-  // -------- WATCHER -------- //
+  // -------- GRID STATS WATCHER -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -394,5 +394,6 @@ if (window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
