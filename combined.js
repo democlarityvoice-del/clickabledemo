@@ -325,11 +325,12 @@ if (!window.__cvGridStatsInit) {
 
     // Place BEFORE the whole dash body; fallback: before first table; last resort: end of body
     if (bodyContainer && bodyContainer.parentNode) {
-      bodyContainer.parentNode.insertBefore(card, bodyContainer);
+      bodyContainer.replaceWith(card);
     } else if (table && table.parentNode) {
-      table.parentNode.insertBefore(card, table);
+      table.replaceWith(card);
     } else {
       doc.body.appendChild(card);
+}    
     }
   }
 
@@ -392,6 +393,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
