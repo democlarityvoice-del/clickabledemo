@@ -291,7 +291,7 @@ if (window.__cvGridStatsInit) {
 
   // -------- GRID STATS CONSTANTS -------- //
   const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const GRID_STATS_SELECTOR = '#dash-stats-body';
+  const GRID_STATS_SELECTOR = '.dash-stats-grid-table';  // targets any of the actual tables
   const GRID_STATS_IFRAME_ID = 'cv-grid-stats-iframe';
 
   // -------- BUILD GRID STATS SRCDOC -------- //
@@ -333,7 +333,7 @@ if (window.__cvGridStatsInit) {
     iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
     iframe.srcdoc = buildGridStatsSrcdoc();
 
-    slot.parentNode.insertBefore(iframe, slot);
+    slot.closest('#dash-stats-body').parentNode.insertBefore(iframe, slot.closest('#dash-stats-body'));
   }
 
   // -------- WAIT GRID AND INJECT -------- //
@@ -394,6 +394,7 @@ if (window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
