@@ -306,40 +306,36 @@ if (!window.__cvGridStatsInit) {
 
 // -------- GRID: Inject and Remove -------- //
   function injectGridStatsCard() {
-    const found = findGridInnerDoc();
-    if (!found) return;
+  const found = findGridInnerDoc();
+  if (!found) return;
 
-    const { doc, table, bodyContainer } = found;
-    if (doc.getElementById(CARD_ID)) return;
+  const { doc, table, bodyContainer } = found;
+  if (doc.getElementById(CARD_ID)) return;
 
-    if (!doc.getElementById(CARD_STYLE_ID)) {
-      const styleEl = doc.createElement('style');
-      styleEl.id = CARD_STYLE_ID;
-      styleEl.textContent = `/* reserved for future styles */`;
-      if (doc.head) doc.head.appendChild(styleEl);
-    }
-
-    const wrap = doc.createElement('div');
-    wrap.innerHTML = buildGridStatsCardHTML();
-    const card = wrap.firstElementChild;
-
-    // Place BEFORE the whole dash body; fallback: before first table; last resort: end of body
-    if (bodyContainer && bodyContainer.parentNode) {
-      bodyContainer.replaceWith(card);
-    } else if (table && table.parentNode) {
-      table.replaceWith(card);
-    } else {
-      doc.body.appendChild(card);
-}    
-    }
+  if (!doc.getElementById(CARD_STYLE_ID)) {
+    const styleEl = doc.createElement('style');
+    styleEl.id = CARD_STYLE_ID;
+    styleEl.textContent = `/* reserved for future styles */`;
+    if (doc.head) doc.head.appendChild(styleEl);
   }
 
-  function removeGridStatsCard() {
-    for (const doc of getSameOriginDocs()) {
-      const card = doc.getElementById(CARD_ID);
-      if (card) card.remove();
-    }
+  const wrap = doc.createElement('div');
+  wrap.innerHTML = buildGridStatsCardHTML();
+  const card = wrap.firstElementChild;
+
+  // Place BEFORE the whole dash body; fallback: before first table; last resort: end of body
+  if (bodyContainer && bodyContainer.parentNode) {
+    bodyContainer.replaceWith(card);
+  } else if (table && table.parentNode) {
+    table.replaceWith(card);
+  } else {
+    doc.body.appendChild(card);
   }
+
+  // 🔒 Attach observer to restore if rerendered
+  attachGridDocObserver(doc);
+}
+
 
 // -------- GRID: Retry logic -------- //
   function waitForGridStatsAndInject(tries = 0) {
@@ -393,6 +389,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
