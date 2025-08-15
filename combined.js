@@ -59,16 +59,16 @@ if (window.__cvDemoInit) {
 <script>
 (function(){
   // Pools — names, extensions, and area codes (area code is real, but 555-01xx makes the full number fictional)
-  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
-  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const areaCodes = ["989","517","248","810","313"]; // 555-01xx makes the full number fictional
+   names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+   extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+   areaCodes = ["989","517","248","810","313"]; // 555-01xx makes the full number fictional
 
-  const CALL_QUEUE = "CallQueue";
-  const VMAIL = "VMail";
-  const SPEAK = "SpeakAccount";
+   CALL_QUEUE = "CallQueue";
+   VMAIL = "VMail";
+   SPEAK = "SpeakAccount";
 
-  const calls = [];
-  const pad2 = (n) => String(n).padStart(2,'0');
+   calls = [];
+   pad2 = (n) => String(n).padStart(2,'0');
 
   function randomName() {
     let name, guard = 0;
@@ -81,8 +81,8 @@ if (window.__cvDemoInit) {
     // Fictional per NANPA: 555-01xx range; also avoid '666'
     let num;
     do {
-      const ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
-      const last2 = pad2(Math.floor(Math.random()*100)); // 00..99
+       ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
+       last2 = pad2(Math.floor(Math.random()*100)); // 00..99
       num = \`\${ac}-555-01\${last2}\`;
     } while (calls.some(c => c.from === num) || /666/.test(num));
     return num;
@@ -103,17 +103,17 @@ if (window.__cvDemoInit) {
   }
 
   function generateCall() {
-    const from = randomPhone();
-    const cnam = randomName();
-    const dialed = randomDialed();
-    const ext = randomExtension();
-    const to = Math.random() < 0.05 ? (Math.random() < 0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
-    const start = Date.now();
+     from = randomPhone();
+     cnam = randomName();
+     dialed = randomDialed();
+     ext = randomExtension();
+     to = Math.random() < 0.05 ? (Math.random() < 0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
+     start = Date.now();
     return {
       from, cnam, dialed, to, ext, start,
       t: () => {
-        const elapsed = Math.min(Date.now()-start, (4*60+32)*1000); // cap at 4:32
-        const s = Math.floor(elapsed/1000);
+         elapsed = Math.min(Date.now()-start, (4*60+32)*1000); // cap at 4:32
+         s = Math.floor(elapsed/1000);
         return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`;
       }
     };
@@ -122,10 +122,10 @@ if (window.__cvDemoInit) {
   function updateCalls() {
     if (calls.length > 5 || Math.random() < 0.3) { if (calls.length) calls.splice(Math.floor(Math.random()*calls.length), 1); }
     if (calls.length < 5) calls.push(generateCall());
-    const now = Date.now();
+     now = Date.now();
     calls.forEach(c => {
       if (c.to === "CallQueue" && now - c.start > 5000) {
-        const firstName = c.cnam.split(" ")[0] || "";
+         firstName = c.cnam.split(" ")[0] || "";
         c.to = \`Ext. \${c.ext} (\${firstName})\`;
       }
       if (c.to === "SpeakAccount" && now - c.start > 2000) c.to = "VMail";
@@ -133,11 +133,11 @@ if (window.__cvDemoInit) {
   }
 
   function render() {
-    const tb = document.getElementById('callsTableBody');
+     tb = document.getElementById('callsTableBody');
     if (!tb) return;
     tb.innerHTML = '';
     calls.forEach(c => {
-      const tr = document.createElement('tr');
+       tr = document.createElement('tr');
       tr.innerHTML = \`
         <td>\${c.from}</td>
         <td>\${c.cnam}</td>
@@ -160,8 +160,8 @@ if (window.__cvDemoInit) {
   (function seed(){ calls.push(generateCall()); render(); })();
   setInterval(() => { updateCalls(); render(); }, 1500);
   document.addEventListener('click', (e) => {
-    const el = e.target instanceof Element ? e.target : null;
-    const btn = el && el.closest('.listen-btn');
+     el = e.target instanceof Element ? e.target : null;
+     btn = el && el.closest('.listen-btn');
     if (!btn) return;
     document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
       b.classList.remove('is-active'); b.setAttribute('aria-pressed','false');
@@ -175,13 +175,13 @@ if (window.__cvDemoInit) {
 
   // -------- REMOVE HOME  -------- //
   function remove() {
-    const ifr = document.getElementById(_ID);
+     ifr = document.getElementById(_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
     // unhide the exact element we hid (if any)
-    const slot = document.querySelector(SLOT_SELECTOR);
+     slot = document.querySelector(SLOT_SELECTOR);
     if (slot) {
-      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+       hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
       if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
         hidden.style.display = '';
         hidden.removeAttribute('data-cv-demo-hidden');
@@ -192,12 +192,12 @@ if (window.__cvDemoInit) {
   // -------- INJECT HOME  -------- //
   function inject() {
     if (document.getElementById(_ID)) return;
-    const slot = document.querySelector(SLOT_SELECTOR);
+     slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
 
     // robust anchor finder
     function findAnchor(el) {
-      const preferred = el.querySelector('.table-container.scrollable-small');
+       preferred = el.querySelector('.table-container.scrollable-small');
       if (preferred) return preferred;
       if (el.firstElementChild) return el.firstElementChild;
       let n = el.firstChild;
@@ -205,7 +205,7 @@ if (window.__cvDemoInit) {
       return n || null;
     }
 
-    const anchor = findAnchor(slot);
+     anchor = findAnchor(slot);
 
     // hide what we anchor against, tag it so we can unhide later
     if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
@@ -213,7 +213,7 @@ if (window.__cvDemoInit) {
       anchor.setAttribute('data-cv-demo-hidden', '1');
     }
 
-    const  = document.createElement('');
+      = document.createElement('');
     .id = _ID;
     .style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
     .setAttribute('scrolling', 'yes');
@@ -225,7 +225,7 @@ if (window.__cvDemoInit) {
 
   // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
-    const slot = document.querySelector(SLOT_SELECTOR);
+     slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
       requestAnimationFrame(() => requestAnimationFrame(() => inject()));
       return;
@@ -238,41 +238,41 @@ if (window.__cvDemoInit) {
   function onHomeEnter() { setTimeout(() => waitForSlotAndInject(), 600); }
 
   function handleRouteChange(prevHref, nextHref) {
-    const wasHome = HOME_REGEX.test(prevHref);
-    const isHome  = HOME_REGEX.test(nextHref);
+     wasHome = HOME_REGEX.test(prevHref);
+     isHome  = HOME_REGEX.test(nextHref);
     if (!wasHome && isHome) onHomeEnter();
     if ( wasHome && !isHome) remove();
   }
 
   (function watchURLChanges() {
     let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
+     origPush = history.pushState;
+     origReplace = history.replaceState;
 
     history.pushState = function () {
-      const prev = last;
-      const ret  = origPush.apply(this, arguments);
-      const now  = location.href; last = now;
+       prev = last;
+       ret  = origPush.apply(this, arguments);
+       now  = location.href; last = now;
       handleRouteChange(prev, now);
       return ret;
     };
     history.replaceState = function () {
-      const prev = last;
-      const ret  = origReplace.apply(this, arguments);
-      const now  = location.href; last = now;
+       prev = last;
+       ret  = origReplace.apply(this, arguments);
+       now  = location.href; last = now;
       handleRouteChange(prev, now);
       return ret;
     };
 
     new MutationObserver(() => {
       if (location.href !== last) {
-        const prev = last, now = location.href; last = now;
+         prev = last, now = location.href; last = now;
         handleRouteChange(prev, now);
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
     document.addEventListener('click', (e) => {
-      const el = e.target instanceof Element ? e.target : null;
+       el = e.target instanceof Element ? e.target : null;
       if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
     });
 
@@ -290,9 +290,10 @@ if (window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
   // -------- GRID STATS CONSTANTS -------- //
-  const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const GRID_STATS_SELECTOR = '.dash-stats-grid-table';   // targets any of the actual tables
-  const GRID_STATS_IFRAME_ID = 'cv-grid-stats-';
+   GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+   GRID_STATS_SELECTOR = '.dash-stats-grid-table';   // targets any of the actual tables
+   GRID_STATS_IFRAME_ID = 'cv-grid-stats-';
+  
 
   // -------- BUILD GRID STATS SRCDOC -------- //
   function buildGridStatsSrcdoc() {
@@ -326,43 +327,37 @@ if (window.__cvGridStatsInit) {
   function injectGridStatsIframe() {
   if (document.getElementById(GRID_STATS_IFRAME_ID)) return;
 
-  // Prefer a table inside #dash-stats-body; otherwise fall back to any matching table
   const table =
     document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
     document.querySelector(GRID_STATS_SELECTOR);
 
-  if (!table) return; // table not mounted yet
+  if (!table) return;
 
-  const body = table.closest('#dash-stats-body');
+  const statsContainer = document.querySelector('#dash-stats-body');
+  const parentWrapper = statsContainer?.closest('.col-sm-6') || table.parentNode;
 
   const iframe = document.createElement('iframe');
   iframe.id = GRID_STATS_IFRAME_ID;
   iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
   iframe.srcdoc = buildGridStatsSrcdoc();
 
-  if (body && body.parentNode) {
-    // Insert the iframe directly BEFORE the whole dash body container (fixes “append at bottom” + scroll)
-    body.parentNode.insertBefore(iframe, body);
-  } else if (table.parentNode) {
-    // Fallback: insert before the table itself
-    table.parentNode.insertBefore(iframe, table);
+  if (parentWrapper && parentWrapper.parentNode) {
+    parentWrapper.parentNode.insertBefore(iframe, parentWrapper);
   } else {
-    // Last resort: append near top-level container to avoid bottom-of-page append
-    (document.querySelector('#omp-active-body') ||
-     document.querySelector('.page-container') ||
-     document.body
-    ).appendChild(iframe);
+    // Fallback to normal logic
+    document.body.appendChild(iframe);
   }
 }
 
 
+
   // -------- WAIT GRID AND INJECT -------- //
   function waitForGridStatsSlotAndInject(tries = 0) {
-  const table =
+   table =
     document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
     document.querySelector(GRID_STATS_SELECTOR);
 
-  const body = table && table.closest('#dash-stats-body');
+   body = table && table.closest('#dash-stats-body');
 
   if (table && (body || tries >= 3)) {
     // if body isn’t ready after ~1 second, proceed with the table fallback
@@ -385,11 +380,11 @@ if (window.__cvGridStatsInit) {
 
   // -------- ROUTE GRID STATS CHANGE -------- //
   function handleGridStatsRouteChange(prevHref, nextHref) {
-    const wasOn = GRID_STATS_REGEX.test(prevHref);
-    const isOn  = GRID_STATS_REGEX.test(nextHref);
+     wasOn = GRID_STATS_REGEX.test(prevHref);
+     isOn  = GRID_STATS_REGEX.test(nextHref);
     if (!wasOn && isOn) onGridStatsPageEnter();
     if ( wasOn && !isOn) {
-      const ifr = document.getElementById(GRID_STATS_IFRAME_ID);
+       ifr = document.getElementById(GRID_STATS_IFRAME_ID);
       if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
     }
   }
@@ -397,8 +392,8 @@ if (window.__cvGridStatsInit) {
   // -------- GRID STATS WATCHER -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
+     origPush = history.pushState;
+     origReplace = history.replaceState;
 
     history.pushState = function () {
       const prev = last;
@@ -425,6 +420,7 @@ if (window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
