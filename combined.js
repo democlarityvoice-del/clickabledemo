@@ -74,6 +74,8 @@ function buildSrcdoc() {
   .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
   tr:hover .svgbak path { fill: var(--icon-hover); }
   .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+
+// -------- CALL SIMULATION: UTILITIES -------- //
 </style>
 </head><body>
   <div class="call-container">
@@ -92,6 +94,7 @@ function buildSrcdoc() {
     </table>
   </div>
 
+// -------- CALL SIMULATION: CALL STRUCTURE -------- //
 <script>
 (function(){
   // existing JS logic
@@ -208,6 +211,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
