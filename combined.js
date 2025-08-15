@@ -1,3 +1,17 @@
+// Top-level constants
+const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
+const HOME_SELECTOR = '#nav-home a, #nav-home';
+const SLOT_SELECTOR = '#omp-active-body';
+const IFRAME_ID = 'cv-demo-calls-iframe';
+
+function buildSrcdoc() {
+  return `<!doctype html><html>...your full HTML...`;
+}
+
+// follow with: removeIframe(), injectIframe(), etc.
+
+
+
 function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -194,6 +208,7 @@ function buildSrcdoc() {
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
