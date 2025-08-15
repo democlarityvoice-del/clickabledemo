@@ -278,8 +278,9 @@
     });
   })();
 })();
-</script></body></html>`; 
+<\/script></body></html>`; 
 }
+
 
 
   // ===== IFRAME INJECTION =====
@@ -366,5 +367,6 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
