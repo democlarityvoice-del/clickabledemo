@@ -232,6 +232,7 @@ if (!window.__cvDemoInit) {
   // Initial landing
   if (HOME_REGEX.test(location.href)) onHomeEnter();
 })();
+} // closes __cvDemoInit
 
 
 
@@ -391,6 +392,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
 
