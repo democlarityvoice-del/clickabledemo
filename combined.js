@@ -103,28 +103,27 @@ function buildSrcdoc() {
     if (!tb) return;
     tb.innerHTML = '';
     calls.forEach((c) => {
-      const tr = document.createElement('tr');
-      tr.innerHTML = \`
-        <td>\${c.from}</td>
-        <td>\${c.cnam}</td>
-        <td>\${c.dialed}</td>
-        <td>\${c.to}</td>
-        <td>\${c.t()}</td>
-        <td>
-          <button class="listen-btn" aria-pressed="false" title="Listen in">
-            <svg class="svgbak" viewBox="0 0 24 24">
-              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-            </svg>
-          </button>
-        </td>\`;
-      tb.appendChild(tr);
-    }); // ✅ <-- this was missing
-  }
-})();
+  const tr = document.createElement('tr');
+  tr.innerHTML = \`
+    <td>\${c.from}</td>
+    <td>\${c.cnam}</td>
+    <td>\${c.dialed}</td>
+    <td>\${c.to}</td>
+    <td>\${c.t()}</td>
+    <td>
+      <button class="listen-btn" aria-pressed="false" title="Listen in">
+        <svg class="svgbak" viewBox="0 0 24 24">
+          <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+          <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+        </svg>
+      </button>
+    </td>\`;
+  tb.appendChild(tr);
+});
+})(); // ← end of IIFE
 <\/script>
 </body></html>`;
-}
+
 
 
 // -------- REMOVE IFRAME -------- //
@@ -212,6 +211,7 @@ function buildSrcdoc() {
 
         if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+
 
 
 
