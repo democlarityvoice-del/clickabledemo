@@ -104,7 +104,15 @@
   const extname = () => \`\${pick(first)} \${pick(alphabet)}.\`;
   const fmt = s => s.toString().padStart(2, '0');
   const timer = s => () => { const d = Date.now()-s, m=Math.floor(d/60000), sec=Math.floor((d%60000)/1000); return \`\${m}:\${fmt(sec)}\`; };
-  const newCall = () => ({ from: num(), cnam: cname(), dialed: 'CallQueue', to: `Ext. ${pick(exts)} (${extname()})`, startedAt: Date.now(), t: timer(Date.now()), state: 'active' });
+  const newCall = () => ({
+  from: num(),
+  cnam: cname(),
+  dialed: 'CallQueue',
+  to: `Ext. ${pick(exts)} (${extname()})`,
+  startedAt: Date.now(),
+  t: timer(Date.now()),
+  state: 'active'
+});
 
   const tick = c => {
     if (Date.now() - c.startedAt > 3 * 60 * 1000) c.state = 'ended';
@@ -240,6 +248,7 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
 
 
