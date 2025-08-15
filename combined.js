@@ -179,44 +179,59 @@ if (!window.__cvDemoInit) {
     if ( wasHome && !isHome) removeHome();
   }
 
-  (function watchHomeURLChanges() {
-    let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
+ (function watchHomeURLChanges() {
+  let last = location.href;
+  const origPush = history.pushState;
+  const origReplace = history.replaceState;
 
-    history.pushState = function () {
+  history.pushState = function () {
+    const prev = last;
+    const ret  = origPush.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleHomeRouteChange(prev, now);
+    return ret;
+  };
+
+  history.replaceState = function () {
+    const prev = last;
+    const ret  = origReplace.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleHomeRouteChange(prev, now);
+    return ret;
+  };
+
+  // Catch SPA mutations that don't use push/replace
+  const mo = new MutationObserver(() => {
+    if (location.href !== last) {
       const prev = last;
-      const ret  = origPush.apply(this, arguments);
-      const now  = location.href; last = now;
+      const now  = location.href;
+      last = now;
       handleHomeRouteChange(prev, now);
-      return ret;
-    };
-    history.replaceState = function () {
-      const prev = last;
-      const ret  = origReplace.apply(this, arguments);
-      const now  = location.href; last = now;
+    }
+  });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  // Catch back/forward
+  window.addEventListener('popstate', () => {
+    const prev = last;
+    const now  = location.href;
+    if (now !== prev) {
+      last = now;
       handleHomeRouteChange(prev, now);
-      return ret;
-    };
+    }
+  });
 
-    new MutationObserver(() => {
-      if (location.href !== last) {
-        const prev = last, now = location.href; last = now;
-        handleHomeRouteChange(prev, now);
-      }
-      });
-      observer.observe(bodyContainer, { childList: true });  
-} // ✅ This closes injectGridStatsCard()
+  // Home nav click hook
+  document.addEventListener('click', (e) => {
+    const el = e.target instanceof Element ? e.target : null;
+    if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
+  });
 
-
-    document.addEventListener('click', (e) => {
-      const el = e.target instanceof Element ? e.target : null;
-      if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
-    });
-
-    if (HOME_REGEX.test(location.href)) onHomeEnter();
-  })();
-} // closes __cvDemoInit
+  // Initial landing
+  if (HOME_REGEX.test(location.href)) onHomeEnter();
+})();
 
 
 // ==============================
@@ -367,3 +382,4 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
