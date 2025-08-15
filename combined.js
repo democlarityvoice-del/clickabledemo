@@ -75,7 +75,7 @@ function buildSrcdoc() {
   tr:hover .svgbak path { fill: var(--icon-hover); }
   .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
 
-// -------- CALL SIMULATION: UTILITIES -------- //
+/* -------- CALL SIMULATION: UTILITIES -------- */
 </style>
 </head><body>
   <div class="call-container">
@@ -210,6 +210,7 @@ function buildSrcdoc() {
 
         if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+
 
 
 
