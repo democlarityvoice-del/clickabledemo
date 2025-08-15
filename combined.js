@@ -239,15 +239,18 @@ if (!window.__cvDemoInit) {
 // ==============================
 // Clarity Voice Grid Stats Inject (CALL CENTER MANAGER) — inject INTO inner iframe
 // ==============================
+// -------- GRID: Init Guard -------- //
 if (!window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
+// -------- GRID: Constants -------- //
   const GRID_STATS_REGEX    = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   const GRID_TABLE_SELECTOR = '.dash-stats-grid-table';
   const GRID_BODY_SELECTOR  = '#dash-stats-body';
   const CARD_ID             = 'cv-grid-stats-card';
   const CARD_STYLE_ID       = 'cv-grid-stats-style';
 
+// -------- GRID: Card HTML -------- //
   function buildGridStatsCardHTML() {
     return `
       <div id="${CARD_ID}" style="box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:12px 16px;width:260px;margin:10px 10px 14px 10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);font-family:Arial,sans-serif;background:#fff;">
@@ -272,6 +275,7 @@ if (!window.__cvGridStatsInit) {
       </div>`;
   }
 
+// -------- GRID: Document Utilities -------- //
   function getSameOriginDocs() {
     const docs = [document];
     const iframes = document.querySelectorAll('iframe');
@@ -299,6 +303,7 @@ if (!window.__cvGridStatsInit) {
     return null;
   }
 
+// -------- GRID: Inject and Remove -------- //
   function injectGridStatsCard() {
     const found = findGridInnerDoc();
     if (!found) return;
@@ -334,6 +339,7 @@ if (!window.__cvGridStatsInit) {
     }
   }
 
+// -------- GRID: Retry logic -------- //
   function waitForGridStatsAndInject(tries = 0) {
     const found = findGridInnerDoc();
     if (found && (found.bodyContainer || tries >= 3)) {
@@ -346,6 +352,7 @@ if (!window.__cvGridStatsInit) {
 
   function onGridStatsPageEnter() { waitForGridStatsAndInject(); }
 
+// -------- GRID: Route Handling -------- //
   function handleGridStatsRouteChange(prevHref, nextHref) {
     const wasOn = GRID_STATS_REGEX.test(prevHref);
     const isOn  = GRID_STATS_REGEX.test(nextHref);
@@ -353,6 +360,7 @@ if (!window.__cvGridStatsInit) {
     if ( wasOn && !isOn) removeGridStatsCard();
   }
 
+// -------- GRID: Watch URL & SPA navigation -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -383,5 +391,6 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
 
