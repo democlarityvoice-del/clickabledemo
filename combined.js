@@ -282,118 +282,145 @@ if (window.__cvDemoInit) {
 
 
 // ==============================
-// Clarity Voice Grid Stats Inject (CALL CENTER MANAGER)
+// ==============================
+// Clarity Voice Grid Stats Inject (CALL CENTER MANAGER) — inject INTO inner iframe
 // ==============================
 if (window.__cvGridStatsInit) {
   // already initialized
 } else {
   window.__cvGridStatsInit = true;
 
-  // -------- GRID STATS CONSTANTS -------- //
-   GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-   GRID_STATS_SELECTOR = '.dash-stats-grid-table';   // targets any of the actual tables
-   GRID_STATS_IFRAME_ID = 'cv-grid-stats-';
-  
+  // -------- CONSTANTS -------- //
+  const GRID_STATS_REGEX        = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const GRID_TABLE_SELECTOR     = '.dash-stats-grid-table';
+  const GRID_BODY_SELECTOR      = '#dash-stats-body';
+  const CARD_ID                 = 'cv-grid-stats-card';
+  const CARD_STYLE_ID           = 'cv-grid-stats-style';
 
-  // -------- BUILD GRID STATS SRCDOC -------- //
-  function buildGridStatsSrcdoc() {
-    return `<!doctype html><html><head><meta charset="utf-8">
-<style>
-  body { font-family: Arial, sans-serif; margin:0; background:#fff; }
-  .grid-box { border:1px solid #ccc; border-radius:8px; padding:12px 16px; width:260px; margin:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); font-size:14px; }
-  .header-row { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px; font-size:13px; }
-  .metric-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
-  .stat { background:#7fff7f; padding:10px; border-radius:6px; text-align:center; font-weight:bold; font-size:16px; }
-  .stat.yellow { background:#ffeb3b; }
-  .label { font-size:12px; color:#555; }
-</style>
-</head><body>
-  <div class="grid-box">
-    <div class="header-row">
-      <span>ALL QUEUES</span>
-      <span style="color:#2196F3;cursor:pointer;">GRID SETTINGS</span>
-    </div>
-    <div class="metric-row">
-      <div class="stat"><div>2</div><div class="label">CW</div></div>
-      <div class="stat"><div>2:42</div><div class="label">AWT</div></div>
-      <div class="stat yellow"><div>3:14</div><div class="label">AHT</div></div>
-      <div class="stat"><div>27</div><div class="label">CA</div></div>
-    </div>
-  </div>
-</body></html>`;
+  // -------- Build card markup (no iframe) -------- //
+  function buildGridStatsCardHTML() {
+    return `
+      <div id="${CARD_ID}" style="box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:12px 16px;width:260px;margin:10px 10px 14px 10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);font-family:Arial,sans-serif;background:#fff;">
+        <div style="display:flex;justify-content:space-between;font-weight:bold;margin-bottom:8px;font-size:13px;">
+          <span>ALL QUEUES</span>
+          <span style="color:#2196F3;cursor:default;">GRID SETTINGS</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+            <div>2</div><div style="font-size:12px;color:#555;font-weight:normal;">CW</div>
+          </div>
+          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+            <div>2:42</div><div style="font-size:12px;color:#555;font-weight:normal;">AWT</div>
+          </div>
+          <div style="background:#ffeb3b;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+            <div>3:14</div><div style="font-size:12px;color:#555;font-weight:normal;">AHT</div>
+          </div>
+          <div style="background:#7fff7f;padding:10px;border-radius:6px;text-align:center;font-weight:bold;font-size:16px;">
+            <div>27</div><div style="font-size:12px;color:#555;font-weight:normal;">CA</div>
+          </div>
+        </div>
+      </div>`;
   }
 
-  // -------- GRID STATS INJECT -------- //
-  function injectGridStatsIframe() {
-  if (document.getElementById(GRID_STATS_IFRAME_ID)) return;
+  // -------- Helpers to find the inner iframe/document -------- //
+  function getSameOriginDocs() {
+    const docs = [];
+    // top-level document first
+    docs.push(document);
 
-  const table =
-    document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
-    document.querySelector(GRID_STATS_SELECTOR);
-
-  if (!table) return;
-
-  const statsContainer = document.querySelector('#dash-stats-body');
-  const parentWrapper = statsContainer?.closest('.col-sm-6') || table.parentNode;
-
-  const iframe = document.createElement('iframe');
-  iframe.id = GRID_STATS_IFRAME_ID;
-  iframe.style.cssText = 'border:none;width:280px;height:160px;margin:10px;display:block;';
-  iframe.srcdoc = buildGridStatsSrcdoc();
-
-  if (parentWrapper && parentWrapper.parentNode) {
-    parentWrapper.parentNode.insertBefore(iframe, parentWrapper);
-  } else {
-    // Fallback to normal logic
-    document.body.appendChild(iframe);
-  }
-}
-
-
-
-  // -------- WAIT GRID AND INJECT -------- //
-  function waitForGridStatsSlotAndInject(tries = 0) {
-   table =
-    document.querySelector('#dash-stats-body .dash-stats-grid-table') ||
-    document.querySelector(GRID_STATS_SELECTOR);
-
-   body = table && table.closest('#dash-stats-body');
-
-  if (table && (body || tries >= 3)) {
-    // if body isn’t ready after ~1 second, proceed with the table fallback
-    requestAnimationFrame(() =>
-      requestAnimationFrame(() => injectGridStatsIframe())
-    );
-    return;
+    // then scan iframes we can access (same-origin only)
+    const iframes = document.querySelectorAll('iframe');
+    for (const ifr of iframes) {
+      try {
+        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (idoc) docs.push(idoc);
+      } catch { /* cross-origin — ignore */ }
+    }
+    return docs;
   }
 
-  if (tries >= 10) return;
-
-  setTimeout(() => waitForGridStatsSlotAndInject(tries + 1), 300);
-}
-
-
-  // -------- PAGE GRID ENTRY -------- //
-  function onGridStatsPageEnter() {
-    waitForGridStatsSlotAndInject();
+  function findGridInnerDoc() {
+    // Find a document that has the grid tables inside #dash-stats-body
+    for (const doc of getSameOriginDocs()) {
+      const tableInBody = doc.querySelector(`${GRID_BODY_SELECTOR} ${GRID_TABLE_SELECTOR}`);
+      const anyTable    = tableInBody || doc.querySelector(GRID_TABLE_SELECTOR);
+      if (anyTable) {
+        return {
+          doc,
+          table: anyTable,
+          bodyContainer: anyTable.closest(GRID_BODY_SELECTOR) || null
+        };
+      }
+    }
+    return null;
   }
 
-  // -------- ROUTE GRID STATS CHANGE -------- //
-  function handleGridStatsRouteChange(prevHref, nextHref) {
-     wasOn = GRID_STATS_REGEX.test(prevHref);
-     isOn  = GRID_STATS_REGEX.test(nextHref);
-    if (!wasOn && isOn) onGridStatsPageEnter();
-    if ( wasOn && !isOn) {
-       ifr = document.getElementById(GRID_STATS_IFRAME_ID);
-      if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+  // -------- Inject the card into the inner doc -------- //
+  function injectGridStatsCard() {
+    const found = findGridInnerDoc();
+    if (!found) return;
+
+    const { doc, table, bodyContainer } = found;
+    if (doc.getElementById(CARD_ID)) return; // already injected
+
+    // Optional: add a tiny stylesheet once (kept mostly inline to avoid clashes)
+    if (!doc.getElementById(CARD_STYLE_ID)) {
+      const styleEl = doc.createElement('style');
+      styleEl.id = CARD_STYLE_ID;
+      styleEl.textContent = `/* reserved for future styles, intentionally minimal */`;
+      doc.head && doc.head.appendChild(styleEl);
+    }
+
+    // Build the card
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildGridStatsCardHTML();
+    const card = wrap.firstElementChild;
+
+    // Prefer placing BEFORE the whole dash body container; fallback: before first table
+    if (bodyContainer && bodyContainer.parentNode) {
+      bodyContainer.parentNode.insertBefore(card, bodyContainer);
+    } else if (table && table.parentNode) {
+      table.parentNode.insertBefore(card, table);
+    } else {
+      // last resort: append to document body
+      doc.body.appendChild(card);
     }
   }
 
-  // -------- GRID STATS WATCHER -------- //
+  function removeGridStatsCard() {
+    // remove from any same-origin doc we may have used
+    for (const doc of getSameOriginDocs()) {
+      const card = doc.getElementById(CARD_ID);
+      if (card) card.remove();
+    }
+  }
+
+  // -------- Waiter -------- //
+  function waitForGridStatsAndInject(tries = 0) {
+    const found = findGridInnerDoc();
+    if (found && (found.bodyContainer || tries >= 3)) {
+      requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsCard()));
+      return;
+    }
+    if (tries >= 12) return;
+    setTimeout(() => waitForGridStatsAndInject(tries + 1), 300);
+  }
+
+  // -------- Routing -------- //
+  function onGridStatsPageEnter() { waitForGridStatsAndInject(); }
+
+  function handleGridStatsRouteChange(prevHref, nextHref) {
+    const wasOn = GRID_STATS_REGEX.test(prevHref);
+    const isOn  = GRID_STATS_REGEX.test(nextHref);
+    if (!wasOn && isOn) onGridStatsPageEnter();
+    if ( wasOn && !isOn) removeGridStatsCard();
+  }
+
+  // -------- Watch URL changes -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
-     origPush = history.pushState;
-     origReplace = history.replaceState;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
 
     history.pushState = function () {
       const prev = last;
@@ -419,7 +446,8 @@ if (window.__cvGridStatsInit) {
 
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
-} // closes __cvGridStatsInit
+}
+
 
 
 
