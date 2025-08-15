@@ -1,16 +1,14 @@
 // ==============================
 // Clarity Voice Demo Calls Inject (HOME)
 // ==============================
-if (window.__cvDemoInit) {
-  // already initialized
-} else {
+if (!window.__cvDemoInit) {
   window.__cvDemoInit = true;
 
   // -------- DECLARE HOME CONSTANTS -------- //
-  const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
-  const HOME_SELECTOR = '#nav-home a, #nav-home';
-  const SLOT_SELECTOR = '#omp-active-body';
-  const IFRAME_ID = 'cv-demo-calls-iframe';
+  const HOME_REGEX     = /\/portal\/home(?:[\/?#]|$)/;
+  const HOME_SELECTOR  = '#nav-home a, #nav-home';
+  const SLOT_SELECTOR  = '#omp-active-body';
+  const IFRAME_ID      = 'cv-demo-calls-iframe';
 
   // -------- BUILD HOME SOURCE -------- //
   function buildSrcdoc() {
@@ -19,12 +17,7 @@ if (window.__cvDemoInit) {
 <style>
   * { box-sizing: border-box; }
   html, body { width: 100%; overflow-x: hidden; }
-  :root {
-    --icon-muted: rgba(0,0,0,.38);
-    --icon-hover: rgba(0,0,0,.60);
-    --icon-active: #000;
-    --icon-size: 18px;
-  }
+  :root { --icon-muted: rgba(0,0,0,.38); --icon-hover: rgba(0,0,0,.60); --icon-active: #000; --icon-size: 18px; }
   body { font-family: Arial, sans-serif; margin: 0; background: #fff; color: #000; }
   .call-container { background:#fff; padding:0 16px 20px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%; max-width:100%; }
   table { width:100%; table-layout:auto; border-collapse:collapse; background:#fff; }
@@ -43,12 +36,7 @@ if (window.__cvDemoInit) {
     <table>
       <thead>
         <tr>
-          <th>From</th>
-          <th>CNAM</th>
-          <th>Dialed</th>
-          <th>To</th>
-          <th>Duration</th>
-          <th><!-- Listen icon column --></th>
+          <th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th>
         </tr>
       </thead>
       <tbody id="callsTableBody"></tbody>
@@ -58,112 +46,63 @@ if (window.__cvDemoInit) {
 <!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function(){
-  // Pools — names, extensions, and area codes (area code is real, but 555-01xx makes the full number fictional)
-   names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
-   extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-   areaCodes = ["989","517","248","810","313"]; // 555-01xx makes the full number fictional
+  // pools
+  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+  const areaCodes = ["989","517","248","810","313"];
+  const CALL_QUEUE="CallQueue", VMAIL="VMail", SPEAK="SpeakAccount";
+  const calls = [];
+  const pad2 = (n)=>String(n).padStart(2,'0');
 
-   CALL_QUEUE = "CallQueue";
-   VMAIL = "VMail";
-   SPEAK = "SpeakAccount";
+  function randomName(){ let name,g=0; do{ name=names[Math.floor(Math.random()*names.length)]; g++; }while(calls.some(c=>c.cnam===name)&&g<50); return name; }
+  function randomPhone(){ let num; do{ const ac=areaCodes[Math.floor(Math.random()*areaCodes.length)]; const last2=pad2(Math.floor(Math.random()*100)); num=\`\${ac}-555-01\${last2}\`; }while(calls.some(c=>c.from===num)||/666/.test(num)); return num; }
+  function randomDialed(){ let num; do{ num=\`800-\${100+Math.floor(Math.random()*900)}-\${1000+Math.floor(Math.random()*9000)}\`; }while(/666/.test(num)); return num; }
+  function randomExtension(){ let ext,g=0; do{ ext=extensions[Math.floor(Math.random()*extensions.length)]; g++; }while(calls.some(c=>c.ext===ext)&&g<50); return ext; }
 
-   calls = [];
-   pad2 = (n) => String(n).padStart(2,'0');
-
-  function randomName() {
-    let name, guard = 0;
-    do { name = names[Math.floor(Math.random()*names.length)]; guard++; }
-    while (calls.some(c => c.cnam === name) && guard < 50);
-    return name;
-  }
-
-  function randomPhone() {
-    // Fictional per NANPA: 555-01xx range; also avoid '666'
-    let num;
-    do {
-       ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
-       last2 = pad2(Math.floor(Math.random()*100)); // 00..99
-      num = \`\${ac}-555-01\${last2}\`;
-    } while (calls.some(c => c.from === num) || /666/.test(num));
-    return num;
-  }
-
-  function randomDialed() {
-    let num;
-    do { num = \`800-\${100+Math.floor(Math.random()*900)}-\${1000+Math.floor(Math.random()*9000)}\`; }
-    while (/666/.test(num));
-    return num;
-  }
-
-  function randomExtension() {
-    let ext, guard = 0;
-    do { ext = extensions[Math.floor(Math.random()*extensions.length)]; guard++; }
-    while (calls.some(c => c.ext === ext) && guard < 50);
-    return ext;
-  }
-
-  function generateCall() {
-     from = randomPhone();
-     cnam = randomName();
-     dialed = randomDialed();
-     ext = randomExtension();
-     to = Math.random() < 0.05 ? (Math.random() < 0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
-     start = Date.now();
-    return {
-      from, cnam, dialed, to, ext, start,
-      t: () => {
-         elapsed = Math.min(Date.now()-start, (4*60+32)*1000); // cap at 4:32
-         s = Math.floor(elapsed/1000);
-        return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`;
-      }
+  function generateCall(){
+    const from=randomPhone(), cnam=randomName(), dialed=randomDialed(), ext=randomExtension();
+    const to = Math.random()<0.05 ? (Math.random()<0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
+    const start=Date.now();
+    return { from, cnam, dialed, to, ext, start,
+      t:()=>{ const elapsed=Math.min(Date.now()-start,(4*60+32)*1000); const s=Math.floor(elapsed/1000); return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`; }
     };
   }
 
-  function updateCalls() {
-    if (calls.length > 5 || Math.random() < 0.3) { if (calls.length) calls.splice(Math.floor(Math.random()*calls.length), 1); }
-    if (calls.length < 5) calls.push(generateCall());
-     now = Date.now();
-    calls.forEach(c => {
-      if (c.to === "CallQueue" && now - c.start > 5000) {
-         firstName = c.cnam.split(" ")[0] || "";
-        c.to = \`Ext. \${c.ext} (\${firstName})\`;
-      }
-      if (c.to === "SpeakAccount" && now - c.start > 2000) c.to = "VMail";
+  function updateCalls(){
+    if(calls.length>5 || Math.random()<0.3){ if(calls.length) calls.splice(Math.floor(Math.random()*calls.length),1); }
+    if(calls.length<5) calls.push(generateCall());
+    const now=Date.now();
+    calls.forEach(c=>{
+      if(c.to==="CallQueue" && now-c.start>5000){ const first=c.cnam.split(" ")[0]||""; c.to=\`Ext. \${c.ext} (\${first})\`; }
+      if(c.to==="SpeakAccount" && now-c.start>2000){ c.to="VMail"; }
     });
   }
 
-  function render() {
-     tb = document.getElementById('callsTableBody');
-    if (!tb) return;
-    tb.innerHTML = '';
-    calls.forEach(c => {
-       tr = document.createElement('tr');
-      tr.innerHTML = \`
-        <td>\${c.from}</td>
-        <td>\${c.cnam}</td>
-        <td>\${c.dialed}</td>
-        <td>\${c.to}</td>
-        <td>\${c.t()}</td>
-        <td>
-          <button class="listen-btn" aria-pressed="false" title="Listen in">
-            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
-              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-            </svg>
-          </button>
-        </td>\`;
+  function render(){
+    const tb=document.getElementById('callsTableBody'); if(!tb) return;
+    tb.innerHTML='';
+    calls.forEach(c=>{
+      const tr=document.createElement('tr');
+      tr.innerHTML=\`
+        <td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td>
+        <td><button class="listen-btn" aria-pressed="false" title="Listen in">
+          <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
+            <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+            <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+          </svg>
+        </button></td>\`;
       tb.appendChild(tr);
     });
   }
 
-  // Seed + loop + toggle
   (function seed(){ calls.push(generateCall()); render(); })();
-  setInterval(() => { updateCalls(); render(); }, 1500);
-  document.addEventListener('click', (e) => {
-     el = e.target instanceof Element ? e.target : null;
-     btn = el && el.closest('.listen-btn');
-    if (!btn) return;
-    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
+  setInterval(()=>{ updateCalls(); render(); },1500);
+
+  document.addEventListener('click',(e)=>{
+    const el = e.target instanceof Element ? e.target : null;
+    const btn = el && el.closest('.listen-btn');
+    if(!btn) return;
+    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b=>{
       b.classList.remove('is-active'); b.setAttribute('aria-pressed','false');
     });
     btn.classList.add('is-active'); btn.setAttribute('aria-pressed','true');
@@ -173,15 +112,14 @@ if (window.__cvDemoInit) {
 </body></html>`;
   }
 
-  // -------- REMOVE HOME  -------- //
-  function remove() {
-     ifr = document.getElementById(_ID);
+  // -------- REMOVE HOME -------- //
+  function removeHome() {
+    const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-    // unhide the exact element we hid (if any)
-     slot = document.querySelector(SLOT_SELECTOR);
+    const slot = document.querySelector(SLOT_SELECTOR);
     if (slot) {
-       hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
       if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
         hidden.style.display = '';
         hidden.removeAttribute('data-cv-demo-hidden');
@@ -189,45 +127,42 @@ if (window.__cvDemoInit) {
     }
   }
 
-  // -------- INJECT HOME  -------- //
-  function inject() {
-    if (document.getElementById(_ID)) return;
-     slot = document.querySelector(SLOT_SELECTOR);
+  // -------- INJECT HOME -------- //
+  function injectHome() {
+    if (document.getElementById(IFRAME_ID)) return;
+    const slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
 
-    // robust anchor finder
-    function findAnchor(el) {
-       preferred = el.querySelector('.table-container.scrollable-small');
+    function findAnchor(el){
+      const preferred = el.querySelector('.table-container.scrollable-small');
       if (preferred) return preferred;
       if (el.firstElementChild) return el.firstElementChild;
-      let n = el.firstChild;
-      while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+      let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
       return n || null;
     }
 
-     anchor = findAnchor(slot);
+    const anchor = findAnchor(slot);
 
-    // hide what we anchor against, tag it so we can unhide later
     if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
       anchor.style.display = 'none';
-      anchor.setAttribute('data-cv-demo-hidden', '1');
+      anchor.setAttribute('data-cv-demo-hidden','1');
     }
 
-      = document.createElement('');
-    .id = _ID;
-    .style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    .setAttribute('scrolling', 'yes');
-    .srcdoc = buildSrcdoc();
+    const iframe = document.createElement('iframe');
+    iframe.id = IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+    iframe.setAttribute('scrolling','yes');
+    iframe.srcdoc = buildSrcdoc();
 
-    if (anchor && anchor.parentNode === slot) slot.insertBefore(, anchor);
-    else slot.appendChild();
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+    else slot.appendChild(iframe);
   }
 
   // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
-     slot = document.querySelector(SLOT_SELECTOR);
+    const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
-      requestAnimationFrame(() => requestAnimationFrame(() => inject()));
+      requestAnimationFrame(() => requestAnimationFrame(() => injectHome()));
       return;
     }
     if (tries >= 12) return;
@@ -237,42 +172,42 @@ if (window.__cvDemoInit) {
   // -------- HOME ROUTING -------- //
   function onHomeEnter() { setTimeout(() => waitForSlotAndInject(), 600); }
 
-  function handleRouteChange(prevHref, nextHref) {
-     wasHome = HOME_REGEX.test(prevHref);
-     isHome  = HOME_REGEX.test(nextHref);
+  function handleHomeRouteChange(prevHref, nextHref) {
+    const wasHome = HOME_REGEX.test(prevHref);
+    const isHome  = HOME_REGEX.test(nextHref);
     if (!wasHome && isHome) onHomeEnter();
-    if ( wasHome && !isHome) remove();
+    if ( wasHome && !isHome) removeHome();
   }
 
-  (function watchURLChanges() {
+  (function watchHomeURLChanges() {
     let last = location.href;
-     origPush = history.pushState;
-     origReplace = history.replaceState;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
 
     history.pushState = function () {
-       prev = last;
-       ret  = origPush.apply(this, arguments);
-       now  = location.href; last = now;
-      handleRouteChange(prev, now);
+      const prev = last;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleHomeRouteChange(prev, now);
       return ret;
     };
     history.replaceState = function () {
-       prev = last;
-       ret  = origReplace.apply(this, arguments);
-       now  = location.href; last = now;
-      handleRouteChange(prev, now);
+      const prev = last;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleHomeRouteChange(prev, now);
       return ret;
     };
 
     new MutationObserver(() => {
       if (location.href !== last) {
-         prev = last, now = location.href; last = now;
-        handleRouteChange(prev, now);
+        const prev = last, now = location.href; last = now;
+        handleHomeRouteChange(prev, now);
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
     document.addEventListener('click', (e) => {
-       el = e.target instanceof Element ? e.target : null;
+      const el = e.target instanceof Element ? e.target : null;
       if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
     });
 
@@ -282,22 +217,17 @@ if (window.__cvDemoInit) {
 
 
 // ==============================
-// ==============================
 // Clarity Voice Grid Stats Inject (CALL CENTER MANAGER) — inject INTO inner iframe
 // ==============================
-if (window.__cvGridStatsInit) {
-  // already initialized
-} else {
+if (!window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
-  // -------- CONSTANTS -------- //
-  const GRID_STATS_REGEX        = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const GRID_TABLE_SELECTOR     = '.dash-stats-grid-table';
-  const GRID_BODY_SELECTOR      = '#dash-stats-body';
-  const CARD_ID                 = 'cv-grid-stats-card';
-  const CARD_STYLE_ID           = 'cv-grid-stats-style';
+  const GRID_STATS_REGEX    = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const GRID_TABLE_SELECTOR = '.dash-stats-grid-table';
+  const GRID_BODY_SELECTOR  = '#dash-stats-body';
+  const CARD_ID             = 'cv-grid-stats-card';
+  const CARD_STYLE_ID       = 'cv-grid-stats-style';
 
-  // -------- Build card markup (no iframe) -------- //
   function buildGridStatsCardHTML() {
     return `
       <div id="${CARD_ID}" style="box-sizing:border-box;border:1px solid #ccc;border-radius:8px;padding:12px 16px;width:260px;margin:10px 10px 14px 10px;box-shadow:0 2px 5px rgba(0,0,0,0.1);font-family:Arial,sans-serif;background:#fff;">
@@ -322,13 +252,8 @@ if (window.__cvGridStatsInit) {
       </div>`;
   }
 
-  // -------- Helpers to find the inner iframe/document -------- //
   function getSameOriginDocs() {
-    const docs = [];
-    // top-level document first
-    docs.push(document);
-
-    // then scan iframes we can access (same-origin only)
+    const docs = [document];
     const iframes = document.querySelectorAll('iframe');
     for (const ifr of iframes) {
       try {
@@ -340,7 +265,6 @@ if (window.__cvGridStatsInit) {
   }
 
   function findGridInnerDoc() {
-    // Find a document that has the grid tables inside #dash-stats-body
     for (const doc of getSameOriginDocs()) {
       const tableInBody = doc.querySelector(`${GRID_BODY_SELECTOR} ${GRID_TABLE_SELECTOR}`);
       const anyTable    = tableInBody || doc.querySelector(GRID_TABLE_SELECTOR);
@@ -355,47 +279,40 @@ if (window.__cvGridStatsInit) {
     return null;
   }
 
-  // -------- Inject the card into the inner doc -------- //
   function injectGridStatsCard() {
     const found = findGridInnerDoc();
     if (!found) return;
 
     const { doc, table, bodyContainer } = found;
-    if (doc.getElementById(CARD_ID)) return; // already injected
+    if (doc.getElementById(CARD_ID)) return;
 
-    // Optional: add a tiny stylesheet once (kept mostly inline to avoid clashes)
     if (!doc.getElementById(CARD_STYLE_ID)) {
       const styleEl = doc.createElement('style');
       styleEl.id = CARD_STYLE_ID;
-      styleEl.textContent = `/* reserved for future styles, intentionally minimal */`;
-      doc.head && doc.head.appendChild(styleEl);
+      styleEl.textContent = `/* reserved for future styles */`;
+      if (doc.head) doc.head.appendChild(styleEl);
     }
 
-    // Build the card
     const wrap = doc.createElement('div');
     wrap.innerHTML = buildGridStatsCardHTML();
     const card = wrap.firstElementChild;
 
-    // Prefer placing BEFORE the whole dash body container; fallback: before first table
     if (bodyContainer && bodyContainer.parentNode) {
       bodyContainer.parentNode.insertBefore(card, bodyContainer);
     } else if (table && table.parentNode) {
       table.parentNode.insertBefore(card, table);
     } else {
-      // last resort: append to document body
       doc.body.appendChild(card);
     }
   }
 
   function removeGridStatsCard() {
-    // remove from any same-origin doc we may have used
     for (const doc of getSameOriginDocs()) {
       const card = doc.getElementById(CARD_ID);
       if (card) card.remove();
     }
   }
 
-  // -------- Waiter -------- //
   function waitForGridStatsAndInject(tries = 0) {
     const found = findGridInnerDoc();
     if (found && (found.bodyContainer || tries >= 3)) {
@@ -406,7 +323,6 @@ if (window.__cvGridStatsInit) {
     setTimeout(() => waitForGridStatsAndInject(tries + 1), 300);
   }
 
-  // -------- Routing -------- //
   function onGridStatsPageEnter() { waitForGridStatsAndInject(); }
 
   function handleGridStatsRouteChange(prevHref, nextHref) {
@@ -416,7 +332,6 @@ if (window.__cvGridStatsInit) {
     if ( wasOn && !isOn) removeGridStatsCard();
   }
 
-  // -------- Watch URL changes -------- //
   (function watchGridStatsURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -446,13 +361,4 @@ if (window.__cvGridStatsInit) {
 
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
-}
-
-
-
-
-
-
-
-
-
+} // closes __cvGridStatsInit
