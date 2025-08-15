@@ -1,5 +1,5 @@
 // ==============================
-// Clarity Voice Demo Calls Inject
+// Clarity Voice Demo Calls Inject (HOME)
 // ==============================
 if (window.__cvDemoInit) {
   // already initialized
@@ -25,59 +25,18 @@ if (window.__cvDemoInit) {
     --icon-active: #000;
     --icon-size: 18px;
   }
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #fff;
-    color: #000;
-  }
-  .call-container {
-    background: #fff;
-    padding: 0 16px 20px;
-    border-radius: 6px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    width: 100%;
-    max-width: 100%;
-  }
-  table {
-    width: 100%;
-    table-layout: auto;
-    border-collapse: collapse;
-    background: #fff;
-  }
-  thead th {
-    font-weight: 700;
-    padding: 10px 12px;
-    font-size: 14px;
-    text-align: left;
-    border-bottom: 1px solid #ddd;
-    white-space: nowrap;
-  }
-  td {
-    padding: 10px 12px;
-    text-align: left;
-    font-size: 14px;
-    border-bottom: 1px solid #ddd;
-    white-space: nowrap;
-  }
-  tr:hover { background: #f5f5f5; }
-
-  .listen-btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: 28px;
-    height: 28px;
-    background: #f0f0f0;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-  }
-  .listen-btn:focus { outline: none; }
-  .svgbak { width: var(--icon-size); height: var(--icon-size); }
-  .svgbak path { fill: var(--icon-muted); transition: fill .2s ease; }
-  tr:hover .svgbak path { fill: var(--icon-hover); }
-  .listen-btn.is-active .svgbak path { fill: var(--icon-active); }
+  body { font-family: Arial, sans-serif; margin: 0; background: #fff; color: #000; }
+  .call-container { background:#fff; padding:0 16px 20px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%; max-width:100%; }
+  table { width:100%; table-layout:auto; border-collapse:collapse; background:#fff; }
+  thead th { font-weight:700; padding:10px 12px; font-size:14px; text-align:left; border-bottom:1px solid #ddd; white-space:nowrap; }
+  td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; white-space:nowrap; }
+  tr:hover { background:#f5f5f5; }
+  .listen-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#f0f0f0; border-radius:50%; border:none; cursor:pointer; }
+  .listen-btn:focus { outline:none; }
+  .svgbak { width:var(--icon-size); height:var(--icon-size); }
+  .svgbak path { fill:var(--icon-muted); transition:fill .2s ease; }
+  tr:hover .svgbak path { fill:var(--icon-hover); }
+  .listen-btn.is-active .svgbak path { fill:var(--icon-active); }
 </style>
 </head><body>
   <div class="call-container">
@@ -102,55 +61,44 @@ if (window.__cvDemoInit) {
   // Pools — names, extensions, and area codes (area code is real, but 555-01xx makes the full number fictional)
   const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
   const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const areaCodes = ["989","517","248","810","313"]; // any is fine; 555-01xx keeps the number fictional
+  const areaCodes = ["989","517","248","810","313"]; // 555-01xx makes the full number fictional
 
   const CALL_QUEUE = "CallQueue";
   const VMAIL = "VMail";
   const SPEAK = "SpeakAccount";
 
   const calls = [];
-
-  // Utilities
   const pad2 = (n) => String(n).padStart(2,'0');
 
   function randomName() {
-    // try to keep names unique among active calls
     let name, guard = 0;
-    do {
-      name = names[Math.floor(Math.random() * names.length)];
-      guard++;
-    } while (calls.some(c => c.cnam === name) && guard < 50);
+    do { name = names[Math.floor(Math.random()*names.length)]; guard++; }
+    while (calls.some(c => c.cnam === name) && guard < 50);
     return name;
   }
 
   function randomPhone() {
-    // Fictional per NANPA: 555-01xx range; also avoid '666' anywhere, just in case
+    // Fictional per NANPA: 555-01xx range; also avoid '666'
     let num;
     do {
-      const ac = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-      const last2 = pad2(Math.floor(Math.random() * 100)); // 00..99
+      const ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
+      const last2 = pad2(Math.floor(Math.random()*100)); // 00..99
       num = \`\${ac}-555-01\${last2}\`;
     } while (calls.some(c => c.from === num) || /666/.test(num));
     return num;
   }
 
   function randomDialed() {
-    // Toll-free-ish looking number; avoid 666
     let num;
-    do {
-      num = \`800-\${100 + Math.floor(Math.random()*900)}-\${1000 + Math.floor(Math.random()*9000)}\`;
-    } while (/666/.test(num));
+    do { num = \`800-\${100+Math.floor(Math.random()*900)}-\${1000+Math.floor(Math.random()*9000)}\`; }
+    while (/666/.test(num));
     return num;
   }
 
   function randomExtension() {
-    // Reserve unique ext up-front to avoid later collisions when flipping CallQueue->Ext
-    let ext;
-    let guard = 0;
-    do {
-      ext = extensions[Math.floor(Math.random() * extensions.length)];
-      guard++;
-    } while (calls.some(c => c.ext === ext) && guard < 50);
+    let ext, guard = 0;
+    do { ext = extensions[Math.floor(Math.random()*extensions.length)]; guard++; }
+    while (calls.some(c => c.ext === ext) && guard < 50);
     return ext;
   }
 
@@ -159,44 +107,28 @@ if (window.__cvDemoInit) {
     const cnam = randomName();
     const dialed = randomDialed();
     const ext = randomExtension();
-
-    // 5% to voicemail; of those, 3% via SpeakAccount first
-    const to = Math.random() < 0.05
-      ? (Math.random() < 0.03 ? SPEAK : VMAIL)
-      : CALL_QUEUE;
-
+    const to = Math.random() < 0.05 ? (Math.random() < 0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
     const start = Date.now();
     return {
       from, cnam, dialed, to, ext, start,
       t: () => {
-        const elapsed = Math.min(Date.now() - start, (4*60 + 32) * 1000); // cap at 4:32
-        const s = Math.floor(elapsed / 1000);
+        const elapsed = Math.min(Date.now()-start, (4*60+32)*1000); // cap at 4:32
+        const s = Math.floor(elapsed/1000);
         return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`;
       }
     };
   }
 
   function updateCalls() {
-    // Occasionally remove a random call (or if we ever exceeded 5)
-    if (calls.length > 5 || Math.random() < 0.3) {
-      if (calls.length) calls.splice(Math.floor(Math.random() * calls.length), 1);
-    }
-
-    // Maintain up to 5 visible calls
-    if (calls.length < 5) {
-      calls.push(generateCall());
-    }
-
-    // Promote CallQueue -> Ext after ~5s; SpeakAccount -> VMail after ~2s
+    if (calls.length > 5 || Math.random() < 0.3) { if (calls.length) calls.splice(Math.floor(Math.random()*calls.length), 1); }
+    if (calls.length < 5) calls.push(generateCall());
     const now = Date.now();
     calls.forEach(c => {
-      if (c.to === CALL_QUEUE && now - c.start > 5000) {
+      if (c.to === "CallQueue" && now - c.start > 5000) {
         const firstName = c.cnam.split(" ")[0] || "";
         c.to = \`Ext. \${c.ext} (\${firstName})\`;
       }
-      if (c.to === SPEAK && now - c.start > 2000) {
-        c.to = VMAIL;
-      }
+      if (c.to === "SpeakAccount" && now - c.start > 2000) c.to = "VMail";
     });
   }
 
@@ -204,7 +136,7 @@ if (window.__cvDemoInit) {
     const tb = document.getElementById('callsTableBody');
     if (!tb) return;
     tb.innerHTML = '';
-    calls.forEach((c) => {
+    calls.forEach(c => {
       const tr = document.createElement('tr');
       tr.innerHTML = \`
         <td>\${c.from}</td>
@@ -224,23 +156,17 @@ if (window.__cvDemoInit) {
     });
   }
 
-  // Paint immediately so the table isn't empty on load
+  // Seed + loop + toggle
   (function seed(){ calls.push(generateCall()); render(); })();
-
-  // Main loop
   setInterval(() => { updateCalls(); render(); }, 1500);
-
-  // Single-active toggle for "Listen in"
   document.addEventListener('click', (e) => {
-    const el = (e.target && e.target.closest) ? e.target : null;
-    const btn = el && el.closest ? el.closest('.listen-btn') : null;
+    const el = e.target instanceof Element ? e.target : null;
+    const btn = el && el.closest('.listen-btn');
     if (!btn) return;
     document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
-      b.classList.remove('is-active');
-      b.setAttribute('aria-pressed','false');
+      b.classList.remove('is-active'); b.setAttribute('aria-pressed','false');
     });
-    btn.classList.add('is-active');
-    btn.setAttribute('aria-pressed','true');
+    btn.classList.add('is-active'); btn.setAttribute('aria-pressed','true');
   });
 })();
 <\/script>
@@ -252,19 +178,40 @@ if (window.__cvDemoInit) {
     const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-    // unhide native anchor if we hid it
+    // unhide the exact element we hid (if any)
     const slot = document.querySelector(SLOT_SELECTOR);
-    const anchor = slot && slot.querySelector('.table-container.scrollable-small');
-    if (anchor) anchor.style.display = '';
+    if (slot) {
+      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+      if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+        hidden.style.display = '';
+        hidden.removeAttribute('data-cv-demo-hidden');
+      }
+    }
   }
 
   // -------- INJECT IFRAME -------- //
   function injectIframe() {
-    if (document.getElementById(IFRAME_ID)) return; // keep existing instance
+    if (document.getElementById(IFRAME_ID)) return;
     const slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
-    const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
-    if (anchor instanceof HTMLElement) anchor.style.display = 'none';
+
+    // robust anchor finder
+    function findAnchor(el) {
+      const preferred = el.querySelector('.table-container.scrollable-small');
+      if (preferred) return preferred;
+      if (el.firstElementChild) return el.firstElementChild;
+      let n = el.firstChild;
+      while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+      return n || null;
+    }
+
+    const anchor = findAnchor(slot);
+
+    // hide what we anchor against, tag it so we can unhide later
+    if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+      anchor.style.display = 'none';
+      anchor.setAttribute('data-cv-demo-hidden', '1');
+    }
 
     const iframe = document.createElement('iframe');
     iframe.id = IFRAME_ID;
@@ -273,12 +220,69 @@ if (window.__cvDemoInit) {
     iframe.srcdoc = buildSrcdoc();
 
     if (anchor && anchor.parentNode === slot) slot.insertBefore(iframe, anchor);
-    else slot.insertBefore(iframe, slot.firstChild);
+    else slot.appendChild(iframe);
   }
+
+  // -------- WAIT AND INJECT -------- //
+  function waitForSlotAndInject(tries = 0) {
+    const slot = document.querySelector(SLOT_SELECTOR);
+    if (slot && slot.isConnected) {
+      requestAnimationFrame(() => requestAnimationFrame(() => injectIframe()));
+      return;
+    }
+    if (tries >= 12) return;
+    setTimeout(() => waitForSlotAndInject(tries + 1), 250);
+  }
+
+  // -------- HOME ROUTING -------- //
+  function onHomeEnter() { setTimeout(() => waitForSlotAndInject(), 600); }
+
+  function handleRouteChange(prevHref, nextHref) {
+    const wasHome = HOME_REGEX.test(prevHref);
+    const isHome  = HOME_REGEX.test(nextHref);
+    if (!wasHome && isHome) onHomeEnter();
+    if ( wasHome && !isHome) removeIframe();
+  }
+
+  (function watchURLChanges() {
+    let last = location.href;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
+
+    history.pushState = function () {
+      const prev = last;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleRouteChange(prev, now);
+      return ret;
+    };
+    history.replaceState = function () {
+      const prev = last;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleRouteChange(prev, now);
+      return ret;
+    };
+
+    new MutationObserver(() => {
+      if (location.href !== last) {
+        const prev = last, now = location.href; last = now;
+        handleRouteChange(prev, now);
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    document.addEventListener('click', (e) => {
+      const el = e.target instanceof Element ? e.target : null;
+      if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
+    });
+
+    if (HOME_REGEX.test(location.href)) onHomeEnter();
+  })();
+} // closes __cvDemoInit
 
 
 // ==============================
-// Clarity Voice Grid Stats Inject
+// Clarity Voice Grid Stats Inject (CALL CENTER MANAGER)
 // ==============================
 if (window.__cvGridStatsInit) {
   // already initialized
@@ -286,7 +290,7 @@ if (window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
   // -------- CONSTANTS -------- //
-  const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[/?#]|$)/;
+  const GRID_STATS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   const GRID_STATS_SELECTOR = '.page-container';
   const GRID_STATS_IFRAME_ID = 'cv-grid-stats-iframe';
 
@@ -294,47 +298,13 @@ if (window.__cvGridStatsInit) {
   function buildGridStatsSrcdoc() {
     return `<!doctype html><html><head><meta charset="utf-8">
 <style>
-  body {
-    font-family: Arial, sans-serif;
-    margin: 0;
-    background: #fff;
-  }
-  .grid-box {
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    padding: 12px 16px;
-    width: 260px;
-    margin: 10px;
-    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    font-size: 14px;
-  }
-  .header-row {
-    display: flex;
-    justify-content: space-between;
-    font-weight: bold;
-    margin-bottom: 8px;
-    font-size: 13px;
-  }
-  .metric-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-  .stat {
-    background: #7fff7f;
-    padding: 10px;
-    border-radius: 6px;
-    text-align: center;
-    font-weight: bold;
-    font-size: 16px;
-  }
-  .stat.yellow {
-    background: #ffeb3b;
-  }
-  .label {
-    font-size: 12px;
-    color: #555;
-  }
+  body { font-family: Arial, sans-serif; margin:0; background:#fff; }
+  .grid-box { border:1px solid #ccc; border-radius:8px; padding:12px 16px; width:260px; margin:10px; box-shadow:0 2px 5px rgba(0,0,0,0.1); font-size:14px; }
+  .header-row { display:flex; justify-content:space-between; font-weight:bold; margin-bottom:8px; font-size:13px; }
+  .metric-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .stat { background:#7fff7f; padding:10px; border-radius:6px; text-align:center; font-weight:bold; font-size:16px; }
+  .stat.yellow { background:#ffeb3b; }
+  .label { font-size:12px; color:#555; }
 </style>
 </head><body>
   <div class="grid-box">
@@ -385,9 +355,9 @@ if (window.__cvGridStatsInit) {
   // -------- ROUTE CHANGE -------- //
   function handleGridStatsRouteChange(prevHref, nextHref) {
     const wasOn = GRID_STATS_REGEX.test(prevHref);
-    const isOn = GRID_STATS_REGEX.test(nextHref);
+    const isOn  = GRID_STATS_REGEX.test(nextHref);
     if (!wasOn && isOn) onGridStatsPageEnter();
-    if (wasOn && !isOn) {
+    if ( wasOn && !isOn) {
       const ifr = document.getElementById(GRID_STATS_IFRAME_ID);
       if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
     }
@@ -401,32 +371,28 @@ if (window.__cvGridStatsInit) {
 
     history.pushState = function () {
       const prev = last;
-      const ret = origPush.apply(this, arguments);
-      const now = location.href;
-      last = now;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href; last = now;
       handleGridStatsRouteChange(prev, now);
       return ret;
     };
     history.replaceState = function () {
       const prev = last;
-      const ret = origReplace.apply(this, arguments);
-      const now = location.href;
-      last = now;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href; last = now;
       handleGridStatsRouteChange(prev, now);
       return ret;
     };
 
     new MutationObserver(() => {
       if (location.href !== last) {
-        const prev = last;
-        const now = location.href;
-        last = now;
+        const prev = last, now = location.href; last = now;
         handleGridStatsRouteChange(prev, now);
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-        if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
+    if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
-} // CLOSES the else { from window.__cvGridStatsInit
+} // closes __cvGridStatsInit
 
 
