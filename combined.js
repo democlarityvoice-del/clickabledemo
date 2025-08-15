@@ -204,7 +204,10 @@ if (!window.__cvDemoInit) {
         const prev = last, now = location.href; last = now;
         handleHomeRouteChange(prev, now);
       }
-    }).observe(document.documentElement, { childList: true, subtree: true });
+      });
+      observer.observe(bodyContainer, { childList: true });  
+} // ✅ This closes injectGridStatsCard()
+
 
     document.addEventListener('click', (e) => {
       const el = e.target instanceof Element ? e.target : null;
@@ -365,6 +368,7 @@ if (!window.__cvGridStatsInit) {
         if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })(); // closes watchGridStatsURLChanges
 } // ✅ This was missing — closes __cvGridStatsInit
+
 
 
 
