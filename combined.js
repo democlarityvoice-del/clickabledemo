@@ -362,9 +362,11 @@ if (!window.__cvGridStatsInit) {
       }
     }).observe(document.documentElement, { childList: true, subtree: true });
 
-    if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
-  })();
-} // closes __cvGridStatsInit
+        if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
+  })(); // closes watchGridStatsURLChanges
+} // ✅ This was missing — closes __cvGridStatsInit
+
+
 
 
 
