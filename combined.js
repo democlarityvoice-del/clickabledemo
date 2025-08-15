@@ -1,12 +1,20 @@
-// -------- DECLARE CONSTANTS -------- //
-const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
-const HOME_SELECTOR = '#nav-home a, #nav-home';
-const SLOT_SELECTOR = '#omp-active-body';
-const IFRAME_ID = 'cv-demo-calls-iframe';
+// ==============================
+// Clarity Voice Demo Calls Inject
+// ==============================
+if (window.__cvDemoInit) {
+  // already initialized
+} else {
+  window.__cvDemoInit = true;
 
-// -------- BUILD SOURCE -------- //
-function buildSrcdoc() {
-  return `<!doctype html><html><head><meta charset="utf-8">
+  // -------- DECLARE CONSTANTS -------- //
+  const HOME_REGEX = /\/portal\/home(?:[/?#]|$)/;
+  const HOME_SELECTOR = '#nav-home a, #nav-home';
+  const SLOT_SELECTOR = '#omp-active-body';
+  const IFRAME_ID = 'cv-demo-calls-iframe';
+
+  // -------- BUILD SOURCE -------- //
+  function buildSrcdoc() {
+    return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; }
@@ -64,8 +72,6 @@ function buildSrcdoc() {
     border-radius: 50%;
     border: none;
     cursor: pointer;
-    position: relative;
-    z-index: 2;
   }
   .listen-btn:focus { outline: none; }
   .svgbak { width: var(--icon-size); height: var(--icon-size); }
@@ -93,40 +99,58 @@ function buildSrcdoc() {
 <!-- -------- CALL SIMULATION: CALL STRUCTURE -------- -->
 <script>
 (function(){
-  const names = ["Carlos Rivera", "Emily Tran", "Mike Johnson", "Ava Chen", "Sarah Patel", "Liam Nguyen", "Monica Alvarez"];
-  const extensions = [201, 203, 204, 207, 211, 215];
-  const areaCodes = ["989", "517", "248", "810", "313"];
-  const callQueue = "CallQueue";
-  const voicemail = "VMail";
-  const speakAccount = "SpeakAccount";
+  // Pools — names, extensions, and area codes (area code is real, but 555-01xx makes the full number fictional)
+  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+  const areaCodes = ["989","517","248","810","313"]; // any is fine; 555-01xx keeps the number fictional
+
+  const CALL_QUEUE = "CallQueue";
+  const VMAIL = "VMail";
+  const SPEAK = "SpeakAccount";
+
+  const calls = [];
+
+  // Utilities
+  const pad2 = (n) => String(n).padStart(2,'0');
 
   function randomName() {
-    let name;
+    // try to keep names unique among active calls
+    let name, guard = 0;
     do {
       name = names[Math.floor(Math.random() * names.length)];
-    } while (calls.some(c => c.cnam === name));
+      guard++;
+    } while (calls.some(c => c.cnam === name) && guard < 50);
     return name;
   }
 
   function randomPhone() {
+    // Fictional per NANPA: 555-01xx range; also avoid '666' anywhere, just in case
     let num;
     do {
       const ac = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-      const rest = Math.floor(Math.random() * 9000000 + 1000000).toString();
-      num = \`\${ac}-\${rest.slice(0,3)}-\${rest.slice(3)}\`;
-    } while (calls.some(c => c.from === num));
+      const last2 = pad2(Math.floor(Math.random() * 100)); // 00..99
+      num = \`\${ac}-555-01\${last2}\`;
+    } while (calls.some(c => c.from === num) || /666/.test(num));
     return num;
   }
 
   function randomDialed() {
-    return "800-" + Math.floor(Math.random() * 900 + 100) + "-" + Math.floor(Math.random() * 9000 + 1000);
+    // Toll-free-ish looking number; avoid 666
+    let num;
+    do {
+      num = \`800-\${100 + Math.floor(Math.random()*900)}-\${1000 + Math.floor(Math.random()*9000)}\`;
+    } while (/666/.test(num));
+    return num;
   }
 
   function randomExtension() {
+    // Reserve unique ext up-front to avoid later collisions when flipping CallQueue->Ext
     let ext;
+    let guard = 0;
     do {
       ext = extensions[Math.floor(Math.random() * extensions.length)];
-    } while (calls.some(c => c.to.includes(ext)));
+      guard++;
+    } while (calls.some(c => c.ext === ext) && guard < 50);
     return ext;
   }
 
@@ -135,50 +159,43 @@ function buildSrcdoc() {
     const cnam = randomName();
     const dialed = randomDialed();
     const ext = randomExtension();
+
+    // 5% to voicemail; of those, 3% via SpeakAccount first
     const to = Math.random() < 0.05
-      ? (Math.random() < 0.03 ? speakAccount : voicemail)
-      : callQueue;
+      ? (Math.random() < 0.03 ? SPEAK : VMAIL)
+      : CALL_QUEUE;
 
     const start = Date.now();
     return {
-      from,
-      cnam,
-      dialed,
-      to,
-      ext,
+      from, cnam, dialed, to, ext, start,
       t: () => {
-        const s = Math.floor((Date.now() - start) / 1000);
-        const min = Math.floor(s / 60);
-        const sec = s % 60;
-        return \`\${min}:\${sec.toString().padStart(2, '0')}\`;
-      },
-      start,
-      updated: Date.now()
+        const elapsed = Math.min(Date.now() - start, (4*60 + 32) * 1000); // cap at 4:32
+        const s = Math.floor(elapsed / 1000);
+        return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`;
+      }
     };
   }
 
-  const calls = [];
-
   function updateCalls() {
-    // Remove old calls
+    // Occasionally remove a random call (or if we ever exceeded 5)
     if (calls.length > 5 || Math.random() < 0.3) {
-      calls.splice(Math.floor(Math.random() * calls.length), 1);
+      if (calls.length) calls.splice(Math.floor(Math.random() * calls.length), 1);
     }
 
-    // Add new calls
+    // Maintain up to 5 visible calls
     if (calls.length < 5) {
-      const newCall = generateCall();
-      calls.push(newCall);
+      calls.push(generateCall());
     }
 
-    // Promote callQueue to extension
+    // Promote CallQueue -> Ext after ~5s; SpeakAccount -> VMail after ~2s
+    const now = Date.now();
     calls.forEach(c => {
-      if (c.to === callQueue && Date.now() - c.start > 5000) {
-        c.to = \`Ext. \${c.ext} (\${c.cnam.split(" ")[0]})\`;
+      if (c.to === CALL_QUEUE && now - c.start > 5000) {
+        const firstName = c.cnam.split(" ")[0] || "";
+        c.to = \`Ext. \${c.ext} (\${firstName})\`;
       }
-
-      if (c.to === speakAccount && Date.now() - c.start > 2000) {
-        c.to = voicemail;
+      if (c.to === SPEAK && now - c.start > 2000) {
+        c.to = VMAIL;
       }
     });
   }
@@ -197,7 +214,7 @@ function buildSrcdoc() {
         <td>\${c.t()}</td>
         <td>
           <button class="listen-btn" aria-pressed="false" title="Listen in">
-            <svg class="svgbak" viewBox="0 0 24 24">
+            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
               <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
               <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
             </svg>
@@ -207,24 +224,43 @@ function buildSrcdoc() {
     });
   }
 
-  setInterval(() => {
-    updateCalls();
-    render();
-  }, 1500);
+  // Paint immediately so the table isn't empty on load
+  (function seed(){ calls.push(generateCall()); render(); })();
+
+  // Main loop
+  setInterval(() => { updateCalls(); render(); }, 1500);
+
+  // Single-active toggle for "Listen in"
+  document.addEventListener('click', (e) => {
+    const el = (e.target && e.target.closest) ? e.target : null;
+    const btn = el && el.closest ? el.closest('.listen-btn') : null;
+    if (!btn) return;
+    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
+      b.classList.remove('is-active');
+      b.setAttribute('aria-pressed','false');
+    });
+    btn.classList.add('is-active');
+    btn.setAttribute('aria-pressed','true');
+  });
 })();
 <\/script>
 </body></html>`;
-}
+  }
 
-// -------- REMOVE IFRAME -------- //
+  // -------- REMOVE IFRAME -------- //
   function removeIframe() {
     const ifr = document.getElementById(IFRAME_ID);
     if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+
+    // unhide native anchor if we hid it
+    const slot = document.querySelector(SLOT_SELECTOR);
+    const anchor = slot && slot.querySelector('.table-container.scrollable-small');
+    if (anchor) anchor.style.display = '';
   }
 
-// -------- INJECT IFRAME -------- //
+  // -------- INJECT IFRAME -------- //
   function injectIframe() {
-    if (document.getElementById(IFRAME_ID)) return;
+    if (document.getElementById(IFRAME_ID)) return; // keep existing instance
     const slot = document.querySelector(SLOT_SELECTOR);
     if (!slot) return;
     const anchor = slot.querySelector('.table-container.scrollable-small') || slot.firstChild;
@@ -240,7 +276,7 @@ function buildSrcdoc() {
     else slot.insertBefore(iframe, slot.firstChild);
   }
 
-// -------- WAIT AND INJECT -------- //
+  // -------- WAIT AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
     const slot = document.querySelector(SLOT_SELECTOR);
     if (slot && slot.isConnected) {
@@ -251,12 +287,12 @@ function buildSrcdoc() {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
-// -------- HOME ROUTING -------- //
+  // -------- HOME ROUTING -------- //
   function onHomeEnter() {
     setTimeout(() => waitForSlotAndInject(), 600);
   }
 
-// -------- ROUTE CHANGE HANDLER -------- //
+  // -------- ROUTE CHANGE HANDLER -------- //
   function handleRouteChange(prevHref, nextHref) {
     const wasHome = HOME_REGEX.test(prevHref);
     const isHome = HOME_REGEX.test(nextHref);
@@ -264,7 +300,7 @@ function buildSrcdoc() {
     if (wasHome && !isHome) removeIframe();
   }
 
-// -------- WATCH URL CHANGES -------- //
+  // -------- WATCH URL CHANGES -------- //
   (function watchURLChanges() {
     let last = location.href;
     const origPush = history.pushState;
@@ -296,11 +332,15 @@ function buildSrcdoc() {
     }).observe(document.documentElement, { childList: true, subtree: true });
 
     document.addEventListener('click', (e) => {
-      if (e.target.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
+      const el = e.target instanceof Element ? e.target : null;
+      if (el && el.closest(HOME_SELECTOR)) setTimeout(onHomeEnter, 0);
     });
 
-        if (HOME_REGEX.test(location.href)) onHomeEnter();
+    if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
+}
+
+
 
 
 
