@@ -278,8 +278,9 @@
     });
   })();
 })();
-</script></body></html>`;
-  }
+</script></body></html>`; 
+}
+
 
   // ===== IFRAME INJECTION =====
   function removeIframe() {
@@ -365,4 +366,5 @@
     if (HOME_REGEX.test(location.href)) onHomeEnter();
   })();
 })();
+
 
