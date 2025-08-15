@@ -300,12 +300,20 @@ if (!window.__cvGridStatsInit) {
     bodyContainer.removeChild(bodyContainer.firstChild);
   }
 
-  // Build and insert your replacement card
+    // Build and insert your replacement card
   const wrap = doc.createElement('div');
   wrap.innerHTML = buildGridStatsCardHTML();
   const card = wrap.firstElementChild;
   bodyContainer.appendChild(card); // ⬅ Insert INTO the original container
-}
+
+  // Set up a MutationObserver to re-inject if removed
+  const observer = new MutationObserver(() => {
+    if (!doc.getElementById(CARD_ID)) {
+      observer.disconnect();
+      requestAnimationFrame(() => requestAnimationFrame(() => injectGridStatsCard()));
+    }
+  });
+  observer.observe(bodyContainer, { childList: true });
 
 
   function waitForGridStatsAndInject(tries = 0) {
@@ -357,4 +365,5 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 } // closes __cvGridStatsInit
+
 
