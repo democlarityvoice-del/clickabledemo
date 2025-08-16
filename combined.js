@@ -9,7 +9,7 @@ if (!window.__cvDemoInit) {
   const HOME_SELECTOR  = '#nav-home a, #nav-home';
   const SLOT_SELECTOR  = '#omp-active-body';
   const IFRAME_ID      = 'cv-demo-calls-iframe';
-  const ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const HOME_ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
   // -------- BUILD HOME SOURCE -------- //
   function buildSrcdoc() {
@@ -25,12 +25,16 @@ if (!window.__cvDemoInit) {
   thead th { font-weight:700; padding:10px 12px; font-size:14px; text-align:left; border-bottom:1px solid #ddd; white-space:nowrap; }
   td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; white-space:nowrap; }
   tr:hover { background:#f5f5f5; }
-  .listen-btn { display:inline-flex; align-items:center; justify-content:center; width:28px; height:28px; background:#f0f0f0; border-radius:50%; border:none; cursor:pointer; }
-  .listen-btn:focus { outline:none; }
-  .svgbak { width:var(--icon-size); height:var(--icon-size); }
-  .svgbak path { fill:var(--icon-muted); transition:fill .2s ease; }
-  tr:hover .svgbak path { fill:var(--icon-hover); }
-  .listen-btn.is-active .svgbak path { fill:var(--icon-active); }
+  .listen-btn img {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  display: block;
+  opacity: .38;
+  transition: opacity .2s ease;
+}
+tr:hover .listen-btn img { opacity: .60; }
+.listen-btn.is-active img { opacity: 1; }
+
 </style>
 </head><body>
   <div class="call-container">
@@ -178,10 +182,12 @@ if (!window.__cvDemoInit) {
         <td>\${c.t()}</td>
         <td>
           <button class="listen-btn" aria-pressed="false" title="Listen in">
-            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
-              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-            </svg>
+            <td>
+              <button class="listen-btn" aria-pressed="false" title="Listen in">
+                <img src="${HOME_ICON_SPEAKER}" alt="">
+              </button>
+            </td>
+
           </button>
         </td>\`;
       tb.appendChild(tr);
@@ -1029,3 +1035,4 @@ cvq-modal thead th{ white-space:nowrap; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
