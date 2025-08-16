@@ -44,74 +44,171 @@ if (!window.__cvDemoInit) {
   </div>
 
 <!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
+<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
-(function(){
+(function () {
+  // Pools
   const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
   const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const areaCodes = ["989","517","248","810","313"];
-  const CALL_QUEUE="CallQueue", VMAIL="VMail", SPEAK="SpeakAccount";
+  const areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
+  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
+
+  // Outbound agent display names
+  const firstNames = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
+  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const OUTBOUND_RATE = 0.30; // ~30% outbound, 70% inbound
+
+  // State
   const calls = [];
-  const pad2 = (n)=>String(n).padStart(2,'0');
+  const pad2 = n => String(n).padStart(2,"0");
 
-  function randomName(){ let name,g=0; do{ name=names[Math.floor(Math.random()*names.length)]; g++; }while(calls.some(c=>c.cnam===name)&&g<50); return name; }
-  function randomPhone(){ let num; do{ const ac=areaCodes[Math.floor(Math.random()*areaCodes.length)]; const last2=pad2(Math.floor(Math.random()*100)); num=\`\${ac}-555-01\${last2}\`; }while(calls.some(c=>c.from===num)||/666/.test(num)); return num; }
-  function randomDialed(){ let num; do{ num=\`800-\${100+Math.floor(Math.random()*900)}-\${1000+Math.floor(Math.random()*9000)}\`; }while(/666/.test(num)); return num; }
-  function randomExtension(){ let ext,g=0; do{ ext=extensions[Math.floor(Math.random()*extensions.length)]; g++; }while(calls.some(c=>c.ext===ext)&&g<50); return ext; }
+  // Helpers
+  function randomName() {
+    let name, guard = 0;
+    do { name = names[Math.floor(Math.random()*names.length)]; guard++; }
+    while (calls.some(c => c.cnam === name) && guard < 50);
+    return name;
+  }
+  function randomAgentName() {
+    const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
+    const init = alphabet[Math.floor(Math.random()*alphabet.length)];
+    return `${fn} ${init}.`;
+  }
+  function randomPhone() {
+    // e.g. 313-555-01xx (NANPA-safe)
+    let num;
+    do {
+      const ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
+      const last2 = pad2(Math.floor(Math.random()*100));
+      num = `${ac}-555-01${last2}`;
+    } while (calls.some(c => c.from === num) || /666/.test(num));
+    return num;
+  }
+  function randomDialed() {
+    // 800-xxx-xxxx, avoid 666
+    let num;
+    do {
+      num = `800-${100+Math.floor(Math.random()*900)}-${1000+Math.floor(Math.random()*9000)}`;
+    } while (/666/.test(num));
+    return num;
+  }
+  function randomExtension() {
+    let ext, guard = 0;
+    do { ext = extensions[Math.floor(Math.random()*extensions.length)]; guard++; }
+    while (calls.some(c => c.ext === ext) && guard < 50);
+    return ext;
+  }
 
-  function generateCall(){
-    const from=randomPhone(), cnam=randomName(), dialed=randomDialed(), ext=randomExtension();
-    const to = Math.random()<0.05 ? (Math.random()<0.03 ? SPEAK : VMAIL) : CALL_QUEUE;
-    const start=Date.now();
-    return { from, cnam, dialed, to, ext, start,
-      t:()=>{ const elapsed=Math.min(Date.now()-start,(4*60+32)*1000); const s=Math.floor(elapsed/1000); return \`\${Math.floor(s/60)}:\${pad2(s%60)}\`; }
+  // New call (inbound or outbound)
+  function generateCall() {
+    const outbound = Math.random() < OUTBOUND_RATE;
+    const ext = randomExtension();
+    const start = Date.now();
+
+    if (outbound) {
+      // Agent dialing a customer
+      const dial = randomPhone(); // external number
+      return {
+        from: `Ext. ${ext}`,
+        cnam: randomAgentName(),   // agent display
+        dialed: dial,
+        to: dial,                  // outbound: To = dialed
+        ext,
+        outbound: true,
+        start,
+        t: () => {
+          const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
+          const s = Math.floor(elapsed/1000);
+          return `${Math.floor(s/60)}:${pad2(s%60)}`;
+        }
+      };
+    }
+
+    // Inbound customer call
+    const from = randomPhone();
+    const cnam = randomName();
+    const dialed = randomDialed();
+    const to = Math.random() < 0.05
+      ? (Math.random() < 0.03 ? SPEAK : VMAIL)
+      : CALL_QUEUE;
+
+    return {
+      from, cnam, dialed, to, ext,
+      outbound: false,
+      start,
+      t: () => {
+        const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
+        const s = Math.floor(elapsed/1000);
+        return `${Math.floor(s/60)}:${pad2(s%60)}`;
+      }
     };
   }
 
-  function updateCalls(){
-    if(calls.length>5 || Math.random()<0.3){ if(calls.length) calls.splice(Math.floor(Math.random()*calls.length),1); }
-    if(calls.length<5) calls.push(generateCall());
-    const now=Date.now();
-    calls.forEach(c=>{
-      if (c.to === "CallQueue" && now - c.start > 5000) {
+  // Lifecycle
+  function updateCalls() {
+    // Occasionally remove one
+    if (calls.length > 5 || Math.random() < 0.3) {
+      if (calls.length) calls.splice(Math.floor(Math.random()*calls.length), 1);
+    }
+    // Keep up to 5
+    if (calls.length < 5) calls.push(generateCall());
+
+    // State transitions for inbound only
+    const now = Date.now();
+    calls.forEach(c => {
+      if (!c.outbound && c.to === CALL_QUEUE && now - c.start > 5000) {
+        // No agent name shown here (per your preference)
         c.to = `Ext. ${c.ext}`;
-}
-     if(c.to==="SpeakAccount" && now-c.start>2000){ c.to="VMail"; }
+      }
+      if (!c.outbound && c.to === SPEAK && now - c.start > 2000) {
+        c.to = VMAIL;
+      }
     });
   }
 
-  function render(){
-    const tb=document.getElementById('callsTableBody'); if(!tb) return;
-    tb.innerHTML='';
-    calls.forEach(c=>{
-      const tr=document.createElement('tr');
-      tr.innerHTML=\`
-        <td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td>
-        <td><button class="listen-btn" aria-pressed="false" title="Listen in">
-          <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
-            <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
-            <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
-          </svg>
-        </button></td>\`;
+  function render() {
+    const tb = document.getElementById("callsTableBody");
+    if (!tb) return;
+    tb.innerHTML = "";
+    calls.forEach(c => {
+      const tr = document.createElement("tr");
+      tr.innerHTML = \`
+        <td>\${c.from}</td>
+        <td>\${c.cnam}</td>
+        <td>\${c.dialed}</td>
+        <td>\${c.to}</td>
+        <td>\${c.t()}</td>
+        <td>
+          <button class="listen-btn" aria-pressed="false" title="Listen in">
+            <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
+              <path d="M3 10v4h4l5 5V5L7 10H3z"></path>
+              <path d="M14.5 3.5a.75.75 0 0 1 1.06 0 9 9 0 0 1 0 12.73.75.75 0 0 1-1.06-1.06 7.5 7.5 0 0 0 0-10.6.75.75 0 0 1 0-1.06z"></path>
+            </svg>
+          </button>
+        </td>\`;
       tb.appendChild(tr);
     });
   }
 
+  // Seed + loop
   (function seed(){ calls.push(generateCall()); render(); })();
-  setInterval(()=>{ updateCalls(); render(); },1500);
+  setInterval(() => { updateCalls(); render(); }, 1500);
 
-  document.addEventListener('click',(e)=>{
+  // Single-active toggle for "Listen in"
+  document.addEventListener("click", (e) => {
     const el = e.target instanceof Element ? e.target : null;
-    const btn = el && el.closest('.listen-btn');
-    if(!btn) return;
-    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b=>{
-      b.classList.remove('is-active'); b.setAttribute('aria-pressed','false');
+    const btn = el && el.closest(".listen-btn");
+    if (!btn) return;
+    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
+      b.classList.remove("is-active");
+      b.setAttribute("aria-pressed","false");
     });
-    btn.classList.add('is-active'); btn.setAttribute('aria-pressed','true');
+    btn.classList.add("is-active");
+    btn.setAttribute("aria-pressed","true");
   });
 })();
 <\/script>
-</body></html>`;
-}
+
 
 
   // -------- REMOVE HOME -------- //
@@ -467,6 +564,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
