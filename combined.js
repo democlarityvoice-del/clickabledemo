@@ -195,7 +195,7 @@ tr:hover .listen-btn img { opacity: .60; }
       <td>\${c.t()}</td>
       <td>
         <button class="listen-btn" aria-pressed="false" title="Listen in">
-          <img src="\${HOME_ICON_SPEAKER}" alt="">
+          <img src="${HOME_ICON_SPEAKER}" alt="">
         </button>
       </td>\`;
     tb.appendChild(tr);
@@ -1043,5 +1043,6 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
