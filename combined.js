@@ -728,79 +728,92 @@ if (!window.__cvQueuesTilesInit) {
     return CVQ_CACHE.active[qkey];
   }
 
-  // ---- ACTION: Build "Callers Waiting" rows for modal ----
-  function makeWaitingRows(qkey, count){
-    if (!CVQ_CACHE.waiting[qkey]) {
-      var now = Date.now();
-      CVQ_CACHE.waiting[qkey] = Array.from({length:count}, function(){
-        return { caller:safeCallerID(), name:'WIRELESS CALLER', status:'Waiting', priority:false, start: now - Math.floor(Math.random()*20)*1000 };
-      });
-    } else {
-      var cur = CVQ_CACHE.waiting[qkey];
-      while (cur.length < count) {
-        cur.push({ caller:safeCallerID(), name:'WIRELESS CALLER', status:'Waiting', priority:false, start: Date.now() });
-      }
-      CVQ_CACHE.waiting[qkey] = cur.slice(0, count);
-    }
-    return CVQ_CACHE.waiting[qkey];
+
+ // ---- ACTION: Ensure Styles + Modal Host (create once) ----
+function ensureStyles(doc){
+  if (!doc.getElementById(PANEL_STYLE_ID)) {
+    var s = doc.createElement('style');
+    s.id = PANEL_STYLE_ID;
+    s.textContent =
+`/* container spacing to match native */
+#${PANEL_ID}.table-container{margin-top:6px;}
+#${PANEL_ID} table{width:100%;}
+#${PANEL_ID} thead th{white-space:nowrap;}
+#${PANEL_ID} td,#${PANEL_ID} th{vertical-align:middle;}
+
+/* clickable counts (blue, boldish) */
+#${PANEL_ID} .cvq-link{color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer;}
+#${PANEL_ID} .cvq-link:hover{text-decoration:underline;}
+
+/* actions column: round icon buttons */
+#${PANEL_ID} .cvq-actions{ text-align:right; white-space:nowrap; width:86px; }
+.cvq-icon{
+  display:inline-flex; align-items:center; justify-content:center;
+  width:24px; height:24px; border-radius:50%;
+  background:#f7f7f7; border:1px solid #e1e1e1;
+  margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s;
+  cursor:pointer; padding:0; line-height:0;
+}
+tr:hover .cvq-icon{ opacity:.85; }
+.cvq-icon:hover{ opacity:1; }
+.cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
+.cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
+
+/* --- CVQ MODAL: default hidden; open with .is-open --- */
+.cvq-modal-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  z-index:9998; display:none;
+}
+.cvq-modal{
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
+  width:min(980px,96vw); height:88vh; max-height:88vh;
+  z-index:9999; overflow:hidden; display:none; flex-direction:column;
+}
+.cvq-modal.is-open{ display:flex; }
+.cvq-modal-backdrop.is-open{ display:block; }
+
+.cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
+.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }
+.cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+
+.cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
+.cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }
+
+.cvq-modal table{ width:100%; }
+.cvq-modal thead th{ white-space:nowrap; }
+.cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }
+
+/* kebab menu inside modal */
+.cvq-kebab{ position:relative; }
+.cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10; }
+.cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }
+.cvq-menu a:hover{ background:#f5f5f5; }
+
+@media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
+    if (doc.head) doc.head.appendChild(s);
   }
 
-  // ---- ACTION: Ensure Styles + Modal Host (create once) ----
-  function ensureStyles(doc){
-    if (!doc.getElementById(PANEL_STYLE_ID)) {
-      var s = doc.createElement('style');
-      s.id = PANEL_STYLE_ID;
-      s.textContent =
-"/* container spacing to match native */\n\
-#"+PANEL_ID+".table-container{margin-top:6px;}\n\
-#"+PANEL_ID+" table{width:100%;}\n\
-#"+PANEL_ID+" thead th{white-space:nowrap;}\n\
-#"+PANEL_ID+" td,#"+PANEL_ID+" th{vertical-align:middle;}\n\
-\n\
-/* clickable counts (blue, boldish) */\n\
-#"+PANEL_ID+" .cvq-link{color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer;}\n\
-#"+PANEL_ID+" .cvq-link:hover{text-decoration:underline;}\n\
-\n\
-/* actions column: round icon buttons */\n\
-#"+PANEL_ID+" .cvq-actions{ text-align:right; white-space:nowrap; width:86px; }\n\
-.cvq-icon{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#f7f7f7; border:1px solid #e1e1e1; margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s; cursor:pointer; padding:0; line-height:0; }\n\
-tr:hover .cvq-icon{ opacity:.85; }\n\
-.cvq-icon:hover{ opacity:1; }\n\
-.cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }\n\
-.cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }\n\
-\n\
-/* --- CVQ MODAL: closed by default; opened by adding .cvq-open --- */\n\
-.cvq-modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9998; display:none; }\n\
-.cvq-modal-backdrop.cvq-open{ display:block; }\n\
-.cvq-modal{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25); width:min(980px,96vw); height:88vh; max-height:88vh; z-index:9999; overflow:hidden; display:none; flex-direction:column; }\n\
-.cvq-modal.cvq-open{ display:flex; }\n\
-.cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }\n\
-.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }\n\
-.cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }\n\
-.cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }\n\
-.cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }\n\
-.cvq-modal table{ width:100%; }\n\
-.cvq-modal thead th{ white-space:nowrap; }\n\
-.cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }\n\
-.cvq-kebab{ position:relative; }\n\
-.cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10; }\n\
-.cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }\n\
-.cvq-menu a:hover{ background:#f5f5f5; }\n\
-@media (max-width:900px){ #"+PANEL_ID+" .hide-sm{display:none;} }";
-      if (doc.head) doc.head.appendChild(s);
-    }
+  if (!doc.getElementById('cvq-modal-host')) {
+    var host = doc.createElement('div');
+    host.id = 'cvq-modal-host';
+    host.innerHTML =
+      '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>'+
+      '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">'+
+        '<header id="cvq-modal-title">Modal</header>'+
+        '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>'+
+        '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>'+
+      '</div>';
+    (doc.body || doc.documentElement).appendChild(host);
 
-    if (!doc.getElementById('cvq-modal-host')) {
-      var host = doc.createElement('div');
-      host.id = 'cvq-modal-host';
-      host.innerHTML =
-        '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>'+
-        '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">'+
-          '<header id="cvq-modal-title">Modal</header>'+
-          '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>'+
-          '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>'+
-        '</div>';
-      (doc.body || doc.documentElement).appendChild(host);
+    // Close wiring (optional to keep here)
+    host.addEventListener('click', function(e){
+      if (e.target && (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close')) closeModal(doc);
+    });
+  }
+}
+
 
       // ---- ACTION: Modal Close (backdrop + button) ----
       host.addEventListener('click', function(e){
@@ -858,6 +871,30 @@ function bindInlineCountOpener(doc){
       }
     } catch(e) {}
     return false; // prevent navigation/bubbling either way
+  };
+}
+// ---- ACTION: Inline opener for count links (fallback if other listeners interfere) ----
+function bindInlineCountOpener(doc){
+  var w = (doc && doc.defaultView) || window;
+  w.__cvqOpenCount = function(act, el){
+    try{
+      // find row
+      var tr = el.closest ? el.closest('tr') : (function(p){ while(p && p.tagName!=='TR') p=p.parentNode; return p; })(el);
+      if (!tr) return false;
+
+      var qkey = tr.getAttribute('data-qkey'), q = null;
+      for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key===qkey){ q = QUEUE_DATA[i]; break; } }
+      if (!q) return false;
+
+      var baseTitle = q.title.replace(/\s+\(\d+\)$/, '');
+
+      if (act === 'active'){
+        openModal(doc, 'Active Calls in ' + baseTitle, buildActiveTable(makeActiveRows(qkey, q.active)));
+      } else if (act === 'waiting'){
+        openModal(doc, 'Callers in ' + baseTitle, buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
+      }
+    } catch(e){}
+    return false; // prevent navigation
   };
 }
 
@@ -977,22 +1014,30 @@ function bindInlineCountOpener(doc){
 
   // ---- ACTION: Open Modal (sets title + content + timer) ----
   function openModal(doc, title, tableHTML){
-    var bd = doc.getElementById('cvq-backdrop');
-    var md = doc.getElementById('cvq-modal');
-    doc.getElementById('cvq-modal-title').textContent = title;
-    doc.getElementById('cvq-modal-content').innerHTML = tableHTML;
-    if (bd) bd.classList.add('cvq-open');
-    if (md) md.classList.add('cvq-open');
+  var bd = doc.getElementById('cvq-backdrop');
+  var md = doc.getElementById('cvq-modal');
+  doc.getElementById('cvq-modal-title').textContent = title;
+  doc.getElementById('cvq-modal-content').innerHTML = tableHTML;
+  if (bd) bd.classList.add('is-open');
+  if (md) md.classList.add('is-open');
+  if (doc.__cvqModalTimer) clearInterval(doc.__cvqModalTimer);
+  doc.__cvqModalTimer = setInterval(function(){
+    var nodes = doc.querySelectorAll('[data-cvq-start]');
+    for (var i=0;i<nodes.length;i++){
+      var t0 = +nodes[i].getAttribute('data-cvq-start');
+      nodes[i].textContent = mmss(((Date.now()-t0)/1000)|0);
+    }
+  },1000);
+}
 
-    if (doc.__cvqModalTimer) clearInterval(doc.__cvqModalTimer);
-    doc.__cvqModalTimer = setInterval(function(){
-      var nodes = doc.querySelectorAll('[data-cvq-start]');
-      for (var i=0;i<nodes.length;i++){
-        var t0 = +nodes[i].getAttribute('data-cvq-start');
-        nodes[i].textContent = mmss(((Date.now()-t0)/1000)|0);
-      }
-    },1000);
-  }
+function closeModal(doc){
+  var bd = doc.getElementById('cvq-backdrop');
+  var md = doc.getElementById('cvq-modal');
+  if (bd) bd.classList.remove('is-open');
+  if (md) md.classList.remove('is-open');
+  if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer=null; }
+}
+
 
   // ---- ACTION: Close Modal (cleans timer) ----
   function closeModal(doc){
@@ -1182,4 +1227,5 @@ function bindInlineCountOpener(doc){
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
