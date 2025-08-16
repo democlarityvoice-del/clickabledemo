@@ -567,253 +567,200 @@ if (!window.__cvGridStatsInit) {
 
 // ==============================
 // ==============================
-// Clarity Voice Queues Tiles (CALL CENTER MANAGER)
+// ==============================
+// Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
 
-  // -------- CONSTANTS -------- //
-  const QUEUES_REGEX          = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const BODY_SEL              = '#home-queues-body';
-  const TABLE_SEL             = '#manager_queues';
-  const PANEL_ID              = 'cv-queues-tiles';
-  const PANEL_STYLE_ID        = 'cv-queues-tiles-style';
-  const TABLE_HIDE_STYLE_ID   = 'cv-queues-hide-style';
-  const TABLE_FLAG_CLASS      = 'cvq-hide-cols';
+  // ---- CONSTANTS ----
+  const QUEUES_REGEX        = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const BODY_SEL            = '#home-queues-body';
+  const CONTAINER_SEL       = '.table-container';
+  const TABLE_SEL           = '#manager_queues';
+  const PANEL_ID            = 'cvq-panel';
+  const PANEL_STYLE_ID      = 'cvq-panel-style';
 
-  // -------- SCHEDULER -------- //
-  function scheduleInject(fn) {
-    let fired = false;
-    if ('requestAnimationFrame' in window) {
-      requestAnimationFrame(() =>
-        requestAnimationFrame(() => { fired = true; fn(); })
-      );
-    }
-    setTimeout(() => { if (!fired) fn(); }, 64);
-  }
-
-  // -------- SAME-ORIGIN DOCS -------- //
-  function getSameOriginDocs() {
-    const docs = [document];
-    const iframes = document.querySelectorAll('iframe');
-    for (const ifr of iframes) {
-      try {
-        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (idoc) docs.push(idoc);
-      } catch { /* cross-origin - ignore */ }
-    }
+  // ---- UTIL ----
+  function scheduleInject(fn){ let f=false; requestAnimationFrame(()=>requestAnimationFrame(()=>{f=true;fn();})); setTimeout(()=>{if(!f)fn();},64); }
+  function getSameOriginDocs(){
+    const docs=[document];
+    document.querySelectorAll('iframe').forEach(ifr=>{
+      try{ const d=ifr.contentDocument || (ifr.contentWindow&&ifr.contentWindow.document); if(d) docs.push(d); }catch{}
+    });
     return docs;
   }
-
-  function findQueuesDoc() {
+  function findQueuesDoc(){
     for (const doc of getSameOriginDocs()) {
       const body = doc.querySelector(BODY_SEL);
-      const table = (body && body.querySelector(TABLE_SEL)) || doc.querySelector(TABLE_SEL);
-      if (body || table) return { doc, body, table };
+      if (!body) continue;
+      const container = body.querySelector(CONTAINER_SEL);
+      const table = body.querySelector(TABLE_SEL);
+      return { doc, body, container, table };
     }
     return null;
   }
 
-  // -------- STYLES -------- //
-  function ensureStyles(doc) {
-    if (!doc.getElementById(PANEL_STYLE_ID)) {
-      const s = doc.createElement('style');
-      s.id = PANEL_STYLE_ID;
-      s.textContent = `
-#${PANEL_ID} .cvq-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); /* <= fills row neatly */
-  gap:10px;
-  margin-top:6px;
-}
-#${PANEL_ID} .cvq-card{ padding:10px 12px; } /* a touch tighter so it aligns visually */
+  // ---- DATA ----
+  const QUEUE_DATA = [
+    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false },
+    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true  },
+    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, timer:true  },
+    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false }
+  ];
+  const fmt=(n)=>{ n|=0; const m=String((n/60|0)).padStart(2,'0'); const s=String(n%60).padStart(2,'0'); return `${m}:${s}`; };
 
-      `;
-      doc.head && doc.head.appendChild(s);
-    }
-    if (!doc.getElementById(TABLE_HIDE_STYLE_ID)) {
-      const h = doc.createElement('style');
-      h.id = TABLE_HIDE_STYLE_ID;
-      // Hide only columns 2..5 (Call Queue, Active, Waiting, Wait). Leave Agents Idle & icons.
-      h.textContent = `
-table.${TABLE_FLAG_CLASS} thead th:nth-child(2),
-table.${TABLE_FLAG_CLASS} thead th:nth-child(3),
-table.${TABLE_FLAG_CLASS} thead th:nth-child(4),
-table.${TABLE_FLAG_CLASS} thead th:nth-child(5),
-table.${TABLE_FLAG_CLASS} tbody td:nth-child(2),
-table.${TABLE_FLAG_CLASS} tbody td:nth-child(3),
-table.${TABLE_FLAG_CLASS} tbody td:nth-child(4),
-table.${TABLE_FLAG_CLASS} tbody td:nth-child(5){ display:none !important; }
-      `;
-      doc.head && doc.head.appendChild(h);
-    }
+  // ---- STYLES ----
+  function ensureStyles(doc){
+    if (doc.getElementById(PANEL_STYLE_ID)) return;
+    const css = `
+#${PANEL_ID}{margin-top:10px;}
+#${PANEL_ID} .cvq-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:12px;}
+#${PANEL_ID} .cvq-card{background:#fff;border:1px solid #e5e5e5;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);padding:12px;}
+#${PANEL_ID} .cvq-title{font-weight:700;font-size:14px;margin:2px 0 10px 0;}
+#${PANEL_ID} .cvq-row{display:flex;gap:12px;}
+#${PANEL_ID} .cvq-badge{flex:1 1 0;border-radius:6px;background:#f7f7f7;padding:10px 8px;text-align:center;border:1px solid #eee;}
+#${PANEL_ID} .cvq-badge .lbl{font-size:12px;color:#666;margin-bottom:6px;}
+#${PANEL_ID} .cvq-badge .val{font-size:28px;font-weight:700;line-height:1;}
+#${PANEL_ID} .cvq-wait{margin-top:6px;font-size:12px;color:#444;}
+@media (max-width: 900px){ #${PANEL_ID} .cvq-grid{grid-template-columns:1fr;} }
+    `;
+    const s = doc.createElement('style');
+    s.id = PANEL_STYLE_ID;
+    s.textContent = css;
+    doc.head && doc.head.appendChild(s);
   }
 
-  // -------- DATA (requested values) -------- //
-  const QUEUE_DATA = [
-    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, tick:false },
-    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, tick:true  },
-    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, tick:true  },
-    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, tick:false }
-  ];
-  const fmt = (sec) => {
-    sec = sec|0; const m = String((sec/60|0)).padStart(2,'0'); const s = String(sec%60).padStart(2,'0');
-    return `${m}:${s}`;
-  };
-
-  function buildPanelHTML() {
-    const cards = QUEUE_DATA.map(d => `
-<div class="cvq-card">
-  <div class="cvq-title">${d.title}</div>
-  <div class="cvq-row">
-    <div class="cvq-badge"><div class="lbl">Active</div><div class="val">${d.active}</div></div>
-    <div class="cvq-badge">
-      <div class="lbl">Waiting</div><div class="val">${d.waiting}</div>
-      ${d.tick ? `<div class="cvq-wait" data-tick="1" data-sec="0" id="cvq-wait-${d.key}">00:00</div>` : `<div class="cvq-wait">--:--</div>`}
-    </div>
-  </div>
-</div>`).join('');
+  // ---- BUILD PANEL ----
+  function buildPanelHTML(){
+    const cards = QUEUE_DATA.map(d=>`
+      <div class="cvq-card" data-key="${d.key}">
+        <div class="cvq-title">${d.title}</div>
+        <div class="cvq-row">
+          <div class="cvq-badge">
+            <div class="lbl">Active</div>
+            <div class="val">${d.active}</div>
+          </div>
+          <div class="cvq-badge">
+            <div class="lbl">Waiting</div>
+            <div class="val">${d.waiting}</div>
+            <div class="cvq-wait" ${d.timer?'data-tick="1" data-sec="0"':''}>${d.timer?'00:00':'--:--'}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
     return `<div id="${PANEL_ID}"><div class="cvq-grid">${cards}</div></div>`;
   }
 
-  // -------- TIMERS -------- //
-  function startTimers(doc) {
-    if (doc.__cvQueuesTimer) return;
-    doc.__cvQueuesTimer = setInterval(() => {
-      doc.querySelectorAll(`#${PANEL_ID} [data-tick="1"]`).forEach(el => {
-        const n = (parseInt(el.getAttribute('data-sec'),10) || 0) + 1;
+  // ---- TIMERS ----
+  function startTimers(doc){
+    if (doc.__cvqTimer) return;
+    doc.__cvqTimer = setInterval(()=>{
+      doc.querySelectorAll(`#${PANEL_ID} [data-tick="1"]`).forEach(el=>{
+        const n = (parseInt(el.getAttribute('data-sec'),10)||0) + 1;
         el.setAttribute('data-sec', String(n));
         el.textContent = fmt(n);
       });
-    }, 1000);
+    },1000);
   }
-  function stopTimers(doc) { if (doc.__cvQueuesTimer) { clearInterval(doc.__cvQueuesTimer); doc.__cvQueuesTimer = null; } }
+  function stopTimers(doc){ if(doc.__cvqTimer){ clearInterval(doc.__cvqTimer); doc.__cvqTimer=null; } }
 
-  // -------- INJECT / REMOVE -------- //
-  function tagTableForHide(table) { if (table) table.classList.add(TABLE_FLAG_CLASS); }
+  // ---- INJECT / REMOVE ----
+  function injectQueuesTiles(){
+    const found = findQueuesDoc();
+    if (!found) return;
+    const { doc, body, container } = found;
 
-  function injectQueuesTiles() {
-  const found = findQueuesDoc();
-  if (!found) return;
+    ensureStyles(doc);
 
-  const { doc, body } = found;
-  ensureStyles(doc);
+    // Already injected?
+    if (doc.getElementById(PANEL_ID)) return;
 
-  // Find the real anchor inside the queues body
-  const container = body && body.querySelector('.table-container');
-  const table     = (body && body.querySelector(TABLE_SEL)) || doc.querySelector(TABLE_SEL);
+    // Build panel
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildPanelHTML();
+    const panel = wrap.firstElementChild;
 
-  // Hide only the columns we don't want (leave Agents Idle + icons)
-  tagTableForHide(table);
+    // Hide the original table container and insert our panel in its place
+    if (container && container.parentNode) {
+      if (!container.hasAttribute('data-cv-hidden')) {
+        container.setAttribute('data-cv-hidden','1');
+        container.style.display = 'none';
+      }
+      container.parentNode.insertBefore(panel, container); // same stack position under the header
+    } else if (body) {
+      body.insertBefore(panel, body.firstChild);
+    } else {
+      (doc.body || doc.documentElement).appendChild(panel);
+    }
 
-  // Already there?
-  if (doc.getElementById(PANEL_ID)) return;
-
-  const wrap  = doc.createElement('div');
-  wrap.innerHTML = buildPanelHTML();
-  const panel = wrap.firstElementChild;
-
-  // ★ Insert the tiles ABOVE the table container, so they appear under the "CALL QUEUES" header
-  if (container && container.parentNode) {
-    container.parentNode.insertBefore(panel, container);
-  } else if (table && table.parentNode) {
-    table.parentNode.insertBefore(panel, table);
-  } else if (body) {
-    body.insertBefore(panel, body.firstChild);
-  } else {
-    (doc.body || doc.documentElement).appendChild(panel);
+    startTimers(doc);
+    attachObserver(doc);
   }
 
-  startTimers(doc);
-  attachQueuesDocObserver(doc);
-}
-
-
-  function removeQueuesTiles() {
-    for (const doc of getSameOriginDocs()) {
-      const panel = doc.getElementById(PANEL_ID);
-      if (panel) panel.remove();
-      const table = doc.querySelector(TABLE_SEL);
-      if (table) table.classList.remove(TABLE_FLAG_CLASS);
-      detachQueuesDocObserver(doc);
+  function removeQueuesTiles(){
+    for (const doc of getSameOriginDocs()){
+      // remove panel
+      const p = doc.getElementById(PANEL_ID);
+      if (p) p.remove();
+      // unhide native container
+      doc.querySelectorAll(`${BODY_SEL} ${CONTAINER_SEL}[data-cv-hidden="1"]`).forEach(n=>{
+        n.style.display = ''; n.removeAttribute('data-cv-hidden');
+      });
       stopTimers(doc);
+      detachObserver(doc);
     }
   }
 
-  // -------- OBSERVERS (same pattern as Grid Stats) -------- //
-  function attachQueuesDocObserver(doc) {
-    if (doc.__cvQueuesMO) return;
-    const mo = new MutationObserver(() => {
+  // ---- OBSERVE SPA RERENDERS ----
+  function attachObserver(doc){
+    if (doc.__cvqMO) return;
+    const mo = new MutationObserver(()=>{
       if (!QUEUES_REGEX.test(location.href)) return;
-      // Re-tag any table that gets re-rendered and re-inject panel if removed
-      const table = doc.querySelector(TABLE_SEL);
-      tagTableForHide(table);
-      if (!doc.getElementById(PANEL_ID) && (doc.querySelector(BODY_SEL) || table)) {
+      const body = doc.querySelector(BODY_SEL);
+      if (!body) return;
+
+      // If our panel vanished or the app re-added the container, fix it
+      const panel = doc.getElementById(PANEL_ID);
+      const container = body.querySelector(CONTAINER_SEL);
+      if (container && container.style.display !== 'none') {
+        // Re-hide and re-inject panel in correct spot
+        scheduleInject(injectQueuesTiles);
+      } else if (!panel && (body || container)) {
         scheduleInject(injectQueuesTiles);
       }
     });
     mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
-    doc.__cvQueuesMO = mo;
+    doc.__cvqMO = mo;
   }
-  function detachQueuesDocObserver(doc) {
-    if (doc.__cvQueuesMO) {
-      try { doc.__cvQueuesMO.disconnect(); } catch {}
-      delete doc.__cvQueuesMO;
-    }
-  }
+  function detachObserver(doc){ if(doc.__cvqMO){ try{doc.__cvqMO.disconnect();}catch{} delete doc.__cvqMO; } }
 
-  // -------- ROUTING WATCH (same as Grid Stats) -------- //
-  function waitForQueuesAndInject(tries = 0) {
+  // ---- ROUTING WATCH ----
+  function waitAndInject(tries=0){
     const found = findQueuesDoc();
-    if (found && (found.body || tries >= 3)) {
-      scheduleInject(injectQueuesTiles);
-      return;
-    }
-    if (tries >= 12) return;
-    setTimeout(() => waitForQueuesAndInject(tries + 1), 300);
+    if (found && (found.body || tries>=3)) { scheduleInject(injectQueuesTiles); return; }
+    if (tries>=12) return;
+    setTimeout(()=>waitAndInject(tries+1),300);
   }
-  function onQueuesPageEnter() { waitForQueuesAndInject(); }
-
-  function handleQueuesRouteChange(prevHref, nextHref) {
-    const wasOn = QUEUES_REGEX.test(prevHref);
-    const isOn  = QUEUES_REGEX.test(nextHref);
-    if (!wasOn && isOn) onQueuesPageEnter();
-    if ( wasOn && !isOn) removeQueuesTiles();
+  function onEnter(){ waitAndInject(); }
+  function handleRoute(prev,next){
+    const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeQueuesTiles();
   }
 
-  (function watchQueuesURLChanges() {
+  (function watchURL(){
     let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
+    const push = history.pushState, rep = history.replaceState;
 
-    history.pushState = function () {
-      const prev = last;
-      const ret  = origPush.apply(this, arguments);
-      const now  = location.href; last = now;
-      handleQueuesRouteChange(prev, now);
-      return ret;
-    };
-    history.replaceState = function () {
-      const prev = last;
-      const ret  = origReplace.apply(this, arguments);
-      const now  = location.href; last = now;
-      handleQueuesRouteChange(prev, now);
-      return ret;
-    };
+    history.pushState = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
 
-    new MutationObserver(() => {
-      if (location.href !== last) {
-        const prev = last, now = location.href; last = now;
-        handleQueuesRouteChange(prev, now);
-      }
-    }).observe(document.documentElement, { childList:true, subtree:true });
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+      .observe(document.documentElement,{childList:true,subtree:true});
 
-    window.addEventListener('popstate', () => {
-      const prev = last, now = location.href;
-      if (now !== prev) { last = now; handleQueuesRouteChange(prev, now); }
-    });
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
 
-    if (QUEUES_REGEX.test(location.href)) onQueuesPageEnter();
+    if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
-} // closes __cvQueuesTilesInit
-
+}
