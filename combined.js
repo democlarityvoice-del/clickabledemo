@@ -25,7 +25,20 @@ if (!window.__cvDemoInit) {
   thead th { font-weight:700; padding:10px 12px; font-size:14px; text-align:left; border-bottom:1px solid #ddd; white-space:nowrap; }
   td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; white-space:nowrap; }
   tr:hover { background:#f5f5f5; }
-  .listen-btn img {
+  .listen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+}
+.listen-btn:focus { outline: none; }
+
+.listen-btn img {
   width: var(--icon-size);
   height: var(--icon-size);
   display: block;
@@ -51,10 +64,10 @@ tr:hover .listen-btn img { opacity: .60; }
 <script>
 (function () {
   // Pools
-   names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
-   extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-   areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
-   CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
+  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+  const areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
+  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
 
   // Outbound agent display names
   const firstNames = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
@@ -169,30 +182,25 @@ tr:hover .listen-btn img { opacity: .60; }
   }
 
   function render() {
-    const tb = document.getElementById("callsTableBody");
-    if (!tb) return;
-    tb.innerHTML = "";
-    calls.forEach(c => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = \`
-        <td>\${c.from}</td>
-        <td>\${c.cnam}</td>
-        <td>\${c.dialed}</td>
-        <td>\${c.to}</td>
-        <td>\${c.t()}</td>
-        <td>
-          <button class="listen-btn" aria-pressed="false" title="Listen in">
-            <td>
-              <button class="listen-btn" aria-pressed="false" title="Listen in">
-                <img src="${HOME_ICON_SPEAKER}" alt="">
-              </button>
-            </td>
-
-          </button>
-        </td>\`;
-      tb.appendChild(tr);
-    });
-  }
+  const tb = document.getElementById("callsTableBody");
+  if (!tb) return;
+  tb.innerHTML = "";
+  calls.forEach(c => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = \`
+      <td>\${c.from}</td>
+      <td>\${c.cnam}</td>
+      <td>\${c.dialed}</td>
+      <td>\${c.to}</td>
+      <td>\${c.t()}</td>
+      <td>
+        <button class="listen-btn" aria-pressed="false" title="Listen in">
+          <img src="\${HOME_ICON_SPEAKER}" alt="">
+        </button>
+      </td>\`;
+    tb.appendChild(tr);
+  });
+}
 
   // Seed + loop
   (function seed(){ calls.push(generateCall()); render(); })();
@@ -737,7 +745,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
 .cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }
 .cvq-modal table{ width:100%; }
-cvq-modal thead th{ white-space:nowrap; }
+.cvq-modal thead th{ white-space:nowrap; }
 .cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }
 .cvq-kebab{ position:relative; }
 .cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px;
@@ -1035,4 +1043,5 @@ cvq-modal thead th{ white-space:nowrap; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
