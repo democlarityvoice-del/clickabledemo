@@ -573,15 +573,15 @@ if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
 
   // ---- CONSTANTS ----
-  const QUEUES_REGEX        = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const BODY_SEL            = '#home-queues-body';
-  const CONTAINER_SEL       = '.table-container';
-  const TABLE_SEL           = '#manager_queues';
-  const PANEL_ID            = 'cvq-panel';
-  const PANEL_STYLE_ID      = 'cvq-panel-style';
+  const QUEUES_REGEX   = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const BODY_SEL       = '#home-queues-body';
+  const CONTAINER_SEL  = '.table-container';
+  const TABLE_SEL      = '#manager_queues';
+  const PANEL_ID       = 'cvq-panel';
+  const PANEL_STYLE_ID = 'cvq-panel-style';
 
   // ---- UTIL ----
-  function scheduleInject(fn){ let f=false; requestAnimationFrame(()=>requestAnimationFrame(()=>{f=true;fn();})); setTimeout(()=>{if(!f)fn();},64); }
+  function scheduleInject(fn){ let f=false; if ('requestAnimationFrame' in window){ requestAnimationFrame(()=>requestAnimationFrame(()=>{f=true;fn();})); } setTimeout(()=>{ if(!f) fn(); },64); }
   function getSameOriginDocs(){
     const docs=[document];
     document.querySelectorAll('iframe').forEach(ifr=>{
@@ -601,160 +601,107 @@ if (!window.__cvQueuesTilesInit) {
   }
 
   // ---- DATA ----
-const QUEUE_DATA = [
-  { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
-  { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
-  { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, timer:true,  idle:4 },
-  { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
-];
-const fmt = (sec)=>{ sec|=0; const m=String((sec/60|0)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${m}:${s}`; };
-
+  const QUEUE_DATA = [
+    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
+    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
+    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, timer:true,  idle:4 },
+    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
+  ];
+  const fmt = (sec)=>{ sec|=0; const m=String((sec/60|0)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${m}:${s}`; };
 
   // ---- STYLES ----
   function ensureStyles(doc){
-  if (doc.getElementById(PANEL_STYLE_ID)) return;
-  const s = doc.createElement('style');
-  s.id = PANEL_STYLE_ID;
-  s.textContent = `
-/* wrapper behaves like the native one so placement/alignment match */
-#${PANEL_ID}.table-container{margin-top:6px;}
-#${PANEL_ID} table{width:100%;}
+    if (doc.getElementById(PANEL_STYLE_ID)) return;
+    const s = doc.createElement('style');
+    s.id = PANEL_STYLE_ID;
+    s.textContent = `
+/* wrapper behaves like native so placement/alignment match */
+#${PANEL_ID}.table-container{ margin-top:6px; }
+#${PANEL_ID} table{ width:100%; }
 
-/* typography/spacing to match the house style */
-#${PANEL_ID} thead th{white-space:nowrap;}
-#${PANEL_ID} td, #${PANEL_ID} th{vertical-align:middle;}
+/* typography/spacing to match house style */
+#${PANEL_ID} thead th{ white-space:nowrap; }
+#${PANEL_ID} td, #${PANEL_ID} th{ vertical-align:middle; }
 
-/* numeric cells look like links in the UI (blue & boldish) */
-#${PANEL_ID} .cvq-num{color:#0b84ff; font-weight:700;}
+/* numbers look like native blue counters */
+#${PANEL_ID} .cvq-num{ color:#0b84ff; font-weight:700; }
 
 /* wait cell */
-#${PANEL_ID} .cvq-wait{color:#333;}
+#${PANEL_ID} .cvq-wait{ color:#333; }
 
-/* simple placeholders for the 3 action icons on the right */
-#${PANEL_ID} .cvq-actions{white-space:nowrap; text-align:center;}
-#${PANEL_ID} .cvq-actions .cvq-icon{
-  display:inline-block; width:18px; height:18px; border-radius:50%;
-  background:#f5f5f5; border:1px solid #e2e2e2; margin-left:6px; vertical-align:middle;
-}
-@media (max-width: 900px){
-  #${PANEL_ID} .hide-sm{display:none;}
-}
-  `;
-  if (doc.head) doc.head.appendChild(s);
-}
-s.textContent += `
-/* ——— actions column ——— */
-#${PANEL_ID} table .cvq-actions,
-${TABLE_SEL} .cvq-actions{ text-align:right; white-space:nowrap; width:64px; }
-
-.cvq-icon{
+/* actions column (two icons) */
+#${PANEL_ID} .cvq-actions{ text-align:right; white-space:nowrap; width:64px; }
+#${PANEL_ID} .cvq-icon{
   display:inline-flex; align-items:center; justify-content:center;
   width:22px; height:22px; border-radius:50%;
   background:#f7f7f7; border:1px solid #e1e1e1;
-  margin-left:6px; opacity:.35; transition:opacity .15s, transform .04s;
+  margin-left:6px; opacity:.35; transition:opacity .15s;
 }
-tr:hover .cvq-icon{ opacity:.75; }
-.cvq-icon:hover{ opacity:1; }
-.cvq-icon svg{ width:14px; height:14px; }
+#${PANEL_ID} tr:hover .cvq-icon{ opacity:.75; }
+#${PANEL_ID} .cvq-icon:hover{ opacity:1; }
+#${PANEL_ID} .cvq-icon svg{ width:14px; height:14px; }
+
+@media (max-width:900px){
+  #${PANEL_ID} .hide-sm{ display:none; }
+}
 `;
-
-
-function buildActionCellHTML(){
-  // Two round buttons: “monitor” and “settings” (fake actions for now)
-  return `
-    <td class="cvq-actions">
-      <button class="cvq-icon" data-act="monitor" title="Monitor queue" aria-label="Monitor queue">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm0 12h16v2H4z"></path>
-        </svg>
-      </button>
-      <button class="cvq-icon" data-act="settings" title="Queue settings" aria-label="Queue settings">
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="M19.14 12.94a7.07 7.07 0 0 0 .05-.94 7.07 7.07 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.65l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.35 7.35 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.41l-.36 2.54a7.35 7.35 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L1.7 7.97a.5.5 0 0 0 .12.65l2.03 1.58a7.07 7.07 0 0 0-.05.94c0 .32.02.63.05.94L1.82 14.66a.5.5 0 0 0-.12.65l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.41h3.8a.5.5 0 0 0 .49-.41l.36-2.54c.58-.22 1.13-.54 1.63-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.65l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"></path>
-        </svg>
-      </button>
-    </td>
-  `;
-}
-
-function addActionIcons(doc){
-  // Prefer our injected table; if not found, fall back to the native one
-  const table = doc.querySelector(`#${PANEL_ID} table`) || doc.querySelector(`${TABLE_SEL}`);
-  if (!table) return;
-
-  // Ensure header cell exists (empty header for icons)
-  const theadRow = table.tHead && table.tHead.rows[0];
-  if (theadRow && !theadRow.querySelector('.cvq-actions-h')){
-    const th = doc.createElement('th');
-    th.className = 'cvq-actions-h cvq-actions';
-    theadRow.appendChild(th);
+    doc.head && doc.head.appendChild(s);
   }
 
-  // Append the two icons to each data row if not present
-  Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
-    if (!tr.querySelector('.cvq-actions')){
-      const wrap = doc.createElement('div');
-      wrap.innerHTML = buildActionCellHTML();
-      tr.appendChild(wrap.firstElementChild);
-    }
-  });
-}
-
-// Simple delegated click handler (optional; easy to replace later)
-document.addEventListener('click', (e) => {
-  const btn = e.target.closest && e.target.closest('.cvq-icon');
-  if (!btn) return;
-  const row = btn.closest('tr');
-  const queueName = row ? row.cells[0].textContent.trim() : '';
-  const act = btn.getAttribute('data-act');
-  // TODO: hook up real behaviors
-  console.log(`[cv] ${act} → ${queueName}`);
-});
-  
+  // ---- ACTION CELL (2 icons) ----
+  function buildActionCellHTML(){
+    return `
+      <td class="cvq-actions">
+        <button class="cvq-icon" data-act="monitor" title="Monitor queue" aria-label="Monitor queue">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 5h16a1 1 0 0 1 1 1v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1zm0 12h16v2H4z"></path>
+          </svg>
+        </button>
+        <button class="cvq-icon" data-act="settings" title="Queue settings" aria-label="Queue settings">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M19.14 12.94a7.07 7.07 0 0 0 .05-.94 7.07 7.07 0 0 0-.05-.94l2.03-1.58a.5.5 0 0 0 .12-.65l-1.92-3.32a.5.5 0 0 0-.61-.22l-2.39.96a7.35 7.35 0 0 0-1.63-.94l-.36-2.54A.5.5 0 0 0 13.9 1h-3.8a.5.5 0 0 0-.49.41l-.36 2.54a7.35 7.35 0 0 0-1.63.94l-2.39-.96a.5.5 0 0 0-.61.22L1.7 7.97a.5.5 0 0 0 .12.65l2.03 1.58a7.07 7.07 0 0 0-.05.94c0 .32.02.63.05.94L1.82 14.66a.5.5 0 0 0-.12.65l1.92 3.32a.5.5 0 0 0 .61.22l2.39-.96c.5.4 1.05.72 1.63.94l.36 2.54a.5.5 0 0 0 .49.41h3.8a.5.5 0 0 0 .49-.41l.36-2.54c.58-.22 1.13-.54 1.63-.94l2.39.96a.5.5 0 0 0 .61-.22l1.92-3.32a.5.5 0 0 0-.12-.65l-2.03-1.58zM12 15.5A3.5 3.5 0 1 1 12 8.5a3.5 3.5 0 0 1 0 7z"></path>
+          </svg>
+        </button>
+      </td>
+    `;
+  }
 
   // ---- BUILD PANEL ----
   function buildPanelHTML(){
-  const rows = QUEUE_DATA.map(d => {
-    const waitCell = d.timer
-      ? `<span class="cvq-wait" id="cvq-wait-${d.key}" data-tick="1" data-sec="0">00:00</span>`
-      : `<span class="cvq-wait">-</span>`;
+    const rows = QUEUE_DATA.map(d => {
+      const waitCell = d.timer
+        ? `<span class="cvq-wait" id="cvq-wait-${d.key}" data-tick="1" data-sec="0">00:00</span>`
+        : `<span class="cvq-wait">-</span>`;
+      return `
+        <tr>
+          <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
+          <td class="cvq-queue">${d.title}</td>
+          <td class="text-center"><span class="cvq-num">${d.active}</span></td>
+          <td class="text-center"><span class="cvq-num">${d.waiting}</span></td>
+          <td class="text-center">${waitCell}</td>
+          <td class="text-center"><span class="cvq-num">${d.idle}</span></td>
+          ${buildActionCellHTML()}
+        </tr>`;
+    }).join('');
+
     return `
-      <tr>
-        <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
-        <td class="cvq-queue">${d.title}</td>
-        <td class="text-center"><span class="cvq-num">${d.active}</span></td>
-        <td class="text-center"><span class="cvq-num">${d.waiting}</span></td>
-        <td class="text-center">${waitCell}</td>
-        <td class="text-center"><span class="cvq-num">${d.idle}</span></td>
-        <td class="cvq-actions">
-          <span class="cvq-icon" title="Action 1"></span>
-          <span class="cvq-icon" title="Action 2"></span>
-          <span class="cvq-icon" title="Action 3"></span>
-        </td>
-      </tr>`;
-  }).join('');
-
-  return `
-    <div id="${PANEL_ID}" class="table-container scrollable-small">
-      <table class="table table-condensed table-hover">
-        <thead>
-          <tr>
-            <th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>
-            <th>Call Queue</th>
-            <th class="text-center">Active Calls</th>
-            <th class="text-center">Callers Waiting</th>
-            <th class="text-center">Wait</th>
-            <th class="text-center">Agents Idle</th>
-            <th class="text-center hide-sm" style="width:86px;"></th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-    </div>`;
-}
-
- addActionIcons(doc);
- 
+      <div id="${PANEL_ID}" class="table-container scrollable-small">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+              <th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>
+              <th>Call Queue</th>
+              <th class="text-center">Active Calls</th>
+              <th class="text-center">Callers Waiting</th>
+              <th class="text-center">Wait</th>
+              <th class="text-center">Agents Idle</th>
+              <th class="text-center hide-sm" style="width:86px;"></th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
 
   // ---- TIMERS ----
   function startTimers(doc){
@@ -777,21 +724,18 @@ document.addEventListener('click', (e) => {
 
     ensureStyles(doc);
 
-    // Already injected?
     if (doc.getElementById(PANEL_ID)) return;
 
-    // Build panel
     const wrap = doc.createElement('div');
     wrap.innerHTML = buildPanelHTML();
     const panel = wrap.firstElementChild;
 
-    // Hide the original table container and insert our panel in its place
     if (container && container.parentNode) {
       if (!container.hasAttribute('data-cv-hidden')) {
         container.setAttribute('data-cv-hidden','1');
         container.style.display = 'none';
       }
-      container.parentNode.insertBefore(panel, container); // same stack position under the header
+      container.parentNode.insertBefore(panel, container);
     } else if (body) {
       body.insertBefore(panel, body.firstChild);
     } else {
@@ -804,10 +748,8 @@ document.addEventListener('click', (e) => {
 
   function removeQueuesTiles(){
     for (const doc of getSameOriginDocs()){
-      // remove panel
       const p = doc.getElementById(PANEL_ID);
       if (p) p.remove();
-      // unhide native container
       doc.querySelectorAll(`${BODY_SEL} ${CONTAINER_SEL}[data-cv-hidden="1"]`).forEach(n=>{
         n.style.display = ''; n.removeAttribute('data-cv-hidden');
       });
@@ -823,12 +765,9 @@ document.addEventListener('click', (e) => {
       if (!QUEUES_REGEX.test(location.href)) return;
       const body = doc.querySelector(BODY_SEL);
       if (!body) return;
-
-      // If our panel vanished or the app re-added the container, fix it
       const panel = doc.getElementById(PANEL_ID);
       const container = body.querySelector(CONTAINER_SEL);
       if (container && container.style.display !== 'none') {
-        // Re-hide and re-inject panel in correct spot
         scheduleInject(injectQueuesTiles);
       } else if (!panel && (body || container)) {
         scheduleInject(injectQueuesTiles);
@@ -867,6 +806,14 @@ document.addEventListener('click', (e) => {
 
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
+
+  // ---- Delegated clicks for the two icons (stub) ----
+  document.addEventListener('click', (e) => {
+    const btn = e.target.closest && e.target.closest(`#${PANEL_ID} .cvq-icon`);
+    if (!btn) return;
+    const row = btn.closest('tr');
+    const queueName = row ? row.cells[1].textContent.trim() : '';
+    const act = btn.getAttribute('data-act');
+    console.log(`[cv] ${act} → ${queueName}`);
+  });
 }
-
-
