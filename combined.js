@@ -587,10 +587,7 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 
 
 // ==============================
-// ==============================
-// ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER)
-// Full injection w/ modals + hosted SVG icons
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
@@ -765,11 +762,12 @@ if (!window.__cvQueuesTilesInit) {
     return CVQ_CACHE.waiting[qkey];
   }
 
-  // ---- ACTION: Ensure Styles + Modal Host (create once) ----
+
  // ---- ACTION: Ensure Styles + Modal Host (create/update once) ----
+// ---- ACTION: Ensure Styles + Modal Host (create/update once) ----
 function ensureStyles(doc){
-  // ⬅️ tweak this to move further right/left
-  var SHIFT_PX = 80;  // positive = right, negative = left
+  // move modal slightly right (affects BOTH Active Calls & Callers Waiting)
+  var SHIFT_PX = 80;
 
   var css =
 `/* container spacing to match native */
@@ -803,7 +801,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 .cvq-modal{
   position:fixed;
-  left:calc(50% + ${SHIFT_PX}px) !important;  /* force the horizontal shift */
+  left:calc(50% + ${SHIFT_PX}px) !important;  /* horizontal shift */
   top:50%;
   transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
@@ -839,7 +837,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 @media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
 
-  // 🔧 Always create OR update the style tag so edits take effect
+  // always create OR update (so later CSS edits take effect)
   var s = doc.getElementById(PANEL_STYLE_ID);
   if (!s) {
     s = doc.createElement('style');
@@ -848,7 +846,7 @@ tr:hover .cvq-icon{ opacity:.85; }
   }
   s.textContent = css;
 
-  // Modal host (create once)
+  // modal host (once)
   if (!doc.getElementById('cvq-modal-host')) {
     var host = doc.createElement('div');
     host.id = 'cvq-modal-host';
@@ -866,6 +864,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     });
   }
 }
+
 
 
       // ---- ACTION: Modal Close (backdrop + button) ----
@@ -1212,6 +1211,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
