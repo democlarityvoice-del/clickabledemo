@@ -212,49 +212,51 @@ if (!window.__cvDemoInit) {
 
   // -------- REMOVE HOME -------- //
   function removeHome() {
-    const ifr = document.getElementById(IFRAME_ID);
-    if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+  const ifr = document.getElementById(IFRAME_ID);
+  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (slot) {
-      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
-      if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-        hidden..display = '';
-        hidden.removeAttribute('data-cv-demo-hidden');
-      }
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (slot) {
+    const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+    if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+      hidden.style.display = '';                // <-- FIXED
+      hidden.removeAttribute('data-cv-demo-hidden');
     }
   }
+}
+
 
   // -------- INJECT HOME -------- //
   function injectHome() {
-    if (document.getElementById(IFRAME_ID)) return;
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (!slot) return;
+  if (document.getElementById(IFRAME_ID)) return;
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
 
-    function findAnchor(el){
-      const preferred = el.querySelector('.table-container.scrollable-small');
-      if (preferred) return preferred;
-      if (el.firstElementChild) return el.firstElementChild;
-      let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-      return n || null;
-    }
-
-    const anchor = findAnchor(slot);
-
-    if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
-      anchor..display = 'none';
-      anchor.setAttribute('data-cv-demo-hidden','1');
-    }
-
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe..cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling','yes');
-    iframe.srcdoc = buildSrcdoc();
-
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
-    else slot.appendChild(iframe);
+  function findAnchor(el){
+    const preferred = el.querySelector('.table-container.scrollable-small');
+    if (preferred) return preferred;
+    if (el.firstElementChild) return el.firstElementChild;
+    let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+    return n || null;
   }
+
+  const anchor = findAnchor(slot);
+
+  if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+    anchor.style.display = 'none';                 // <-- FIXED
+    anchor.setAttribute('data-cv-demo-hidden','1');
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;'; // <-- FIXED
+  iframe.setAttribute('scrolling','yes');
+  iframe.srcdoc = buildSrcdoc();
+
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+  else slot.appendChild(iframe);
+}
+
 
   // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
@@ -341,12 +343,14 @@ if (!window.__cvDemoInit) {
 if (!window.__cvGridStatsInit) {
   window.__cvGridStatsInit = true;
 
-  // -------- GRID: Constants -------- //
-  const GRID_STATS_REGEX    = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const GRID_BODY_SELECTOR  = '#dash-stats-body';
-  const GRID_TABLE_SELECTOR = '.dash-stats-grid-table';
-  const CARD_ID             = 'cv-grid-stats-card';
-  const CARD__ID       = 'cv-grid-stats-style';
+  
+// -------- GRID: Constants -------- //
+const GRID_STATS_REGEX    = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+const GRID_BODY_SELECTOR  = '#dash-stats-body';
+const GRID_TABLE_SELECTOR = '.dash-stats-grid-table';
+const CARD_ID             = 'cv-grid-stats-card';
+const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
+
 
   // -------- GRID: Helpers (scheduler / hide / observe) -------- //
   function scheduleInject(fn) {
@@ -565,8 +569,7 @@ if (!window.__cvGridStatsInit) {
 }   // closes __cvGridStatsInit
 
 
-// ==============================
-// ==============================
+
 // ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals
 // ==============================
@@ -1024,3 +1027,4 @@ tr:hover .cvq-icon{ opacity:.75; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
