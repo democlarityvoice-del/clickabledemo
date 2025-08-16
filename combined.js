@@ -759,17 +759,23 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
 .cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
 
-/* Modal backdrop + shell (TALLER) */
-.cvq-modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9998; display:none; }
+/* --- CVQ MODAL: default hidden (prevents auto-popup on load) --- */
+.cvq-modal-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.35);
+  z-index:9998; display:none !important;
+}
 .cvq-modal{
   position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   width:min(980px,96vw); height:88vh; max-height:88vh;
-  display:none; z-index:9999; overflow:hidden; display:flex; flex-direction:column;
+  z-index:9999; overflow:hidden;
+  display:none !important;           /* stays hidden until we open it */
+  /* we'll set display:flex from JS when opening */
 }
 .cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
 .cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }
 .cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
+
 .cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
 .cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }
 
@@ -1145,6 +1151,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
