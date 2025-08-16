@@ -571,7 +571,8 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 
 
 // ==============================
-// Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals
+// ==============================
+// Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals + FA icons
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
@@ -583,6 +584,15 @@ if (!window.__cvQueuesTilesInit) {
   const TABLE_SEL      = '#manager_queues';
   const PANEL_ID       = 'cvq-panel';
   const PANEL_STYLE_ID = 'cvq-panel-style';
+
+  // (easy to tweak icon choices here if you prefer different FA glyphs)
+  const FA = {
+    rightA: 'fa-solid fa-headset',      // right column: “monitor”
+    rightB: 'fa-solid fa-ellipsis-h',   // right column: “more”
+    listen: 'fa-solid fa-headset',      // modal active rows: listen
+    prio:   'fa-solid fa-arrow-up',     // modal waiting rows: prioritize
+    menu:   'fa-solid fa-ellipsis-vertical' // modal waiting rows: kebab
+  };
 
   // ---- UTIL ----
   function scheduleInject(fn){
@@ -612,7 +622,6 @@ if (!window.__cvQueuesTilesInit) {
   const mmss = (sec)=>{ sec|=0; const m=String((sec/60|0)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${m}:${s}`; };
 
   // ---- DATA ----
-  // Requested counts (visible in main grid)
   const QUEUE_DATA = [
     { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
     { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
@@ -684,6 +693,18 @@ if (!window.__cvQueuesTilesInit) {
   }
 
   // ---- STYLES + modal host ----
+  function ensureFontAwesome(doc){
+    if (doc.__cvqFAEnsured) return;
+    const has = doc.querySelector('link[href*="font-awesome"],link[href*="fontawesome"],link[href*="/all.min.css"]');
+    if (!has) {
+      const link = doc.createElement('link');
+      link.rel = 'stylesheet';
+      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
+      doc.head && doc.head.appendChild(link);
+    }
+    doc.__cvqFAEnsured = true;
+  }
+
   function ensureStyles(doc){
     if (!doc.getElementById(PANEL_STYLE_ID)) {
       const s = doc.createElement('style');
@@ -708,11 +729,12 @@ if (!window.__cvQueuesTilesInit) {
   display:inline-flex; align-items:center; justify-content:center;
   width:22px; height:22px; border-radius:50%;
   background:#f7f7f7; border:1px solid #e1e1e1;
-  margin-left:6px; opacity:.35; transition:opacity .15s;
+  margin-left:6px; opacity:.35; transition:opacity .15s, color .15s;
 }
 tr:hover .cvq-icon{ opacity:.75; }
 .cvq-icon:hover{ opacity:1; }
-.cvq-icon svg{ width:14px; height:14px; }
+.cvq-icon i{ font-size:13px; line-height:1; color:rgba(0,0,0,.45); }
+tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
 
 /* Modal host */
 .cvq-modal-backdrop{
@@ -763,6 +785,9 @@ tr:hover .cvq-icon{ opacity:.75; }
         }
       });
     }
+
+    // make sure FA is available
+    ensureFontAwesome(doc);
   }
 
   // ---- PANEL HTML ----
@@ -780,12 +805,8 @@ tr:hover .cvq-icon{ opacity:.75; }
           <td class="text-center">${waitCell}</td>
           <td class="text-center"><span class="">${d.idle ?? 0}</span></td>
           <td class="cvq-actions">
-            <span class="cvq-icon" title="Queue tools" aria-label="Queue tools">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v2H4zm0 6h16v2H4zm0 6h16v2H4z"/></svg>
-            </span>
-            <span class="cvq-icon" title="More" aria-label="More">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="19" cy="12" r="2"/></svg>
-            </span>
+            <span class="cvq-icon" title="Monitor queue" aria-label="Monitor queue"><i class="${FA.rightA}"></i></span>
+            <span class="cvq-icon" title="More" aria-label="More"><i class="${FA.rightB}"></i></span>
           </td>
         </tr>`;
     }).join('');
@@ -818,7 +839,9 @@ tr:hover .cvq-icon{ opacity:.75; }
         <td>${r.status}</td>
         <td>${r.agent}</td>
         <td class="text-center"><span data-cvq-start="${r.start}">${mmss(((Date.now()-r.start)/1000)|0)}</span></td>
-        <td class="text-center"><span class="cvq-icon" title="Listen in">👂</span></td>
+        <td class="text-center">
+          <button class="cvq-icon" title="Listen in" aria-label="Listen in"><i class="${FA.listen}"></i></button>
+        </td>
       </tr>`).join('');
     return `
       <table class="table table-condensed table-hover">
@@ -834,8 +857,8 @@ tr:hover .cvq-icon{ opacity:.75; }
         <td>${r.status} ${r.priority ? `<span class="cvq-badge">Priority</span>`:''}</td>
         <td class="text-center"><span data-cvq-start="${r.start}">${mmss(((Date.now()-r.start)/1000)|0)}</span></td>
         <td class="text-center">
-          <span class="cvq-icon" title="Prioritize" data-cvq="prio">⬆️</span>
-          <span class="cvq-icon cvq-kebab" title="Transfer" data-cvq="menu">⛓️
+          <button class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><i class="${FA.prio}"></i></button>
+          <span class="cvq-icon cvq-kebab" title="More" data-cvq="menu" aria-label="More"><i class="${FA.menu}"></i>
             <div class="cvq-menu">
               <a href="#" data-cvq="pickup">Pick up call</a>
               <a href="#" data-cvq="transfer">Transfer call</a>
@@ -976,11 +999,8 @@ tr:hover .cvq-icon{ opacity:.75; }
   function removeQueuesTiles(){
     for (const doc of getSameOriginDocs()){
       const p = doc.getElementById(PANEL_ID); if (p) p.remove();
-      // unhide native container
       doc.querySelectorAll(`${BODY_SEL} ${CONTAINER_SEL}[data-cv-hidden="1"]`).forEach(n=>{ n.style.display=''; n.removeAttribute('data-cv-hidden'); });
-      // stop timers
       if (doc.__cvqTimer){ clearInterval(doc.__cvqTimer); doc.__cvqTimer=null; }
-      // close modal if open
       closeModal(doc);
       detachObserver(doc);
     }
@@ -1027,4 +1047,6 @@ tr:hover .cvq-icon{ opacity:.75; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
+
 
