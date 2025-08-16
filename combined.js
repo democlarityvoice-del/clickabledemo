@@ -801,7 +801,7 @@ tr:hover .cvq-icon{ opacity:.85; }
   z-index:9998; display:none;
 }
 .cvq-modal{
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+  position:fixed; left:calc(50% + 16px); top:50%; transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   width:min(980px,96vw); height:88vh; max-height:88vh;
   z-index:9999; overflow:hidden; display:none; flex-direction:column;
@@ -1187,3 +1187,4 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
