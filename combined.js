@@ -620,16 +620,14 @@ if (!window.__cvQueuesTilesInit) {
       const s = doc.createElement('style');
       s.id = PANEL_STYLE_ID;
       s.textContent = `
-#${PANEL_ID}{box-sizing:border-box;margin:8px 0 12px 0;}
-#${PANEL_ID} .cvq-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:10px;}
-#${PANEL_ID} .cvq-card{border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.08);padding:10px 12px;}
-#${PANEL_ID} .cvq-title{font-weight:700;font-size:13px;margin-bottom:8px;}
-#${PANEL_ID} .cvq-row{display:flex;gap:8px;}
-#${PANEL_ID} .cvq-badge{flex:1 1 0;border-radius:6px;padding:8px 6px;text-align:center;background:#f4f8ff;}
-#${PANEL_ID} .cvq-badge .lbl{font-size:11px;color:#555;margin-bottom:4px;}
-#${PANEL_ID} .cvq-badge .val{font-size:22px;font-weight:700;line-height:1;}
-#${PANEL_ID} .cvq-wait{margin-top:4px;font-size:11px;opacity:.9;}
-@media (max-width:980px){ #${PANEL_ID} .cvq-grid{grid-template-columns:1fr;} }
+#${PANEL_ID} .cvq-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); /* <= fills row neatly */
+  gap:10px;
+  margin-top:6px;
+}
+#${PANEL_ID} .cvq-card{ padding:10px 12px; } /* a touch tighter so it aligns visually */
+
       `;
       doc.head && doc.head.appendChild(s);
     }
@@ -695,33 +693,41 @@ table.${TABLE_FLAG_CLASS} tbody td:nth-child(5){ display:none !important; }
   function tagTableForHide(table) { if (table) table.classList.add(TABLE_FLAG_CLASS); }
 
   function injectQueuesTiles() {
-    const found = findQueuesDoc();
-    if (!found) return;
+  const found = findQueuesDoc();
+  if (!found) return;
 
-    const { doc, body, table } = found;
-    ensureStyles(doc);
-    tagTableForHide(table);
+  const { doc, body } = found;
+  ensureStyles(doc);
 
-    if (doc.getElementById(PANEL_ID)) return;
+  // Find the real anchor inside the queues body
+  const container = body && body.querySelector('.table-container');
+  const table     = (body && body.querySelector(TABLE_SEL)) || doc.querySelector(TABLE_SEL);
 
-    const wrap = doc.createElement('div');
-    wrap.innerHTML = buildPanelHTML();
-    const panel = wrap.firstElementChild;
+  // Hide only the columns we don't want (leave Agents Idle + icons)
+  tagTableForHide(table);
 
-    // Insert INSIDE the queues body, before the native table (consistent with Grid Stats pattern)
-    if (body) {
-      const anchor = table || body.firstChild;
-      if (anchor && anchor.parentNode === body) body.insertBefore(panel, anchor);
-      else body.appendChild(panel);
-    } else if (table && table.parentNode) {
-      table.parentNode.insertBefore(panel, table);
-    } else {
-      (doc.body || doc.documentElement).appendChild(panel);
-    }
+  // Already there?
+  if (doc.getElementById(PANEL_ID)) return;
 
-    startTimers(doc);
-    attachQueuesDocObserver(doc);
+  const wrap  = doc.createElement('div');
+  wrap.innerHTML = buildPanelHTML();
+  const panel = wrap.firstElementChild;
+
+  // ★ Insert the tiles ABOVE the table container, so they appear under the "CALL QUEUES" header
+  if (container && container.parentNode) {
+    container.parentNode.insertBefore(panel, container);
+  } else if (table && table.parentNode) {
+    table.parentNode.insertBefore(panel, table);
+  } else if (body) {
+    body.insertBefore(panel, body.firstChild);
+  } else {
+    (doc.body || doc.documentElement).appendChild(panel);
   }
+
+  startTimers(doc);
+  attachQueuesDocObserver(doc);
+}
+
 
   function removeQueuesTiles() {
     for (const doc of getSameOriginDocs()) {
@@ -810,3 +816,4 @@ table.${TABLE_FLAG_CLASS} tbody td:nth-child(5){ display:none !important; }
     if (QUEUES_REGEX.test(location.href)) onQueuesPageEnter();
   })();
 } // closes __cvQueuesTilesInit
+
