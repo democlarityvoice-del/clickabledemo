@@ -589,7 +589,6 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 // ==============================
 // ==============================
 // ==============================
-// ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER)
 // Full injection w/ modals + hosted SVG icons
 // ==============================
@@ -822,6 +821,28 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer = null; }
   }
 
+  // ---- ACTION: Bind inline opener for count links (works even if bubbling is blocked) ----
+  function bindInlineCountOpener(doc){
+    var w = (doc && doc.defaultView) || window;
+    w.__cvqOpenCount = function(act, el){
+      try{
+        var tr = el.closest ? el.closest('tr') : (function(p){ while(p && p.tagName!=='TR') p=p.parentNode; return p; })(el);
+        if (!tr) return false;
+        var qkey = tr.getAttribute('data-qkey');
+        var q = null;
+        for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; } }
+        if (!q) return false;
+
+        if (act === 'active'){
+          openModal(doc, 'Active Calls in '+q.title.replace(/\s+\\(\\d+\\)$',''), buildActiveTable(makeActiveRows(qkey, q.active)));
+        } else if (act === 'waiting'){
+          openModal(doc, 'Callers in '+q.title.replace(/\s+\\(\\d+\\)$',''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
+        }
+      } catch(e){}
+      return false; // prevent navigation/bubbling
+    };
+  }
+
   // ---- ACTION: Build Panel HTML (renders all queue rows) ----
   function buildPanelHTML(){
     var rows = QUEUE_DATA.map(function(d){
@@ -830,18 +851,20 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
         : '<span class="cvq-wait">-</span>';
       var idleCount = d.waiting > 0 ? 0 : (d.idle || 0);
 
-      // Inline onclicks for platform modal (belt) + delegated handler (suspenders)
+      // Inline onclicks for platform modal + counts
       var agentsHref = (IDLE_LINKS[d.key] || '#');
       var queueHref  = (QUEUE_EDIT_LINKS[d.key] || '#');
       var agentsOnClick = "try{var lm=(window.loadModal||parent.loadModal||top.loadModal);if(typeof lm==='function'){lm('#write-agents', this.href);return false;}}catch(e){}";
       var queueOnClick  = "try{var lm=(window.loadModal||parent.loadModal||top.loadModal);if(typeof lm==='function'){lm('#write-queue', this.href);return false;}}catch(e){}";
+      var activeOnClick = "return window.__cvqOpenCount && window.__cvqOpenCount('active', this);";
+      var waitOnClick   = "return window.__cvqOpenCount && window.__cvqOpenCount('waiting', this);";
 
       return ''+
       '<tr data-qkey="'+d.key+'">'+
         '<td class="text-center"><input type="checkbox" tabindex="-1" /></td>'+
         '<td class="cvq-queue">'+d.title+'</td>'+
-        '<td class="text-center"><a class="cvq-link" data-act="active">'+d.active+'</a></td>'+
-        '<td class="text-center"><a class="cvq-link" data-act="waiting">'+d.waiting+'</a></td>'+
+        '<td class="text-center"><a class="cvq-link" data-act="active" onclick="'+activeOnClick+'">'+d.active+'</a></td>'+
+        '<td class="text-center"><a class="cvq-link" data-act="waiting" onclick="'+waitOnClick+'">'+d.waiting+'</a></td>'+
         '<td class="text-center">'+waitCell+'</td>'+
 
         // ---- ACTION: Agents Idle Link — route to real "Edit Agents"
@@ -967,19 +990,17 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (doc.__cvqClicksWired) return;
     doc.__cvqClicksWired = true;
 
-    // ---- ACTION: Active/Waiting Counts — open modals (CAPTURE to bypass host stopPropagation) ----
+    // counts: capture to bypass host stopPropagation
     doc.addEventListener('click', function(e){
       var link = closest(e.target, '#'+PANEL_ID+' .cvq-link');
       if (!link) return;
       var act = link.getAttribute('data-act');
-      if (!act) return; // non-count links handled below
+      if (!act) return;
 
       e.preventDefault();
-      var tr = closest(link, 'tr');
-      if (!tr) return;
+      var tr = closest(link, 'tr'); if (!tr) return;
       var qkey = tr.getAttribute('data-qkey');
-      var q = null;
-      for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; } }
+      var q = null; for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key===qkey){ q=QUEUE_DATA[i]; break; } }
       if (!q) return;
 
       if (act === 'active') {
@@ -987,9 +1008,9 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
       } else if (act === 'waiting') {
         openModal(doc, 'Callers in '+q.title.replace(/\s+\(\d+\)$/, ''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
       }
-    }, true); // << capture
+    }, true);
 
-    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — route or platform modal (CAPTURE) ----
+    // nav buttons/idle: capture
     doc.addEventListener('click', function(e){
       var nav = closest(e.target, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
       if (!nav) return;
@@ -1000,32 +1021,24 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
 
       var lm = getLoadModal(doc);
       if (lm) { e.preventDefault(); lm(targetSel, href); }
-      else {
-        // hard fallback if host blocks default navigation
-        try { (doc.defaultView || window).location.href = href; e.preventDefault(); } catch(_) {}
-      }
-    }, true); // << capture
+      else { try { (doc.defaultView || window).location.href = href; e.preventDefault(); } catch(_) {} }
+    }, true);
 
-    // ---- ACTION: Waiting Table Interactions (inside our modal) ----
+    // waiting-table interactions (inside our modal)
     doc.addEventListener('click', function(e){
       var modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
 
-      // prioritize toggle
       var pr = closest(e.target, '[data-cvq="prio"]');
       if (pr){
         var row = closest(pr, 'tr'); if (!row) return;
         var cell = row.cells[2];
         var txt = (cell.textContent || '').replace(/\s+/g,' ').trim();
-        if (/Priority/.test(txt)) {
-          cell.innerHTML = txt.replace(/Priority/,'').replace(/\s+/g,' ').trim();
-        } else {
-          cell.innerHTML = txt + ' <span class="cvq-badge">Priority</span>';
-        }
+        if (/Priority/.test(txt)) cell.innerHTML = txt.replace(/Priority/,'').replace(/\s+/g,' ').trim();
+        else cell.innerHTML = txt + ' <span class="cvq-badge">Priority</span>';
         return;
       }
 
-      // kebab open/close
       var kb = closest(e.target, '[data-cvq="menu"]');
       if (kb){
         var menu = kb.querySelector('.cvq-menu');
@@ -1043,7 +1056,7 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
       }
     }, false);
 
-    // close any open kebab when clicking elsewhere inside the modal
+    // click-away inside modal closes kebabs
     doc.addEventListener('click', function(e){
       var modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
@@ -1058,20 +1071,18 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     var found = findQueuesDoc(); if (!found) return;
     var doc = found.doc, body = found.body, container = found.container;
 
-    ensureStyles(doc);        // styles + modal host + force-close
-    forceCloseCvq(doc);       // safety: ensure closed on entry
+    ensureStyles(doc);
+    forceCloseCvq(doc);
+    bindInlineCountOpener(doc);   // <-- make inline count openers available
 
     if (doc.getElementById(PANEL_ID)) return; // already injected
 
-    // Build panel
     var wrap = doc.createElement('div'); wrap.innerHTML = buildPanelHTML();
     var panel = wrap.firstElementChild;
 
-    // Hide original table container and insert our panel above it
     if (container && container.parentNode) {
       if (!container.hasAttribute('data-cv-hidden')) {
-        container.setAttribute('data-cv-hidden','1');
-        container.style.display = 'none';
+        container.setAttribute('data-cv-hidden','1'); container.style.display = 'none';
       }
       container.parentNode.insertBefore(panel, container);
     } else if (body) {
@@ -1153,4 +1164,3 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-
