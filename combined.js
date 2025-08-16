@@ -43,7 +43,7 @@ if (!window.__cvDemoInit) {
     </table>
   </div>
 
-<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
+
 <!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function () {
@@ -208,6 +208,8 @@ if (!window.__cvDemoInit) {
   });
 })();
 <\/script>
+</body></html>`;
+}
 
 
 
@@ -564,6 +566,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
