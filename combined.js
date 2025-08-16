@@ -749,6 +749,13 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
 .cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
 
+.cvq-modal-backdrop{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.35);
+  z-index:9998;
+  display:none;
+}
+
 /* Modal host */
 .cvq-modal{
   position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
@@ -786,12 +793,13 @@ tr:hover .cvq-icon{ opacity:.85; }
       const host = doc.createElement('div');
       host.id = 'cvq-modal-host';
       host.innerHTML = `
-        <div class="cvq-modal-backdrop" id="cvq-backdrop"></div>
-        <div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">
+        <div class="cvq-modal-backdrop" id="cvq-backdrop" style="display:none"></div>
+        <div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true" style="display:none">
           <header id="cvq-modal-title">Modal</header>
           <div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>
           <footer><button class="cvq-btn" id="cvq-close">Close</button></footer>
-        </div>`;
+        </div>
+
       (doc.body || doc.documentElement).appendChild(host);
 
       // close wiring
@@ -1086,6 +1094,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
