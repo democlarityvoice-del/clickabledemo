@@ -564,29 +564,34 @@ if (!window.__cvGridStatsInit) {
   })();
 }   // closes __cvGridStatsInit
 
+
 // ==============================
-// ==============================
-// Queues Tiles (CALL CENTER MANAGER)
+// Queues Tiles (CALL CENTER MANAGER) — uses #home-queues-body + .live-queues
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
 
-  const MANAGER_REGEX   = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const TABLE_SEL       = '#manager_queues';                       // table in your screenshot
-  const PANEL_ID        = 'cv-queues-tiles';
-  const HIDE_STYLE_ID   = 'cv-queues-hide-cols-style';
-  const PANEL_STYLE_ID  = 'cv-queues-tiles-style';
+  const MANAGER_REGEX  = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const BODY_SEL       = '#home-queues-body';
+  const TABLE_CAND     = '#manager_queues, ' + BODY_SEL + ' table.live-queues, table.live-queues';
+  const PANEL_ID       = 'cv-queues-tiles';
+  const PANEL_STYLE_ID = 'cv-queues-tiles-style';
+  const HIDE_STYLE_ID  = 'cv-queues-hide-style';
+  const TABLE_FLAG_CLS = 'cv-queues-modded';
 
-  // Your requested values
   const DATA = [
-    { key: 'main',      title: 'Main Routing (300)',       active: 0, waiting: 0, tick: false },
-    { key: 'sales',     title: 'New Sales (301)',          active: 3, waiting: 1, tick: true  },
-    { key: 'existing',  title: 'Existing Customer (302)',  active: 1, waiting: 1, tick: true  },
-    { key: 'billing',   title: 'Billing (303)',            active: 0, waiting: 0, tick: false },
+    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, tick:false },
+    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, tick:true  },
+    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, tick:true  },
+    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, tick:false }
   ];
 
-  // -------- helpers --------
-  function fmt(sec){ sec = sec|0; const m = String((sec/60|0)).padStart(2,'0'); const s = String(sec%60).padStart(2,'0'); return `${m}:${s}`; }
+  const fmt = s => {
+    s |= 0;
+    const m = String((s/60|0)).padStart(2,'0');
+    const r = String(s%60).padStart(2,'0');
+    return `${m}:${r}`;
+  };
 
   function getSameOriginDocs() {
     const docs = [document];
@@ -594,15 +599,16 @@ if (!window.__cvQueuesTilesInit) {
       try {
         const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
         if (d) docs.push(d);
-      } catch { /* cross-origin; ignore */ }
+      } catch {}
     });
     return docs;
   }
 
-  function findTable() {
+  function findTargets() {
     for (const doc of getSameOriginDocs()) {
-      const table = doc.querySelector(TABLE_SEL);
-      if (table) return { doc, table };
+      const body = doc.querySelector(BODY_SEL) || doc;
+      const table = body.querySelector(TABLE_CAND) || doc.querySelector(TABLE_CAND);
+      if (table) return { doc, body: body || doc.body, table };
     }
     return null;
   }
@@ -620,156 +626,106 @@ if (!window.__cvQueuesTilesInit) {
 #${PANEL_ID} .cvq-badge{flex:1 1 0;border-radius:6px;padding:8px 6px;text-align:center;background:#f4f8ff;}
 #${PANEL_ID} .cvq-badge .lbl{font-size:11px;color:#555;margin-bottom:4px;}
 #${PANEL_ID} .cvq-badge .val{font-size:22px;font-weight:700;line-height:1;}
-#${PANEL_ID} .cvq-wait{margin-top:4px;font-size:11px;color:#333;opacity:.9;}
-@media (max-width: 980px){ #${PANEL_ID} .cvq-grid{grid-template-columns:repeat(2,1fr);} }
+#${PANEL_ID} .cvq-wait{margin-top:4px;font-size:11px;opacity:.9;}
+@media (max-width:980px){ #${PANEL_ID} .cvq-grid{grid-template-columns:repeat(2,1fr);} }
       `;
       doc.head && doc.head.appendChild(s);
     }
     if (!doc.getElementById(HIDE_STYLE_ID)) {
-      // Hide "Active Calls / Callers Waiting / Wait" (2nd, 3rd, 4th columns)
       const h = doc.createElement('style');
       h.id = HIDE_STYLE_ID;
+      // Only hide on the table we tag with TABLE_FLAG_CLS
       h.textContent = `
-${TABLE_SEL} thead th:nth-child(2),
-${TABLE_SEL} thead th:nth-child(3),
-${TABLE_SEL} thead th:nth-child(4),
-${TABLE_SEL} tbody td:nth-child(2),
-${TABLE_SEL} tbody td:nth-child(3),
-${TABLE_SEL} tbody td:nth-child(4){ display:none !important; }
+table.${TABLE_FLAG_CLS} thead th:nth-child(2),
+table.${TABLE_FLAG_CLS} thead th:nth-child(3),
+table.${TABLE_FLAG_CLS} thead th:nth-child(4),
+table.${TABLE_FLAG_CLS} tbody td:nth-child(2),
+table.${TABLE_FLAG_CLS} tbody td:nth-child(3),
+table.${TABLE_FLAG_CLS} tbody td:nth-child(4){ display:none !important; }
       `;
       doc.head && doc.head.appendChild(h);
     }
   }
 
   function buildPanelHTML() {
-    const cards = DATA.map(d => {
-      const waitHTML = d.tick
-        ? `<div class="cvq-wait" data-tick="1" data-sec="0" id="cvq-wait-${d.key}">${fmt(0)}</div>`
-        : `<div class="cvq-wait" style="opacity:.6">--:--</div>`;
-      return `
+    const cards = DATA.map(d => `
 <div class="cvq-card">
   <div class="cvq-title">${d.title}</div>
   <div class="cvq-row">
+    <div class="cvq-badge"><div class="lbl">Active</div><div class="val">${d.active}</div></div>
     <div class="cvq-badge">
-      <div class="lbl">Active</div>
-      <div class="val">${d.active}</div>
-    </div>
-    <div class="cvq-badge">
-      <div class="lbl">Waiting</div>
-      <div class="val">${d.waiting}</div>
-      ${waitHTML}
+      <div class="lbl">Waiting</div><div class="val">${d.waiting}</div>
+      ${d.tick ? `<div class="cvq-wait" data-tick="1" data-sec="0" id="cvq-wait-${d.key}">${fmt(0)}</div>` : `<div class="cvq-wait">--:--</div>`}
     </div>
   </div>
-</div>`;
-    }).join('');
+</div>`).join('');
     return `<div id="${PANEL_ID}"><div class="cvq-grid">${cards}</div></div>`;
   }
 
   function insertPanel() {
-    const found = findTable();
+    const found = findTargets();
     if (!found) return false;
+    const { doc, body, table } = found;
 
-    const { doc, table } = found;
-    if (doc.getElementById(PANEL_ID)) return true; // already there
+    if (doc.getElementById(PANEL_ID)) return true;
 
     ensureStyles(doc);
 
+    // tag the table so our hide-CSS only hits this one
+    table.classList.add(TABLE_FLAG_CLS);
+
+    // insert panel just above the table (inside the queues body if present)
+    const host = body.contains(table) ? body : table.parentNode || doc.body;
     const wrap = doc.createElement('div');
     wrap.innerHTML = buildPanelHTML();
-    const panel = wrap.firstElementChild;
+    host.insertBefore(wrap.firstElementChild, table);
 
-    // Insert right above the queues table
-    if (table.parentNode) table.parentNode.insertBefore(panel, table);
-    else doc.body.appendChild(panel);
-
-    // start counters
     startTimers(doc);
-
-    // keep alive if SPA re-renders the table
     attachObserver(doc);
     return true;
   }
 
-  function startTimers(doc) {
+  function startTimers(doc){
     if (doc.__cvQueuesTimer) return;
     doc.__cvQueuesTimer = setInterval(() => {
       doc.querySelectorAll(`#${PANEL_ID} [data-tick="1"]`).forEach(el => {
-        const sec = (parseInt(el.getAttribute('data-sec'), 10) || 0) + 1;
+        const sec = (parseInt(el.getAttribute('data-sec'),10) || 0) + 1;
         el.setAttribute('data-sec', String(sec));
         el.textContent = fmt(sec);
       });
     }, 1000);
   }
+  function stopTimers(doc){ if (doc.__cvQueuesTimer){ clearInterval(doc.__cvQueuesTimer); doc.__cvQueuesTimer=null; } }
 
-  function stopTimers(doc) {
-    if (doc.__cvQueuesTimer) {
-      clearInterval(doc.__cvQueuesTimer);
-      doc.__cvQueuesTimer = null;
-    }
-  }
-
-  function attachObserver(doc) {
+  function attachObserver(doc){
     if (doc.__cvQueuesMO) return;
     const mo = new MutationObserver(() => {
-      // if panel was removed while still on manager page, re-insert
-      if (MANAGER_REGEX.test(location.href)) {
-        if (!doc.getElementById(PANEL_ID)) insertPanel();
-      }
+      if (MANAGER_REGEX.test(location.href) && !doc.getElementById(PANEL_ID)) insertPanel();
     });
-    mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
+    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
     doc.__cvQueuesMO = mo;
   }
+  function detachObserver(doc){ if (doc.__cvQueuesMO){ try{doc.__cvQueuesMO.disconnect();}catch{} doc.__cvQueuesMO=null; } }
 
-  function detachObserver(doc) {
-    if (doc.__cvQueuesMO) {
-      try { doc.__cvQueuesMO.disconnect(); } catch {}
-      doc.__cvQueuesMO = null;
+  function removeEverywhere(){
+    for (const doc of getSameOriginDocs()){
+      const p = doc.getElementById(PANEL_ID); if (p) p.remove();
+      stopTimers(doc); detachObserver(doc);
+      doc.querySelectorAll('table.'+TABLE_FLAG_CLS).forEach(t => t.classList.remove(TABLE_FLAG_CLS));
     }
   }
 
-  function removeEverywhere() {
-    for (const doc of getSameOriginDocs()) {
-      const p = doc.getElementById(PANEL_ID);
-      if (p) p.remove();
-      const hide = doc.getElementById(HIDE_STYLE_ID);
-      if (hide) hide.remove();
-      stopTimers(doc);
-      detachObserver(doc);
-    }
-  }
+  function run(){ MANAGER_REGEX.test(location.href) ? insertPanel() : removeEverywhere(); }
 
-  function run() {
-    if (MANAGER_REGEX.test(location.href)) {
-      insertPanel();
-    } else {
-      removeEverywhere();
-    }
-  }
-
-  // watch SPA nav
-  (function watchURL() {
+  // SPA hooks
+  (function watchURL(){
     let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
-
-    history.pushState = function () {
-      const ret = origPush.apply(this, arguments);
-      const now = location.href; if (now !== last) { last = now; run(); }
-      return ret;
-    };
-    history.replaceState = function () {
-      const ret = origReplace.apply(this, arguments);
-      const now = location.href; if (now !== last) { last = now; run(); }
-      return ret;
-    };
-
-    new MutationObserver(() => {
-      if (location.href !== last) { last = location.href; run(); }
-    }).observe(document.documentElement, { childList: true, subtree: true });
-
-    window.addEventListener('popstate', () => setTimeout(run, 0));
+    const P = history.pushState, R = history.replaceState;
+    history.pushState = function(){ const r = P.apply(this, arguments); if (location.href!==last){ last=location.href; run(); } return r; };
+    history.replaceState = function(){ const r = R.apply(this, arguments); if (location.href!==last){ last=location.href; run(); } return r; };
+    new MutationObserver(()=>{ if (location.href!==last){ last=location.href; run(); }}).observe(document.documentElement,{childList:true,subtree:true});
+    addEventListener('popstate', ()=> setTimeout(run,0));
   })();
 
-  // initial
   run();
 }
