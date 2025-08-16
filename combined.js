@@ -766,11 +766,12 @@ if (!window.__cvQueuesTilesInit) {
   }
 
   // ---- ACTION: Ensure Styles + Modal Host (create once) ----
-  function ensureStyles(doc){
-    if (!doc.getElementById(PANEL_STYLE_ID)) {
-      const s = doc.createElement('style');
-      s.id = PANEL_STYLE_ID;
-      s.textContent =
+ // ---- ACTION: Ensure Styles + Modal Host (create/update once) ----
+function ensureStyles(doc){
+  // ⬅️ tweak this to move further right/left
+  var SHIFT_PX = 80;  // positive = right, negative = left
+
+  var css =
 `/* container spacing to match native */
 #${PANEL_ID}.table-container{margin-top:6px;}
 #${PANEL_ID} table{width:100%;}
@@ -801,7 +802,10 @@ tr:hover .cvq-icon{ opacity:.85; }
   z-index:9998; display:none;
 }
 .cvq-modal{
-  position:fixed; left:calc(50% + 40px); top:50%; transform:translate(-50%,-50%);
+  position:fixed;
+  left:calc(50% + ${SHIFT_PX}px) !important;  /* force the horizontal shift */
+  top:50%;
+  transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   width:min(980px,96vw); height:88vh; max-height:88vh;
   z-index:9999; overflow:hidden; display:none; flex-direction:column;
@@ -809,8 +813,9 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-modal.is-open{ display:flex; }
 .cvq-modal-backdrop.is-open{ display:block; }
 
+/* header/body/footer */
 .cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
-.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }
+.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; min-height:0; max-height:none; }
 .cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
 
 .cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
@@ -827,21 +832,41 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }
 .cvq-menu a:hover{ background:#f5f5f5; }
 
-@media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
-      if (doc.head) doc.head.appendChild(s);
-    }
+@media (max-width:1200px){
+  /* recenters on smaller screens so it doesn't clip */
+  .cvq-modal{ left:50% !important; }
+}
 
-    if (!doc.getElementById('cvq-modal-host')) {
-      const host = doc.createElement('div');
-      host.id = 'cvq-modal-host';
-      host.innerHTML =
-        '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>'+
-        '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">'+
-          '<header id="cvq-modal-title">Modal</header>'+
-          '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>'+
-          '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>'+
-        '</div>';
-      (doc.body || doc.documentElement).appendChild(host);
+@media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
+
+  // 🔧 Always create OR update the style tag so edits take effect
+  var s = doc.getElementById(PANEL_STYLE_ID);
+  if (!s) {
+    s = doc.createElement('style');
+    s.id = PANEL_STYLE_ID;
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+  s.textContent = css;
+
+  // Modal host (create once)
+  if (!doc.getElementById('cvq-modal-host')) {
+    var host = doc.createElement('div');
+    host.id = 'cvq-modal-host';
+    host.innerHTML =
+      '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>'+
+      '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">'+
+        '<header id="cvq-modal-title">Modal</header>'+
+        '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>'+
+        '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>'+
+      '</div>';
+    (doc.body || doc.documentElement).appendChild(host);
+
+    host.addEventListener('click', function(e){
+      if (e.target && (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close')) closeModal(doc);
+    });
+  }
+}
+
 
       // ---- ACTION: Modal Close (backdrop + button) ----
       host.addEventListener('click', (e)=>{
@@ -1187,5 +1212,6 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
