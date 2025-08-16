@@ -12,7 +12,7 @@ if (!window.__cvDemoInit) {
 
   // -------- BUILD HOME SOURCE -------- //
   function buildSrcdoc() {
-    return `<!doctype html><html><head><meta charset="utf-8">
+  return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   * { box-sizing: border-box; }
@@ -43,10 +43,8 @@ if (!window.__cvDemoInit) {
     </table>
   </div>
 
-<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function(){
-  // pools
   const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
   const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
   const areaCodes = ["989","517","248","810","313"];
@@ -83,7 +81,7 @@ if (!window.__cvDemoInit) {
     tb.innerHTML='';
     calls.forEach(c=>{
       const tr=document.createElement('tr');
-      tr.inner=\`
+      tr.innerHTML=\`
         <td>\${c.from}</td><td>\${c.cnam}</td><td>\${c.dialed}</td><td>\${c.to}</td><td>\${c.t()}</td>
         <td><button class="listen-btn" aria-pressed="false" title="Listen in">
           <svg class="svgbak" viewBox="0 0 24 24" role="img" aria-label="Listen in">
@@ -111,6 +109,7 @@ if (!window.__cvDemoInit) {
 <\/script>
 </body></html>`;
 }
+
 
   // -------- REMOVE HOME -------- //
   function removeHome() {
@@ -465,6 +464,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
