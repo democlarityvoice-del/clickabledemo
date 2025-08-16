@@ -589,6 +589,7 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 // ==============================
 // ==============================
 // ==============================
+// ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER)
 // Full injection w/ modals + hosted SVG icons
 // ==============================
@@ -829,6 +830,12 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
         : '<span class="cvq-wait">-</span>';
       var idleCount = d.waiting > 0 ? 0 : (d.idle || 0);
 
+      // Inline onclicks for platform modal (belt) + delegated handler (suspenders)
+      var agentsHref = (IDLE_LINKS[d.key] || '#');
+      var queueHref  = (QUEUE_EDIT_LINKS[d.key] || '#');
+      var agentsOnClick = "try{var lm=(window.loadModal||parent.loadModal||top.loadModal);if(typeof lm==='function'){lm('#write-agents', this.href);return false;}}catch(e){}";
+      var queueOnClick  = "try{var lm=(window.loadModal||parent.loadModal||top.loadModal);if(typeof lm==='function'){lm('#write-queue', this.href);return false;}}catch(e){}";
+
       return ''+
       '<tr data-qkey="'+d.key+'">'+
         '<td class="text-center"><input type="checkbox" tabindex="-1" /></td>'+
@@ -839,17 +846,15 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
 
         // ---- ACTION: Agents Idle Link — route to real "Edit Agents"
         '<td class="text-center">'+
-          '<a class="cvq-link cvq-idle" href="'+(IDLE_LINKS[d.key] || '#')+'">'+idleCount+'</a>'+
+          '<a class="cvq-link cvq-idle" href="'+agentsHref+'" data-target="#write-agents" data-toggle="modal" data-backdrop="static" onclick="'+agentsOnClick+'">'+idleCount+'</a>'+
         '</td>'+
 
         // ---- ACTIONS CELL: Edit Agents / Edit Queue buttons (right edge)
         '<td class="cvq-actions">'+
-          // ---- ACTION: Edit Agents Button — route to real "Edit Agents"
-          '<a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents" href="'+(IDLE_LINKS[d.key] || '#')+'">'+
+          '<a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents" href="'+agentsHref+'" data-target="#write-agents" data-toggle="modal" data-backdrop="static" onclick="'+agentsOnClick+'">'+
             '<img src="'+ICON_USER+'" alt="">'+
           '</a>'+
-          // ---- ACTION: Edit Queue Button — route to real "Edit Queue"
-          '<a class="cvq-icon" title="Edit Queue" aria-label="Edit Queue" href="'+(QUEUE_EDIT_LINKS[d.key] || '#')+'">'+
+          '<a class="cvq-icon" title="Edit Queue" aria-label="Edit Queue" href="'+queueHref+'" data-target="#write-queue" data-toggle="modal" data-backdrop="static" onclick="'+queueOnClick+'">'+
             '<img src="'+ICON_EDIT+'" alt="">'+
           '</a>'+
         '</td>'+
@@ -910,9 +915,7 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
         '<td>'+r.status+(r.priority ? ' <span class="cvq-badge">Priority</span>' : '')+'</td>'+
         '<td class="text-center"><span data-cvq-start="'+r.start+'">'+mmss(((Date.now()-r.start)/1000)|0)+'</span></td>'+
         '<td class="text-center">'+
-          // ---- ACTION: Waiting Row "Prioritize" Toggle ----
           '<span class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><img src="'+ICON_ARROW+'" alt=""></span>'+
-          // ---- ACTION: Waiting Row Kebab Menu (Pickup/Transfer) ----
           '<span class="cvq-icon cvq-kebab" title="Actions" data-cvq="menu" aria-haspopup="menu" aria-expanded="false">'+
             '<img src="'+ICON_PHONE+'" alt="">'+
             '<div class="cvq-menu" role="menu">'+
@@ -964,14 +967,12 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (doc.__cvqClicksWired) return;
     doc.__cvqClicksWired = true;
 
-    // ---- ACTION: Active/Waiting Counts — open modals ----
+    // ---- ACTION: Active/Waiting Counts — open modals (CAPTURE to bypass host stopPropagation) ----
     doc.addEventListener('click', function(e){
-      var el = e.target;
-      var link = closest(el, '#'+PANEL_ID+' .cvq-link');
+      var link = closest(e.target, '#'+PANEL_ID+' .cvq-link');
       if (!link) return;
-
       var act = link.getAttribute('data-act');
-      if (!act) return; // let other handler take care of non-count links
+      if (!act) return; // non-count links handled below
 
       e.preventDefault();
       var tr = closest(link, 'tr');
@@ -986,12 +987,11 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
       } else if (act === 'waiting') {
         openModal(doc, 'Callers in '+q.title.replace(/\s+\(\d+\)$/, ''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
       }
-    }, false);
+    }, true); // << capture
 
-    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — route or platform modal ----
+    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — route or platform modal (CAPTURE) ----
     doc.addEventListener('click', function(e){
-      var el = e.target;
-      var nav = closest(el, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
+      var nav = closest(e.target, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
       if (!nav) return;
 
       var href = nav.getAttribute('href') || '#';
@@ -1000,8 +1000,11 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
 
       var lm = getLoadModal(doc);
       if (lm) { e.preventDefault(); lm(targetSel, href); }
-      // else: allow normal navigation in the iframe
-    }, false);
+      else {
+        // hard fallback if host blocks default navigation
+        try { (doc.defaultView || window).location.href = href; e.preventDefault(); } catch(_) {}
+      }
+    }, true); // << capture
 
     // ---- ACTION: Waiting Table Interactions (inside our modal) ----
     doc.addEventListener('click', function(e){
@@ -1150,7 +1153,4 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-
-
-
 
