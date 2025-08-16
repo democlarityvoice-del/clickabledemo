@@ -588,6 +588,7 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 
 // ==============================
 // ==============================
+// ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER)
 // Full injection w/ modals + hosted SVG icons
 // ==============================
@@ -624,7 +625,6 @@ if (!window.__cvQueuesTilesInit) {
   };
 
   // ---- DECLARE QUEUE DATA (demo counts) ----
-  // NOTE: Agents Idle is displayed as 0 if waiting > 0 (see buildPanelHTML)
   const QUEUE_DATA = [
     { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
     { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
@@ -634,7 +634,7 @@ if (!window.__cvQueuesTilesInit) {
 
   // ---- DECLARE UTIL: scheduleInject (safe RAF/timeout) ----
   function scheduleInject(fn) {
-    let fired = false;
+    var fired = false;
     if ('requestAnimationFrame' in window) {
       requestAnimationFrame(function(){ requestAnimationFrame(function(){ fired = true; fn(); }); });
     }
@@ -643,11 +643,11 @@ if (!window.__cvQueuesTilesInit) {
 
   // ---- DECLARE UTIL: getSameOriginDocs (document + inner iframes) ----
   function getSameOriginDocs(){
-    const docs = [document];
-    const ifrs = document.querySelectorAll('iframe');
+    var docs = [document];
+    var ifrs = document.querySelectorAll('iframe');
     for (var i=0;i<ifrs.length;i++){
       try {
-        const idoc = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        var idoc = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
         if (idoc) docs.push(idoc);
       } catch {}
     }
@@ -656,14 +656,14 @@ if (!window.__cvQueuesTilesInit) {
 
   // ---- DECLARE UTIL: findQueuesDoc (locate body/container/table) ----
   function findQueuesDoc(){
-    const docs = getSameOriginDocs();
+    var docs = getSameOriginDocs();
     for (var i=0;i<docs.length;i++){
-      const doc = docs[i];
-      const body = doc.querySelector(BODY_SEL);
+      var doc = docs[i];
+      var body = doc.querySelector(BODY_SEL);
       if (!body) continue;
-      const container = body.querySelector(CONTAINER_SEL);
-      const table = body.querySelector(TABLE_SEL);
-      return { doc, body, container, table };
+      var container = body.querySelector(CONTAINER_SEL);
+      var table = body.querySelector(TABLE_SEL);
+      return { doc:doc, body:body, container:container, table:table };
     }
     return null;
   }
@@ -671,24 +671,40 @@ if (!window.__cvQueuesTilesInit) {
   // ---- DECLARE UTIL: mmss (format seconds) ----
   function mmss(sec){
     sec = sec|0;
-    const m = String((sec/60|0)).padStart(2,'0');
-    const s = String(sec%60).padStart(2,'0');
+    var m = String((sec/60|0)).padStart(2,'0');
+    var s = String(sec%60).padStart(2,'0');
     return m + ':' + s;
   }
 
-  // ---- DECLARE UTIL: matches (selector compatibility) ----
+  // ---- DECLARE UTIL: closest / matches (compat) ----
   function matches(el, sel){
     if (!el || el.nodeType !== 1) return false;
     var p = Element.prototype;
     var fn = p.matches || p.msMatchesSelector || p.webkitMatchesSelector;
     return fn ? fn.call(el, sel) : false;
   }
+  function closest(el, sel){
+    while (el && el.nodeType === 1) {
+      if (matches(el, sel)) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  // ---- DECLARE UTIL: find loadModal on window/parent/top ----
+  function getLoadModal(doc){
+    var w = (doc && doc.defaultView) || window;
+    return (typeof w.loadModal === 'function' && w.loadModal) ||
+           (w.parent && typeof w.parent.loadModal === 'function' && w.parent.loadModal) ||
+           (w.top && typeof w.top.loadModal === 'function' && w.top.loadModal) ||
+           null;
+  }
 
   // ---- DECLARE CACHES FOR MODAL ROWS (stable while open) ----
-  const REAL_DIDS       = ['(248) 436-3443','(248) 436-3449','(313) 995-9080'];
-  const SAFE_FAKE_AC    = ['900','700','999','888','511','600','311','322','456'];
-  const AGENT_EXT_POOL  = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const CVQ_CACHE       = { active:{}, waiting:{} };
+  var REAL_DIDS       = ['(248) 436-3443','(248) 436-3449','(313) 995-9080'];
+  var SAFE_FAKE_AC    = ['900','700','999','888','511','600','311','322','456'];
+  var AGENT_EXT_POOL  = [201,203,204,207,211,215,218,219,222,227,231,235];
+  var CVQ_CACHE       = { active:{}, waiting:{} };
 
   function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function safeCallerID(){ return '(' + rand(SAFE_FAKE_AC) + ') 555-01' + String(Math.floor(Math.random()*100)).padStart(2,'0'); }
@@ -698,12 +714,12 @@ if (!window.__cvQueuesTilesInit) {
   // ---- ACTION: Build "Active Calls" rows for modal ----
   function makeActiveRows(qkey, count){
     if (!CVQ_CACHE.active[qkey]) {
-      const now = Date.now();
+      var now = Date.now();
       CVQ_CACHE.active[qkey] = Array.from({length:count}, function(_,i){
         return { from:safeCallerID(), dialed:pickRealDID(i), status:'Talking', agent:String(pickAgentExt(i)), start:now - Math.floor(Math.random()*90)*1000 };
       });
     } else {
-      const cur = CVQ_CACHE.active[qkey];
+      var cur = CVQ_CACHE.active[qkey];
       while (cur.length < count) {
         cur.push({ from:safeCallerID(), dialed:pickRealDID(cur.length), status:'Talking', agent:String(pickAgentExt(cur.length)), start:Date.now() });
       }
@@ -715,12 +731,12 @@ if (!window.__cvQueuesTilesInit) {
   // ---- ACTION: Build "Callers Waiting" rows for modal ----
   function makeWaitingRows(qkey, count){
     if (!CVQ_CACHE.waiting[qkey]) {
-      const now = Date.now();
+      var now = Date.now();
       CVQ_CACHE.waiting[qkey] = Array.from({length:count}, function(){
         return { caller:safeCallerID(), name:'WIRELESS CALLER', status:'Waiting', priority:false, start: now - Math.floor(Math.random()*20)*1000 };
       });
     } else {
-      const cur = CVQ_CACHE.waiting[qkey];
+      var cur = CVQ_CACHE.waiting[qkey];
       while (cur.length < count) {
         cur.push({ caller:safeCallerID(), name:'WIRELESS CALLER', status:'Waiting', priority:false, start: Date.now() });
       }
@@ -732,77 +748,57 @@ if (!window.__cvQueuesTilesInit) {
   // ---- ACTION: Ensure Styles + Modal Host (create once) ----
   function ensureStyles(doc){
     if (!doc.getElementById(PANEL_STYLE_ID)) {
-      const s = doc.createElement('style');
+      var s = doc.createElement('style');
       s.id = PANEL_STYLE_ID;
       s.textContent =
-`/* container spacing to match native */
-#${PANEL_ID}.table-container{margin-top:6px;}
-#${PANEL_ID} table{width:100%;}
-#${PANEL_ID} thead th{white-space:nowrap;}
-#${PANEL_ID} td,#${PANEL_ID} th{vertical-align:middle;}
-
-/* clickable counts (blue, boldish) */
-#${PANEL_ID} .cvq-link{color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer;}
-#${PANEL_ID} .cvq-link:hover{text-decoration:underline;}
-
-/* actions column: round icon buttons */
-#${PANEL_ID} .cvq-actions{ text-align:right; white-space:nowrap; width:86px; }
-.cvq-icon{
-  display:inline-flex; align-items:center; justify-content:center;
-  width:24px; height:24px; border-radius:50%;
-  background:#f7f7f7; border:1px solid #e1e1e1;
-  margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s;
-  cursor:pointer; padding:0; line-height:0;
-}
-tr:hover .cvq-icon{ opacity:.85; }
-.cvq-icon:hover{ opacity:1; }
-.cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
-.cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
-
-/* --- CVQ MODAL: default hidden (prevents auto-popup on load) --- */
-.cvq-modal-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.35);
-  z-index:9998; display:none !important;
-}
-.cvq-modal{
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
-  background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
-  width:min(980px,96vw); height:88vh; max-height:88vh;
-  z-index:9999; overflow:hidden;
-  display:none !important;           /* stays hidden until we open it */
-  /* we'll set display:flex from JS when opening */
-}
-.cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
-.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }
-.cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
-
-.cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
-.cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }
-
-.cvq-modal table{ width:100%; }
-.cvq-modal thead th{ white-space:nowrap; }
-.cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }
-
-/* kebab menu inside modal */
-.cvq-kebab{ position:relative; }
-.cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px;
-  box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10; }
-.cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }
-.cvq-menu a:hover{ background:#f5f5f5; }
-
-@media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
-      doc.head && doc.head.appendChild(s);
+"/* container spacing to match native */\n\
+#"+PANEL_ID+".table-container{margin-top:6px;}\n\
+#"+PANEL_ID+" table{width:100%;}\n\
+#"+PANEL_ID+" thead th{white-space:nowrap;}\n\
+#"+PANEL_ID+" td,#"+PANEL_ID+" th{vertical-align:middle;}\n\
+\n\
+/* clickable counts (blue, boldish) */\n\
+#"+PANEL_ID+" .cvq-link{color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer;}\n\
+#"+PANEL_ID+" .cvq-link:hover{text-decoration:underline;}\n\
+\n\
+/* actions column: round icon buttons */\n\
+#"+PANEL_ID+" .cvq-actions{ text-align:right; white-space:nowrap; width:86px; }\n\
+.cvq-icon{ display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#f7f7f7; border:1px solid #e1e1e1; margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s; cursor:pointer; padding:0; line-height:0; }\n\
+tr:hover .cvq-icon{ opacity:.85; }\n\
+.cvq-icon:hover{ opacity:1; }\n\
+.cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }\n\
+.cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }\n\
+\n\
+/* --- CVQ MODAL: closed by default; opened by adding .cvq-open --- */\n\
+.cvq-modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9998; display:none; }\n\
+.cvq-modal-backdrop.cvq-open{ display:block; }\n\
+.cvq-modal{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25); width:min(980px,96vw); height:88vh; max-height:88vh; z-index:9999; overflow:hidden; display:none; flex-direction:column; }\n\
+.cvq-modal.cvq-open{ display:flex; }\n\
+.cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }\n\
+.cvq-modal .cvq-modal-body{ overflow:auto; flex:1 1 auto; max-height:unset; }\n\
+.cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }\n\
+.cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }\n\
+.cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }\n\
+.cvq-modal table{ width:100%; }\n\
+.cvq-modal thead th{ white-space:nowrap; }\n\
+.cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }\n\
+.cvq-kebab{ position:relative; }\n\
+.cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10; }\n\
+.cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }\n\
+.cvq-menu a:hover{ background:#f5f5f5; }\n\
+@media (max-width:900px){ #"+PANEL_ID+" .hide-sm{display:none;} }";
+      if (doc.head) doc.head.appendChild(s);
     }
 
     if (!doc.getElementById('cvq-modal-host')) {
-      const host = doc.createElement('div');
+      var host = doc.createElement('div');
       host.id = 'cvq-modal-host';
       host.innerHTML =
-        '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>' +
-        '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">' +
-          '<header id="cvq-modal-title">Modal</header>' +
-          '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>' +
-          '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>' +
+        '<div class="cvq-modal-backdrop" id="cvq-backdrop"></div>'+
+        '<div class="cvq-modal" id="cvq-modal" role="dialog" aria-modal="true">'+
+          '<header id="cvq-modal-title">Modal</header>'+
+          '<div class="cvq-modal-body"><div id="cvq-modal-content"></div></div>'+
+          '<footer><button class="cvq-btn" id="cvq-close">Close</button></footer>'+
         '</div>';
       (doc.body || doc.documentElement).appendChild(host);
 
@@ -811,126 +807,139 @@ tr:hover .cvq-icon{ opacity:.85; }
         if (e.target && (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close')) closeModal(doc);
       });
     }
+
+    // ---- ACTION: Force Modal Closed (safety on first run / re-renders) ----
+    forceCloseCvq(doc);
+  }
+
+  // ---- ACTION: Force-close helper (no flicker/auto-open) ----
+  function forceCloseCvq(doc){
+    var bd = doc.getElementById('cvq-backdrop');
+    var md = doc.getElementById('cvq-modal');
+    if (bd) bd.classList.remove('cvq-open');
+    if (md) md.classList.remove('cvq-open');
+    if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer = null; }
   }
 
   // ---- ACTION: Build Panel HTML (renders all queue rows) ----
   function buildPanelHTML(){
-    const rows = QUEUE_DATA.map(function(d){
-      const waitCell = d.timer
-        ? '<span class="cvq-wait" id="cvq-wait-' + d.key + '" data-tick="1" data-sec="0">00:00</span>'
+    var rows = QUEUE_DATA.map(function(d){
+      var waitCell = d.timer
+        ? '<span class="cvq-wait" id="cvq-wait-'+d.key+'" data-tick="1" data-sec="0">00:00</span>'
         : '<span class="cvq-wait">-</span>';
-      const idleCount = d.waiting > 0 ? 0 : (d.idle || 0);
+      var idleCount = d.waiting > 0 ? 0 : (d.idle || 0);
 
-      return '' +
-      '<tr data-qkey="' + d.key + '">' +
-        '<td class="text-center"><input type="checkbox" tabindex="-1" /></td>' +
-        '<td class="cvq-queue">' + d.title + '</td>' +
-        '<td class="text-center"><a class="cvq-link" data-act="active">' + d.active + '</a></td>' +
-        '<td class="text-center"><a class="cvq-link" data-act="waiting">' + d.waiting + '</a></td>' +
-        '<td class="text-center">' + waitCell + '</td>' +
+      return ''+
+      '<tr data-qkey="'+d.key+'">'+
+        '<td class="text-center"><input type="checkbox" tabindex="-1" /></td>'+
+        '<td class="cvq-queue">'+d.title+'</td>'+
+        '<td class="text-center"><a class="cvq-link" data-act="active">'+d.active+'</a></td>'+
+        '<td class="text-center"><a class="cvq-link" data-act="waiting">'+d.waiting+'</a></td>'+
+        '<td class="text-center">'+waitCell+'</td>'+
 
-        // ---- ACTION: Agents Idle Link — route to real "Edit Agents" ----
-        '<td class="text-center">' +
-          '<a class="cvq-link cvq-idle" href="' + (IDLE_LINKS[d.key] || '#') + '">' + idleCount + '</a>' +
-        '</td>' +
+        // ---- ACTION: Agents Idle Link — route to real "Edit Agents"
+        '<td class="text-center">'+
+          '<a class="cvq-link cvq-idle" href="'+(IDLE_LINKS[d.key] || '#')+'">'+idleCount+'</a>'+
+        '</td>'+
 
-        // ---- ACTIONS CELL: Edit Agents / Edit Queue buttons (right edge) ----
-        '<td class="cvq-actions">' +
-          // ---- ACTION: Edit Agents Button — route to real "Edit Agents" ----
-          '<a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents" href="' + (IDLE_LINKS[d.key] || '#') + '">' +
-            '<img src="' + ICON_USER + '" alt="">' +
-          '</a>' +
-          // ---- ACTION: Edit Queue Button — route to real "Edit Queue" ----
-          '<a class="cvq-icon" title="Edit Queue" aria-label="Edit Queue" href="' + (QUEUE_EDIT_LINKS[d.key] || '#') + '">' +
-            '<img src="' + ICON_EDIT + '" alt="">' +
-          '</a>' +
-        '</td>' +
+        // ---- ACTIONS CELL: Edit Agents / Edit Queue buttons (right edge)
+        '<td class="cvq-actions">'+
+          // ---- ACTION: Edit Agents Button — route to real "Edit Agents"
+          '<a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents" href="'+(IDLE_LINKS[d.key] || '#')+'">'+
+            '<img src="'+ICON_USER+'" alt="">'+
+          '</a>'+
+          // ---- ACTION: Edit Queue Button — route to real "Edit Queue"
+          '<a class="cvq-icon" title="Edit Queue" aria-label="Edit Queue" href="'+(QUEUE_EDIT_LINKS[d.key] || '#')+'">'+
+            '<img src="'+ICON_EDIT+'" alt="">'+
+          '</a>'+
+        '</td>'+
       '</tr>';
     }).join('');
 
-    return '' +
-      '<div id="' + PANEL_ID + '" class="table-container scrollable-small">' +
-        '<table class="table table-condensed table-hover">' +
-          '<thead>' +
-            '<tr>' +
-              '<th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>' +
-              '<th>Call Queue</th>' +
-              '<th class="text-center">Active Calls</th>' +
-              '<th class="text-center">Callers Waiting</th>' +
-              '<th class="text-center">Wait</th>' +
-              '<th class="text-center">Agents Idle</th>' +
-              '<th class="text-center hide-sm" style="width:86px;"></th>' +
-            '</tr>' +
-          '</thead>' +
-          '<tbody>' + rows + '</tbody>' +
-        '</table>' +
+    return ''+
+      '<div id="'+PANEL_ID+'" class="table-container scrollable-small">'+
+        '<table class="table table-condensed table-hover">'+
+          '<thead>'+
+            '<tr>'+
+              '<th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>'+
+              '<th>Call Queue</th>'+
+              '<th class="text-center">Active Calls</th>'+
+              '<th class="text-center">Callers Waiting</th>'+
+              '<th class="text-center">Wait</th>'+
+              '<th class="text-center">Agents Idle</th>'+
+              '<th class="text-center hide-sm" style="width:86px;"></th>'+
+            '</tr>'+
+          '</thead>'+
+          '<tbody>'+rows+'</tbody>'+
+        '</table>'+
       '</div>';
   }
 
   // ---- ACTION: Build "Active Calls" Modal Table ----
   function buildActiveTable(rows){
-    const body = rows.map(function(r){
-      return '' +
-      '<tr>' +
-        '<td>' + r.from + '</td>' +
-        '<td>' + r.dialed + '</td>' +
-        '<td>' + r.status + '</td>' +
-        '<td>' + r.agent + '</td>' +
-        '<td class="text-center"><span data-cvq-start="' + r.start + '">' + mmss(((Date.now()-r.start)/1000)|0) + '</span></td>' +
-        '<td class="text-center">' +
-          '<button class="cvq-icon" title="Listen in" aria-label="Listen in">' +
-            '<img src="' + ICON_SPEAKER + '" alt="">' +
-          '</button>' +
-        '</td>' +
+    var body = rows.map(function(r){
+      return ''+
+      '<tr>'+
+        '<td>'+r.from+'</td>'+
+        '<td>'+r.dialed+'</td>'+
+        '<td>'+r.status+'</td>'+
+        '<td>'+r.agent+'</td>'+
+        '<td class="text-center"><span data-cvq-start="'+r.start+'">'+mmss(((Date.now()-r.start)/1000)|0)+'</span></td>'+
+        '<td class="text-center">'+
+          '<button class="cvq-icon" title="Listen in" aria-label="Listen in">'+
+            '<img src="'+ICON_SPEAKER+'" alt="">'+
+          '</button>'+
+        '</td>'+
       '</tr>';
     }).join('');
 
-    return '' +
-      '<table class="table table-condensed table-hover">' +
-        '<thead><tr><th>From</th><th>Dialed</th><th>Status</th><th>Agent</th><th>Duration</th><th class="text-center"></th></tr></thead>' +
-        '<tbody>' + (body || '<tr><td colspan="6" class="text-center">No active calls</td></tr>') + '</tbody>' +
+    return ''+
+      '<table class="table table-condensed table-hover">'+
+        '<thead><tr><th>From</th><th>Dialed</th><th>Status</th><th>Agent</th><th>Duration</th><th class="text-center"></th></tr></thead>'+
+        '<tbody>'+(body || '<tr><td colspan="6" class="text-center">No active calls</td></tr>')+'</tbody>'+
       '</table>';
   }
 
   // ---- ACTION: Build "Callers Waiting" Modal Table ----
   function buildWaitingTable(rows){
-    const body = rows.map(function(r,i){
-      return '' +
-      '<tr data-row="' + i + '">' +
-        '<td>' + r.caller + '</td>' +
-        '<td>' + r.name + '</td>' +
-        '<td>' + r.status + (r.priority ? ' <span class="cvq-badge">Priority</span>' : '') + '</td>' +
-        '<td class="text-center"><span data-cvq-start="' + r.start + '">' + mmss(((Date.now()-r.start)/1000)|0) + '</span></td>' +
-        '<td class="text-center">' +
+    var body = rows.map(function(r,i){
+      return ''+
+      '<tr data-row="'+i+'">'+
+        '<td>'+r.caller+'</td>'+
+        '<td>'+r.name+'</td>'+
+        '<td>'+r.status+(r.priority ? ' <span class="cvq-badge">Priority</span>' : '')+'</td>'+
+        '<td class="text-center"><span data-cvq-start="'+r.start+'">'+mmss(((Date.now()-r.start)/1000)|0)+'</span></td>'+
+        '<td class="text-center">'+
           // ---- ACTION: Waiting Row "Prioritize" Toggle ----
-          '<span class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><img src="' + ICON_ARROW + '" alt=""></span>' +
+          '<span class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><img src="'+ICON_ARROW+'" alt=""></span>'+
           // ---- ACTION: Waiting Row Kebab Menu (Pickup/Transfer) ----
-          '<span class="cvq-icon cvq-kebab" title="Actions" data-cvq="menu" aria-haspopup="menu" aria-expanded="false">' +
-            '<img src="' + ICON_PHONE + '" alt="">' +
-            '<div class="cvq-menu" role="menu">' +
-              '<a href="#" data-cvq="pickup"   role="menuitem">Pick up call</a>' +
-              '<a href="#" data-cvq="transfer" role="menuitem">Transfer call</a>' +
-            '</div>' +
-          '</span>' +
-        '</td>' +
+          '<span class="cvq-icon cvq-kebab" title="Actions" data-cvq="menu" aria-haspopup="menu" aria-expanded="false">'+
+            '<img src="'+ICON_PHONE+'" alt="">'+
+            '<div class="cvq-menu" role="menu">'+
+              '<a href="#" data-cvq="pickup"   role="menuitem">Pick up call</a>'+
+              '<a href="#" data-cvq="transfer" role="menuitem">Transfer call</a>'+
+            '</div>'+
+          '</span>'+
+        '</td>'+
       '</tr>';
     }).join('');
 
-    return '' +
-      '<table class="table table-condensed table-hover">' +
-        '<thead><tr><th>Caller ID</th><th>Name</th><th>Status</th><th>Duration</th><th class="text-center"></th></tr></thead>' +
-        '<tbody>' + (body || '<tr><td colspan="5" class="text-center">No waiting callers</td></tr>') + '</tbody>' +
+    return ''+
+      '<table class="table table-condensed table-hover">'+
+        '<thead><tr><th>Caller ID</th><th>Name</th><th>Status</th><th>Duration</th><th class="text-center"></th></tr></thead>'+
+        '<tbody>'+(body || '<tr><td colspan="5" class="text-center">No waiting callers</td></tr>')+'</tbody>'+
       '</table>';
   }
 
   // ---- ACTION: Open Modal (sets title + content + timer) ----
   function openModal(doc, title, tableHTML){
-    const bd = doc.getElementById('cvq-backdrop');
-    const md = doc.getElementById('cvq-modal');
+    var bd = doc.getElementById('cvq-backdrop');
+    var md = doc.getElementById('cvq-modal');
     doc.getElementById('cvq-modal-title').textContent = title;
     doc.getElementById('cvq-modal-content').innerHTML = tableHTML;
-    if (bd) bd.style.display = 'block';
-    if (md) md.style.display = 'flex';
+    if (bd) bd.classList.add('cvq-open');
+    if (md) md.classList.add('cvq-open');
+
     if (doc.__cvqModalTimer) clearInterval(doc.__cvqModalTimer);
     doc.__cvqModalTimer = setInterval(function(){
       var nodes = doc.querySelectorAll('[data-cvq-start]');
@@ -943,10 +952,10 @@ tr:hover .cvq-icon{ opacity:.85; }
 
   // ---- ACTION: Close Modal (cleans timer) ----
   function closeModal(doc){
-    const bd = doc.getElementById('cvq-backdrop');
-    const md = doc.getElementById('cvq-modal');
-    if (bd) bd.style.display='none';
-    if (md) md.style.display='none';
+    var bd = doc.getElementById('cvq-backdrop');
+    var md = doc.getElementById('cvq-modal');
+    if (bd) bd.classList.remove('cvq-open');
+    if (md) md.classList.remove('cvq-open');
     if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer=null; }
   }
 
@@ -958,118 +967,108 @@ tr:hover .cvq-icon{ opacity:.85; }
     // ---- ACTION: Active/Waiting Counts — open modals ----
     doc.addEventListener('click', function(e){
       var el = e.target;
-      while (el && el !== doc) {
-        if (matches(el, '#'+PANEL_ID+' .cvq-link')) {
-          var act = el.getAttribute('data-act');
-          if (!act) break; // not a count link; let the other handler catch it
-          e.preventDefault();
-          // find row + queue data
-          var tr = el.closest ? el.closest('tr') : null;
-          if (!tr) {
-            var p = el; while (p && p.tagName !== 'TR') p = p.parentNode; tr = p;
-          }
-          var qkey = tr && tr.getAttribute('data-qkey');
-          var q = null;
-          for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; } }
-          if (!q) return;
+      var link = closest(el, '#'+PANEL_ID+' .cvq-link');
+      if (!link) return;
 
-          if (act === 'active') {
-            openModal(doc, 'Active Calls in ' + q.title.replace(/\s+\(\d+\)$/, ''), buildActiveTable(makeActiveRows(qkey, q.active)));
-          } else if (act === 'waiting') {
-            openModal(doc, 'Callers in ' + q.title.replace(/\s+\(\d+\)$/, ''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
-          }
-          return;
-        }
-        el = el.parentNode;
+      var act = link.getAttribute('data-act');
+      if (!act) return; // let other handler take care of non-count links
+
+      e.preventDefault();
+      var tr = closest(link, 'tr');
+      if (!tr) return;
+      var qkey = tr.getAttribute('data-qkey');
+      var q = null;
+      for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; } }
+      if (!q) return;
+
+      if (act === 'active') {
+        openModal(doc, 'Active Calls in '+q.title.replace(/\s+\(\d+\)$/, ''), buildActiveTable(makeActiveRows(qkey, q.active)));
+      } else if (act === 'waiting') {
+        openModal(doc, 'Callers in '+q.title.replace(/\s+\(\d+\)$/, ''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
       }
-    }, true);
+    }, false);
 
-    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — route or modal ----
+    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — route or platform modal ----
     doc.addEventListener('click', function(e){
       var el = e.target;
-      while (el && el !== doc) {
-        if (matches(el, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a')) {
-          var href = el.getAttribute('href') || '#';
-          var label = el.getAttribute('aria-label') || '';
-          var isAgents = (label === 'Edit Agents') || matches(el, '#'+PANEL_ID+' .cvq-idle');
-          var targetSel = isAgents ? '#write-agents' : '#write-queue';
+      var nav = closest(el, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
+      if (!nav) return;
 
-          // If host exposes loadModal, use it; else navigate normally
-          if (typeof window.loadModal === 'function') {
-            e.preventDefault();
-            window.loadModal(targetSel, href);
-          }
-          return;
-        }
-        el = el.parentNode;
-      }
-    }, true);
+      var href = nav.getAttribute('href') || '#';
+      var isAgents = matches(nav, '#'+PANEL_ID+' .cvq-idle') || (nav.getAttribute('aria-label') === 'Edit Agents');
+      var targetSel = isAgents ? '#write-agents' : '#write-queue';
 
-    // ---- ACTION: Waiting Table Interactions (inside modal) ----
+      var lm = getLoadModal(doc);
+      if (lm) { e.preventDefault(); lm(targetSel, href); }
+      // else: allow normal navigation in the iframe
+    }, false);
+
+    // ---- ACTION: Waiting Table Interactions (inside our modal) ----
     doc.addEventListener('click', function(e){
-      var modal = null, p = e.target;
-      while (p){ if (p.id === 'cvq-modal'){ modal = p; break; } p = p.parentNode; }
+      var modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
 
-      // ---- ACTION: Waiting Row "Prioritize" Toggle ----
-      var pr = e.target;
-      while (pr && pr !== modal) {
-        if (pr.getAttribute && pr.getAttribute('data-cvq') === 'prio') {
-          var row = pr.closest ? pr.closest('tr') : null;
-          if (!row) { var r = pr; while (r && r.tagName !== 'TR') r = r.parentNode; row = r; }
-          if (!row) return;
-          var cell = row.cells[2];
-          var txt = cell.textContent || '';
-          if (/Priority/.test(txt)) {
-            cell.innerHTML = txt.replace(/Priority/,'').replace(/\s+/g,' ').trim();
-          } else {
-            cell.innerHTML = (txt + ' <span class="cvq-badge">Priority</span>').trim();
-          }
-          return;
+      // prioritize toggle
+      var pr = closest(e.target, '[data-cvq="prio"]');
+      if (pr){
+        var row = closest(pr, 'tr'); if (!row) return;
+        var cell = row.cells[2];
+        var txt = (cell.textContent || '').replace(/\s+/g,' ').trim();
+        if (/Priority/.test(txt)) {
+          cell.innerHTML = txt.replace(/Priority/,'').replace(/\s+/g,' ').trim();
+        } else {
+          cell.innerHTML = txt + ' <span class="cvq-badge">Priority</span>';
         }
-        pr = pr.parentNode;
-      }
-
-      // ---- ACTION: Waiting Row Kebab Menu (open/close + item clicks) ----
-      var kb = e.target;
-      while (kb && kb !== modal) {
-        if (kb.getAttribute && kb.getAttribute('data-cvq') === 'menu') {
-          var menu = kb.querySelector('.cvq-menu');
-          var menus = modal.querySelectorAll('.cvq-menu');
-          for (var i=0;i<menus.length;i++){ if (menus[i] !== menu) menus[i].style.display='none'; }
-          menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
-          e.stopPropagation();
-          return;
-        }
-        kb = kb.parentNode;
-      }
-
-      if (matches(e.target, '.cvq-menu a')) {
-        e.preventDefault();
-        var m = e.target.closest ? e.target.closest('.cvq-menu') : null;
-        if (m) m.style.display='none';
         return;
       }
-    });
+
+      // kebab open/close
+      var kb = closest(e.target, '[data-cvq="menu"]');
+      if (kb){
+        var menu = kb.querySelector('.cvq-menu');
+        var menus = modal.querySelectorAll('.cvq-menu');
+        for (var i=0;i<menus.length;i++){ if (menus[i] !== menu) menus[i].style.display='none'; }
+        menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        e.stopPropagation();
+        return;
+      }
+
+      if (matches(e.target, '.cvq-menu a')){
+        e.preventDefault();
+        var m = closest(e.target, '.cvq-menu'); if (m) m.style.display='none';
+        return;
+      }
+    }, false);
+
+    // close any open kebab when clicking elsewhere inside the modal
+    doc.addEventListener('click', function(e){
+      var modal = closest(e.target, '#cvq-modal');
+      if (!modal) return;
+      if (closest(e.target, '.cvq-kebab')) return;
+      var menus = modal.querySelectorAll('.cvq-menu');
+      for (var i=0;i<menus.length;i++) menus[i].style.display='none';
+    }, false);
   }
 
   // ---- ACTION: Inject Queues Tiles (create panel + timers + handlers) ----
   function injectQueuesTiles(){
-    const found = findQueuesDoc(); if (!found) return;
-    const doc = found.doc, body = found.body, container = found.container;
+    var found = findQueuesDoc(); if (!found) return;
+    var doc = found.doc, body = found.body, container = found.container;
 
-    ensureStyles(doc);
+    ensureStyles(doc);        // styles + modal host + force-close
+    forceCloseCvq(doc);       // safety: ensure closed on entry
 
     if (doc.getElementById(PANEL_ID)) return; // already injected
 
     // Build panel
-    const wrap = doc.createElement('div'); wrap.innerHTML = buildPanelHTML();
-    const panel = wrap.firstElementChild;
+    var wrap = doc.createElement('div'); wrap.innerHTML = buildPanelHTML();
+    var panel = wrap.firstElementChild;
 
     // Hide original table container and insert our panel above it
     if (container && container.parentNode) {
       if (!container.hasAttribute('data-cv-hidden')) {
-        container.setAttribute('data-cv-hidden','1'); container.style.display = 'none';
+        container.setAttribute('data-cv-hidden','1');
+        container.style.display = 'none';
       }
       container.parentNode.insertBefore(panel, container);
     } else if (body) {
@@ -1096,11 +1095,11 @@ tr:hover .cvq-icon{ opacity:.85; }
 
   // ---- ACTION: Remove Queues Tiles (cleanup + unhide originals) ----
   function removeQueuesTiles(){
-    const docs = getSameOriginDocs();
+    var docs = getSameOriginDocs();
     for (var i=0;i<docs.length;i++){
-      const doc = docs[i];
-      const p = doc.getElementById(PANEL_ID); if (p) p.remove();
-      const hidden = doc.querySelectorAll(BODY_SEL + ' ' + CONTAINER_SEL + '[data-cv-hidden="1"]');
+      var doc = docs[i];
+      var p = doc.getElementById(PANEL_ID); if (p) p.remove();
+      var hidden = doc.querySelectorAll(BODY_SEL+' '+CONTAINER_SEL+'[data-cv-hidden="1"]');
       for (var j=0;j<hidden.length;j++){ hidden[j].style.display=''; hidden[j].removeAttribute('data-cv-hidden'); }
       if (doc.__cvqTimer){ clearInterval(doc.__cvqTimer); doc.__cvqTimer=null; }
       closeModal(doc);
@@ -1111,13 +1110,13 @@ tr:hover .cvq-icon{ opacity:.85; }
   // ---- WATCHER: Observe SPA Rerenders (re-inject if needed) ----
   function attachObserver(doc){
     if (doc.__cvqMO) return;
-    const mo = new MutationObserver(function(){
+    var mo = new MutationObserver(function(){
       if (!QUEUES_REGEX.test(location.href)) return;
-      const body = doc.querySelector(BODY_SEL); if (!body) return;
-      const container = body.querySelector(CONTAINER_SEL);
-      const panel = doc.getElementById(PANEL_ID);
+      var body = doc.querySelector(BODY_SEL); if (!body) return;
+      var container = body.querySelector(CONTAINER_SEL);
+      var panel = doc.getElementById(PANEL_ID);
       if (container && container.style.display !== 'none') scheduleInject(injectQueuesTiles);
-      else if (!panel && (body || container))          scheduleInject(injectQueuesTiles);
+      else if (!panel && (body || container))            scheduleInject(injectQueuesTiles);
     });
     mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
     doc.__cvqMO = mo;
@@ -1127,34 +1126,30 @@ tr:hover .cvq-icon{ opacity:.85; }
   // ---- WATCHER: Route Changes (enter/leave manager page) ----
   function waitAndInject(tries){
     tries = tries || 0;
-    const found = findQueuesDoc();
+    var found = findQueuesDoc();
     if (found && (found.body || tries>=3)) { scheduleInject(injectQueuesTiles); return; }
     if (tries>=12) return;
     setTimeout(function(){ waitAndInject(tries+1); },300);
   }
   function onEnter(){ waitAndInject(0); }
   function handleRoute(prev,next){
-    const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
+    var was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
     if (!was && is) onEnter();
     if ( was && !is) removeQueuesTiles();
   }
 
   // ---- WATCHER: URL (push/replace/popstate + SPA) ----
   (function watchURL(){
-    let last = location.href;
-    const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    new MutationObserver(function(){ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+    var last = location.href;
+    var push = history.pushState, rep = history.replaceState;
+    history.pushState    = function(){ var prev=last; var ret=push.apply(this,arguments); var now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ var prev=last; var ret=rep.apply(this,arguments);  var now=location.href; last=now; handleRoute(prev,now); return ret; };
+    new MutationObserver(function(){ if(location.href!==last){ var prev=last, now=location.href; last=now; handleRoute(prev,now); } })
       .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',function(){ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
+    window.addEventListener('popstate',function(){ var prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-
-
-
-
 
 
 
