@@ -9,6 +9,7 @@ if (!window.__cvDemoInit) {
   const HOME_SELECTOR  = '#nav-home a, #nav-home';
   const SLOT_SELECTOR  = '#omp-active-body';
   const IFRAME_ID      = 'cv-demo-calls-iframe';
+  const ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
   // -------- BUILD HOME SOURCE -------- //
   function buildSrcdoc() {
@@ -46,10 +47,10 @@ if (!window.__cvDemoInit) {
 <script>
 (function () {
   // Pools
-  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
-  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
-  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
+   names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+   extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+   areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
+   CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
 
   // Outbound agent display names
   const firstNames = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
@@ -572,7 +573,8 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 
 // ==============================
 // ==============================
-// Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals + FA icons
+// ==============================
+// Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals + hosted SVG icons
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
@@ -585,14 +587,12 @@ if (!window.__cvQueuesTilesInit) {
   const PANEL_ID       = 'cvq-panel';
   const PANEL_STYLE_ID = 'cvq-panel-style';
 
-  // (easy to tweak icon choices here if you prefer different FA glyphs)
-  const FA = {
-    rightA: 'fa-solid fa-headset',      // right column: “monitor”
-    rightB: 'fa-solid fa-ellipsis-h',   // right column: “more”
-    listen: 'fa-solid fa-headset',      // modal active rows: listen
-    prio:   'fa-solid fa-arrow-up',     // modal waiting rows: prioritize
-    menu:   'fa-solid fa-ellipsis-vertical' // modal waiting rows: kebab
-  };
+  // hosted SVGs (circle buttons wrap these)
+  const ICON_USER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+  const ICON_EDIT    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
+  const ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const ICON_PHONE   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+  const ICON_ARROW   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/arrow-up-solid-full.svg';
 
   // ---- UTIL ----
   function scheduleInject(fn){
@@ -629,20 +629,15 @@ if (!window.__cvQueuesTilesInit) {
     { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
   ];
 
-  // Generators for modal rows (stable while page is open)
+  // Fake rows for modals (stable while page is open)
   const REAL_DIDS = ['(248) 436-3443','(248) 436-3449','(313) 995-9080'];
-  const SAFE_FAKE_AC = ['900','700','999','888','511','600','311','322','456']; // non-real area codes
+  const SAFE_FAKE_AC = ['900','700','999','888','511','600','311','322','456'];
   const AGENT_EXT_POOL = [201,203,204,207,211,215,218,219,222,227,231,235];
   const CVQ_CACHE = { active:{}, waiting:{} };
-
-  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function safeCallerID(){
-    const ac = rand(SAFE_FAKE_AC);
-    const last2 = String(Math.floor(Math.random()*100)).padStart(2,'0');
-    return `(${ac}) 555-01${last2}`;
-  }
-  function pickAgentExt(i=0){ return AGENT_EXT_POOL[i % AGENT_EXT_POOL.length]; }
-  function pickRealDID(i=0){ return REAL_DIDS[i % REAL_DIDS.length]; }
+  const rand = arr => arr[Math.floor(Math.random()*arr.length)];
+  const safeCallerID = () => `(${rand(SAFE_FAKE_AC)}) 555-01${String(Math.floor(Math.random()*100)).padStart(2,'0')}`;
+  const pickAgentExt = (i=0) => AGENT_EXT_POOL[i % AGENT_EXT_POOL.length];
+  const pickRealDID  = (i=0) => REAL_DIDS[i % REAL_DIDS.length];
 
   function makeActiveRows(qkey, count){
     if (!CVQ_CACHE.active[qkey]) {
@@ -693,18 +688,6 @@ if (!window.__cvQueuesTilesInit) {
   }
 
   // ---- STYLES + modal host ----
-  function ensureFontAwesome(doc){
-    if (doc.__cvqFAEnsured) return;
-    const has = doc.querySelector('link[href*="font-awesome"],link[href*="fontawesome"],link[href*="/all.min.css"]');
-    if (!has) {
-      const link = doc.createElement('link');
-      link.rel = 'stylesheet';
-      link.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css';
-      doc.head && doc.head.appendChild(link);
-    }
-    doc.__cvqFAEnsured = true;
-  }
-
   function ensureStyles(doc){
     if (!doc.getElementById(PANEL_STYLE_ID)) {
       const s = doc.createElement('style');
@@ -723,45 +706,40 @@ if (!window.__cvQueuesTilesInit) {
 /* wait cell */
 #${PANEL_ID} .cvq-wait{color:#333;}
 
-/* actions column: two faint round icons that darken on hover */
+/* actions column: round icon buttons */
 #${PANEL_ID} .cvq-actions{ text-align:right; white-space:nowrap; width:64px; }
 .cvq-icon{
   display:inline-flex; align-items:center; justify-content:center;
-  width:22px; height:22px; border-radius:50%;
+  width:24px; height:24px; border-radius:50%;
   background:#f7f7f7; border:1px solid #e1e1e1;
-  margin-left:6px; opacity:.35; transition:opacity .15s, color .15s;
+  margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s;
+  cursor:pointer; padding:0; line-height:0;
 }
-tr:hover .cvq-icon{ opacity:.75; }
+tr:hover .cvq-icon{ opacity:.85; }
 .cvq-icon:hover{ opacity:1; }
-.cvq-icon i{ font-size:13px; line-height:1; color:rgba(0,0,0,.45); }
-tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
+.cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
+.cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
 
 /* Modal host */
-.cvq-modal-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9998; display:none;
-}
-.cvq-modal{
-  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
+.cvq-modal-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.35); z-index:9998; display:none; }
+.cvq-modal{ position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
-  width:min(940px,96vw); max-height:80vh; display:none; z-index:9999; overflow:hidden;
-}
+  width:min(940px,96vw); max-height:80vh; display:none; z-index:9999; overflow:hidden; }
 .cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
 .cvq-modal .cvq-modal-body{ overflow:auto; max-height:calc(80vh - 110px); }
 .cvq-modal footer{ padding:12px 16px; border-top:1px solid #eee; display:flex; justify-content:flex-end; gap:10px; }
 .cvq-btn{ padding:6px 12px; border-radius:4px; border:1px solid #cfcfcf; background:#f7f7f7; cursor:pointer; }
 .cvq-btn.primary{ background:#0b84ff; border-color:#0b84ff; color:#fff; }
 .cvq-modal table{ width:100%; }
-.cvq-modal thead th{ white-space:nowrap; }
+cvq-modal thead th{ white-space:nowrap; }
 .cvq-badge{ display:inline-block; padding:2px 6px; border-radius:4px; background:#2a77a8; color:#fff; font-size:12px; }
 .cvq-kebab{ position:relative; }
-.cvq-menu{
-  position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px;
-  box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10;
-}
+.cvq-menu{ position:absolute; right:0; top:100%; margin-top:6px; background:#fff; border:1px solid #ddd; border-radius:6px;
+  box-shadow:0 8px 24px rgba(0,0,0,.16); min-width:160px; display:none; z-index:10; }
 .cvq-menu a{ display:block; padding:8px 12px; color:#222; text-decoration:none; }
 .cvq-menu a:hover{ background:#f5f5f5; }
 @media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }
-      `;
+`;
       doc.head && doc.head.appendChild(s);
     }
 
@@ -778,16 +756,11 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
         </div>`;
       (doc.body || doc.documentElement).appendChild(host);
 
-      // close wiring for backdrop/close
+      // close wiring
       host.addEventListener('click', (e)=>{
-        if (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close') {
-          closeModal(doc);
-        }
+        if (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close') closeModal(doc);
       });
     }
-
-    // make sure FA is available
-    ensureFontAwesome(doc);
   }
 
   // ---- PANEL HTML ----
@@ -803,10 +776,14 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
           <td class="text-center"><a class="cvq-link" data-act="active">${d.active}</a></td>
           <td class="text-center"><a class="cvq-link" data-act="waiting">${d.waiting}</a></td>
           <td class="text-center">${waitCell}</td>
-          <td class="text-center"><span class="">${d.idle ?? 0}</span></td>
+          <td class="text-center"><span>${d.idle ?? 0}</span></td>
           <td class="cvq-actions">
-            <span class="cvq-icon" title="Monitor queue" aria-label="Monitor queue"><i class="${FA.rightA}"></i></span>
-            <span class="cvq-icon" title="More" aria-label="More"><i class="${FA.rightB}"></i></span>
+            <button class="cvq-icon" data-act="agents" data-q="${d.key}" title="Edit Agents" aria-label="Edit Agents">
+              <img src="${ICON_USER}" alt="">
+            </button>
+            <button class="cvq-icon" data-act="queue" data-q="${d.key}" title="Edit Queue" aria-label="Edit Queue">
+              <img src="${ICON_EDIT}" alt="">
+            </button>
           </td>
         </tr>`;
     }).join('');
@@ -840,7 +817,9 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
         <td>${r.agent}</td>
         <td class="text-center"><span data-cvq-start="${r.start}">${mmss(((Date.now()-r.start)/1000)|0)}</span></td>
         <td class="text-center">
-          <button class="cvq-icon" title="Listen in" aria-label="Listen in"><i class="${FA.listen}"></i></button>
+          <button class="cvq-icon" title="Listen in" aria-label="Listen in">
+            <img src="${ICON_SPEAKER}" alt="">
+          </button>
         </td>
       </tr>`).join('');
     return `
@@ -849,6 +828,7 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
         <tbody>${body || `<tr><td colspan="6" class="text-center">No active calls</td></tr>`}</tbody>
       </table>`;
   }
+
   function buildWaitingTable(rows){
     const body = rows.map((r,i)=>`
       <tr data-row="${i}">
@@ -857,11 +837,12 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
         <td>${r.status} ${r.priority ? `<span class="cvq-badge">Priority</span>`:''}</td>
         <td class="text-center"><span data-cvq-start="${r.start}">${mmss(((Date.now()-r.start)/1000)|0)}</span></td>
         <td class="text-center">
-          <button class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><i class="${FA.prio}"></i></button>
-          <span class="cvq-icon cvq-kebab" title="More" data-cvq="menu" aria-label="More"><i class="${FA.menu}"></i>
-            <div class="cvq-menu">
-              <a href="#" data-cvq="pickup">Pick up call</a>
-              <a href="#" data-cvq="transfer">Transfer call</a>
+          <span class="cvq-icon" title="Prioritize" data-cvq="prio" aria-label="Prioritize"><img src="${ICON_ARROW}" alt=""></span>
+          <span class="cvq-icon cvq-kebab" title="Actions" data-cvq="menu" aria-haspopup="menu" aria-expanded="false">
+            <img src="${ICON_PHONE}" alt="">
+            <div class="cvq-menu" role="menu">
+              <a href="#" data-cvq="pickup"   role="menuitem">Pick up call</a>
+              <a href="#" data-cvq="transfer" role="menuitem">Transfer call</a>
             </div>
           </span>
         </td>
@@ -872,6 +853,7 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
         <tbody>${body || `<tr><td colspan="5" class="text-center">No waiting callers</td></tr>`}</tbody>
       </table>`;
   }
+
   function openModal(doc, title, tableHTML){
     const bd = doc.getElementById('cvq-backdrop');
     const md = doc.getElementById('cvq-modal');
@@ -1047,6 +1029,3 @@ tr:hover .cvq-icon i{ color:rgba(0,0,0,.8); }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-
-
-
