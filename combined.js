@@ -601,55 +601,90 @@ if (!window.__cvQueuesTilesInit) {
   }
 
   // ---- DATA ----
-  const QUEUE_DATA = [
-    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false },
-    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true  },
-    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, timer:true  },
-    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false }
-  ];
-  const fmt=(n)=>{ n|=0; const m=String((n/60|0)).padStart(2,'0'); const s=String(n%60).padStart(2,'0'); return `${m}:${s}`; };
+const QUEUE_DATA = [
+  { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
+  { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
+  { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, timer:true,  idle:4 },
+  { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
+];
+const fmt = (sec)=>{ sec|=0; const m=String((sec/60|0)).padStart(2,'0'); const s=String(sec%60).padStart(2,'0'); return `${m}:${s}`; };
+
 
   // ---- STYLES ----
   function ensureStyles(doc){
-    if (doc.getElementById(PANEL_STYLE_ID)) return;
-    const css = `
-#${PANEL_ID}{margin-top:10px;}
-#${PANEL_ID} .cvq-grid{display:grid;grid-template-columns:repeat(2,minmax(280px,1fr));gap:12px;}
-#${PANEL_ID} .cvq-card{background:#fff;border:1px solid #e5e5e5;border-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.06);padding:12px;}
-#${PANEL_ID} .cvq-title{font-weight:700;font-size:14px;margin:2px 0 10px 0;}
-#${PANEL_ID} .cvq-row{display:flex;gap:12px;}
-#${PANEL_ID} .cvq-badge{flex:1 1 0;border-radius:6px;background:#f7f7f7;padding:10px 8px;text-align:center;border:1px solid #eee;}
-#${PANEL_ID} .cvq-badge .lbl{font-size:12px;color:#666;margin-bottom:6px;}
-#${PANEL_ID} .cvq-badge .val{font-size:28px;font-weight:700;line-height:1;}
-#${PANEL_ID} .cvq-wait{margin-top:6px;font-size:12px;color:#444;}
-@media (max-width: 900px){ #${PANEL_ID} .cvq-grid{grid-template-columns:1fr;} }
-    `;
-    const s = doc.createElement('style');
-    s.id = PANEL_STYLE_ID;
-    s.textContent = css;
-    doc.head && doc.head.appendChild(s);
-  }
+  if (doc.getElementById(PANEL_STYLE_ID)) return;
+  const s = doc.createElement('style');
+  s.id = PANEL_STYLE_ID;
+  s.textContent = `
+/* wrapper behaves like the native one so placement/alignment match */
+#${PANEL_ID}.table-container{margin-top:6px;}
+#${PANEL_ID} table{width:100%;}
+
+/* typography/spacing to match the house style */
+#${PANEL_ID} thead th{white-space:nowrap;}
+#${PANEL_ID} td, #${PANEL_ID} th{vertical-align:middle;}
+
+/* numeric cells look like links in the UI (blue & boldish) */
+#${PANEL_ID} .cvq-num{color:#0b84ff; font-weight:700;}
+
+/* wait cell */
+#${PANEL_ID} .cvq-wait{color:#333;}
+
+/* simple placeholders for the 3 action icons on the right */
+#${PANEL_ID} .cvq-actions{white-space:nowrap; text-align:center;}
+#${PANEL_ID} .cvq-actions .cvq-icon{
+  display:inline-block; width:18px; height:18px; border-radius:50%;
+  background:#f5f5f5; border:1px solid #e2e2e2; margin-left:6px; vertical-align:middle;
+}
+@media (max-width: 900px){
+  #${PANEL_ID} .hide-sm{display:none;}
+}
+  `;
+  if (doc.head) doc.head.appendChild(s);
+}
+
 
   // ---- BUILD PANEL ----
   function buildPanelHTML(){
-    const cards = QUEUE_DATA.map(d=>`
-      <div class="cvq-card" data-key="${d.key}">
-        <div class="cvq-title">${d.title}</div>
-        <div class="cvq-row">
-          <div class="cvq-badge">
-            <div class="lbl">Active</div>
-            <div class="val">${d.active}</div>
-          </div>
-          <div class="cvq-badge">
-            <div class="lbl">Waiting</div>
-            <div class="val">${d.waiting}</div>
-            <div class="cvq-wait" ${d.timer?'data-tick="1" data-sec="0"':''}>${d.timer?'00:00':'--:--'}</div>
-          </div>
-        </div>
-      </div>
-    `).join('');
-    return `<div id="${PANEL_ID}"><div class="cvq-grid">${cards}</div></div>`;
-  }
+  const rows = QUEUE_DATA.map(d => {
+    const waitCell = d.timer
+      ? `<span class="cvq-wait" id="cvq-wait-${d.key}" data-tick="1" data-sec="0">00:00</span>`
+      : `<span class="cvq-wait">-</span>`;
+    return `
+      <tr>
+        <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
+        <td class="cvq-queue">${d.title}</td>
+        <td class="text-center"><span class="cvq-num">${d.active}</span></td>
+        <td class="text-center"><span class="cvq-num">${d.waiting}</span></td>
+        <td class="text-center">${waitCell}</td>
+        <td class="text-center"><span class="cvq-num">${d.idle}</span></td>
+        <td class="cvq-actions">
+          <span class="cvq-icon" title="Action 1"></span>
+          <span class="cvq-icon" title="Action 2"></span>
+          <span class="cvq-icon" title="Action 3"></span>
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div id="${PANEL_ID}" class="table-container scrollable-small">
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>
+            <th>Call Queue</th>
+            <th class="text-center">Active Calls</th>
+            <th class="text-center">Callers Waiting</th>
+            <th class="text-center">Wait</th>
+            <th class="text-center">Agents Idle</th>
+            <th class="text-center hide-sm" style="width:86px;"></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 
   // ---- TIMERS ----
   function startTimers(doc){
@@ -763,3 +798,4 @@ if (!window.__cvQueuesTilesInit) {
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
