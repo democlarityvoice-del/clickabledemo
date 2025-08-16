@@ -821,27 +821,45 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer = null; }
   }
 
-  // ---- ACTION: Bind inline opener for count links (works even if bubbling is blocked) ----
-  function bindInlineCountOpener(doc){
-    var w = (doc && doc.defaultView) || window;
-    w.__cvqOpenCount = function(act, el){
-      try{
-        var tr = el.closest ? el.closest('tr') : (function(p){ while(p && p.tagName!=='TR') p=p.parentNode; return p; })(el);
-        if (!tr) return false;
-        var qkey = tr.getAttribute('data-qkey');
-        var q = null;
-        for (var i=0;i<QUEUE_DATA.length;i++){ if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; } }
-        if (!q) return false;
+ // ---- ACTION: Bind inline opener for count links (works even if bubbling is blocked) ----
+function bindInlineCountOpener(doc){
+  var w = (doc && doc.defaultView) || window;
+  w.__cvqOpenCount = function(act, el){
+    try{
+      // find the row for this link
+      var tr = el.closest ? el.closest('tr') : (function(p){
+        while (p && p.tagName !== 'TR') p = p.parentNode;
+        return p;
+      })(el);
+      if (!tr) return false;
 
-        if (act === 'active'){
-          openModal(doc, 'Active Calls in '+q.title.replace(/\s+\\(\\d+\\)$',''), buildActiveTable(makeActiveRows(qkey, q.active)));
-        } else if (act === 'waiting'){
-          openModal(doc, 'Callers in '+q.title.replace(/\s+\\(\\d+\\)$',''), buildWaitingTable(makeWaitingRows(qkey, q.waiting)));
-        }
-      } catch(e){}
-      return false; // prevent navigation/bubbling
-    };
-  }
+      var qkey = tr.getAttribute('data-qkey');
+      var q = null;
+      for (var i = 0; i < QUEUE_DATA.length; i++){
+        if (QUEUE_DATA[i].key === qkey){ q = QUEUE_DATA[i]; break; }
+      }
+      if (!q) return false;
+
+      // ✅ FIX: proper regex literal with closing slash
+      var baseTitle = q.title.replace(/\s+\(\d+\)$/, '');
+
+      if (act === 'active'){
+        openModal(
+          doc,
+          'Active Calls in ' + baseTitle,
+          buildActiveTable(makeActiveRows(qkey, q.active))
+        );
+      } else if (act === 'waiting'){
+        openModal(
+          doc,
+          'Callers in ' + baseTitle,
+          buildWaitingTable(makeWaitingRows(qkey, q.waiting))
+        );
+      }
+    } catch(e) {}
+    return false; // prevent navigation/bubbling either way
+  };
+}
 
   // ---- ACTION: Build Panel HTML (renders all queue rows) ----
   function buildPanelHTML(){
@@ -1164,3 +1182,4 @@ tr:hover .cvq-icon{ opacity:.85; }\n\
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
