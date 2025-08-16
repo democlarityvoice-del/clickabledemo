@@ -109,8 +109,8 @@ if (!window.__cvDemoInit) {
   });
 })();
 <\/script>
-</body></>`;
-  }
+</body></html>`;
+}
 
   // -------- REMOVE HOME -------- //
   function removeHome() {
@@ -465,6 +465,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
