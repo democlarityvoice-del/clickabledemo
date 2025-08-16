@@ -43,6 +43,7 @@ if (!window.__cvDemoInit) {
     </table>
   </div>
 
+<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function(){
   const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
@@ -464,6 +465,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
