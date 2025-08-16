@@ -43,8 +43,6 @@ if (!window.__cvDemoInit) {
     </table>
   </div>
 
-
-<!-- -------- CALL SIMULATION: HOME CALL STRUCTURE -------- -->
 <script>
 (function () {
   // Pools
@@ -72,7 +70,7 @@ if (!window.__cvDemoInit) {
   function randomAgentName() {
     const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
     const init = alphabet[Math.floor(Math.random()*alphabet.length)];
-    return `${fn} ${init}.`;
+    return fn + " " + init + ".";
   }
   function randomPhone() {
     // e.g. 313-555-01xx (NANPA-safe)
@@ -80,7 +78,7 @@ if (!window.__cvDemoInit) {
     do {
       const ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
       const last2 = pad2(Math.floor(Math.random()*100));
-      num = `${ac}-555-01${last2}`;
+      num = ac + "-555-01" + last2;
     } while (calls.some(c => c.from === num) || /666/.test(num));
     return num;
   }
@@ -88,7 +86,7 @@ if (!window.__cvDemoInit) {
     // 800-xxx-xxxx, avoid 666
     let num;
     do {
-      num = `800-${100+Math.floor(Math.random()*900)}-${1000+Math.floor(Math.random()*9000)}`;
+      num = "800-" + (100+Math.floor(Math.random()*900)) + "-" + (1000+Math.floor(Math.random()*9000));
     } while (/666/.test(num));
     return num;
   }
@@ -109,7 +107,7 @@ if (!window.__cvDemoInit) {
       // Agent dialing a customer
       const dial = randomPhone(); // external number
       return {
-        from: `Ext. ${ext}`,
+        from: "Ext. " + ext,
         cnam: randomAgentName(),   // agent display
         dialed: dial,
         to: dial,                  // outbound: To = dialed
@@ -119,7 +117,7 @@ if (!window.__cvDemoInit) {
         t: () => {
           const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
           const s = Math.floor(elapsed/1000);
-          return `${Math.floor(s/60)}:${pad2(s%60)}`;
+          return String(Math.floor(s/60)) + ":" + pad2(s%60);
         }
       };
     }
@@ -139,7 +137,7 @@ if (!window.__cvDemoInit) {
       t: () => {
         const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
         const s = Math.floor(elapsed/1000);
-        return `${Math.floor(s/60)}:${pad2(s%60)}`;
+        return String(Math.floor(s/60)) + ":" + pad2(s%60);
       }
     };
   }
@@ -157,8 +155,7 @@ if (!window.__cvDemoInit) {
     const now = Date.now();
     calls.forEach(c => {
       if (!c.outbound && c.to === CALL_QUEUE && now - c.start > 5000) {
-        // No agent name shown here (per your preference)
-        c.to = `Ext. ${c.ext}`;
+        c.to = "Ext. " + c.ext;  // no agent name here
       }
       if (!c.outbound && c.to === SPEAK && now - c.start > 2000) {
         c.to = VMAIL;
@@ -566,6 +563,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
