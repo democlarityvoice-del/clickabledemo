@@ -615,6 +615,13 @@ const IDLE_LINKS = {
   billing:  '/portal/callqueues/editagents/303@claritydemo/Ring+All'
 };
 
+  const QUEUE_EDIT_LINKS = {
+  main:     '/portal/callqueues/edit/300@claritydemo',
+  sales:    '/portal/callqueues/edit/301@claritydemo',
+  existing: '/portal/callqueues/edit/302@claritydemo',
+  billing:  '/portal/callqueues/edit/303@claritydemo'
+};
+
   
   // ---- UTIL ----
   function scheduleInject(fn){
@@ -747,13 +754,13 @@ tr:hover .cvq-icon{ opacity:.85; }
   position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   width:min(980px,96vw);
-  height:88vh;               /* <-- taller */
-  max-height:88vh;           /* guard */
-  display:none;              /* stays none until opened */
+  height:88vh;
+  max-height:88vh;
+  display:none;               /* ← keep this one */
   z-index:9999; overflow:hidden;
-  /* NEW: make header/body/footer stack and let body expand */
-  display:flex; flex-direction:column;
+  flex-direction:column;      /* fine to keep; activates when display:flex */
 }
+
 
 
 .cvq-modal header{ padding:14px 16px; border-bottom:1px solid #eee; font-size:18px; font-weight:600; }
@@ -796,49 +803,65 @@ tr:hover .cvq-icon{ opacity:.85; }
 
   // ---- PANEL HTML ----
   function buildPanelHTML(){
-    const rows = QUEUE_DATA.map(d => {
-      const waitCell = d.timer
-        ? `<span class="cvq-wait" id="cvq-wait-${d.key}" data-tick="1" data-sec="0">00:00</span>`
-        : `<span class="cvq-wait">-</span>`;
-      return `
-        <tr data-qkey="${d.key}">
-          <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
-          <td class="cvq-queue">${d.title}</td>
-          <td class="text-center"><a class="cvq-link" data-act="active">${d.active}</a></td>
-          <td class="text-center"><a class="cvq-link" data-act="waiting">${d.waiting}</a></td>
-          <td class="text-center">${waitCell}</td>
-          <td class="text-center">
-            <a class="cvq-link cvq-idle"
-              href="${IDLE_LINKS[d.key] || '#'}"
-              data-target="#write-agents"
-              data-toggle="modal"
-              data-backdrop="static"
-              onclick="if(window.loadModal){ loadModal('#write-agents', this.getAttribute('href')); return false; }">
-              ${d.waiting > 0 ? 0 : (d.idle ?? 0)}
-            </a>
-          </td>
-
-        </tr>`;
-    }).join('');
+  const rows = QUEUE_DATA.map(d => {
+    const waitCell = d.timer
+      ? `<span class="cvq-wait" id="cvq-wait-${d.key}" data-tick="1" data-sec="0">00:00</span>`
+      : `<span class="cvq-wait">-</span>`;
+    const idleCount = d.waiting > 0 ? 0 : (d.idle ?? 0);
 
     return `
-      <div id="${PANEL_ID}" class="table-container scrollable-small">
-        <table class="table table-condensed table-hover">
-          <thead>
-            <tr>
-              <th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>
-              <th>Call Queue</th>
-              <th class="text-center">Active Calls</th>
-              <th class="text-center">Callers Waiting</th>
-              <th class="text-center">Wait</th>
-              <th class="text-center">Agents Idle</th>
-              <th class="text-center hide-sm" style="width:86px;"></th>
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
-      </div>`;
-  }
+      <tr data-qkey="${d.key}">
+        <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
+        <td class="cvq-queue">${d.title}</td>
+        <td class="text-center"><a class="cvq-link" data-act="active">${d.active}</a></td>
+        <td class="text-center"><a class="cvq-link" data-act="waiting">${d.waiting}</a></td>
+        <td class="text-center">${waitCell}</td>
+
+        <!-- tail: Agents Idle (links to real Edit Agents) -->
+        <td class="text-center">
+          <a class="cvq-link cvq-idle"
+             href="${IDLE_LINKS[d.key] || '#'}"
+             data-target="#write-agents" data-toggle="modal" data-backdrop="static"
+             onclick="if(window.loadModal){ loadModal('#write-agents', this.getAttribute('href')); return false; }">
+            ${idleCount}
+          </a>
+        </td>
+
+        <!-- tail: round action buttons (user = Edit Agents, pencil = Edit Queue) -->
+        <td class="cvq-actions">
+          <a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents"
+             href="${IDLE_LINKS[d.key] || '#'}"
+             onclick="if(window.loadModal){ loadModal('#write-agents', this.getAttribute('href')); return false; }">
+            <img src="${ICON_USER}" alt="">
+          </a>
+          <a class="cvq-icon" title="Edit Queue" aria-label="Edit Queue"
+             href="${QUEUE_EDIT_LINKS[d.key] || '#'}"
+             onclick="if(window.loadModal){ loadModal('#write-queue', this.getAttribute('href')); return false; }">
+            <img src="${ICON_EDIT}" alt="">
+          </a>
+        </td>
+      </tr>`;
+  }).join('');
+
+  return `
+    <div id="${PANEL_ID}" class="table-container scrollable-small">
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th class="text-center" style="width:28px;"><span class="hide-sm">&nbsp;</span></th>
+            <th>Call Queue</th>
+            <th class="text-center">Active Calls</th>
+            <th class="text-center">Callers Waiting</th>
+            <th class="text-center">Wait</th>
+            <th class="text-center">Agents Idle</th>
+            <th class="text-center hide-sm" style="width:86px;"></th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+    </div>`;
+}
+
 
   // ---- MODAL helpers ----
   function buildActiveTable(rows){
@@ -1063,6 +1086,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
