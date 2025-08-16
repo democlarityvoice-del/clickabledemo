@@ -585,8 +585,7 @@ const CARD_STYLE_ID       = 'cv-grid-stats-style'; // <-- FIXED name
 
 
 
-// ==============================
-// ==============================
+
 // ==============================
 // Clarity Voice Queues Tiles (CALL CENTER MANAGER) — full injection w/ modals + hosted SVG icons
 // ==============================
@@ -608,6 +607,15 @@ if (!window.__cvQueuesTilesInit) {
   const ICON_PHONE   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   const ICON_ARROW   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/arrow-up-solid-full.svg';
 
+  // Real Edit Agents links for claritydemo
+const IDLE_LINKS = {
+  main:     '/portal/callqueues/editagents/300@claritydemo/Ring+All',
+  sales:    '/portal/callqueues/editagents/301@claritydemo/Round-robin',
+  existing: '/portal/callqueues/editagents/302@claritydemo/Linear+Cascade',
+  billing:  '/portal/callqueues/editagents/303@claritydemo/Ring+All'
+};
+
+  
   // ---- UTIL ----
   function scheduleInject(fn){
     let fired = false;
@@ -799,15 +807,17 @@ tr:hover .cvq-icon{ opacity:.85; }
           <td class="text-center"><a class="cvq-link" data-act="active">${d.active}</a></td>
           <td class="text-center"><a class="cvq-link" data-act="waiting">${d.waiting}</a></td>
           <td class="text-center">${waitCell}</td>
-          <td class="text-center"><span>${d.idle ?? 0}</span></td>
-          <td class="cvq-actions">
-            <button class="cvq-icon" data-act="agents" data-q="${d.key}" title="Edit Agents" aria-label="Edit Agents">
-              <img src="${ICON_USER}" alt="">
-            </button>
-            <button class="cvq-icon" data-act="queue" data-q="${d.key}" title="Edit Queue" aria-label="Edit Queue">
-              <img src="${ICON_EDIT}" alt="">
-            </button>
+          <td class="text-center">
+            <a class="cvq-link cvq-idle"
+              href="${IDLE_LINKS[d.key] || '#'}"
+              data-target="#write-agents"
+              data-toggle="modal"
+              data-backdrop="static"
+              onclick="if(window.loadModal){ loadModal('#write-agents', this.getAttribute('href')); return false; }">
+              ${d.waiting > 0 ? 0 : (d.idle ?? 0)}
+            </a>
           </td>
+
         </tr>`;
     }).join('');
 
@@ -1053,6 +1063,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
