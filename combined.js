@@ -566,60 +566,62 @@ if (!window.__cvGridStatsInit) {
 
 
 // ==============================
-// Queues Tiles (CALL CENTER MANAGER) — uses #home-queues-body + .live-queues
+// ==============================
+// Clarity Voice Queues Tiles (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvQueuesTilesInit) {
   window.__cvQueuesTilesInit = true;
 
-  const MANAGER_REGEX  = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const BODY_SEL       = '#home-queues-body';
-  const TABLE_CAND     = '#manager_queues, ' + BODY_SEL + ' table.live-queues, table.live-queues';
-  const PANEL_ID       = 'cv-queues-tiles';
-  const PANEL_STYLE_ID = 'cv-queues-tiles-style';
-  const HIDE_STYLE_ID  = 'cv-queues-hide-style';
-  const TABLE_FLAG_CLS = 'cv-queues-modded';
+  // -------- CONSTANTS -------- //
+  const QUEUES_REGEX          = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const BODY_SEL              = '#home-queues-body';
+  const TABLE_SEL             = '#manager_queues';
+  const PANEL_ID              = 'cv-queues-tiles';
+  const PANEL_STYLE_ID        = 'cv-queues-tiles-style';
+  const TABLE_HIDE_STYLE_ID   = 'cv-queues-hide-style';
+  const TABLE_FLAG_CLASS      = 'cvq-hide-cols';
 
-  const DATA = [
-    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, tick:false },
-    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, tick:true  },
-    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, tick:true  },
-    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, tick:false }
-  ];
+  // -------- SCHEDULER -------- //
+  function scheduleInject(fn) {
+    let fired = false;
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(() =>
+        requestAnimationFrame(() => { fired = true; fn(); })
+      );
+    }
+    setTimeout(() => { if (!fired) fn(); }, 64);
+  }
 
-  const fmt = s => {
-    s |= 0;
-    const m = String((s/60|0)).padStart(2,'0');
-    const r = String(s%60).padStart(2,'0');
-    return `${m}:${r}`;
-  };
-
+  // -------- SAME-ORIGIN DOCS -------- //
   function getSameOriginDocs() {
     const docs = [document];
-    document.querySelectorAll('iframe').forEach(ifr => {
+    const iframes = document.querySelectorAll('iframe');
+    for (const ifr of iframes) {
       try {
-        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (d) docs.push(d);
-      } catch {}
-    });
+        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (idoc) docs.push(idoc);
+      } catch { /* cross-origin - ignore */ }
+    }
     return docs;
   }
 
-  function findTargets() {
+  function findQueuesDoc() {
     for (const doc of getSameOriginDocs()) {
-      const body = doc.querySelector(BODY_SEL) || doc;
-      const table = body.querySelector(TABLE_CAND) || doc.querySelector(TABLE_CAND);
-      if (table) return { doc, body: body || doc.body, table };
+      const body = doc.querySelector(BODY_SEL);
+      const table = (body && body.querySelector(TABLE_SEL)) || doc.querySelector(TABLE_SEL);
+      if (body || table) return { doc, body, table };
     }
     return null;
   }
 
+  // -------- STYLES -------- //
   function ensureStyles(doc) {
     if (!doc.getElementById(PANEL_STYLE_ID)) {
       const s = doc.createElement('style');
       s.id = PANEL_STYLE_ID;
       s.textContent = `
-#${PANEL_ID}{box-sizing:border-box;margin:10px 0 14px 0;}
-#${PANEL_ID} .cvq-grid{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;}
+#${PANEL_ID}{box-sizing:border-box;margin:8px 0 12px 0;}
+#${PANEL_ID} .cvq-grid{display:grid;grid-template-columns:repeat(2,minmax(260px,1fr));gap:10px;}
 #${PANEL_ID} .cvq-card{border:1px solid #ddd;border-radius:8px;background:#fff;box-shadow:0 2px 5px rgba(0,0,0,.08);padding:10px 12px;}
 #${PANEL_ID} .cvq-title{font-weight:700;font-size:13px;margin-bottom:8px;}
 #${PANEL_ID} .cvq-row{display:flex;gap:8px;}
@@ -627,105 +629,184 @@ if (!window.__cvQueuesTilesInit) {
 #${PANEL_ID} .cvq-badge .lbl{font-size:11px;color:#555;margin-bottom:4px;}
 #${PANEL_ID} .cvq-badge .val{font-size:22px;font-weight:700;line-height:1;}
 #${PANEL_ID} .cvq-wait{margin-top:4px;font-size:11px;opacity:.9;}
-@media (max-width:980px){ #${PANEL_ID} .cvq-grid{grid-template-columns:repeat(2,1fr);} }
+@media (max-width:980px){ #${PANEL_ID} .cvq-grid{grid-template-columns:1fr;} }
       `;
       doc.head && doc.head.appendChild(s);
     }
-    if (!doc.getElementById(HIDE_STYLE_ID)) {
+    if (!doc.getElementById(TABLE_HIDE_STYLE_ID)) {
       const h = doc.createElement('style');
-      h.id = HIDE_STYLE_ID;
-      // Only hide on the table we tag with TABLE_FLAG_CLS
+      h.id = TABLE_HIDE_STYLE_ID;
+      // Hide only columns 2..5 (Call Queue, Active, Waiting, Wait). Leave Agents Idle & icons.
       h.textContent = `
-table.${TABLE_FLAG_CLS} thead th:nth-child(2),
-table.${TABLE_FLAG_CLS} thead th:nth-child(3),
-table.${TABLE_FLAG_CLS} thead th:nth-child(4),
-table.${TABLE_FLAG_CLS} tbody td:nth-child(2),
-table.${TABLE_FLAG_CLS} tbody td:nth-child(3),
-table.${TABLE_FLAG_CLS} tbody td:nth-child(4){ display:none !important; }
+table.${TABLE_FLAG_CLASS} thead th:nth-child(2),
+table.${TABLE_FLAG_CLASS} thead th:nth-child(3),
+table.${TABLE_FLAG_CLASS} thead th:nth-child(4),
+table.${TABLE_FLAG_CLASS} thead th:nth-child(5),
+table.${TABLE_FLAG_CLASS} tbody td:nth-child(2),
+table.${TABLE_FLAG_CLASS} tbody td:nth-child(3),
+table.${TABLE_FLAG_CLASS} tbody td:nth-child(4),
+table.${TABLE_FLAG_CLASS} tbody td:nth-child(5){ display:none !important; }
       `;
       doc.head && doc.head.appendChild(h);
     }
   }
 
+  // -------- DATA (requested values) -------- //
+  const QUEUE_DATA = [
+    { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, tick:false },
+    { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, tick:true  },
+    { key:'existing', title:'Existing Customer (302)', active:1, waiting:1, tick:true  },
+    { key:'billing',  title:'Billing (303)',           active:0, waiting:0, tick:false }
+  ];
+  const fmt = (sec) => {
+    sec = sec|0; const m = String((sec/60|0)).padStart(2,'0'); const s = String(sec%60).padStart(2,'0');
+    return `${m}:${s}`;
+  };
+
   function buildPanelHTML() {
-    const cards = DATA.map(d => `
+    const cards = QUEUE_DATA.map(d => `
 <div class="cvq-card">
   <div class="cvq-title">${d.title}</div>
   <div class="cvq-row">
     <div class="cvq-badge"><div class="lbl">Active</div><div class="val">${d.active}</div></div>
     <div class="cvq-badge">
       <div class="lbl">Waiting</div><div class="val">${d.waiting}</div>
-      ${d.tick ? `<div class="cvq-wait" data-tick="1" data-sec="0" id="cvq-wait-${d.key}">${fmt(0)}</div>` : `<div class="cvq-wait">--:--</div>`}
+      ${d.tick ? `<div class="cvq-wait" data-tick="1" data-sec="0" id="cvq-wait-${d.key}">00:00</div>` : `<div class="cvq-wait">--:--</div>`}
     </div>
   </div>
 </div>`).join('');
     return `<div id="${PANEL_ID}"><div class="cvq-grid">${cards}</div></div>`;
   }
 
-  function insertPanel() {
-    const found = findTargets();
-    if (!found) return false;
-    const { doc, body, table } = found;
-
-    if (doc.getElementById(PANEL_ID)) return true;
-
-    ensureStyles(doc);
-
-    // tag the table so our hide-CSS only hits this one
-    table.classList.add(TABLE_FLAG_CLS);
-
-    // insert panel just above the table (inside the queues body if present)
-    const host = body.contains(table) ? body : table.parentNode || doc.body;
-    const wrap = doc.createElement('div');
-    wrap.innerHTML = buildPanelHTML();
-    host.insertBefore(wrap.firstElementChild, table);
-
-    startTimers(doc);
-    attachObserver(doc);
-    return true;
-  }
-
-  function startTimers(doc){
+  // -------- TIMERS -------- //
+  function startTimers(doc) {
     if (doc.__cvQueuesTimer) return;
     doc.__cvQueuesTimer = setInterval(() => {
       doc.querySelectorAll(`#${PANEL_ID} [data-tick="1"]`).forEach(el => {
-        const sec = (parseInt(el.getAttribute('data-sec'),10) || 0) + 1;
-        el.setAttribute('data-sec', String(sec));
-        el.textContent = fmt(sec);
+        const n = (parseInt(el.getAttribute('data-sec'),10) || 0) + 1;
+        el.setAttribute('data-sec', String(n));
+        el.textContent = fmt(n);
       });
     }, 1000);
   }
-  function stopTimers(doc){ if (doc.__cvQueuesTimer){ clearInterval(doc.__cvQueuesTimer); doc.__cvQueuesTimer=null; } }
+  function stopTimers(doc) { if (doc.__cvQueuesTimer) { clearInterval(doc.__cvQueuesTimer); doc.__cvQueuesTimer = null; } }
 
-  function attachObserver(doc){
+  // -------- INJECT / REMOVE -------- //
+  function tagTableForHide(table) { if (table) table.classList.add(TABLE_FLAG_CLASS); }
+
+  function injectQueuesTiles() {
+    const found = findQueuesDoc();
+    if (!found) return;
+
+    const { doc, body, table } = found;
+    ensureStyles(doc);
+    tagTableForHide(table);
+
+    if (doc.getElementById(PANEL_ID)) return;
+
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildPanelHTML();
+    const panel = wrap.firstElementChild;
+
+    // Insert INSIDE the queues body, before the native table (consistent with Grid Stats pattern)
+    if (body) {
+      const anchor = table || body.firstChild;
+      if (anchor && anchor.parentNode === body) body.insertBefore(panel, anchor);
+      else body.appendChild(panel);
+    } else if (table && table.parentNode) {
+      table.parentNode.insertBefore(panel, table);
+    } else {
+      (doc.body || doc.documentElement).appendChild(panel);
+    }
+
+    startTimers(doc);
+    attachQueuesDocObserver(doc);
+  }
+
+  function removeQueuesTiles() {
+    for (const doc of getSameOriginDocs()) {
+      const panel = doc.getElementById(PANEL_ID);
+      if (panel) panel.remove();
+      const table = doc.querySelector(TABLE_SEL);
+      if (table) table.classList.remove(TABLE_FLAG_CLASS);
+      detachQueuesDocObserver(doc);
+      stopTimers(doc);
+    }
+  }
+
+  // -------- OBSERVERS (same pattern as Grid Stats) -------- //
+  function attachQueuesDocObserver(doc) {
     if (doc.__cvQueuesMO) return;
     const mo = new MutationObserver(() => {
-      if (MANAGER_REGEX.test(location.href) && !doc.getElementById(PANEL_ID)) insertPanel();
+      if (!QUEUES_REGEX.test(location.href)) return;
+      // Re-tag any table that gets re-rendered and re-inject panel if removed
+      const table = doc.querySelector(TABLE_SEL);
+      tagTableForHide(table);
+      if (!doc.getElementById(PANEL_ID) && (doc.querySelector(BODY_SEL) || table)) {
+        scheduleInject(injectQueuesTiles);
+      }
     });
     mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
     doc.__cvQueuesMO = mo;
   }
-  function detachObserver(doc){ if (doc.__cvQueuesMO){ try{doc.__cvQueuesMO.disconnect();}catch{} doc.__cvQueuesMO=null; } }
-
-  function removeEverywhere(){
-    for (const doc of getSameOriginDocs()){
-      const p = doc.getElementById(PANEL_ID); if (p) p.remove();
-      stopTimers(doc); detachObserver(doc);
-      doc.querySelectorAll('table.'+TABLE_FLAG_CLS).forEach(t => t.classList.remove(TABLE_FLAG_CLS));
+  function detachQueuesDocObserver(doc) {
+    if (doc.__cvQueuesMO) {
+      try { doc.__cvQueuesMO.disconnect(); } catch {}
+      delete doc.__cvQueuesMO;
     }
   }
 
-  function run(){ MANAGER_REGEX.test(location.href) ? insertPanel() : removeEverywhere(); }
+  // -------- ROUTING WATCH (same as Grid Stats) -------- //
+  function waitForQueuesAndInject(tries = 0) {
+    const found = findQueuesDoc();
+    if (found && (found.body || tries >= 3)) {
+      scheduleInject(injectQueuesTiles);
+      return;
+    }
+    if (tries >= 12) return;
+    setTimeout(() => waitForQueuesAndInject(tries + 1), 300);
+  }
+  function onQueuesPageEnter() { waitForQueuesAndInject(); }
 
-  // SPA hooks
-  (function watchURL(){
+  function handleQueuesRouteChange(prevHref, nextHref) {
+    const wasOn = QUEUES_REGEX.test(prevHref);
+    const isOn  = QUEUES_REGEX.test(nextHref);
+    if (!wasOn && isOn) onQueuesPageEnter();
+    if ( wasOn && !isOn) removeQueuesTiles();
+  }
+
+  (function watchQueuesURLChanges() {
     let last = location.href;
-    const P = history.pushState, R = history.replaceState;
-    history.pushState = function(){ const r = P.apply(this, arguments); if (location.href!==last){ last=location.href; run(); } return r; };
-    history.replaceState = function(){ const r = R.apply(this, arguments); if (location.href!==last){ last=location.href; run(); } return r; };
-    new MutationObserver(()=>{ if (location.href!==last){ last=location.href; run(); }}).observe(document.documentElement,{childList:true,subtree:true});
-    addEventListener('popstate', ()=> setTimeout(run,0));
-  })();
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
 
-  run();
-}
+    history.pushState = function () {
+      const prev = last;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleQueuesRouteChange(prev, now);
+      return ret;
+    };
+    history.replaceState = function () {
+      const prev = last;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href; last = now;
+      handleQueuesRouteChange(prev, now);
+      return ret;
+    };
+
+    new MutationObserver(() => {
+      if (location.href !== last) {
+        const prev = last, now = location.href; last = now;
+        handleQueuesRouteChange(prev, now);
+      }
+    }).observe(document.documentElement, { childList:true, subtree:true });
+
+    window.addEventListener('popstate', () => {
+      const prev = last, now = location.href;
+      if (now !== prev) { last = now; handleQueuesRouteChange(prev, now); }
+    });
+
+    if (QUEUES_REGEX.test(location.href)) onQueuesPageEnter();
+  })();
+} // closes __cvQueuesTilesInit
