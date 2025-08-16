@@ -564,6 +564,180 @@ if (!window.__cvGridStatsInit) {
   })();
 }   // closes __cvGridStatsInit
 
+// ==============================
+// Clarity Voice Queues Enhancer (CALL CENTER MANAGER)
+// ==============================
+if (!window.__cvQueuesUIInit) {
+  window.__cvQueuesUIInit = true;
+
+  const PAGE_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const TABLE_ID   = "manager_queues";
+  const STYLE_ID   = "cv-queues-style";
+
+  // Fixed initial values you requested
+  const PRESET = new Map([
+    ["Main Routing (300)",      { ac: 0, cw: 0, waitStart: null }],
+    ["New Sales (301)",         { ac: 3, cw: 1, waitStart: Date.now() }],
+    ["Existing Customer (302)", { ac: 1, cw: 1, waitStart: Date.now() }],
+    ["Billing (303)",           { ac: 0, cw: 0, waitStart: null }],
+  ]);
+
+  // --- utilities ---
+  const pad2 = n => String(n).padStart(2, "0");
+  const fmt = secs => `${pad2(Math.floor(secs / 60))}:${pad2(secs % 60)}`;
+
+  function ensureStyle(doc) {
+    if (doc.getElementById(STYLE_ID)) return;
+    const css = `
+      .cvq-chips{position:absolute;right:8px;top:50%;transform:translateY(-50%);display:flex;gap:8px}
+      .cvq-chip{min-width:64px;border-radius:8px;padding:6px 8px;text-align:center;background:#f5f7fb;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+      .cvq-k{font-size:10px;letter-spacing:.4px;font-weight:700;color:#6b7280;margin-bottom:2px}
+      .cvq-v{font-size:18px;font-weight:700;color:#111}
+      .cvq-attn{background:#fff6d6}
+      .cvq-namecell{position:relative}
+    `;
+    const style = doc.createElement("style");
+    style.id = STYLE_ID;
+    style.textContent = css;
+    doc.head && doc.head.appendChild(style);
+  }
+
+  function getSameOriginDocs() {
+    const docs = [document];
+    document.querySelectorAll("iframe").forEach(ifr => {
+      try {
+        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (idoc) docs.push(idoc);
+      } catch { /* cross-origin */ }
+    });
+    return docs;
+  }
+
+  function findTable() {
+    for (const doc of getSameOriginDocs()) {
+      const tbl = doc.getElementById(TABLE_ID);
+      if (tbl) return { doc, tbl };
+    }
+    return null;
+  }
+
+  function headerIndexes(tbl) {
+    const ths = Array.from(tbl.querySelectorAll("thead th")).map(th => th.textContent.trim().toLowerCase());
+    return {
+      name: ths.indexOf("call queue"),
+      ac:   ths.indexOf("active calls"),
+      cw:   ths.indexOf("callers waiting"),
+      wt:   ths.indexOf("wait"),
+    };
+  }
+
+  function createChips(doc, preset) {
+    const wrap = doc.createElement("div");
+    wrap.className = "cvq-chips";
+    wrap.innerHTML = `
+      <div class="cvq-chip" data-key="ac"><div class="cvq-k">AC</div><div class="cvq-v">${preset.ac}</div></div>
+      <div class="cvq-chip ${preset.cw>0 ? "cvq-attn":""}" data-key="cw"><div class="cvq-k">CW</div><div class="cvq-v">${preset.cw}</div></div>
+      <div class="cvq-chip ${preset.cw>0 ? "cvq-attn":""}" data-key="wt"><div class="cvq-k">WAIT</div><div class="cvq-v">${preset.cw>0 ? "00:00" : "—"}</div></div>
+    `;
+    return wrap;
+  }
+
+  function enhanceOnce(doc, tbl) {
+    ensureStyle(doc);
+
+    const idx = headerIndexes(tbl);
+    if (idx.name === -1) return; // unexpected layout
+
+    // Hide the three original columns (header + rows)
+    [idx.ac, idx.cw, idx.wt].forEach(i => {
+      if (i < 0) return;
+      tbl.querySelectorAll(`thead th:nth-child(${i+1}), tbody td:nth-child(${i+1})`).forEach(el => {
+        el.setAttribute("data-cvq-hidden","1");
+        el.style.display = "none";
+      });
+    });
+
+    // Per-row enhancement
+    const rows = Array.from(tbl.querySelectorAll("tbody tr"));
+    rows.forEach(tr => {
+      if (tr.getAttribute("data-cvq") === "1") return;
+
+      const nameCell = tr.children[idx.name];
+      if (!nameCell) return;
+
+      const label = nameCell.textContent.replace(/\s+/g,' ').trim();
+      const preset = PRESET.get(label);
+      if (!preset) return; // only transform the 4 queues you specified
+
+      nameCell.classList.add("cvq-namecell");
+      const chips = createChips(doc, preset);
+      nameCell.appendChild(chips);
+
+      // store for ticking
+      tr.setAttribute("data-cvq","1");
+      tr.dataset.cvqCw = String(preset.cw);
+      tr.dataset.cvqWaitStart = preset.waitStart ? String(preset.waitStart) : "";
+
+      // keep original hidden cells in sync (optional)
+      const acCell = tr.children[idx.ac];
+      const cwCell = tr.children[idx.cw];
+      const wtCell = tr.children[idx.wt];
+      if (acCell) acCell.textContent = preset.ac;
+      if (cwCell) cwCell.textContent = preset.cw;
+      if (wtCell) wtCell.textContent = preset.cw > 0 ? "00:00" : "-";
+    });
+  }
+
+  // Live wait counter
+  let tickTimer = null;
+  function startTicker(doc, tbl) {
+    if (tickTimer) return;
+    tickTimer = setInterval(() => {
+      const rows = Array.from(tbl.querySelectorAll('tbody tr[data-cvq="1"]'));
+      const now = Date.now();
+      rows.forEach(tr => {
+        const cw = Number(tr.dataset.cvqCw || "0");
+        const start = Number(tr.dataset.cvqWaitStart || "0");
+        const wtChip = tr.querySelector('.cvq-chip[data-key="wt"] .cvq-v');
+        if (!wtChip) return;
+        if (cw > 0 && start) {
+          const secs = Math.max(0, Math.floor((now - start) / 1000));
+          wtChip.textContent = fmt(secs);
+        } else {
+          wtChip.textContent = "—";
+        }
+      });
+    }, 1000);
+  }
+
+  function run() {
+    if (!PAGE_REGEX.test(location.href)) return;
+    const found = findTable();
+    if (!found) return;
+    const { doc, tbl } = found;
+    enhanceOnce(doc, tbl);
+    startTicker(doc, tbl);
+
+    // Re-apply if the table re-renders
+    if (!doc.__cvQueuesMO) {
+      const mo = new MutationObserver(() => {
+        if (!PAGE_REGEX.test(location.href)) return;
+        const again = findTable();
+        if (again) enhanceOnce(again.doc, again.tbl);
+      });
+      mo.observe(tbl.tBodies[0] || tbl, { childList: true, subtree: true });
+      doc.__cvQueuesMO = mo;
+    }
+  }
+
+  // initial + SPA route hooks (lightweight)
+  run();
+  const _push = history.pushState, _replace = history.replaceState;
+  history.pushState = function(){ const r=_push.apply(this, arguments); setTimeout(run,0); return r; };
+  history.replaceState = function(){ const r=_replace.apply(this, arguments); setTimeout(run,0); return r; };
+  window.addEventListener("popstate", () => setTimeout(run, 0));
+}
+
 
 
 
