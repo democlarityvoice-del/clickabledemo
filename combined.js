@@ -72,8 +72,10 @@ if (!window.__cvDemoInit) {
     if(calls.length<5) calls.push(generateCall());
     const now=Date.now();
     calls.forEach(c=>{
-      if(c.to==="CallQueue" && now-c.start>5000){ const first=c.cnam.split(" ")[0]||""; c.to=\`Ext. \${c.ext} (\${first})\`; }
-      if(c.to==="SpeakAccount" && now-c.start>2000){ c.to="VMail"; }
+      if (c.to === "CallQueue" && now - c.start > 5000) {
+        c.to = `Ext. ${c.ext}`;
+}
+     if(c.to==="SpeakAccount" && now-c.start>2000){ c.to="VMail"; }
     });
   }
 
@@ -465,6 +467,7 @@ if (!window.__cvGridStatsInit) {
     if (GRID_STATS_REGEX.test(location.href)) onGridStatsPageEnter();
   })();
 }   // closes __cvGridStatsInit
+
 
 
 
