@@ -1345,67 +1345,63 @@ if (!window.__cvAgentsPanelInit) {
   }
 
   function buildPanel(doc){
-    const panel = doc.createElement('div');
-    panel.id = PANEL_ID;
+  const panel = doc.createElement('div');
+  panel.id = PANEL_ID;
 
-    const frag = doc.createDocumentFragment();
-    AGENTS.forEach(a => {
-      const offline = a.lunch ? true : !a.online;
+  const frag = doc.createDocumentFragment();
+  AGENTS.forEach(a => {
+    const offline = a.lunch ? true : !a.online;
 
-      const row = doc.createElement('div');
-      row.className = 'cv-row' + (offline ? ' is-offline' : '');
+    const row = doc.createElement('div');
+    row.className = 'cv-row' + (offline ? ' is-offline' : '');
 
-      const top = doc.createElement('div');
-      top.className = 'cv-top';
+    const top = doc.createElement('div');
+    top.className = 'cv-top';
 
-      const left = doc.createElement('div');
-      left.className = 'cv-left';
+    const left = doc.createElement('div');
+    left.className = 'cv-left';
 
-      const glyph = doc.createElement('span');
-      glyph.className = 'cv-glyph';
-      glyph.setAttribute('data-icon', a.icon === 'phone' ? 'phone' : 'user');
+    const glyph = doc.createElement('span');
+    glyph.className = 'cv-glyph';
+    glyph.setAttribute('data-icon', a.icon === 'phone' ? 'phone' : 'user');
 
-      const name = doc.createElement('div');
-      name.className = 'cv-name';
-      name.textContent = `Ext ${a.ext} (${a.name})`;
+    const name = doc.createElement('div');
+    name.className = 'cv-name';
+    name.textContent = `Ext ${a.ext} (${a.name})`;
 
-      left.appendChild(glyph);
-      left.appendChild(name);
+    left.appendChild(glyph);
+    left.appendChild(name);
 
-      const tools = doc.createElement('div');
-      tools.className = 'cv-tools';
-      tools.innerHTML = `
-        <span class="cv-tool" title="Stats"><img alt="" src="${ICON_STATS}"></span>
-        <span class="cv-tool" title="Queues"><img alt="" src="${ICON_QUEUES}"></span>
-        <span class="cv-tool" title="Listen in"><img alt="" src="${ICON_LISTEN}"></span>
+    const tools = doc.createElement('div');
+    tools.className = 'cv-tools';
+    tools.innerHTML = `
+      <span class="cv-tool" title="Stats"><img alt="" src="${ICON_STATS}"></span>
+      <span class="cv-tool" title="Queues"><img alt="" src="${ICON_QUEUES}"></span>
+      <span class="cv-tool" title="Listen in"><img alt="" src="${ICON_LISTEN}"></span>
+    `;
+
+    top.appendChild(left);
+    top.appendChild(tools);
+    row.appendChild(top);
+
+    // NEW: Lunch subline under the name
+    if (a.lunch) {
+      const sub = doc.createElement('div');
+      sub.className = 'cv-sub';
+      sub.innerHTML = `
+        <span class="cv-sub-label">Lunch</span>
+        <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
       `;
+      row.appendChild(sub);
+    }
 
-      top.appendChild(left);
-      top.appendChild(tools);
-      row.appendChild(top);
+    frag.appendChild(row);
+  });
 
-      // lunch tick
-if (!doc.__cvLunchTick){
-  doc.__cvLunchTick = setInterval(() => {
-    doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
-      let start = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
-      if (!Number.isFinite(start)) {
-        start = Date.now();
-        el.setAttribute('data-cv-lunch-start', String(start));
-      }
-      const secs = Math.floor((Date.now() - start) / 1000);
-      el.textContent = mmss(secs);
-    });
-  }, 1000);
+  panel.appendChild(frag);
+  return panel;
 }
 
-
-      frag.appendChild(row);
-    });
-
-    panel.appendChild(frag);
-    return panel;
-  }
 
   function inject(){
     const bits = findBits(); if (!bits) return;
@@ -1469,5 +1465,6 @@ if (!doc.__cvLunchTick){
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
 
 
