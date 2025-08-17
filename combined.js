@@ -800,14 +800,12 @@ tr:hover .cvq-icon{ opacity:.85; }
   z-index:9998; display:none;
 }
 .cvq-modal{
-  position:fixed;
-  left:calc(50% + ${SHIFT_PX}px) !important;  /* horizontal shift */
-  top:50%;
-  transform:translate(-50%,-50%);
+  position:fixed; left:50%; top:50%; transform:translate(-50%,-50%);
   background:#fff; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.25);
   width:min(980px,96vw); height:88vh; max-height:88vh;
   z-index:9999; overflow:hidden; display:none; flex-direction:column;
 }
+
 .cvq-modal.is-open{ display:flex; }
 .cvq-modal-backdrop.is-open{ display:block; }
 
@@ -834,6 +832,17 @@ tr:hover .cvq-icon{ opacity:.85; }
   /* recenters on smaller screens so it doesn't clip */
   .cvq-modal{ left:50% !important; }
 }
+/* match first column padding for header + cells */
+.cvq-modal table th:first-child,
+.cvq-modal table td:first-child{ padding-left:22px; }
+
+/* center Agent / Duration / Actions (works for both modals) */
+.cvq-modal table thead th:nth-child(4),
+.cvq-modal table thead th:nth-child(5),
+.cvq-modal table thead th:nth-child(6),
+.cvq-modal table tbody td:nth-child(4),
+.cvq-modal table tbody td:nth-child(5),
+.cvq-modal table tbody td:nth-child(6){ text-align:center; }
 
 @media (max-width:900px){ #${PANEL_ID} .hide-sm{display:none;} }`;
 
@@ -1203,6 +1212,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
