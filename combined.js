@@ -1249,26 +1249,26 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agents Panel — with titles + reliable lunch ticker
+// Clarity Voice Agents Panel — ES5-safe, reliable lunch timer
 // ==============================
-if (!window.__cvAgentsPanelAllInOne) {
-  window.__cvAgentsPanelAllInOne = true;
+if (!window.__cvAgentsPanelInit) {
+  window.__cvAgentsPanelInit = true;
 
-  const AGENTS_REGEX       = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const NATIVE_TABLE_SEL   = '#agents-table';
-  const CONTAINER_SEL      = '.table-container';
-  const PANEL_ID           = 'cv-agents-panel';
-  const PANEL_STYLE_ID     = 'cv-agents-style';
+  var AGENTS_REGEX       = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  var NATIVE_TABLE_SEL   = '#agents-table';
+  var CONTAINER_SEL      = '.table-container';
+  var PANEL_ID           = 'cv-agents-panel';
+  var PANEL_STYLE_ID     = 'cv-agents-style';
 
   // Icons
-  const ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-  const ICON_PHONE  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
-  const ICON_STATS  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
-  const ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-  const ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  var ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+  var ICON_PHONE  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
+  var ICON_STATS  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+  var ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  var ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Agents (Bob on lunch)
-  const AGENTS = [
+  // Agents (Bob on lunch; Mike/Brittany/Mark show phone icon)
+  var AGENTS = [
     { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
     { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
     { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
@@ -1279,27 +1279,38 @@ if (!window.__cvAgentsPanelAllInOne) {
     { name:'John Smith',        ext:207, online:true,  icon:'user'  }
   ];
 
-  // ---------- helpers ----------
-  const pad = n => String(n).padStart(2,'0');
-  const mmss = s => pad((s/60|0)) + ':' + pad(s%60);
+  // Helpers
+  function pad2(n){ return ('0'+n).slice(-2); }
+  function mmss(s){ return pad2((s/60|0)) + ':' + pad2(s%60); }
 
-  function getDocs() {
-    const docs = [document];
-    document.querySelectorAll('iframe').forEach(ifr => {
+  function getDocs(){
+    var docs = [document];
+    var ifrs = document.getElementsByTagName('iframe');
+    for (var i=0;i<ifrs.length;i++){
       try {
-        const d = ifr.contentDocument || ifr.contentWindow?.document;
-        if (d) docs.push(d);
-      } catch {}
-    });
+        var idoc = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        if (idoc) docs.push(idoc);
+      } catch(e){}
+    }
     return docs;
   }
 
-  function findBits() {
-    for (const doc of getDocs()) {
-      const table = doc.querySelector(NATIVE_TABLE_SEL);
-      if (table) {
-        const container = table.closest(CONTAINER_SEL) || table.parentElement || doc.body;
-        return { doc, table, container };
+  function closest(el, sel){
+    while (el && el.nodeType === 1){
+      if (el.matches ? el.matches(sel) : (el.msMatchesSelector && el.msMatchesSelector(sel)) || (el.webkitMatchesSelector && el.webkitMatchesSelector(sel))) return el;
+      el = el.parentNode;
+    }
+    return null;
+  }
+
+  function findBits(){
+    var docs = getDocs();
+    for (var i=0;i<docs.length;i++){
+      var doc = docs[i];
+      var table = doc.querySelector(NATIVE_TABLE_SEL);
+      if (table){
+        var container = (table.closest && table.closest(CONTAINER_SEL)) || table.parentElement || doc.body;
+        return { doc: doc, table: table, container: container };
       }
     }
     return null;
@@ -1307,195 +1318,188 @@ if (!window.__cvAgentsPanelAllInOne) {
 
   function ensureStyles(doc){
     if (doc.getElementById(PANEL_STYLE_ID)) return;
-    const s = doc.createElement('style');
+    var s = doc.createElement('style');
     s.id = PANEL_STYLE_ID;
-    s.textContent = `
-/* card container matches portal tables */
-#${PANEL_ID}.table-container{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}
+    var css = [
+      '#',PANEL_ID,'{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}',
+      '#',PANEL_ID,' .cv-row{display:block;padding:8px 12px;border-bottom:1px solid #eee}',
+      '#',PANEL_ID,' .cv-row:last-child{border-bottom:none}',
 
-/* table look to keep your column titles */
-#${PANEL_ID} table{width:100%;border-collapse:collapse;background:#fff}
-#${PANEL_ID} thead th{padding:8px 12px;font:600 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;border-bottom:1px solid #ddd;text-align:left;white-space:nowrap}
-#${PANEL_ID} tbody td{padding:8px 12px;font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;border-bottom:1px solid #eee;vertical-align:middle}
-#${PANEL_ID} tbody tr:hover{background:#f7f7f7}
+      '#',PANEL_ID,' .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}',
+      '#',PANEL_ID,' .cv-left{display:flex;align-items:center;gap:10px;min-width:0}',
 
-/* left cell content */
-#${PANEL_ID} .cv-name{color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-#${PANEL_ID} .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px}
-#${PANEL_ID} .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}
-#${PANEL_ID} .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}
+      '#',PANEL_ID,' .cv-name{font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 
-/* glyph + name line */
-#${PANEL_ID} .cv-top{display:flex;align-items:center;gap:8px}
-#${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;border-radius:2px;background:#22c55e}
-#${PANEL_ID} .cv-glyph[data-icon="user"]{
-  -webkit-mask:url(${ICON_USER}) center/contain no-repeat; mask:url(${ICON_USER}) center/contain no-repeat;
-}
-#${PANEL_ID} .cv-glyph[data-icon="phone"]{
-  -webkit-mask:url(${ICON_PHONE}) center/contain no-repeat; mask:url(${ICON_PHONE}) center/contain no-repeat;
-}
+      '#',PANEL_ID,' .cv-glyph{width:16px;height:16px;display:inline-block;border-radius:2px;background:#22c55e}',
+      '#',PANEL_ID,' .cv-glyph[data-icon="user"]{-webkit-mask:url(',ICON_USER,') center/contain no-repeat;mask:url(',ICON_USER,') center/contain no-repeat;}',
+      '#',PANEL_ID,' .cv-glyph[data-icon="phone"]{-webkit-mask:url(',ICON_PHONE,') center/contain no-repeat;mask:url(',ICON_PHONE,') center/contain no-repeat;}',
 
-/* actions (right column) */
-#${PANEL_ID} .cv-actions{white-space:nowrap;text-align:right}
-#${PANEL_ID} .cv-tool{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;
-  background:#f7f7f7;border:1px solid #e1e1e1;margin-left:6px;opacity:.55;transition:opacity .15s;cursor:pointer}
-#${PANEL_ID} .cv-tool:hover{opacity:1}
-#${PANEL_ID} .cv-tool img{width:14px;height:14px;display:block}
+      '#',PANEL_ID,' .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s}',
+      '#',PANEL_ID,' .cv-row:hover .cv-tools{opacity:1;visibility:visible}',
+      '#',PANEL_ID,' .cv-tool{width:16px;height:16px;opacity:.65;cursor:pointer}',
+      '#',PANEL_ID,' .cv-tool:hover{opacity:1}',
+      '#',PANEL_ID,' .cv-tool img{width:16px;height:16px;display:block}',
 
-/* offline tint */
-#${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af}
-#${PANEL_ID} .is-offline .cv-name{color:#9aa0a6}
-#${PANEL_ID} .is-offline .cv-sub-label,#${PANEL_ID} .is-offline .cv-sub-time{color:#b3b8bf}
-`;
+      '#',PANEL_ID,' .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-left:26px}',
+      '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
+      '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
+
+      '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',
+      '#',PANEL_ID,' .is-offline .cv-name{color:#9aa0a6}',
+      '#',PANEL_ID,' .is-offline .cv-sub-label,#',PANEL_ID,' .is-offline .cv-sub-time{color:#b3b8bf}'
+    ].join('');
+    s.textContent = css;
     (doc.head || doc.documentElement).appendChild(s);
   }
 
-  function buildRow(doc, agent){
-    const tr = doc.createElement('tr');
-    tr.className = agent.lunch || !agent.online ? 'is-offline' : '';
+  function buildPanel(doc){
+    var panel = doc.createElement('div');
+    panel.id = PANEL_ID;
 
-    // left cell (Agent + Lunch subline)
-    const tdLeft = doc.createElement('td');
-    const top = doc.createElement('div');
-    top.className = 'cv-top';
+    var frag = doc.createDocumentFragment();
 
-    const glyph = doc.createElement('span');
-    glyph.className = 'cv-glyph';
-    glyph.setAttribute('data-icon', agent.icon === 'phone' ? 'phone' : 'user');
+    for (var i=0;i<AGENTS.length;i++){
+      var a = AGENTS[i];
+      var row = doc.createElement('div');
+      var offline = a.lunch ? true : !a.online;
+      row.className = 'cv-row' + (offline ? ' is-offline' : '');
 
-    const name = doc.createElement('div');
-    name.className = 'cv-name';
-    name.textContent = `Ext ${agent.ext} (${agent.name})`;
+      var top = doc.createElement('div');
+      top.className = 'cv-top';
 
-    top.appendChild(glyph);
-    top.appendChild(name);
-    tdLeft.appendChild(top);
+      var left = doc.createElement('div');
+      left.className = 'cv-left';
 
-    if (agent.lunch) {
-      const sub = doc.createElement('div');
-      sub.className = 'cv-sub';
-      sub.innerHTML = `
-        <span class="cv-sub-label">Lunch</span>
-        <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
-      `;
-      tdLeft.appendChild(sub);
+      var glyph = doc.createElement('span');
+      glyph.className = 'cv-glyph';
+      glyph.setAttribute('data-icon', a.icon === 'phone' ? 'phone' : 'user');
+
+      var name = doc.createElement('div');
+      name.className = 'cv-name';
+      name.textContent = 'Ext ' + a.ext + ' (' + a.name + ')';
+
+      left.appendChild(glyph);
+      left.appendChild(name);
+
+      var tools = doc.createElement('div');
+      tools.className = 'cv-tools';
+      tools.innerHTML =
+        '<span class="cv-tool" title="Stats"><img alt="" src="'+ICON_STATS+'"></span>' +
+        '<span class="cv-tool" title="Queues"><img alt="" src="'+ICON_QUEUES+'"></span>' +
+        '<span class="cv-tool" title="Listen in"><img alt="" src="'+ICON_LISTEN+'"></span>';
+
+      top.appendChild(left);
+      top.appendChild(tools);
+      row.appendChild(top);
+
+      if (a.lunch){
+        var sub = doc.createElement('div');
+        sub.className = 'cv-sub';
+        sub.innerHTML =
+          '<span class="cv-sub-label">Lunch</span>' +
+          '<span class="cv-sub-time" data-cv-lunch-start="'+ Date.now() +'">00:00</span>';
+        row.appendChild(sub);
+      }
+
+      frag.appendChild(row);
     }
 
-    // right cell (Actions)
-    const tdAct = doc.createElement('td');
-    tdAct.className = 'cv-actions';
-    tdAct.innerHTML = `
-      <span class="cv-tool" title="Stats"><img alt="" src="${ICON_STATS}"></span>
-      <span class="cv-tool" title="Queues"><img alt="" src="${ICON_QUEUES}"></span>
-      <span class="cv-tool" title="Listen in"><img alt="" src="${ICON_LISTEN}"></span>
-    `;
-
-    tr.appendChild(tdLeft);
-    tr.appendChild(tdAct);
-    return tr;
+    panel.appendChild(frag);
+    return panel;
   }
 
-  function buildPanel(doc){
-    const wrap = doc.createElement('div');
-    wrap.id = PANEL_ID;
-    wrap.className = 'table-container scrollable-small';
-
-    const table = doc.createElement('table');
-    table.className = 'table table-condensed table-hover';
-
-    // ======= TITLES / COLUMN HEADERS (you asked to include them) =======
-    const thead = doc.createElement('thead');
-    thead.innerHTML = `
-      <tr>
-        <th>Agent</th>
-        <th class="text-right">Actions</th>
-      </tr>`;
-    table.appendChild(thead);
-
-    const tbody = doc.createElement('tbody');
-    AGENTS.forEach(a => tbody.appendChild(buildRow(doc, a)));
-    table.appendChild(tbody);
-
-    wrap.appendChild(table);
-    return wrap;
-  }
-
-  // ticker works across main doc + same-origin iframes
+  // Reliable per-document ticker (no optional chaining, no duplicate intervals)
   function startLunchTicker(doc){
     if (!doc) return;
-    if (doc.__cvAgentsLunchTicker) clearInterval(doc.__cvAgentsLunchTicker);
-    const tick = () => {
-      const now = Date.now();
-      doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
-        let st = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
-        if (!Number.isFinite(st)) { st = now; el.setAttribute('data-cv-lunch-start', String(st)); }
-        const secs = ((now - st)/1000)|0;
-        const txt = mmss(secs);
+    if (doc.__cvAgentsLunchTicker) { try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){} }
+    function tick(){
+      var list = doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time');
+      for (var i=0;i<list.length;i++){
+        var el = list[i];
+        var st = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
+        if (!isFinite(st)) {
+          st = Date.now();
+          el.setAttribute('data-cv-lunch-start', String(st));
+        }
+        var secs = ((Date.now() - st)/1000) | 0;
+        var txt = mmss(secs);
         if (el.textContent !== txt) el.textContent = txt;
-      });
-    };
+      }
+    }
     tick();
     doc.__cvAgentsLunchTicker = setInterval(tick, 1000);
   }
+
   function stopLunchTicker(doc){
-    if (doc?.__cvAgentsLunchTicker){ clearInterval(doc.__cvAgentsLunchTicker); doc.__cvAgentsLunchTicker=null; }
+    if (doc && doc.__cvAgentsLunchTicker){
+      try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){}
+      doc.__cvAgentsLunchTicker = null;
+    }
   }
 
   function inject(){
-    const bits = findBits(); if (!bits) return;
-    const { doc, table, container } = bits;
+    var bits = findBits(); if (!bits) return;
+    var doc = bits.doc, table = bits.table, container = bits.container;
     if (doc.getElementById(PANEL_ID)) { startLunchTicker(doc); return; }
 
     ensureStyles(doc);
 
-    // hide native table
-    if (table) { table.setAttribute('data-cv-hidden','1'); table.style.display='none'; }
+    if (table && table.style){
+      table.setAttribute('data-cv-hidden','1');
+      table.style.display = 'none';
+    }
 
-    // insert our panel
-    const panel = buildPanel(doc);
-    container.insertBefore(panel, table || null);
+    var panel = buildPanel(doc);
+    if (container && container.insertBefore){
+      container.insertBefore(panel, table || null);
+    } else {
+      (doc.body || doc.documentElement).appendChild(panel);
+    }
 
     startLunchTicker(doc);
   }
 
   function remove(){
-    for (const doc of getDocs()){
-      const p = doc.getElementById(PANEL_ID);
+    var docs = getDocs();
+    for (var i=0;i<docs.length;i++){
+      var doc = docs[i];
+      var p = doc.getElementById(PANEL_ID);
       if (p) p.remove();
-      const t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
+      var t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
       if (t){ t.style.display=''; t.removeAttribute('data-cv-hidden'); }
       stopLunchTicker(doc);
     }
   }
 
-  function waitAndInject(tries=0){
+  function waitAndInject(tries){
+    tries = tries || 0;
     if (!AGENTS_REGEX.test(location.href)) return;
-    const bits = findBits();
+    var bits = findBits();
     if (bits){ inject(); return; }
     if (tries >= 25) return;
-    setTimeout(()=>waitAndInject(tries+1), 250);
+    setTimeout(function(){ waitAndInject(tries+1); }, 250);
   }
 
   (function watch(){
-    let last = location.href;
-    const push = history.pushState, rep = history.replaceState;
+    var last = location.href;
+    var push = history.pushState, rep = history.replaceState;
 
     function route(prev, next){
-      const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+      var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
       if (!was && is) waitAndInject(0);
       if ( was && !is) remove();
     }
 
-    history.pushState = function(){ const prev=last; const r=push.apply(this,arguments); const now=location.href; last=now; route(prev,now); return r; };
-    history.replaceState = function(){ const prev=last; const r=rep.apply(this,arguments);  const now=location.href; last=now; route(prev,now); return r; };
-
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now);} })
+    history.pushState = function(){
+      var prev=last; var r=push.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
+    };
+    history.replaceState = function(){
+      var prev=last; var r=rep.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
+    };
+    new MutationObserver(function(){ if(location.href!==last){ var prev=last, now=location.href; last=now; route(prev,now);} })
       .observe(document.documentElement,{childList:true,subtree:true});
-
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now);} });
+    window.addEventListener('popstate',function(){ var prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now);} });
 
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
-
-
