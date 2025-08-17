@@ -1214,6 +1214,240 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
+// ==============================
+// Clarity Voice Agent List Inject (CALL CENTER MANAGER)
+// ==============================
+if (!window.__cvAgentListInit) {
+  window.__cvAgentListInit = true;
+
+  // ---- ROUTE + TARGETS ----
+  const AGENT_LIST_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const PANEL_ID   = 'cv-agents-panel';
+  const STYLE_ID   = 'cv-agents-style';
+
+  // try these in order; we’ll use the first one that exists (in doc or same-origin iframes)
+  const AGENT_TARGET_SELECTORS = [
+    '#agent-list-body',
+    '#agents-widget .panel-body',
+    '#agents .panel-body',
+    '#agentsHolder',
+    '#agents-grid',
+    '.agents-list',
+    '#agents'
+  ];
+
+  // ---- DATA ----
+  const AGENTS = [
+    { name: 'Bob A.',       lunch: true  }, // will show Lunch timer
+    { name: 'Cathy T.',     offline: true },
+    { name: 'Jake L.' },
+    { name: 'Alex R.' },
+    { name: 'Mike J.' },
+    { name: 'Brittany L.',  offline: true },
+    { name: 'John S.' }
+  ];
+
+  const ICONS = [
+    { title: 'Stats',     char: '📊' },
+    { title: 'Queues',    char: '📋' },
+    { title: 'Listen in', char: '🎧' }
+  ];
+
+  // ---- HELPERS ----
+  function scheduleInject(fn){
+    let fired = false;
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ fired = true; fn(); }));
+    }
+    setTimeout(()=>{ if (!fired) fn(); }, 64);
+  }
+
+  function getSameOriginDocs(){
+    const docs = [document];
+    document.querySelectorAll('iframe').forEach(ifr=>{
+      try{
+        const idoc = ifr.contentDocument || ifr.contentWindow?.document;
+        if (idoc) docs.push(idoc);
+      }catch{}
+    });
+    return docs;
+  }
+
+  function findAgentsRoot(){
+    for (const doc of getSameOriginDocs()){
+      for (const sel of AGENT_TARGET_SELECTORS){
+        const root = doc.querySelector(sel);
+        if (root) return { doc, root };
+      }
+    }
+    return null;
+  }
+
+  function formatElapsed(ms){
+    const s = Math.floor(ms/1000);
+    const m = Math.floor(s/60);
+    const ss = String(s%60).padStart(2,'0');
+    return `${m}:${ss}`;
+  }
+
+  // ---- STYLES (head-scoped, updated in-place) ----
+  function ensureStyles(doc){
+    let s = doc.getElementById(STYLE_ID);
+    if (!s){ s = doc.createElement('style'); s.id = STYLE_ID; (doc.head || doc.documentElement).appendChild(s); }
+    s.textContent = `
+/* container */
+#${PANEL_ID}{ display:flex; flex-direction:column; gap:8px; }
+
+/* row */
+.cv-agent-row{
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 12px; border-radius:6px; background:#fff;
+  box-shadow:0 1px 3px rgba(0,0,0,.1); transition:background .15s;
+}
+.cv-agent-row:hover{ background:#f5f5f5; }
+
+/* left block */
+.cv-agent-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+.cv-avatar{
+  width:32px; height:32px; border-radius:50%; background:#9aa4af; color:#fff;
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;
+}
+.cv-avatar.offline{ filter:grayscale(1); opacity:.6; }
+.cv-agent-name{ font-weight:600; font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.cv-agent-status{ font-size:12px; color:#555; margin-left:6px; white-space:nowrap; }
+
+/* right icons (appear on hover) */
+.cv-agent-icons{ display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .15s; }
+.cv-agent-row:hover .cv-agent-icons{ opacity:1; pointer-events:auto; }
+.cv-agent-icon{ font-size:16px; cursor:pointer; opacity:.7; }
+.cv-agent-icon:hover{ opacity:1; }
+    `;
+  }
+
+  // ---- BUILD PANEL ----
+  function buildPanel(doc){
+    const wrap = doc.createElement('div');
+    wrap.id = PANEL_ID;
+
+    AGENTS.forEach(agent=>{
+      const row  = doc.createElement('div'); row.className = 'cv-agent-row';
+
+      const left = doc.createElement('div'); left.className = 'cv-agent-left';
+
+      const av   = doc.createElement('div'); av.className = 'cv-avatar';
+      if (agent.offline) av.classList.add('offline');
+      av.textContent = agent.name.split(' ').map(p=>p[0]).join('');
+
+      const nm   = doc.createElement('div'); nm.className = 'cv-agent-name'; nm.textContent = agent.name;
+
+      left.appendChild(av); left.appendChild(nm);
+
+      // Lunch timer on the designated agent
+      if (agent.lunch){
+        const st = doc.createElement('div');
+        st.className = 'cv-agent-status';
+        st.dataset.isLunch = 'true';
+        st.dataset.start   = String(Date.now());
+        st.textContent = 'Lunch • 0:00';
+        left.appendChild(st);
+      }
+
+      const icons = doc.createElement('div'); icons.className = 'cv-agent-icons';
+      ICONS.forEach(ic=>{
+        const span = doc.createElement('span');
+        span.className = 'cv-agent-icon';
+        span.title = ic.title;
+        span.textContent = ic.char;
+        icons.appendChild(span);
+      });
+
+      row.appendChild(left);
+      row.appendChild(icons);
+      wrap.appendChild(row);
+    });
+
+    return wrap;
+  }
+
+  // ---- INJECT / REMOVE ----
+  function injectAgents(){
+    const found = findAgentsRoot(); if (!found) return;
+    const { doc, root } = found;
+
+    ensureStyles(doc);
+    if (doc.getElementById(PANEL_ID)) return; // already injected in this doc
+
+    // Preserve original for clean removal if desired
+    if (!root.__cvAgentsOrigHTML){ root.__cvAgentsOrigHTML = root.innerHTML; }
+    root.setAttribute('data-cv-agents-replaced','1');
+    root.innerHTML = '';
+    root.appendChild(buildPanel(doc));
+
+    // single lunch timer per doc
+    if (!doc.__cvAgentsLunchTimer){
+      doc.__cvAgentsLunchTimer = setInterval(()=>{
+        const el = doc.querySelector('#'+PANEL_ID+' [data-is-lunch="true"]');
+        if (!el) return;
+        const since = parseInt(el.dataset.start, 10) || Date.now();
+        el.textContent = 'Lunch • ' + formatElapsed(Date.now() - since);
+      }, 1000);
+    }
+
+    // observe re-renders; re-apply if panel gets blown away
+    if (!doc.__cvAgentsMO){
+      const mo = new MutationObserver(()=>{
+        if (!AGENT_LIST_REGEX.test(location.href)) return;
+        const exists = doc.getElementById(PANEL_ID);
+        const stillHasRoot = !!findAgentsRoot();
+        if (!exists && stillHasRoot) scheduleInject(injectAgents);
+      });
+      mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
+      doc.__cvAgentsMO = mo;
+    }
+  }
+
+  function removeAgents(){
+    for (const doc of getSameOriginDocs()){
+      const panel = doc.getElementById(PANEL_ID);
+      if (panel && panel.parentNode){
+        const root = panel.parentNode;
+        panel.remove();
+        if (root.__cvAgentsOrigHTML){
+          root.innerHTML = root.__cvAgentsOrigHTML;
+          delete root.__cvAgentsOrigHTML;
+        }
+      }
+      if (doc.__cvAgentsLunchTimer){ clearInterval(doc.__cvAgentsLunchTimer); doc.__cvAgentsLunchTimer = null; }
+      if (doc.__cvAgentsMO){ try{ doc.__cvAgentsMO.disconnect(); }catch{} doc.__cvAgentsMO = null; }
+    }
+  }
+
+  // ---- ROUTING / WATCHERS ----
+  function onEnter(){ scheduleInject(injectAgents); }
+
+  function handleRoute(prev, next){
+    const was = AGENT_LIST_REGEX.test(prev);
+    const is  = AGENT_LIST_REGEX.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeAgents();
+  }
+
+  (function watchURL(){
+    let last = location.href;
+    const push = history.pushState, rep = history.replaceState;
+
+    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
+
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+      .observe(document.documentElement,{ childList:true, subtree:true });
+
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
+
+    if (AGENT_LIST_REGEX.test(location.href)) onEnter();
+  })();
+}
+
 
 
 
