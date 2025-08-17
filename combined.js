@@ -1852,4 +1852,89 @@ if (!window.__cvAgentsPanelInit) {
     openQueuesModal(ext, getAgentName(row));
   }, true);
 })();
+/* === FIX: wire OUR Agents-panel “Queues” icon inside its own document (iframe-safe) === */
+(function () {
+  var PANEL_ID = 'cv-agents-panel';
+  var DOMAIN   = 'claritydemo';
+
+  function getDocs() {
+    var docs = [document];
+    var ifrs = document.getElementsByTagName('iframe');
+    for (var i = 0; i < ifrs.length; i++) {
+      try {
+        var d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        if (d) docs.push(d);
+      } catch (e) {}
+    }
+    return docs;
+  }
+
+  function getNS(win) {
+    win = win || window;
+    return win.NSAgentsCallQueues ||
+           (win.parent && win.parent.NSAgentsCallQueues) ||
+           (win.top && win.top.NSAgentsCallQueues) || null;
+  }
+
+  function getExtFromRow(row) {
+    var d = (row.getAttribute('data-ext') || '').replace(/[^\d]/g, '');
+    if (d) return d;
+    var t = (row.querySelector('.cv-name') || {}).textContent || '';
+    var m = t.match(/Ext\s+(\d{2,6})/i);
+    return m ? m[1] : '';
+  }
+
+  function getAgentName(row) {
+    var t = (row.querySelector('.cv-name') || {}).textContent || '';
+    var m = t.match(/\((.*?)\)\s*$/);
+    return (m && m[1]) ? m[1] : (t || 'Agent');
+  }
+
+  function wireDoc(doc) {
+    if (!doc || doc.__cvQueuesIconWired) return;
+    doc.__cvQueuesIconWired = true;
+
+    doc.addEventListener('click', function (e) {
+      var root = doc.getElementById(PANEL_ID);
+      if (!root) return;
+
+      var btn = e.target && e.target.closest && e.target.closest('#' + PANEL_ID + ' .cv-tool[data-tool="queues"]');
+      if (!btn || !root.contains(btn)) return;
+
+      e.preventDefault();
+
+      var row = btn.closest('.cv-row'); if (!row) return;
+      var ext = getExtFromRow(row);    if (!ext) return;
+      var name = getAgentName(row);
+
+      // 1) Fire the platform fetch (same as native button)
+      var ns = getNS(doc.defaultView || window);
+      if (ns && typeof ns.getQueuesPerAgent === 'function') {
+        try { ns.getQueuesPerAgent('sip:' + ext + '@' + DOMAIN, name); } catch (err) {}
+      }
+
+      // 2) Open the native modal in THIS document
+      var t = doc.createElement('button');
+      t.type = 'button';
+      t.style.display = 'none';
+      t.setAttribute('data-toggle', 'modal');
+      t.setAttribute('data-target', '#queuesPerAgentModal');
+      t.setAttribute('data-backdrop', 'static');
+      (doc.body || doc.documentElement).appendChild(t);
+      t.click();
+      setTimeout(function(){ try { t.parentNode && t.parentNode.removeChild(t); } catch(e){} }, 0);
+    }, true);
+  }
+
+  // wire current doc + any same-origin iframes (where the panel may live)
+  var docs = getDocs();
+  for (var i = 0; i < docs.length; i++) wireDoc(docs[i]);
+
+  // keep it wired if SPA rehydrates/iframes swap
+  new MutationObserver(function () {
+    var ds = getDocs();
+    for (var j = 0; j < ds.length; j++) wireDoc(ds[j]);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+
 
