@@ -1217,7 +1217,9 @@ tr:hover .cvq-icon{ opacity:.85; }
 // ==============================
 // ==============================
 // Clarity Voice Agents Panel Inject (CALL CENTER MANAGER)
-// (lunch row matches native: "Lunch" left, 00:06 right, muted grey)
+// - Lunch row (muted gray) below name
+// - Per-agent icon (user or phone)
+// - Lighter/smaller name style
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
@@ -1230,20 +1232,21 @@ if (!window.__cvAgentsPanelInit) {
 
   // Icons
   const ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+  const ICON_PHONE  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
   const ICON_STATS  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
   const ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
   const ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Agents (color = online state; no "Online/Offline" text)
+  // Agents (color indicates state; lunch on Bob)
   const AGENTS = [
-    { name:'Mike Johnson',      ext:200, online:true  },
-    { name:'Cathy Thomas',      ext:201, online:true  },
-    { name:'Jake Lee',          ext:202, online:false },
-    { name:'Bob Andersen',      ext:203, online:true,  lunch:true }, // lunch example
-    { name:'Brittany Lawrence', ext:204, online:false },
-    { name:'Alex Roberts',      ext:205, online:true  },
-    { name:'Mark Sanchez',      ext:206, online:true  },
-    { name:'John Smith',        ext:207, online:true  }
+    { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
+    { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
+    { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
+    { name:'Bob Andersen',      ext:203, online:true,  icon:'user',  lunch:true },
+    { name:'Brittany Lawrence', ext:204, online:false, icon:'phone' },
+    { name:'Alex Roberts',      ext:205, online:true,  icon:'user'  },
+    { name:'Mark Sanchez',      ext:206, online:true,  icon:'phone' },
+    { name:'John Smith',        ext:207, online:true,  icon:'user'  }
   ];
 
   // ---------- helpers ----------
@@ -1280,22 +1283,32 @@ if (!window.__cvAgentsPanelInit) {
 #${PANEL_ID}{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden;}
 #${PANEL_ID} .cv-row{padding:10px 12px;border-bottom:1px solid #eee;}
 #${PANEL_ID} .cv-row:last-child{border-bottom:none;}
+
 /* top line */
 #${PANEL_ID} .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 #${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
-#${PANEL_ID} .cv-name{font:600 14px/1.2 Arial, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#${PANEL_ID} .cv-name{font:500 13px/1.3 Arial, sans-serif;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
 #${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;border-radius:2px;background:#22c55e;}
-#${PANEL_ID} .cv-glyph{ -webkit-mask:url(${ICON_USER}) center/contain no-repeat; mask:url(${ICON_USER}) center/contain no-repeat; }
+/* Per-icon masks */
+#${PANEL_ID} .cv-glyph[data-icon="user"]{
+  -webkit-mask:url(${ICON_USER}) center/contain no-repeat; mask:url(${ICON_USER}) center/contain no-repeat;
+}
+#${PANEL_ID} .cv-glyph[data-icon="phone"]{
+  -webkit-mask:url(${ICON_PHONE}) center/contain no-repeat; mask:url(${ICON_PHONE}) center/contain no-repeat;
+}
 #${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af;}
+
 #${PANEL_ID} .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s;}
 #${PANEL_ID} .cv-row:hover .cv-tools{opacity:1;visibility:visible;}
 #${PANEL_ID} .cv-tool{width:16px;height:16px;opacity:.65;cursor:pointer}
 #${PANEL_ID} .cv-tool:hover{opacity:1}
 #${PANEL_ID} .cv-tool img{width:16px;height:16px;display:block}
-/* lunch subline */
+
+/* lunch subline (muted, like native) */
 #${PANEL_ID} .cv-sub{display:flex;justify-content:space-between;align-items:center;padding:4px 0 0 26px;}
-#${PANEL_ID} .cv-sub-label{font:600 13px/1 Arial;color:#9aa0a6;}     /* muted grey "Lunch" */
-#${PANEL_ID} .cv-sub-time{font:600 13px/1 Arial;color:#9aa0a6;}      /* muted grey 00:06 */
+#${PANEL_ID} .cv-sub-label{font:600 13px/1 Arial;color:#9aa0a6;}
+#${PANEL_ID} .cv-sub-time{font:600 13px/1 Arial;color:#9aa0a6;}
     `;
     (doc.head || doc.documentElement).appendChild(s);
   }
@@ -1318,6 +1331,7 @@ if (!window.__cvAgentsPanelInit) {
 
       const glyph = doc.createElement('span');
       glyph.className = 'cv-glyph';
+      glyph.setAttribute('data-icon', a.icon === 'phone' ? 'phone' : 'user');
 
       const name = doc.createElement('div');
       name.className = 'cv-name';
@@ -1338,7 +1352,7 @@ if (!window.__cvAgentsPanelInit) {
       top.appendChild(tools);
       row.appendChild(top);
 
-      // lunch subline (native look)
+      // lunch subline
       if (a.lunch){
         const sub = doc.createElement('div');
         sub.className = 'cv-sub';
@@ -1356,6 +1370,7 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
+  // ---------- inject / remove ----------
   function injectPanel(){
     const found = findAgentsBits();
     if (!found) return;
@@ -1364,15 +1379,13 @@ if (!window.__cvAgentsPanelInit) {
 
     ensureStyles(doc);
 
-    // Hide native table, keep in DOM
     table.setAttribute('data-cv-hidden','1');
     table.style.display = 'none';
 
-    // Insert our panel just above the native table
     const panel = buildPanel(doc);
     container.insertBefore(panel, table);
 
-    // Lunch timer tick (00:06 style)
+    // Lunch timer tick
     if (!doc.__cvLunchTick){
       doc.__cvLunchTick = setInterval(() => {
         doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
@@ -1392,6 +1405,7 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
+  // ---------- watchers ----------
   function waitAndInject(tries=0){
     if (!AGENTS_REGEX.test(location.href)) return;
     const found = findAgentsBits();
@@ -1410,7 +1424,6 @@ if (!window.__cvAgentsPanelInit) {
     document.__cvAgentsMO = mo;
   }
 
-  // URL/routing watcher
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
