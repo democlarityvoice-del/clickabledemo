@@ -1473,13 +1473,27 @@ if (!window.__cvAgentsPanelInit) {
       '</div>'
     ].join('');
   }
-  function openStatsForRow(doc,row){
-    if (!row) return;
-    var name = (row.querySelector('.cv-name')||{}).textContent || 'Agent';
-    var ext  = (row.getAttribute('data-ext')||'').replace(/[^\d]/g,'') || (name.match(/Ext\s+(\d{2,6})/i)||[])[1] || '200';
-    var v = (parseInt(ext,10)%2===0) ? 'B' : 'A';
-    openStatsModal(doc, { title:'', bodyHTML: buildStatsHTML(doc,name,ext,CV_STATS_SETS[v]) });
-  }
+  function openStatsForRow(doc, row){
+  if (!row) return;
+
+  // pull "Mike Johnson" from "Ext 200 (Mike Johnson)"
+  var nameText = (row.querySelector('.cv-name')||{}).textContent || '';
+  var mName = nameText.match(/\(([^)]+)\)/);
+  var agentName = (mName && mName[1]) || 'Agent';
+
+  // extension from data-ext or from the text
+  var ext = (row.getAttribute('data-ext')||'').replace(/[^\d]/g,'') ||
+            ((nameText.match(/Ext\.?\s*(\d{2,6})/i)||[])[1]) ||
+            '200';
+
+  // even/odd ext → B/A (both have 5 outbound calls & 22 talk time)
+  var variant = (parseInt(ext,10) % 2 === 0) ? 'B' : 'A';
+
+  openStatsModal(doc, {
+    title: '', // we render the portal-style header inside the body
+    bodyHTML: buildStatsHTML(doc, agentName, ext, CV_STATS_SETS[variant])
+  });
+}
 
   // ---------- inject/remove ----------
   function inject(){
@@ -1551,5 +1565,6 @@ if (!window.__cvAgentsPanelInit) {
       'font:600 12px/1 Arial;color:#fff;}';
   (document.head||document.documentElement).appendChild(s);
 })();
+
 
 
