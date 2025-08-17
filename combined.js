@@ -1858,3 +1858,60 @@ function openStatsForRow(row){
   }, true);
 })();
 
+/* ===== STATS ICON MICROFIX (append-only) ===== */
+(function(){
+  function panelRoot(){
+    try { return document.getElementById(PANEL_ID); } catch(e){ return null; }
+  }
+
+  // Tag the Stats icon in each row (or fall back to the first tool)
+  function tagStatsIcons(){
+    var root = panelRoot(); if (!root) return;
+    root.querySelectorAll('.cv-row').forEach(function(row){
+      var el = row.querySelector('.cv-tool-stats, [data-tool="stats"]');
+      if (!el){
+        // fallback: first tool in the row becomes Stats
+        el = row.querySelector('.cv-tools .cv-tool');
+        if (!el) return;
+        el.classList.add('cv-tool-stats');
+        el.setAttribute('data-tool','stats');
+      }
+      // a11y + affordances
+      if (!el.getAttribute('role')) el.setAttribute('role','button');
+      if (!el.getAttribute('tabindex')) el.setAttribute('tabindex','0');
+      if (!el.getAttribute('title')) el.setAttribute('title','Stats');
+      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label','Stats');
+    });
+  }
+
+  // Initial pass + keep tagging on re-renders
+  tagStatsIcons();
+  new MutationObserver(tagStatsIcons).observe(document.documentElement, {childList:true, subtree:true});
+
+  // Single delegated click listener (uses your existing openStatsForRow)
+  if (!document.__cvStatsClick){
+    document.addEventListener('click', function(e){
+      var root = panelRoot(); if (!root) return;
+      var btn = e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+      if (!btn || !root.contains(btn)) return;
+      var row = btn.closest('.cv-row');
+      if (typeof openStatsForRow === 'function') openStatsForRow(row);
+    }, true);
+    document.__cvStatsClick = true;
+  }
+
+  // Optional keyboard activation
+  if (!document.__cvStatsKey){
+    document.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var root = panelRoot(); if (!root) return;
+      var btn = e.target.closest && e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+      if (!btn || !root.contains(btn)) return;
+      e.preventDefault();
+      var row = btn.closest('.cv-row');
+      if (typeof openStatsForRow === 'function') openStatsForRow(row);
+    }, true);
+    document.__cvStatsKey = true;
+  }
+})();
+
