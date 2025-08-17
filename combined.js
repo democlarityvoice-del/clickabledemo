@@ -1003,6 +1003,20 @@ tr:hover .cvq-icon{ opacity:.85; }
         </table>
       </div>`;
   }
+/* === CV Queues: make "Edit Agents" / "Edit Queue" icons a bit larger === */
+(function () {
+  var s = document.createElement('style');
+  s.textContent = `
+    /* widen the actions column (overrides inline width on the TH too) */
+    #cvq-panel .cvq-actions { width: 100px; }
+    #cvq-panel th.hide-sm    { width: 100px !important; }
+
+    /* bump the circular button + glyph sizes (was 24/14) */
+    #cvq-panel .cvq-icon     { width: 28px; height: 28px; }
+    #cvq-panel .cvq-icon img { width: 16px; height: 16px; }
+  `;
+  (document.head || document.documentElement).appendChild(s);
+})();
 
   // ---- ACTION: Build "Active Calls" Modal Table ----
   function buildActiveTable(rows){
@@ -1704,3 +1718,4 @@ if (!window.__cvAgentsPanelInit) {
     '#cvhf-stats-root .cvhf-pie::before{color:#fff !important;}';    /* white % like ref */
   (document.head || document.documentElement).appendChild(s);
 })();
+
