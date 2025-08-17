@@ -1214,6 +1214,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 // ==============================
+// ==============================
 // Clarity Voice Agent List Inject (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvAgentListInit) {
@@ -1263,25 +1264,19 @@ if (!window.__cvAgentListInit) {
     return `${m}:${ss}`;
   }
 
-  // Find the Agents container: prefer #agents-table → .table-container
-  function findAgentsRoot(){
+  function findAgentsContext(){
     for (const doc of getSameOriginDocs()){
-      const table = doc.getElementById('agents-table');
-      if (table) {
-        const root = table.closest('.table-container') || table.parentElement;
-        if (root) return { doc, root };
-      }
-      // Fallbacks (just in case)
-      const alt =
-        doc.querySelector('#agents .table-container') ||
-        doc.querySelector('#agents') ||
-        null;
-      if (alt) return { doc, root: alt };
+      const table =
+        doc.getElementById('agents-table') ||
+        doc.querySelector('#agents-table') ||
+        doc.querySelector('table.allowmonitor.table-hover'); // lenient fallback
+      if (!table) continue;
+      const container = table.closest('.table-container') || table.parentElement || null;
+      if (container) return { doc, table, container };
     }
     return null;
   }
 
-  // Styles
   function ensureStyles(doc){
     let s = doc.getElementById(STYLE_ID);
     if (!s) { s = doc.createElement('style'); s.id = STYLE_ID; (doc.head || doc.documentElement).appendChild(s); }
@@ -1314,7 +1309,6 @@ if (!window.__cvAgentListInit) {
     `;
   }
 
-  // Build our panel
   function buildPanel(doc){
     const wrap = doc.createElement('div');
     wrap.id = PANEL_ID;
@@ -1358,24 +1352,24 @@ if (!window.__cvAgentListInit) {
   }
 
   function injectAgents(){
-    const found = findAgentsRoot(); if (!found) return;
-    const { doc, root } = found;
+    const found = findAgentsContext(); if (!found) return;
+    const { doc, table, container } = found;
 
     ensureStyles(doc);
 
     // Already injected?
     if (doc.getElementById(PANEL_ID)) return;
 
-    // Hide native table container once (restorable)
-    if (!root.__cvAgentsOrig){ root.__cvAgentsOrig = root.innerHTML; }
-    if (!root.hasAttribute('data-cv-agents-hidden')){
-      root.setAttribute('data-cv-agents-hidden','1');
-      root.innerHTML = '';
+    // Hide native table, keep DOM intact
+    if (!table.hasAttribute('data-cv-hidden')){
+      table.setAttribute('data-cv-hidden','1');
+      table.style.display = 'none';
     }
 
-    root.appendChild(buildPanel(doc));
+    // Insert our panel at the top of the same container
+    container.insertBefore(buildPanel(doc), container.firstChild);
 
-    // Single lunch timer per doc
+    // One lunch timer per doc
     if (!doc.__cvAgentsLunchTimer){
       doc.__cvAgentsLunchTimer = setInterval(()=>{
         const el = doc.querySelector('#'+PANEL_ID+' [data-is-lunch="true"]');
@@ -1385,13 +1379,14 @@ if (!window.__cvAgentListInit) {
       }, 1000);
     }
 
-    // Re-inject on SPA re-renders
+    // Keep it alive across SPA re-renders
     if (!doc.__cvAgentsMO){
       const mo = new MutationObserver(()=>{
         if (!AGENT_LIST_REGEX.test(location.href)) return;
-        const panelExists = !!doc.getElementById(PANEL_ID);
-        const tableStillThere = !!findAgentsRoot();
-        if (!panelExists && tableStillThere) scheduleInject(injectAgents);
+        const ctx = findAgentsContext();
+        if (!ctx) return;
+        const hasPanel = !!ctx.doc.getElementById(PANEL_ID);
+        if (!hasPanel) scheduleInject(injectAgents);
       });
       mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
       doc.__cvAgentsMO = mo;
@@ -1401,11 +1396,10 @@ if (!window.__cvAgentListInit) {
   function removeAgents(){
     for (const doc of getSameOriginDocs()){
       const panel = doc.getElementById(PANEL_ID);
-      if (panel && panel.parentNode){
-        const root = panel.parentNode;
-        panel.remove();
-        if (root.__cvAgentsOrig){ root.innerHTML = root.__cvAgentsOrig; delete root.__cvAgentsOrig; }
-        root.removeAttribute('data-cv-agents-hidden');
+      if (panel && panel.parentNode) panel.remove();
+      const table = doc.getElementById('agents-table') || doc.querySelector('#agents-table');
+      if (table && table.hasAttribute('data-cv-hidden')){
+        table.style.display = ''; table.removeAttribute('data-cv-hidden');
       }
       if (doc.__cvAgentsLunchTimer){ clearInterval(doc.__cvAgentsLunchTimer); doc.__cvAgentsLunchTimer = null; }
       if (doc.__cvAgentsMO){ try{ doc.__cvAgentsMO.disconnect(); }catch{} doc.__cvAgentsMO = null; }
@@ -1423,16 +1417,11 @@ if (!window.__cvAgentListInit) {
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
-
     history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
     history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-
     new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
       .observe(document.documentElement,{ childList:true, subtree:true });
-
     window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
-
     if (AGENT_LIST_REGEX.test(location.href)) onEnter();
   })();
 }
-
