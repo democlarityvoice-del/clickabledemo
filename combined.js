@@ -16,37 +16,65 @@ if (!window.__cvDemoInit) {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  * { box-sizing: border-box; }
-  html, body { width: 100%; overflow-x: hidden; }
-  :root { --icon-muted: rgba(0,0,0,.38); --icon-hover: rgba(0,0,0,.60); --icon-active: #000; --icon-size: 18px; }
-  body { font-family: Arial, sans-serif; margin: 0; background: #fff; color: #000; }
-  .call-container { background:#fff; padding:0 16px 20px; border-radius:6px; box-shadow:0 2px 5px rgba(0,0,0,0.1); width:100%; max-width:100%; }
-  table { width:100%; table-layout:auto; border-collapse:collapse; background:#fff; }
-  thead th { font-weight:700; padding:10px 12px; font-size:14px; text-align:left; border-bottom:1px solid #ddd; white-space:nowrap; }
-  td { padding:10px 12px; text-align:left; font-size:14px; border-bottom:1px solid #ddd; white-space:nowrap; }
-  tr:hover { background:#f5f5f5; }
-  .listen-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  background: #f0f0f0;
-  border-radius: 50%;
-  border: none;
-  cursor: pointer;
-}
-.listen-btn:focus { outline: none; }
+  /* ----- match portal table typography & weights ----- */
+  :root{
+    --font-stack: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --text-color:#333;
+    --muted:#666;
+    --border:#ddd;
+  }
 
-.listen-btn img {
-  width: var(--icon-size);
-  height: var(--icon-size);
-  display: block;
-  opacity: .38;
-  transition: opacity .2s ease;
-}
-tr:hover .listen-btn img { opacity: .60; }
-.listen-btn.is-active img { opacity: 1; }
+  *{ box-sizing:border-box; }
+  html, body{
+    width:100%;
+    margin:0;
+    overflow-x:hidden;
+    font: 13px/1.428 var(--font-stack);   /* size + line-height + stack */
+    color: var(--text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .call-container{
+    background:#fff;
+    padding:0 16px 18px;
+    border-radius:6px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    width:100%;
+    max-width:100%;
+  }
+
+  table{ width:100%; border-collapse:collapse; background:#fff; table-layout:auto; }
+  thead th{
+    padding:8px 12px;
+    font-weight:600;                 /* header is semi-bold like portal */
+    font-size:13px;
+    text-align:left;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
+  }
+  td{
+    padding:8px 12px;
+    font-weight:400;                 /* body rows are normal weight */
+    font-size:13px;
+    border-bottom:1px solid #eee;
+    white-space:nowrap;
+    text-align:left;
+  }
+
+  tr:hover{ background:#f7f7f7; }
+
+  /* “listen in” button (unchanged, just inherits the new font now) */
+  .listen-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:28px; height:28px; background:#f0f0f0; border-radius:50%; border:none; cursor:pointer;
+  }
+  .listen-btn:focus{ outline:none; }
+  .listen-btn img{ width:18px; height:18px; display:block; opacity:.38; transition:opacity .2s; }
+  tr:hover .listen-btn img{ opacity:.60; }
+  .listen-btn.is-active img{ opacity:1; }
+</style>
+
 
 </style>
 </head><body>
@@ -1441,4 +1469,5 @@ if (!doc.__cvLunchTick){
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
 
