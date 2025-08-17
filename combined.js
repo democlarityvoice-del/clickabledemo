@@ -866,14 +866,6 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
-
-      // ---- ACTION: Modal Close (backdrop + button) ----
-      host.addEventListener('click', (e)=>{
-        if (e.target && (e.target.id === 'cvq-backdrop' || e.target.id === 'cvq-close')) closeModal(doc);
-      });
-    }
-  }
-
   // ---- ACTION: Open / Close Modal (single, canonical) ----
   function openModal(doc, title, tableHTML){
     const bd = doc.getElementById('cvq-backdrop');
@@ -1211,6 +1203,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
+
 
 
 
