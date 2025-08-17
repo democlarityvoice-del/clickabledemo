@@ -1719,3 +1719,58 @@ if (!window.__cvAgentsPanelInit) {
   (document.head || document.documentElement).appendChild(s);
 })();
 
+/* === Agents panel: wire "Queues" icon to native Queues-per-Agent modal === */
+(function () {
+  var PANEL_ID = 'cv-agents-panel';
+  var DOMAIN   = 'claritydemo'; // tenant domain (fixed)
+
+  function getLoadModal(){
+    var w = window;
+    return (typeof w.loadModal === 'function' && w.loadModal) ||
+           (w.parent && typeof w.parent.loadModal === 'function' && w.parent.loadModal) ||
+           (w.top && typeof w.top.loadModal === 'function' && w.top.loadModal) || null;
+  }
+  function getNS(){
+    var w = window;
+    return w.NSAgentsCallQueues ||
+           (w.parent && w.parent.NSAgentsCallQueues) ||
+           (w.top && w.top.NSAgentsCallQueues) || null;
+  }
+  function extFromRow(row){
+    // prefer data-ext, else parse "Ext 201 (Name)"
+    var name = (row.querySelector('.cv-name') || {}).textContent || '';
+    var data = (row.getAttribute('data-ext') || '').replace(/[^\d]/g,'');
+    if (data) return data;
+    var m = name.match(/Ext\s+(\d{2,6})/i);
+    return m ? m[1] : '';
+  }
+  function agentDisplayFromRow(row){
+    var name = (row.querySelector('.cv-name') || {}).textContent || '';
+    // pull "(Name)" out of "Ext 201 (Name)"
+    return name.replace(/^.*\((.*?)\).*$/, '$1') || name || 'Agent';
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest && e.target.closest('#' + PANEL_ID + ' .cv-tool[data-tool="queues"]');
+    if (!btn) return;
+    e.preventDefault();
+
+    var row = btn.closest('.cv-row'); if (!row) return;
+    var ext = extFromRow(row);       if (!ext) return;
+
+    var sipUri = 'sip:' + ext + '@' + DOMAIN;
+    var agentLabel = agentDisplayFromRow(row);
+
+    // Call the platform API (same as the real button does)
+    var NS = getNS();
+    if (NS && typeof NS.getQueuesPerAgent === 'function') {
+      try { NS.getQueuesPerAgent(sipUri, agentLabel); } catch(_) {}
+    }
+
+    // Open the native modal (same target id as the real button)
+    var lm = getLoadModal();
+    if (lm) lm('#queuesPerAgentModal');
+  }, true);
+})();
+
+
