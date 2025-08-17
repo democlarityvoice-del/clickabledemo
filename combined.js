@@ -1217,36 +1217,36 @@ tr:hover .cvq-icon{ opacity:.85; }
 // ==============================
 // ==============================
 // Clarity Voice Agents Panel Inject (CALL CENTER MANAGER)
+// (lunch row matches native: "Lunch" left, 00:06 right, muted grey)
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
 
   const AGENTS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   const NATIVE_TABLE_SEL = '#agents-table';
-  const CONTAINER_FALLBACK_SEL = '.table-container';
-  const PANEL_ID = 'cv-agents-panel';
-  const PANEL_STYLE_ID = 'cv-agents-style';
+  const CONTAINER_SEL    = '.table-container';
+  const PANEL_ID         = 'cv-agents-panel';
+  const PANEL_STYLE_ID   = 'cv-agents-style';
 
-  // Hosted icons
+  // Icons
   const ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-  const ICON_PHONE  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
   const ICON_STATS  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
   const ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
   const ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Demo agents
+  // Agents (color = online state; no "Online/Offline" text)
   const AGENTS = [
-    { name: 'Mike Johnson',      ext: 200, online: true  },
-    { name: 'Cathy Thomas',      ext: 201, online: true  },
-    { name: 'Jake Lee',          ext: 202, online: false },
-    { name: 'Bob Andersen',      ext: 203, online: false, lunch: true }, // lunch/timer
-    { name: 'Brittany Lawrence', ext: 204, online: false },
-    { name: 'Alex Roberts',      ext: 205, online: true  },
-    { name: 'Mark Sanchez',      ext: 206, online: true  },
-    { name: 'John Smith',        ext: 207, online: true  },
+    { name:'Mike Johnson',      ext:200, online:true  },
+    { name:'Cathy Thomas',      ext:201, online:true  },
+    { name:'Jake Lee',          ext:202, online:false },
+    { name:'Bob Andersen',      ext:203, online:true,  lunch:true }, // lunch example
+    { name:'Brittany Lawrence', ext:204, online:false },
+    { name:'Alex Roberts',      ext:205, online:true  },
+    { name:'Mark Sanchez',      ext:206, online:true  },
+    { name:'John Smith',        ext:207, online:true  }
   ];
 
-  // Utilities
+  // ---------- helpers ----------
   const getDocs = () => {
     const docs = [document];
     document.querySelectorAll('iframe').forEach(ifr => {
@@ -1262,7 +1262,7 @@ if (!window.__cvAgentsPanelInit) {
     for (const doc of getDocs()) {
       const table = doc.querySelector(NATIVE_TABLE_SEL);
       if (table) {
-        const container = table.closest(CONTAINER_FALLBACK_SEL) || table.parentElement || doc.body;
+        const container = table.closest(CONTAINER_SEL) || table.parentElement || doc.body;
         return { doc, table, container };
       }
     }
@@ -1270,31 +1270,33 @@ if (!window.__cvAgentsPanelInit) {
   };
 
   const pad2 = n => String(n).padStart(2,'0');
-  const mmss = secs => `${Math.floor(secs/60)}:${pad2(secs%60)}`;
+  const mmss = s => `${pad2(Math.floor(s/60))}:${pad2(s%60)}`;  // 00:06 style
 
   function ensureStyles(doc){
     if (doc.getElementById(PANEL_STYLE_ID)) return;
-    const css = `
-#${PANEL_ID}{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden;}
-#${PANEL_ID} .cv-row{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid #eee;}
-#${PANEL_ID} .cv-row:last-child{border-bottom:none;}
-#${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
-#${PANEL_ID} .cv-label{font:600 14px/1.2 Arial, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-#${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;background:#22c55e;border-radius:2px;flex:0 0 16px;}
-#${PANEL_ID} .mask-phone{ -webkit-mask:url(${ICON_PHONE}) center / contain no-repeat; mask:url(${ICON_PHONE}) center / contain no-repeat; }
-#${PANEL_ID} .mask-user { -webkit-mask:url(${ICON_USER})  center / contain no-repeat; mask:url(${ICON_USER})  center / contain no-repeat; }
-#${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af;}
-#${PANEL_ID} .cv-badge{font:600 12px/1 Arial;padding:4px 8px;border-radius:999px;background:#fde68a;color:#7c5c13;margin-left:4px;}
-#${PANEL_ID} .cv-badge .cv-t{font-weight:600;}
-#${PANEL_ID} .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s;}
-#${PANEL_ID} .cv-row:hover .cv-tools{opacity:1;visibility:visible;}
-#${PANEL_ID} .cv-tool{width:16px;height:16px;opacity:.6;cursor:pointer;display:inline-block}
-#${PANEL_ID} .cv-tool:hover{opacity:1}
-#${PANEL_ID} .cv-tool img{width:16px;height:16px;display:block}
-    `;
     const s = doc.createElement('style');
     s.id = PANEL_STYLE_ID;
-    s.textContent = css;
+    s.textContent = `
+#${PANEL_ID}{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden;}
+#${PANEL_ID} .cv-row{padding:10px 12px;border-bottom:1px solid #eee;}
+#${PANEL_ID} .cv-row:last-child{border-bottom:none;}
+/* top line */
+#${PANEL_ID} .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+#${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
+#${PANEL_ID} .cv-name{font:600 14px/1.2 Arial, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;border-radius:2px;background:#22c55e;}
+#${PANEL_ID} .cv-glyph{ -webkit-mask:url(${ICON_USER}) center/contain no-repeat; mask:url(${ICON_USER}) center/contain no-repeat; }
+#${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af;}
+#${PANEL_ID} .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s;}
+#${PANEL_ID} .cv-row:hover .cv-tools{opacity:1;visibility:visible;}
+#${PANEL_ID} .cv-tool{width:16px;height:16px;opacity:.65;cursor:pointer}
+#${PANEL_ID} .cv-tool:hover{opacity:1}
+#${PANEL_ID} .cv-tool img{width:16px;height:16px;display:block}
+/* lunch subline */
+#${PANEL_ID} .cv-sub{display:flex;justify-content:space-between;align-items:center;padding:4px 0 0 26px;}
+#${PANEL_ID} .cv-sub-label{font:600 13px/1 Arial;color:#9aa0a6;}     /* muted grey "Lunch" */
+#${PANEL_ID} .cv-sub-time{font:600 13px/1 Arial;color:#9aa0a6;}      /* muted grey 00:06 */
+    `;
     (doc.head || doc.documentElement).appendChild(s);
   }
 
@@ -1307,25 +1309,22 @@ if (!window.__cvAgentsPanelInit) {
       const row = doc.createElement('div');
       row.className = 'cv-row' + (a.online ? '' : ' is-offline');
 
+      // top line
+      const top = doc.createElement('div');
+      top.className = 'cv-top';
+
       const left = doc.createElement('div');
       left.className = 'cv-left';
 
       const glyph = doc.createElement('span');
-      glyph.className = 'cv-glyph ' + (a.online ? 'mask-phone' : 'mask-user');
+      glyph.className = 'cv-glyph';
 
-      const label = doc.createElement('div');
-      label.className = 'cv-label';
-      label.textContent = `Ext ${a.ext} (${a.name})`;
+      const name = doc.createElement('div');
+      name.className = 'cv-name';
+      name.textContent = `Ext ${a.ext} (${a.name})`;
 
       left.appendChild(glyph);
-      left.appendChild(label);
-
-      if (a.lunch){
-        const badge = doc.createElement('span');
-        badge.className = 'cv-badge';
-        badge.innerHTML = 'Lunch&nbsp;<span class="cv-t" data-cv-lunch-start="'+Date.now()+'">0:00</span>';
-        left.appendChild(badge);
-      }
+      left.appendChild(name);
 
       const tools = doc.createElement('div');
       tools.className = 'cv-tools';
@@ -1335,8 +1334,21 @@ if (!window.__cvAgentsPanelInit) {
         <span class="cv-tool" title="Listen in"><img alt="" src="${ICON_LISTEN}"></span>
       `;
 
-      row.appendChild(left);
-      row.appendChild(tools);
+      top.appendChild(left);
+      top.appendChild(tools);
+      row.appendChild(top);
+
+      // lunch subline (native look)
+      if (a.lunch){
+        const sub = doc.createElement('div');
+        sub.className = 'cv-sub';
+        sub.innerHTML = `
+          <span class="cv-sub-label">Lunch</span>
+          <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
+        `;
+        row.appendChild(sub);
+      }
+
       frag.appendChild(row);
     });
 
@@ -1344,7 +1356,7 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
-  function injectAgentsPanel(){
+  function injectPanel(){
     const found = findAgentsBits();
     if (!found) return;
     const { doc, table, container } = found;
@@ -1352,41 +1364,43 @@ if (!window.__cvAgentsPanelInit) {
 
     ensureStyles(doc);
 
+    // Hide native table, keep in DOM
     table.setAttribute('data-cv-hidden','1');
     table.style.display = 'none';
 
+    // Insert our panel just above the native table
     const panel = buildPanel(doc);
     container.insertBefore(panel, table);
 
+    // Lunch timer tick (00:06 style)
     if (!doc.__cvLunchTick){
       doc.__cvLunchTick = setInterval(() => {
-        doc.querySelectorAll('#'+PANEL_ID+' .cv-t').forEach(el => {
+        doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
           const t0 = +el.getAttribute('data-cv-lunch-start') || Date.now();
-          const secs = Math.floor((Date.now()-t0)/1000);
-          el.textContent = mmss(secs);
+          el.textContent = mmss(Math.floor((Date.now()-t0)/1000));
         });
       }, 1000);
     }
   }
 
-  function removeAgentsPanel(){
+  function removePanel(){
     for (const doc of getDocs()){
       const p = doc.getElementById(PANEL_ID);
       if (p) p.remove();
-      const tbl = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
-      if (tbl){ tbl.style.display=''; tbl.removeAttribute('data-cv-hidden'); }
+      const t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
+      if (t){ t.style.display=''; t.removeAttribute('data-cv-hidden'); }
     }
   }
 
   function waitAndInject(tries=0){
     if (!AGENTS_REGEX.test(location.href)) return;
     const found = findAgentsBits();
-    if (found){ injectAgentsPanel(); return; }
-    if (tries >= 20) return;
-    setTimeout(() => waitAndInject(tries+1), 300);
+    if (found){ injectPanel(); return; }
+    if (tries >= 25) return;
+    setTimeout(() => waitAndInject(tries+1), 250);
   }
 
-  function attachObserver(){
+  function attachMO(){
     if (document.__cvAgentsMO) return;
     const mo = new MutationObserver(() => {
       if (!AGENTS_REGEX.test(location.href)) return;
@@ -1396,25 +1410,23 @@ if (!window.__cvAgentsPanelInit) {
     document.__cvAgentsMO = mo;
   }
 
+  // URL/routing watcher
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
 
-    history.pushState = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handle(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handle(prev,now); return ret; };
-
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handle(prev,now);} })
-      .observe(document.documentElement,{childList:true,subtree:true});
-
-    window.addEventListener('popstate', ()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handle(prev,now);} });
-
-    function handle(prev,next){
+    function handle(prev, next){
       const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
-      if (!was &&  is){ waitAndInject(0); attachObserver(); }
-      if ( was && !is){ removeAgentsPanel(); }
+      if (!was && is){ waitAndInject(0); attachMO(); }
+      if ( was && !is){ removePanel(); }
     }
 
-    if (AGENTS_REGEX.test(location.href)){ waitAndInject(0); attachObserver(); }
+    history.pushState = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handle(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handle(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handle(prev,now);} })
+      .observe(document.documentElement,{childList:true,subtree:true});
+    window.addEventListener('popstate', ()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handle(prev,now);} });
+
+    if (AGENTS_REGEX.test(location.href)){ waitAndInject(0); attachMO(); }
   })();
 }
-
