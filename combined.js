@@ -628,14 +628,14 @@ if (!window.__cvQueuesTilesInit) {
   const PANEL_ID       = 'cvq-panel';
   const PANEL_STYLE_ID = 'cvq-panel-style';
 
-  // ---- DECLARE ICON URL CONSTANTS (HOSTED SVGs) ----
+  // ---- DECLARE CALL CENTER ICON URL CONSTANTS (HOSTED SVGs) ----
   const ICON_USER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
   const ICON_EDIT    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
   const ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   const ICON_PHONE   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   const ICON_ARROW   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/arrow-up-solid-full.svg';
 
-  // ---- DECLARE REAL ROUTES (claritydemo) ----
+  // ---- DECLARE CALL CENTER REAL ROUTES (claritydemo) ----
   const IDLE_LINKS = {
     main:     '/portal/callqueues/editagents/300@claritydemo/Ring+All',
     sales:    '/portal/callqueues/editagents/301@claritydemo/Round-robin',
@@ -649,7 +649,7 @@ if (!window.__cvQueuesTilesInit) {
     billing:  '/portal/callqueues/edit/303@claritydemo'
   };
 
-  // ---- DECLARE QUEUE DATA (demo counts) ----
+  // ---- DECLARE CALL CENTER QUEUE DATA (demo counts) ----
   const QUEUE_DATA = [
     { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
     { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
@@ -657,7 +657,7 @@ if (!window.__cvQueuesTilesInit) {
     { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
   ];
 
-  // ---- UTIL: scheduleInject (safe RAF/timeout) ----
+  // ---- UTIL: CALL CENTER scheduleInject (safe RAF/timeout) ----
   function scheduleInject(fn) {
     let fired = false;
     if ('requestAnimationFrame' in window) {
@@ -666,7 +666,7 @@ if (!window.__cvQueuesTilesInit) {
     setTimeout(() => { if (!fired) fn(); }, 64);
   }
 
-  // ---- UTIL: getSameOriginDocs (document + inner iframes) ----
+  // ---- UTIL: CALL CENTER getSameOriginDocs (document + inner iframes) ----
   function getSameOriginDocs(){
     const docs = [document];
     const ifrs = document.querySelectorAll('iframe');
@@ -679,7 +679,7 @@ if (!window.__cvQueuesTilesInit) {
     return docs;
   }
 
-  // ---- UTIL: findQueuesDoc (locate body/container/table) ----
+  // ---- UTIL: CALL CENTER findQueuesDoc (locate body/container/table) ----
   function findQueuesDoc(){
     const docs = getSameOriginDocs();
     for (let i=0;i<docs.length;i++){
@@ -693,7 +693,7 @@ if (!window.__cvQueuesTilesInit) {
     return null;
   }
 
-  // ---- UTIL: mmss (format seconds) ----
+  // ---- UTIL: CALL CENTER mmss (format seconds) ----
   function mmss(sec){
     sec |= 0;
     const m = String((sec/60|0)).padStart(2,'0');
@@ -701,7 +701,7 @@ if (!window.__cvQueuesTilesInit) {
     return m + ':' + s;
   }
 
-  // ---- UTIL: matches / closest (compat) ----
+  // ---- UTIL: CALL CENTER matches / closest (compat) ----
   function matches(el, sel){
     if (!el || el.nodeType !== 1) return false;
     const p = Element.prototype;
@@ -716,7 +716,7 @@ if (!window.__cvQueuesTilesInit) {
     return null;
   }
 
-  // ---- UTIL: find loadModal on window/parent/top ----
+  // ---- UTIL: CALL CENTER find loadModal on window/parent/top ----
   function getLoadModal(doc){
     const w = (doc && doc.defaultView) || window;
     return (typeof w.loadModal === 'function' && w.loadModal) ||
@@ -725,7 +725,7 @@ if (!window.__cvQueuesTilesInit) {
            null;
   }
 
-  // ---- CACHES FOR MODAL ROWS (stable while open) ----
+  // ---- CALL CENTER CACHES FOR MODAL ROWS (stable while open) ----
   const REAL_DIDS      = ['(248) 436-3443','(248) 436-3449','(313) 995-9080'];
   const SAFE_FAKE_AC   = ['900','700','999','888','511','600','311','322','456'];
   const AGENT_EXT_POOL = [201,203,204,207,211,215,218,219,222,227,231,235];
@@ -736,7 +736,7 @@ if (!window.__cvQueuesTilesInit) {
   function pickAgentExt(i){ return AGENT_EXT_POOL[i % AGENT_EXT_POOL.length]; }
   function pickRealDID(i){ return REAL_DIDS[i % REAL_DIDS.length]; }
 
-  // ---- ACTION: Build "Active Calls" rows for modal ----
+  // ---- ACTION: Build "Active Calls" rows for modal CALL CENTER ----
   function makeActiveRows(qkey, count){
     if (!CVQ_CACHE.active[qkey]) {
       const now = Date.now();
@@ -792,7 +792,7 @@ if (!window.__cvQueuesTilesInit) {
 
 
 
-// ---- ACTION: Ensure Styles + Modal Host (create/update once) ----
+// ---- ACTION: CALL CENTER Ensure Styles + Modal Host (create/update once) ----
 function ensureStyles(doc){
   // move modal slightly right (affects BOTH Active Calls & Callers Waiting)
   var SHIFT_PX = 80;
@@ -903,7 +903,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
-  // ---- ACTION: Open / Close Modal (single, canonical) ----
+  // ---- ACTION: Open / Close CALL CENTER Modal (single, canonical) ----
   function openModal(doc, title, tableHTML){
     const bd = doc.getElementById('cvq-backdrop');
     const md = doc.getElementById('cvq-modal');
@@ -928,7 +928,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer=null; }
   }
 
-  // ---- ACTION: Build Panel HTML (renders all queue rows) ----
+  // ---- ACTION: Build Panel CALL CENTER QUEUES HTML (renders all queue rows) ----
   function buildPanelHTML(){
     const rows = QUEUE_DATA.map((d)=>{
       const waitCell = d.timer
@@ -1004,7 +1004,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       </div>`;
   }
 
-  // ---- ACTION: Build "Active Calls" Modal Table ----
+  // ---- ACTION: Build "Active Calls" Modal Table CALL CENTER ----
   function buildActiveTable(rows){
     const body = rows.map((r)=>`
       <tr>
@@ -1027,7 +1027,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       </table>`;
   }
 
-  // ---- ACTION: Build "Callers Waiting" Modal Table ----
+  // ---- ACTION: CALL CENTER Build "Callers Waiting" Modal Table ----
   function buildWaitingTable(rows){
     const body = rows.map((r,i)=>`
       <tr data-row="${i}">
@@ -1054,7 +1054,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       </table>`;
   }
 
-  // ---- ACTION: Wire Clicks (counts → modals; agents/queue → route) ----
+  // ---- ACTION: CALL CENTER Wire Clicks (counts → modals; agents/queue → route) ----
   function addQueuesClickHandlers(doc){
     if (doc.__cvqClicksWired) return;
     doc.__cvqClicksWired = true;
@@ -1080,7 +1080,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       }
     }, true);
 
-    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — platform modal or navigate ----
+    // ---- ACTION: CALL CENTER Agents Idle / Edit Agents / Edit Queue — platform modal or navigate ----
     doc.addEventListener('click', (e)=>{
       const nav = closest(e.target, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
       if (!nav) return;
@@ -1092,7 +1092,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       if (lm) { e.preventDefault(); lm(targetSel, href); }
     }, true);
 
-    // ---- ACTION: Waiting-table Interactions (inside modal) ----
+    // ---- ACTION: CALL CENTER Waiting-table Interactions (inside modal) ----
     doc.addEventListener('click', (e)=>{
       const modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
@@ -1125,7 +1125,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       }
     });
 
-    // ---- ACTION: Click-away inside modal closes kebabs ----
+    // ---- ACTION: CALL CENTER Click-away inside modal closes kebabs ----
     doc.addEventListener('click', (e)=>{
       const modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
@@ -1135,7 +1135,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     });
   }
 
-  // ---- ACTION: Inject Queues Tiles (create panel + timers + handlers) ----
+  // ---- ACTION: Inject CALL CENTER Queues Tiles into GRID (create panel + timers + handlers) ----
   function injectQueuesTiles(){
     const found = findQueuesDoc(); if (!found) return;
     const doc = found.doc, body = found.body, container = found.container;
@@ -1177,7 +1177,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     attachObserver(doc);
   }
 
-  // ---- ACTION: Remove Queues Tiles (cleanup + unhide originals) ----
+  // ---- ACTION: CALL CENTER Remove Queues Tiles (cleanup + unhide originals) ----
   function removeQueuesTiles(){
     const docs = getSameOriginDocs();
     for (let i=0;i<docs.length;i++){
@@ -1191,7 +1191,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     }
   }
 
-  // ---- WATCHER: Observe SPA Rerenders (re-inject if needed) ----
+  // ---- WATCHER: CALL CENTER Observe SPA Rerenders (re-inject if needed) ----
   function attachObserver(doc){
     if (doc.__cvqMO) return;
     const mo = new MutationObserver(()=>{
@@ -1213,7 +1213,7 @@ tr:hover .cvq-icon{ opacity:.85; }
   }
   function detachObserver(doc){ if(doc.__cvqMO){ try{doc.__cvqMO.disconnect();}catch{} delete doc.__cvqMO; } }
 
-  // ---- WATCHER: Route Changes (enter/leave manager page) ----
+  // ---- WATCHER: CALL CENTER Route Changes (enter/leave manager page) ----
   function waitAndInject(tries){
     tries = tries || 0;
     const found = findQueuesDoc();
@@ -1233,7 +1233,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
-  // ---- WATCHER: URL (push/replace/popstate + SPA) ----
+  // ---- CALL CENTER WATCHER: URL (push/replace/popstate + SPA) ----
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
@@ -1249,7 +1249,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agents Panel — ES5-safe, reliable lunch timer
+// Clarity Voice Agents Panel — ES5-safe, reliable lunch timer + Stats modal
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
@@ -1267,12 +1267,12 @@ if (!window.__cvAgentsPanelInit) {
   var ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
   var ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Agents (Bob on lunch; Mike/Brittany/Mark show phone icon)
+  // Agents (Bob stays gray/offline; no lunch)
   var AGENTS = [
     { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
     { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
     { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
-    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  },
+    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  }, // offline (gray), no lunch
 
     { name:'Brittany Lawrence', ext:204, online:true,  icon:'phone' },
     { name:'Alex Roberts',      ext:205, online:true,  icon:'user'  },
@@ -1280,7 +1280,7 @@ if (!window.__cvAgentsPanelInit) {
     { name:'John Smith',        ext:207, online:true,  icon:'user'  }
   ];
 
-  // Helpers
+  // ===== helpers =====
   function pad2(n){ return ('0'+n).slice(-2); }
   function mmss(s){ return pad2((s/60|0)) + ':' + pad2(s%60); }
 
@@ -1298,7 +1298,8 @@ if (!window.__cvAgentsPanelInit) {
 
   function closest(el, sel){
     while (el && el.nodeType === 1){
-      if (el.matches ? el.matches(sel) : (el.msMatchesSelector && el.msMatchesSelector(sel)) || (el.webkitMatchesSelector && el.webkitMatchesSelector(sel))) return el;
+      var m = el.matches || el.msMatchesSelector || el.webkitMatchesSelector;
+      if (m && m.call(el, sel)) return el;
       el = el.parentNode;
     }
     return null;
@@ -1317,45 +1318,71 @@ if (!window.__cvAgentsPanelInit) {
     return null;
   }
 
+  // ===== panel + styles =====
   function ensureStyles(doc){
-  if (doc.getElementById(PANEL_STYLE_ID)) return;
-  var s = doc.createElement('style');
-  s.id = PANEL_STYLE_ID;
-  var css = [
-    '#',PANEL_ID,'{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}',
-    '#',PANEL_ID,' .cv-row{display:block;padding:8px 12px;border-bottom:1px solid #eee}',
-    '#',PANEL_ID,' .cv-row:last-child{border-bottom:none}',
+    if (doc.getElementById(PANEL_STYLE_ID)) return;
+    var s = doc.createElement('style');
+    s.id = PANEL_STYLE_ID;
+    var css = [
+      '#',PANEL_ID,'{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}',
+      '#',PANEL_ID,' .cv-row{display:block;padding:8px 12px;border-bottom:1px solid #eee}',
+      '#',PANEL_ID,' .cv-row:last-child{border-bottom:none}',
 
-    '#',PANEL_ID,' .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}',
-    '#',PANEL_ID,' .cv-left{display:flex;align-items:center;gap:10px;min-width:0}',
+      '#',PANEL_ID,' .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}',
+      '#',PANEL_ID,' .cv-left{display:flex;align-items:center;gap:10px;min-width:0}',
 
-    '#',PANEL_ID,' .cv-name{font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
+      '#',PANEL_ID,' .cv-name{font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 
-    // --- ICON TWEAKS: bigger + darker green ---
-    '#',PANEL_ID,' .cv-glyph{width:20px;height:20px;display:inline-block;border-radius:3px;background:#167a32}',
-    '#',PANEL_ID,' .cv-glyph[data-icon="user"]{-webkit-mask:url(',ICON_USER,') center/contain no-repeat;mask:url(',ICON_USER,') center/contain no-repeat;}',
-    '#',PANEL_ID,' .cv-glyph[data-icon="phone"]{-webkit-mask:url(',ICON_PHONE,') center/contain no-repeat;mask:url(',ICON_PHONE,') center/contain no-repeat;}',
+      /* darker/heavier green + larger glyphs */
+      '#',PANEL_ID,' .cv-glyph{width:20px;height:20px;display:inline-block;border-radius:3px;background:#167a32}',
+      '#',PANEL_ID,' .cv-glyph[data-icon="user"]{-webkit-mask:url(',ICON_USER,') center/contain no-repeat;mask:url(',ICON_USER,') center/contain no-repeat;}',
+      '#',PANEL_ID,' .cv-glyph[data-icon="phone"]{-webkit-mask:url(',ICON_PHONE,') center/contain no-repeat;mask:url(',ICON_PHONE,') center/contain no-repeat;}',
 
-    '#',PANEL_ID,' .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s}',
-    '#',PANEL_ID,' .cv-row:hover .cv-tools{opacity:1;visibility:visible}',
-    // tools a bit larger/heavier too
-    '#',PANEL_ID,' .cv-tool{width:20px;height:20px;opacity:.75;cursor:pointer}',
-    '#',PANEL_ID,' .cv-tool:hover{opacity:1}',
-    '#',PANEL_ID,' .cv-tool img{width:20px;height:20px;display:block}',
+      '#',PANEL_ID,' .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s}',
+      '#',PANEL_ID,' .cv-row:hover .cv-tools{opacity:1;visibility:visible}',
+      '#',PANEL_ID,' .cv-tool{width:20px;height:20px;opacity:.75;cursor:pointer}',
+      '#',PANEL_ID,' .cv-tool:hover{opacity:1}',
+      '#',PANEL_ID,' .cv-tool img{width:20px;height:20px;display:block}',
 
-    // align subline under the larger glyph (20px glyph + 10px gap = 30px)
-    '#',PANEL_ID,' .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-left:30px}',
-    '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
-    '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
+      /* subline aligns under 20px glyph (20 + 10px gap = 30px) */
+      '#',PANEL_ID,' .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-left:30px}',
+      '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
+      '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
 
-    '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',
-    '#',PANEL_ID,' .is-offline .cv-name{color:#9aa0a6}',
-    '#',PANEL_ID,' .is-offline .cv-sub-label,#',PANEL_ID,' .is-offline .cv-sub-time{color:#b3b8bf}'
-  ].join('');
-  s.textContent = css;
-  (doc.head || doc.documentElement).appendChild(s);
-}
+      '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',
+      '#',PANEL_ID,' .is-offline .cv-name{color:#9aa0a6}',
+      '#',PANEL_ID,' .is-offline .cv-sub-label,#',PANEL_ID,' .is-offline .cv-sub-time{color:#b3b8bf}',
 
+      /* ===== Stats modal styles (scoped by IDs) ===== */
+      'body.cv-modal-open{overflow:hidden}',
+      '#cv-modal-root{position:fixed;inset:0;z-index:2147483646;pointer-events:none}',
+      '#cv-modal-root.is-open{pointer-events:auto}',
+      '#cv-modal-root .cv-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .18s}',
+      '#cv-modal-root.is-open .cv-scrim{opacity:1}',
+      '#cv-modal-root .cv-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.98);min-width:360px;max-width:1024px;max-height:80vh;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;opacity:0;transition:transform .18s,opacity .18s}',
+      '#cv-modal-root.is-open .cv-dialog{opacity:1;transform:translate(-50%,-50%) scale(1)}',
+      '#cv-modal-root .cv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}',
+      '#cv-modal-root .cv-modal-title{font:600 14px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
+      '#cv-modal-root .cv-modal-close{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #e6e6e6;background:#fafafa}',
+      '#cv-modal-root .cv-modal-close:hover{background:#f1f3f5}',
+      '#cv-modal-root .cv-modal-body{padding:16px;overflow:auto}',
+      '#cv-modal-root .cv-modal-footer{padding:12px 16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px}',
+      '#cv-modal-root .cv-btn{padding:8px 12px;border-radius:8px;font:600 13px/1.2 Arial;cursor:pointer;border:1px solid #ddd;background:#fff}',
+      '#cv-modal-root .cv-btn-primary{background:#167a32;color:#fff;border-color:#167a32}',
+      /* charts */
+      '#cv-modal-root .cv-stats-wrap{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:16px;min-width:980px;}',
+      '#cv-modal-root .cv-stats-list{list-style:none;margin:0;padding:0 0 0 8px;font:600 13px/1.6 Arial;color:#222;}',
+      '#cv-modal-root .cv-stats-list li{display:flex;gap:12px;align-items:baseline;}',
+      '#cv-modal-root .cv-stats-num{width:44px;text-align:right;color:#333;}',
+      '#cv-modal-root .cv-chart{background:#fff;border:1px solid #eee;border-radius:8px;padding:12px;}',
+      '#cv-modal-root .cv-chart h5{margin:0 0 8px 0;font:600 12px/1.2 Arial;color:#555;}',
+      '#cv-modal-root .cv-chart-pie{width:var(--size);height:var(--size);border-radius:50%;background:conic-gradient(#2f66d0 var(--deg), #d33 0);} ',
+      '#cv-modal-root .cv-chart-pie::after{content:"";width:calc(var(--size) - 70px);height:calc(var(--size) - 70px);background:#fff;border-radius:50%;display:block;margin:auto;margin-top:35px;}',
+      '#cv-modal-root .cv-stats-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0 0 10px;}',
+      '#cv-modal-root .cv-stats-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px;}'
+    ].join('');
+    (doc.head || doc.documentElement).appendChild(s);
+  }
 
   function buildPanel(doc){
     var panel = doc.createElement('div');
@@ -1366,8 +1393,9 @@ if (!window.__cvAgentsPanelInit) {
     for (var i=0;i<AGENTS.length;i++){
       var a = AGENTS[i];
       var row = doc.createElement('div');
-      var offline = a.lunch ? true : !a.online;
+      var offline = !a.online; // no lunch for anyone; Bob offline shows gray
       row.className = 'cv-row' + (offline ? ' is-offline' : '');
+      row.setAttribute('data-ext', String(a.ext));
 
       var top = doc.createElement('div');
       top.className = 'cv-top';
@@ -1389,22 +1417,13 @@ if (!window.__cvAgentsPanelInit) {
       var tools = doc.createElement('div');
       tools.className = 'cv-tools';
       tools.innerHTML =
-        '<span class="cv-tool" title="Stats"><img alt="" src="'+ICON_STATS+'"></span>' +
-        '<span class="cv-tool" title="Queues"><img alt="" src="'+ICON_QUEUES+'"></span>' +
-        '<span class="cv-tool" title="Listen in"><img alt="" src="'+ICON_LISTEN+'"></span>';
+        '<span class="cv-tool cv-tool-stats" data-tool="stats" title="Stats" aria-label="Stats"><img alt="" src="'+ICON_STATS+'"></span>' +
+        '<span class="cv-tool" data-tool="queues" title="Queues" aria-label="Queues"><img alt="" src="'+ICON_QUEUES+'"></span>' +
+        '<span class="cv-tool" data-tool="listen" title="Listen in" aria-label="Listen in"><img alt="" src="'+ICON_LISTEN+'"></span>';
 
       top.appendChild(left);
       top.appendChild(tools);
       row.appendChild(top);
-
-      if (a.lunch){
-        var sub = doc.createElement('div');
-        sub.className = 'cv-sub';
-        sub.innerHTML =
-          '<span class="cv-sub-label">Lunch</span>' +
-          '<span class="cv-sub-time" data-cv-lunch-start="'+ Date.now() +'">00:00</span>';
-        row.appendChild(sub);
-      }
 
       frag.appendChild(row);
     }
@@ -1413,7 +1432,7 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
-  // Reliable per-document ticker (no optional chaining, no duplicate intervals)
+  // ===== lunch ticker (kept; no one has lunch right now) =====
   function startLunchTicker(doc){
     if (!doc) return;
     if (doc.__cvAgentsLunchTicker) { try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){} }
@@ -1434,7 +1453,6 @@ if (!window.__cvAgentsPanelInit) {
     tick();
     doc.__cvAgentsLunchTicker = setInterval(tick, 1000);
   }
-
   function stopLunchTicker(doc){
     if (doc && doc.__cvAgentsLunchTicker){
       try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){}
@@ -1442,6 +1460,160 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
+  // ===== Stats modal (self-contained) =====
+  function ensureModalHost(doc){
+    if (doc.getElementById('cv-modal-root')) return;
+    var root = doc.createElement('div');
+    root.id = 'cv-modal-root';
+    (doc.body || doc.documentElement).appendChild(root);
+  }
+  function openStatsModal(doc, opts){
+    ensureModalHost(doc);
+    var root = doc.getElementById('cv-modal-root');
+    var title = (opts && opts.title) || '';
+    var bodyHTML = (opts && opts.bodyHTML) || '';
+    var primaryText = (opts && opts.primaryText) || 'Close';
+    var lock = !!(opts && opts.lock);
+
+    var prev = doc.activeElement;
+    root.innerHTML = [
+      '<div class="cv-scrim"></div>',
+      '<div class="cv-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">',
+        '<div class="cv-modal-header">',
+          '<div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
+          '<button class="cv-modal-close" aria-label="Close">×</button>',
+        '</div>',
+        '<div class="cv-modal-body">',bodyHTML,'</div>',
+        '<div class="cv-modal-footer">',
+          '<button class="cv-btn cv-btn-primary" data-btn="primary">',primaryText,'</button>',
+        '</div>',
+      '</div>'
+    ].join('');
+
+    function close(){
+      root.classList.remove('is-open');
+      root.innerHTML = '';
+      doc.body.classList.remove('cv-modal-open');
+      doc.removeEventListener('keydown', onKey);
+      if (prev && prev.focus) { try { prev.focus(); } catch(e){} }
+    }
+    function onKey(e){
+      if (e.key === 'Escape' && !lock){ e.preventDefault(); close(); }
+      if (e.key === 'Tab'){
+        var dialog = root.querySelector('.cv-dialog');
+        if (!dialog) return;
+        var focusables = dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        var first = focusables[0], last = focusables[focusables.length-1];
+        if (e.shiftKey && doc.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && doc.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+    }
+
+    var dialog = root.querySelector('.cv-dialog');
+    var scrim  = root.querySelector('.cv-scrim');
+    var xBtn   = root.querySelector('.cv-modal-close');
+    var primary = root.querySelector('[data-btn="primary"]');
+
+    if (!lock){ scrim.addEventListener('click', close); xBtn.addEventListener('click', close); }
+    if (primary) primary.addEventListener('click', close);
+
+    root.classList.add('is-open');
+    doc.body.classList.add('cv-modal-open');
+    doc.addEventListener('keydown', onKey);
+    (primary || xBtn).focus();
+  }
+
+  // canned A/B sets; outbound fixed to 5/22
+  var CV_STATS_SETS = {
+    A: { metrics: { callCenterCallsToday:10, callCenterTalkTime:13, callCenterAvgTalk:'1:23',
+                    inboundCallsToday:10, inboundTalkTime:14, inboundAvgTalk:'1:23',
+                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
+         perHour:[4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
+         perDay:[27,38,30,24,27,29,28,47,29,42],
+         pie:{ pct1:100, pct2:0 } },
+    B: { metrics: { callCenterCallsToday:14, callCenterTalkTime:24, callCenterAvgTalk:'1:46',
+                    inboundCallsToday:16, inboundTalkTime:29, inboundAvgTalk:'1:45',
+                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
+         perHour:[1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
+         perDay:[36,65,39,44,46,27,30,48,50,43],
+         pie:{ pct1:88.9, pct2:11.1 } }
+  };
+
+  function cvBarSVG(values, max, width, height, barGapPx){
+    max = max || Math.max(1, Math.max.apply(null, values));
+    var n = values.length, barW = Math.floor((width - (n+1)*barGapPx) / n);
+    var x = barGapPx, h = height;
+    var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'];
+    for (var i=0;i<n;i++){
+      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
+      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
+      x += barW + barGapPx;
+    }
+    parts.push('</svg>');
+    return parts.join('');
+  }
+  function cvPieHTML(pct1, size){
+    pct1 = Math.max(0, Math.min(100, pct1));
+    var deg1 = (pct1/100)*360;
+    return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg1+'deg;"></div>';
+  }
+  function buildStatsModalHTML(doc, agentName, ext, data){
+    var m = data.metrics;
+    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6);
+    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8);
+    var pie  = cvPieHTML(data.pie.pct1, 220);
+
+    return [
+      '<div class="cv-stats-wrap">',
+        '<div class="cv-stats-head"><div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div></div>',
+        '<div>',
+          '<ul class="cv-stats-list">',
+            '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
+          '</ul>',
+        '</div>',
+        '<div class="cv-chart"><h5>My Calls Per Hour (last 24 hours)</h5>',bar1,'</div>',
+        '<div class="cv-chart"><h5>My Calls Per Day (last 10 days)</h5>',bar2,'</div>',
+        '<div class="cv-chart"><h5>Calls by Origination Source (last 24 hours)</h5>',pie,
+          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'+
+            data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
+        '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  function openStatsForRow(doc, row){
+    if (!row) return;
+    var nameEl = row.querySelector('.cv-name');
+    var name = nameEl ? nameEl.textContent.trim() : 'Agent';
+    var ext = (row.getAttribute('data-ext') || '').replace(/[^\d]/g,'');
+    if (!ext) {
+      // fallback: parse from text "Ext 200 (Name)"
+      var m = name && name.match(/Ext\s+(\d{2,6})/i);
+      ext = m ? m[1] : '200';
+    }
+    // parity split: ODD -> A, EVEN -> B
+    var n = parseInt(ext,10);
+    var variant = (isFinite(n) && n % 2 === 0) ? 'B' : 'A';
+    var data = CV_STATS_SETS[variant];
+
+    openStatsModal(doc, {
+      title: '',
+      bodyHTML: buildStatsModalHTML(doc, name, ext, data),
+      primaryText: 'Close'
+    });
+  }
+
+  // ===== inject/remove =====
   function inject(){
     var bits = findBits(); if (!bits) return;
     var doc = bits.doc, table = bits.table, container = bits.container;
@@ -1459,6 +1631,29 @@ if (!window.__cvAgentsPanelInit) {
       container.insertBefore(panel, table || null);
     } else {
       (doc.body || doc.documentElement).appendChild(panel);
+    }
+
+    // wire Stats clicks once per document
+    if (!doc.__cvAgentsStatsWired){
+      doc.addEventListener('click', function(e){
+        var root = doc.getElementById(PANEL_ID);
+        if (!root) return;
+        var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
+        if (!btn) return;
+        var row = btn.closest('.cv-row');
+        openStatsForRow(doc, row);
+      }, true);
+      doc.addEventListener('keydown', function(e){
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        var root = doc.getElementById(PANEL_ID);
+        if (!root) return;
+        var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
+        if (!btn) return;
+        e.preventDefault();
+        var row = btn.closest('.cv-row');
+        openStatsForRow(doc, row);
+      }, true);
+      doc.__cvAgentsStatsWired = true;
     }
 
     startLunchTicker(doc);
@@ -1508,410 +1703,3 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
-
-
-/* ===========================
-   STATS MODAL (append-only)
-   =========================== */
-(function(){
-  var MODAL_STYLE_ID = 'CV_MODAL_STYLE';
-  var MODAL_ROOT_ID  = 'cv-modal-root';
-
-  /* ---------- styles ---------- */
-  function ensureModalStyles(doc){
-    if (doc.getElementById(MODAL_STYLE_ID)) return;
-    var s = doc.createElement('style');
-    s.id = MODAL_STYLE_ID;
-    s.textContent = [
-      'body.cv-modal-open{overflow:hidden}',
-      '#',MODAL_ROOT_ID,'{position:fixed;inset:0;z-index:2147483646;pointer-events:none}',
-      '#',MODAL_ROOT_ID,'.is-open{pointer-events:auto}',
-      '#',MODAL_ROOT_ID,' .cv-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .18s}',
-      '#',MODAL_ROOT_ID,'.is-open .cv-scrim{opacity:1}',
-      '#',MODAL_ROOT_ID,' .cv-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.98);min-width:360px;max-width:1024px;max-height:80vh;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;opacity:0;transition:transform .18s,opacity .18s}',
-      '#',MODAL_ROOT_ID,'.is-open .cv-dialog{opacity:1;transform:translate(-50%,-50%) scale(1)}',
-      '#',MODAL_ROOT_ID,' .cv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}',
-      '#',MODAL_ROOT_ID,' .cv-modal-title{font:600 14px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
-      '#',MODAL_ROOT_ID,' .cv-modal-close{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #e6e6e6;background:#fafafa}',
-      '#',MODAL_ROOT_ID,' .cv-modal-close:hover{background:#f1f3f5}',
-      '#',MODAL_ROOT_ID,' .cv-modal-body{padding:16px;overflow:auto}',
-      '#',MODAL_ROOT_ID,' .cv-modal-footer{padding:12px 16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px}',
-      '#',MODAL_ROOT_ID,' .cv-btn{padding:8px 12px;border-radius:8px;font:600 13px/1.2 Arial;cursor:pointer;border:1px solid #ddd;background:#fff}',
-      '#',MODAL_ROOT_ID,' .cv-btn-primary{background:#167a32;color:#fff;border-color:#167a32}',
-
-      /* charts */
-      '#',MODAL_ROOT_ID,' .cv-stats-wrap{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:16px;min-width:980px;}',
-      '#',MODAL_ROOT_ID,' .cv-stats-list{list-style:none;margin:0;padding:0 0 0 8px;font:600 13px/1.6 Arial;color:#222;}',
-      '#',MODAL_ROOT_ID,' .cv-stats-list li{display:flex;gap:12px;align-items:baseline;}',
-      '#',MODAL_ROOT_ID,' .cv-stats-num{width:44px;text-align:right;color:#333;}',
-      '#',MODAL_ROOT_ID,' .cv-chart{background:#fff;border:1px solid #eee;border-radius:8px;padding:12px;}',
-      '#',MODAL_ROOT_ID,' .cv-chart h5{margin:0 0 8px 0;font:600 12px/1.2 Arial;color:#555;}',
-      '#',MODAL_ROOT_ID,' .cv-chart-pie{width:var(--size);height:var(--size);border-radius:50%;background:conic-gradient(#2f66d0 var(--deg), #d33 0);} ',
-      '#',MODAL_ROOT_ID,' .cv-chart-pie::after{content:"";width:calc(var(--size) - 70px);height:calc(var(--size) - 70px);background:#fff;border-radius:50%;display:block;margin:auto;margin-top:35px;}',
-      '#',MODAL_ROOT_ID,' .cv-stats-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0 0 10px;}',
-      '#',MODAL_ROOT_ID,' .cv-stats-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px;}'
-    ].join('');
-    (doc.head || doc.documentElement).appendChild(s);
-  }
-
-  function initModalSystem(doc){
-    ensureModalStyles(doc);
-    if (!doc.getElementById(MODAL_ROOT_ID)) {
-      var root = doc.createElement('div');
-      root.id = MODAL_ROOT_ID;
-      doc.body.appendChild(root);
-    }
-  }
-
-  function openModal(doc, opts){
-    initModalSystem(doc);
-    var root = doc.getElementById(MODAL_ROOT_ID);
-    var title = (opts && opts.title) || '';
-    var bodyHTML = (opts && opts.bodyHTML) || '';
-    var primaryText = (opts && opts.primaryText) || 'Close';
-    var onPrimary = (opts && opts.onPrimary) || null;
-    var lock = !!(opts && opts.lock);
-
-    var prev = doc.activeElement;
-    root.innerHTML = [
-      '<div class="cv-scrim"></div>',
-      '<div class="cv-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">',
-        '<div class="cv-modal-header">',
-          '<div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
-          '<button class="cv-modal-close" aria-label="Close">×</button>',
-        '</div>',
-        '<div class="cv-modal-body">',bodyHTML,'</div>',
-        '<div class="cv-modal-footer">',
-          (primaryText ? '<button class="cv-btn cv-btn-primary" data-btn="primary">'+primaryText+'</button>' : ''),
-        '</div>',
-      '</div>'
-    ].join('');
-
-    function close(){
-      root.classList.remove('is-open');
-      root.innerHTML = '';
-      doc.body.classList.remove('cv-modal-open');
-      doc.removeEventListener('keydown', onKey);
-      if (prev && prev.focus) { try { prev.focus(); } catch(e){} }
-    }
-    function onKey(e){
-      if (e.key === 'Escape' && !lock){ e.preventDefault(); close(); }
-      if (e.key === 'Tab'){
-        var dialog = root.querySelector('.cv-dialog');
-        if (!dialog) return;
-        var focusables = dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
-        if (!focusables.length) return;
-        var first = focusables[0], last = focusables[focusables.length-1];
-        if (e.shiftKey && doc.activeElement === first){ e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && doc.activeElement === last){ e.preventDefault(); first.focus(); }
-      }
-    }
-
-    var dialog = root.querySelector('.cv-dialog');
-    var scrim  = root.querySelector('.cv-scrim');
-    var xBtn   = root.querySelector('.cv-modal-close');
-    var primary = root.querySelector('[data-btn="primary"]');
-
-    if (!lock){ scrim.addEventListener('click', close); xBtn.addEventListener('click', close); }
-    if (primary) primary.addEventListener('click', function(){ onPrimary ? onPrimary(close, root) : close(); });
-
-    root.classList.add('is-open');
-    root.classList.add('is-open');
-    doc.body.classList.add('cv-modal-open');
-    doc.addEventListener('keydown', onKey);
-    (primary || xBtn).focus();
-
-    return { close: close, dialog: dialog, root: root };
-  }
-
-  /* ---------- canned stats (A/B) ---------- */
-  var CV_STATS_SETS = {
-    A: {
-      metrics: {
-        callCenterCallsToday: 10,
-        callCenterTalkTime: 13,
-        callCenterAvgTalk: '1:23',
-        inboundCallsToday: 10,
-        inboundTalkTime: 14,
-        inboundAvgTalk: '1:23',
-        outboundCallsToday: 5,
-        outboundTalkTime: 22,
-        outboundAvgTalk: '4:24',
-        avgACW: '0.0'
-      },
-      perHour: [4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
-      perDay:  [27,38,30,24,27,29,28,47,29,42],
-      pie:     { pct1: 100, pct2: 0 }
-    },
-    B: {
-      metrics: {
-        callCenterCallsToday: 14,
-        callCenterTalkTime: 24,
-        callCenterAvgTalk: '1:46',
-        inboundCallsToday: 16,
-        inboundTalkTime: 29,
-        inboundAvgTalk: '1:45',
-        outboundCallsToday: 5,
-        outboundTalkTime: 22,
-        outboundAvgTalk: '4:24',
-        avgACW: '0.0'
-      },
-      perHour: [1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
-      perDay:  [36,65,39,44,46,27,30,48,50,43],
-      pie:     { pct1: 88.9, pct2: 11.1 }
-    }
-  };
-  function cvChooseStatsSet(rowIndex){ return (rowIndex % 2 === 0) ? 'A' : 'B'; }
-
-  /* ---------- tiny chart renderers ---------- */
-  function cvBarSVG(values, max, width, height, barGapPx, color){
-    max = max || Math.max(1, Math.max.apply(null, values));
-    var n = values.length, barW = Math.floor((width - (n+1)*barGapPx) / n);
-    var x = barGapPx, h = height;
-    var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'];
-    for (var i=0;i<n;i++){
-      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
-      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"/>');
-      x += barW + barGapPx;
-    }
-    parts.push('</svg>');
-    return parts.join('');
-  }
-  function cvPieHTML(pct1, size){
-    pct1 = Math.max(0, Math.min(100, pct1));
-    var deg1 = (pct1/100)*360;
-    return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg1+'deg;"></div>';
-  }
-
-  /* ---------- modal body builder ---------- */
-  function buildStatsModalHTML(doc, agentName, ext, data){
-    var m = data.metrics;
-    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6, '#e57027');
-    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8, '#e57027');
-    var pie  = cvPieHTML(data.pie.pct1, 220);
-
-    return [
-      '<div class="cv-stats-wrap">',
-        '<div class="cv-stats-head">',
-          '<div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div>',
-        '</div>',
-
-        '<div>',
-          '<ul class="cv-stats-list">',
-            '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
-          '</ul>',
-        '</div>',
-
-        '<div class="cv-chart">',
-          '<h5>My Calls Per Hour (last 24 hours)</h5>',
-          bar1,
-        '</div>',
-
-        '<div class="cv-chart">',
-          '<h5>My Calls Per Day (last 10 days)</h5>',
-          bar2,
-        '</div>',
-
-        '<div class="cv-chart">',
-          '<h5>Calls by Origination Source (last 24 hours)</h5>',
-          pie,
-          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'
-          + data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
-        '</div>',
-      '</div>'
-    ].join('');
-  }
-
-  /* ---------- event wiring (delegated) ---------- */
-  function onStatsClick(e){
-    var tool = e.target.closest && e.target.closest('.cv-tool[data-tool="stats"]');
-    if (!tool) return;
-
-    var row = tool.closest('.cv-row');
-    if (!row) return;
-
-    var nameEl = row.querySelector('.cv-name');
-    var name = (nameEl && nameEl.textContent) ? nameEl.textContent.trim() : 'Agent';
-
-    // Determine row index for deterministic A/B set
-    var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
-    var rowIndex = Math.max(0, allRows.indexOf(row));
-    var variant = cvChooseStatsSet(rowIndex);
-    var data = CV_STATS_SETS[variant];
-
-    // Extension (from data-ext or a generated one)
-    var ext = (row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (rowIndex + 1));
-
-    openModal(document, {
-      title: '', // title rendered in body (to mimic portal look)
-      bodyHTML: buildStatsModalHTML(document, name, ext, data),
-      primaryText: 'Close',
-      secondaryText: ''
-    });
-  }
-
-  // Global delegated listener so it survives re-injection
-  document.addEventListener('click', onStatsClick, true);
-})();
-
-/* ================================
-   WIRE STATS ICON (.cv-tool-stats)
-   ================================ */
-(function(){
-  // tag any stats icons we injected that don't have a data attribute yet
-  function tagStatsIcons(doc){
-    var root = doc || document;
-    root.querySelectorAll('.cv-tool-stats:not([data-tool])').forEach(function(el){
-      el.setAttribute('data-tool','stats');
-      el.setAttribute('role','button');
-      el.setAttribute('tabindex','0');
-      if (!el.getAttribute('title')) el.setAttribute('title','Stats');
-      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label','Stats');
-    });
-  }
-
-  // run once now
-  tagStatsIcons(document);
-
-  // keep tagging if the panel re-renders
-  new MutationObserver(function(){
-    tagStatsIcons(document);
-  }).observe(document.documentElement, {childList:true, subtree:true});
-
-  // open the stats modal when our icon is clicked (or activated by keyboard)
-  // === REPLACE your current openStatsForRow with this ===
-function openStatsForRow(row){
-  if (!row || typeof buildStatsModalHTML !== 'function' || typeof openModal !== 'function') return;
-
-  // name
-  var nameEl = row.querySelector('.cv-name');
-  var name = nameEl ? nameEl.textContent.trim() : 'Agent';
-
-  // stable row index (only used for fallback + default ext)
-  var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
-  var idx = Math.max(0, allRows.indexOf(row));
-
-  // --- get extension as a string, with robust parsing ---
-  function getExt(){
-    // 1) explicit data-ext wins
-    if (row.dataset && row.dataset.ext && /\d/.test(row.dataset.ext)) return String(row.dataset.ext);
-
-    // 2) try to parse digits from the row text: "(201)" or "ext 201"
-    var text = nameEl ? nameEl.textContent : '';
-    var m = text && (text.match(/\((?:ext\.?\s*)?(\d{2,6})\)/i) || text.match(/(?:ext\.?\s*)(\d{2,6})/i));
-    if (m) return m[1];
-
-    // 3) fallback: deterministic synthetic ext
-    return String(200 + (idx + 1));
-  }
-
-  var ext = getExt();
-  // keep it around for future reads
-  if (row.dataset) row.dataset.ext = ext;
-
-  // --- choose stats variant by extension parity ---
-  var n = parseInt(ext.replace(/[^\d]/g,''), 10);
-  var variant;
-  if (isFinite(n)) {
-    // ODD -> A, EVEN -> B
-    variant = (n % 2 === 0) ? 'B' : 'A';
-  } else {
-    // fallback to prior behavior if no numeric ext found
-    variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(idx) : ((idx % 2 === 0) ? 'A' : 'B');
-  }
-
-  var data = (typeof CV_STATS_SETS !== 'undefined') ? CV_STATS_SETS[variant] : null;
-  if (!data) return;
-
-  openModal(document, {
-    title: '', // we render the portal-style title inside the body
-    bodyHTML: buildStatsModalHTML(document, name, ext, data),
-    primaryText: 'Close',
-    secondaryText: ''
-  });
-}
-
-  // delegated click (and keyboard) handler for our injected icon
-  document.addEventListener('click', function(e){
-    var btn = e.target.closest('.cv-tool-stats, [data-tool="stats"]');
-    if (!btn) return;
-    var row = btn.closest('.cv-row');
-    openStatsForRow(row);
-  }, true);
-
-  document.addEventListener('keydown', function(e){
-    if (e.key !== 'Enter' && e.key !== ' ') return;
-    var btn = e.target.closest && e.target.closest('.cv-tool-stats, [data-tool="stats"]');
-    if (!btn) return;
-    e.preventDefault();
-    var row = btn.closest('.cv-row');
-    openStatsForRow(row);
-  }, true);
-})();
-
-/* ===== STATS ICON MICROFIX (append-only) ===== */
-(function(){
-  function panelRoot(){
-    try { return document.getElementById(PANEL_ID); } catch(e){ return null; }
-  }
-
-  // Tag the Stats icon in each row (or fall back to the first tool)
-  function tagStatsIcons(){
-    var root = panelRoot(); if (!root) return;
-    root.querySelectorAll('.cv-row').forEach(function(row){
-      var el = row.querySelector('.cv-tool-stats, [data-tool="stats"]');
-      if (!el){
-        // fallback: first tool in the row becomes Stats
-        el = row.querySelector('.cv-tools .cv-tool');
-        if (!el) return;
-        el.classList.add('cv-tool-stats');
-        el.setAttribute('data-tool','stats');
-      }
-      // a11y + affordances
-      if (!el.getAttribute('role')) el.setAttribute('role','button');
-      if (!el.getAttribute('tabindex')) el.setAttribute('tabindex','0');
-      if (!el.getAttribute('title')) el.setAttribute('title','Stats');
-      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label','Stats');
-    });
-  }
-
-  // Initial pass + keep tagging on re-renders
-  tagStatsIcons();
-  new MutationObserver(tagStatsIcons).observe(document.documentElement, {childList:true, subtree:true});
-
-  // Single delegated click listener (uses your existing openStatsForRow)
-  if (!document.__cvStatsClick){
-    document.addEventListener('click', function(e){
-      var root = panelRoot(); if (!root) return;
-      var btn = e.target.closest('.cv-tool-stats, [data-tool="stats"]');
-      if (!btn || !root.contains(btn)) return;
-      var row = btn.closest('.cv-row');
-      if (typeof openStatsForRow === 'function') openStatsForRow(row);
-    }, true);
-    document.__cvStatsClick = true;
-  }
-
-  // Optional keyboard activation
-  if (!document.__cvStatsKey){
-    document.addEventListener('keydown', function(e){
-      if (e.key !== 'Enter' && e.key !== ' ') return;
-      var root = panelRoot(); if (!root) return;
-      var btn = e.target.closest && e.target.closest('.cv-tool-stats, [data-tool="stats"]');
-      if (!btn || !root.contains(btn)) return;
-      e.preventDefault();
-      var row = btn.closest('.cv-row');
-      if (typeof openStatsForRow === 'function') openStatsForRow(row);
-    }, true);
-    document.__cvStatsKey = true;
-  }
-})();
-
