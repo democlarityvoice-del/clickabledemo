@@ -1215,213 +1215,217 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agent List Inject (CALL CENTER MANAGER)
+// Clarity Voice Agents List Inject (CALL CENTER MANAGER)
 // ==============================
-if (!window.__cvAgentListInit) {
-  window.__cvAgentListInit = true;
+if (!window.__cvAgentsInjectInit) {
+  window.__cvAgentsInjectInit = true;
 
-  const AGENT_LIST_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const PANEL_ID  = 'cv-agents-panel';
-  const STYLE_ID  = 'cv-agents-style';
+  // --- constants ---
+  const AGENTS_REGEX      = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const PANEL_ID          = 'cv-agents-panel';
+  const STYLE_ID          = 'cv-agents-style';
+  const LUNCH_ATTR        = 'data-cv-lunch-start';
 
-  // Display data
-  const AGENTS = [
-    { name: 'Bob A.',      lunch: true  }, // shows Lunch • mm:ss
-    { name: 'Cathy T.',    offline: true },
-    { name: 'Jake L.' },
-    { name: 'Alex R.' },
-    { name: 'Mike J.' },
-    { name: 'Brittany L.', offline: true },
-    { name: 'John S.' }
+  // replace with whatever display names you want
+  const AGENT_NAMES = [
+    'Bob A.', 'Cathy T.', 'Jake L.', 'Alex R.',
+    'Mike J.', 'Brittany L.', 'John S.'
   ];
-  const ICONS = [
-    { title: 'Stats',     char: '📊' },
-    { title: 'Queues',    char: '📋' },
-    { title: 'Listen in', char: '🎧' }
-  ];
+  const LUNCH_INDEX = 0; // which one should show Lunch + timer
 
-  function scheduleInject(fn){
-    let fired = false;
-    if ('requestAnimationFrame' in window) {
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{ fired = true; fn(); }));
-    }
-    setTimeout(()=>{ if (!fired) fn(); }, 64);
-  }
-  function getSameOriginDocs(){
+  // --- helpers ---
+  const pad2 = n => String(n).padStart(2,'0');
+  const mmss = s => `${Math.floor(s/60)}:${pad2(s%60)}`;
+
+  function findAgentsTableDoc() {
+    // search main doc + any same-origin iframes
     const docs = [document];
-    document.querySelectorAll('iframe').forEach(ifr=>{
+    document.querySelectorAll('iframe').forEach(ifr => {
       try {
-        const idoc = ifr.contentDocument || ifr.contentWindow?.document;
+        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
         if (idoc) docs.push(idoc);
       } catch {}
     });
-    return docs;
-  }
-  function formatElapsed(ms){
-    const s = Math.floor(ms/1000);
-    const m = Math.floor(s/60);
-    const ss = String(s%60).padStart(2,'0');
-    return `${m}:${ss}`;
-  }
 
-  function findAgentsContext(){
-    for (const doc of getSameOriginDocs()){
-      const table =
-        doc.getElementById('agents-table') ||
-        doc.querySelector('#agents-table') ||
-        doc.querySelector('table.allowmonitor.table-hover'); // lenient fallback
-      if (!table) continue;
-      const container = table.closest('.table-container') || table.parentElement || null;
-      if (container) return { doc, table, container };
+    for (const doc of docs) {
+      const table = doc.querySelector('#agents-table');
+      if (table) {
+        const container = table.closest('.table-container') || table.parentNode;
+        return { doc, table, container };
+      }
     }
     return null;
   }
 
-  function ensureStyles(doc){
-    let s = doc.getElementById(STYLE_ID);
-    if (!s) { s = doc.createElement('style'); s.id = STYLE_ID; (doc.head || doc.documentElement).appendChild(s); }
+  function ensureStyles(doc) {
+    if (doc.getElementById(STYLE_ID)) return;
+    const s = doc.createElement('style');
+    s.id = STYLE_ID;
     s.textContent = `
-#${PANEL_ID}{ display:flex; flex-direction:column; gap:8px; }
-
-/* row */
-#${PANEL_ID} .cv-agent-row{
-  display:flex; align-items:center; justify-content:space-between;
-  padding:8px 12px; border-radius:6px; background:#fff;
-  box-shadow:0 1px 3px rgba(0,0,0,.1); transition:background .15s;
-}
-#${PANEL_ID} .cv-agent-row:hover{ background:#f5f5f5; }
-
-/* left side */
-#${PANEL_ID} .cv-agent-left{ display:flex; align-items:center; gap:10px; min-width:0; }
-#${PANEL_ID} .cv-avatar{
-  width:32px; height:32px; border-radius:50%; background:#9aa4af; color:#fff;
-  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;
-}
-#${PANEL_ID} .cv-avatar.offline{ filter:grayscale(1); opacity:.6; }
-#${PANEL_ID} .cv-agent-name{ font-weight:600; font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-#${PANEL_ID} .cv-agent-status{ font-size:12px; color:#555; margin-left:6px; white-space:nowrap; }
-
-/* right icons (hover only) */
-#${PANEL_ID} .cv-agent-icons{ display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .15s; }
-#${PANEL_ID} .cv-agent-row:hover .cv-agent-icons{ opacity:1; pointer-events:auto; }
-#${PANEL_ID} .cv-agent-icon{ font-size:16px; cursor:pointer; opacity:.7; }
-#${PANEL_ID} .cv-agent-icon:hover{ opacity:1; }
+      /* CV Agents – lightweight styles scoped to our panel */
+      #${PANEL_ID}{font:14px/1.35 Arial,Helvetica,sans-serif; color:#222;}
+      #${PANEL_ID} .cv-list{display:flex; flex-direction:column; gap:8px; margin:0; padding:0; list-style:none;}
+      #${PANEL_ID} .cv-row{display:flex; align-items:center; justify-content:space-between;
+        background:#fff; border-radius:6px; padding:8px 10px; box-shadow:0 1px 3px rgba(0,0,0,.08);
+        transition:background .15s ease;}
+      #${PANEL_ID} .cv-row:hover{background:#f5f5f5;}
+      #${PANEL_ID} .cv-left{display:flex; align-items:center; gap:10px; min-width:0;}
+      #${PANEL_ID} .cv-avatar{width:22px; height:22px; border-radius:4px; background:#6aa8ff;
+        color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;}
+      #${PANEL_ID} .cv-name{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+      #${PANEL_ID} .cv-status{font-size:12px; color:#555; margin-left:6px; white-space:nowrap;}
+      #${PANEL_ID} .cv-pill{display:inline-block; padding:1px 6px; border-radius:999px; font-size:12px;
+        background:#ffe9a6; color:#7a5b00; border:1px solid #f2d989; margin-right:4px;}
+      #${PANEL_ID} .cv-icons{display:flex; align-items:center; gap:10px; opacity:.65;}
+      #${PANEL_ID} .cv-icon{cursor:pointer; user-select:none;}
+      #${PANEL_ID} .cv-row:hover .cv-icons{opacity:1;}
     `;
+    (doc.head || doc.documentElement).appendChild(s);
   }
 
-  function buildPanel(doc){
+  function buildPanelHTML(doc) {
     const wrap = doc.createElement('div');
     wrap.id = PANEL_ID;
 
-    AGENTS.forEach(agent=>{
-      const row  = doc.createElement('div'); row.className = 'cv-agent-row';
-      const left = doc.createElement('div'); left.className = 'cv-agent-left';
+    const ul = doc.createElement('ul');
+    ul.className = 'cv-list';
 
-      const av   = doc.createElement('div'); av.className = 'cv-avatar';
-      if (agent.offline) av.classList.add('offline');
-      av.textContent = agent.name.split(' ').map(p=>p[0]).join('');
+    AGENT_NAMES.forEach((name, i) => {
+      const li = doc.createElement('li');
+      li.className = 'cv-row';
 
-      const nm   = doc.createElement('div'); nm.className = 'cv-agent-name'; nm.textContent = agent.name;
+      const left = doc.createElement('div');
+      left.className = 'cv-left';
 
-      left.appendChild(av); left.appendChild(nm);
+      const av = doc.createElement('span');
+      av.className = 'cv-avatar';
+      const initials = name.replace(/\./g,'').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+      av.textContent = initials;
 
-      if (agent.lunch){
-        const st = doc.createElement('div');
-        st.className = 'cv-agent-status';
-        st.dataset.isLunch = 'true';
-        st.dataset.start   = String(Date.now());
-        st.textContent = 'Lunch • 0:00';
-        left.appendChild(st);
+      const nm = doc.createElement('span');
+      nm.className = 'cv-name';
+      nm.textContent = name;
+
+      left.appendChild(av);
+      left.appendChild(nm);
+
+      // optional status
+      const status = doc.createElement('span');
+      status.className = 'cv-status';
+
+      if (i === LUNCH_INDEX) {
+        const now = Date.now();
+        status.innerHTML = `<span class="cv-pill">Lunch</span><span class="cv-lunch-timer">00:00</span>`;
+        status.setAttribute(LUNCH_ATTR, String(now));
       }
 
-      const icons = doc.createElement('div'); icons.className = 'cv-agent-icons';
-      ICONS.forEach(ic=>{
+      left.appendChild(status);
+
+      // right side icons (hover)
+      const icons = doc.createElement('div');
+      icons.className = 'cv-icons';
+      [
+        {t:'Stats',   c:'📊'},
+        {t:'Queues',  c:'📋'},
+        {t:'Listen',  c:'🎧'},
+      ].forEach(ic => {
         const span = doc.createElement('span');
-        span.className = 'cv-agent-icon';
-        span.title = ic.title;
-        span.textContent = ic.char;
+        span.className = 'cv-icon';
+        span.title = ic.t;
+        span.textContent = ic.c;
         icons.appendChild(span);
       });
 
-      row.appendChild(left);
-      row.appendChild(icons);
-      wrap.appendChild(row);
+      li.appendChild(left);
+      li.appendChild(icons);
+      ul.appendChild(li);
     });
 
+    wrap.appendChild(ul);
     return wrap;
   }
 
-  function injectAgents(){
-    const found = findAgentsContext(); if (!found) return;
+  function injectAgents() {
+    const found = findAgentsTableDoc();
+    if (!found) return;
     const { doc, table, container } = found;
+    if (!container || doc.getElementById(PANEL_ID)) return;
 
     ensureStyles(doc);
 
-    // Already injected?
-    if (doc.getElementById(PANEL_ID)) return;
+    // hide native table but leave it in DOM
+    table.setAttribute('data-cv-hidden','1');
+    table.style.display = 'none';
 
-    // Hide native table, keep DOM intact
-    if (!table.hasAttribute('data-cv-hidden')){
-      table.setAttribute('data-cv-hidden','1');
-      table.style.display = 'none';
-    }
+    // insert our panel above it
+    const panel = buildPanelHTML(doc);
+    container.insertBefore(panel, container.firstChild);
 
-    // Insert our panel at the top of the same container
-    container.insertBefore(buildPanel(doc), container.firstChild);
-
-    // One lunch timer per doc
-    if (!doc.__cvAgentsLunchTimer){
-      doc.__cvAgentsLunchTimer = setInterval(()=>{
-        const el = doc.querySelector('#'+PANEL_ID+' [data-is-lunch="true"]');
+    // lunch timer
+    if (!doc.__cvAgentsTimer) {
+      doc.__cvAgentsTimer = setInterval(() => {
+        const el = doc.querySelector(`#${PANEL_ID} [${LUNCH_ATTR}]`);
         if (!el) return;
-        const since = parseInt(el.dataset.start, 10) || Date.now();
-        el.textContent = 'Lunch • ' + formatElapsed(Date.now() - since);
+        const start = parseInt(el.getAttribute(LUNCH_ATTR),10) || Date.now();
+        const secs = Math.floor((Date.now() - start)/1000);
+        const t = el.querySelector('.cv-lunch-timer');
+        if (t) t.textContent = mmss(secs);
       }, 1000);
     }
 
-    // Keep it alive across SPA re-renders
-    if (!doc.__cvAgentsMO){
-      const mo = new MutationObserver(()=>{
-        if (!AGENT_LIST_REGEX.test(location.href)) return;
-        const ctx = findAgentsContext();
-        if (!ctx) return;
-        const hasPanel = !!ctx.doc.getElementById(PANEL_ID);
-        if (!hasPanel) scheduleInject(injectAgents);
-      });
-      mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
-      doc.__cvAgentsMO = mo;
+    // watch for host re-renders
+    attachAgentsObserver(doc);
+    console.info('[cv] agents injected');
+  }
+
+  function removeAgents() {
+    const docs = [document];
+    document.querySelectorAll('iframe').forEach(ifr => {
+      try {
+        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (idoc) docs.push(idoc);
+      } catch {}
+    });
+    for (const doc of docs) {
+      const p = doc.getElementById(PANEL_ID);
+      if (p) p.remove();
+      const tbl = doc.querySelector('#agents-table[data-cv-hidden="1"]');
+      if (tbl) { tbl.style.display=''; tbl.removeAttribute('data-cv-hidden'); }
+      if (doc.__cvAgentsMO) { try{doc.__cvAgentsMO.disconnect();}catch{} doc.__cvAgentsMO=null; }
+      if (doc.__cvAgentsTimer) { clearInterval(doc.__cvAgentsTimer); doc.__cvAgentsTimer=null; }
     }
   }
 
-  function removeAgents(){
-    for (const doc of getSameOriginDocs()){
-      const panel = doc.getElementById(PANEL_ID);
-      if (panel && panel.parentNode) panel.remove();
-      const table = doc.getElementById('agents-table') || doc.querySelector('#agents-table');
-      if (table && table.hasAttribute('data-cv-hidden')){
-        table.style.display = ''; table.removeAttribute('data-cv-hidden');
-      }
-      if (doc.__cvAgentsLunchTimer){ clearInterval(doc.__cvAgentsLunchTimer); doc.__cvAgentsLunchTimer = null; }
-      if (doc.__cvAgentsMO){ try{ doc.__cvAgentsMO.disconnect(); }catch{} doc.__cvAgentsMO = null; }
-    }
+  function attachAgentsObserver(doc) {
+    if (doc.__cvAgentsMO) return;
+    const mo = new MutationObserver(() => {
+      if (!AGENTS_REGEX.test(location.href)) return;
+      const havePanel = !!doc.getElementById(PANEL_ID);
+      const table = doc.querySelector('#agents-table');
+      // re-inject if panel vanished or table got re-shown
+      if (!havePanel && table) injectAgents();
+    });
+    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
+    doc.__cvAgentsMO = mo;
   }
 
-  function onEnter(){ scheduleInject(injectAgents); }
-  function handleRoute(prev,next){
-    const was = AGENT_LIST_REGEX.test(prev);
-    const is  = AGENT_LIST_REGEX.test(next);
-    if (!was && is) onEnter();
+  // --- router/watchers (mirrors your other modules) ---
+  function onEnterAgents(){ injectAgents(); }
+  function handleRouteAgents(prev, next){
+    const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+    if (!was && is) onEnterAgents();
     if ( was && !is) removeAgents();
   }
 
-  (function watchURL(){
+  (function watchAgentsURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
-      .observe(document.documentElement,{ childList:true, subtree:true });
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
-    if (AGENT_LIST_REGEX.test(location.href)) onEnter();
+    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRouteAgents(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRouteAgents(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRouteAgents(prev,now); } })
+      .observe(document.documentElement,{childList:true,subtree:true});
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRouteAgents(prev,now); } });
+
+    if (AGENTS_REGEX.test(location.href)) onEnterAgents();
   })();
 }
