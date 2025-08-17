@@ -1509,10 +1509,10 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 
-/* ===== Agents Stats Modal — APPEND-ONLY (no changes to existing code) ===== */
+/* ===== Agents Stats Modal — APPEND-ONLY (with bar value labels) ===== */
 (function(){
-  if (window.__cvAgentsStatsAppendOnce) return;
-  window.__cvAgentsStatsAppendOnce = true;
+  if (window.__cvAgentsStatsAppendOnce_v2) return;
+  window.__cvAgentsStatsAppendOnce_v2 = true;
 
   // ---------- minimal modal (scoped styles & elements) ----------
   var STYLE_ID = 'cvhf-stats-style';
@@ -1538,7 +1538,7 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' .cvhf-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font:600 13px/1 Arial;cursor:pointer}',
         '#',ROOT_ID,' .cvhf-btn.primary{background:#167a32;border-color:#167a32;color:#fff}',
 
-        /* layout + “chart” look to match your reference (no axes/labels) */
+        /* layout + simple “chart” look (no axes) */
         '#',ROOT_ID,' .cvhf-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:980px}',
         '#',ROOT_ID,' .cvhf-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px}',
         '#',ROOT_ID,' .cvhf-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0}',
@@ -1548,6 +1548,9 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' .cvhf-card{border:1px solid #eee;border-radius:8px;padding:12px;background:#fff}',
         '#',ROOT_ID,' .cvhf-card h5{margin:0 0 8px;font:600 12px/1.2 Arial;color:#555}',
         '#',ROOT_ID,' .cvhf-card svg{display:block;margin:10px 8px 14px}',
+
+        /* bar value labels */
+        '#',ROOT_ID,' .cvhf-bar-val{font:600 11px/1 Arial;fill:#444;dominant-baseline:ideographic;text-anchor:middle}',
 
         /* solid pie (no donut) with centered % text */
         '#',ROOT_ID,' .cvhf-pie{position:relative;width:var(--size);height:var(--size);margin:8px auto;border-radius:50%;',
@@ -1582,25 +1585,39 @@ if (!window.__cvAgentsPanelInit) {
     root.classList.add('is-open');
   }
 
-  // ---------- tiny render helpers (no axes) ----------
+  // ---------- tiny render helpers (adds numeric labels to bars) ----------
   function barSVG(values, max, w, h, gap){
     max = max || Math.max(1, Math.max.apply(null, values));
-    var n = values.length, bw = Math.floor((w - (n+1)*gap)/n), x = gap, out = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
+    var n  = values.length;
+    var bw = Math.floor((w - (n+1)*gap)/n);
+    var x  = gap;
+    var out = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
     for (var i=0;i<n;i++){
-      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
+      var v  = values[i];
+      var bh = Math.round((v/max)*h);
+      var y  = h - bh;
+      var cx = x + Math.floor(bw/2);
+      var ty = Math.max(12, y - 3); // keep label visible even for tiny bars
+
+      // bar rect
       out.push('<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
+
+      // numeric label (hide when v==0)
+      if (v > 0) out.push('<text class="cvhf-bar-val" x="'+cx+'" y="'+ty+'">'+v+'</text>');
+
       x += bw + gap;
     }
     out.push('</svg>');
     return out.join('');
   }
+
   function pieHTML(pct,size){
     pct = Math.max(0, Math.min(100, pct));
     var deg = (pct/100)*360;
     return '<div class="cvhf-pie" data-pct="'+pct.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
   }
 
-  // ---------- canned data (A / B). Both have 5 outbound, 22 outbound talk time ----------
+  // ---------- canned data (A / B). Both keep 5 outbound calls & 22 talk time ----------
   var STATS = {
     A: {
       metrics: {
@@ -1627,8 +1644,8 @@ if (!window.__cvAgentsPanelInit) {
   };
 
   function buildBody(agentName, ext, data){
-    var m = data.metrics;
-    var b1 = barSVG(data.perHour, 10, 460, 160, 6);
+    var m  = data.metrics;
+    var b1 = barSVG(data.perHour, 10, 460, 160, 6); // bars now show numeric values
     var b2 = barSVG(data.perDay,  80, 460, 180, 8);
     var pie= pieHTML(data.piePct, 220);
     return [
@@ -1658,13 +1675,11 @@ if (!window.__cvAgentsPanelInit) {
     var root = document.getElementById('cv-agents-panel');
     if (!root) return;
 
-    // Click target: explicit stats icon if present, else anything tagged as stats
     var btn = e.target && e.target.closest &&
       e.target.closest('#cv-agents-panel .cv-tool[title="Stats"], #cv-agents-panel .cv-tool-stats, #cv-agents-panel [data-tool="stats"]');
 
     if (!btn || !root.contains(btn)) return;
 
-    // Find the row & parse from the existing label text (read-only)
     var row = btn.closest('.cv-row'); if (!row) return;
     var label = (row.querySelector('.cv-name') && row.querySelector('.cv-name').textContent) || '';
 
@@ -1674,11 +1689,9 @@ if (!window.__cvAgentsPanelInit) {
     var ext       = (extMatch && extMatch[1]) || '200';
     var agentName = (nameMatch && nameMatch[1]) || 'Agent';
 
-    // Even ext → B, Odd → A
     var variant = (parseInt(ext,10) % 2 === 0) ? 'B' : 'A';
     var data    = STATS[variant] || STATS.A;
 
     openModal('', buildBody(agentName, ext, data));
   }, true);
 })();
-
