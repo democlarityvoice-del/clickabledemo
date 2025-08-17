@@ -1384,16 +1384,17 @@ if (!window.__cvAgentsPanelInit) {
     top.appendChild(tools);
     row.appendChild(top);
 
-    // NEW: Lunch subline under the name
-    if (a.lunch) {
-      const sub = doc.createElement('div');
-      sub.className = 'cv-sub';
-      sub.innerHTML = `
-        <span class="cv-sub-label">Lunch</span>
-        <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
-      `;
-      row.appendChild(sub);
-    }
+    // add the Lunch subline UNDER the name when this agent is on lunch
+if (a.lunch) {
+  const sub = doc.createElement('div');
+  sub.className = 'cv-sub';
+  sub.innerHTML = `
+    <span class="cv-sub-label">Lunch</span>
+    <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
+  `;
+  row.appendChild(sub);
+}
+
 
     frag.appendChild(row);
   });
@@ -1465,6 +1466,7 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
 
 
 
