@@ -1213,218 +1213,188 @@ tr:hover .cvq-icon{ opacity:.85; }
   })();
 }
 
-// ==============================
+
+
 // ==============================
 // Clarity Voice Agents List Inject (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvAgentsInjectInit) {
   window.__cvAgentsInjectInit = true;
 
-  // --- constants ---
-  const AGENTS_REGEX      = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const PANEL_ID          = 'cv-agents-panel';
-  const STYLE_ID          = 'cv-agents-style';
-  const LUNCH_ATTR        = 'data-cv-lunch-start';
+  const AGENTS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  const PANEL_ID     = 'cv-agents-panel';
+  const STYLE_ID     = 'cv-agents-style';
+  const LUNCH_ATTR   = 'data-cv-lunch-start';
 
-  // replace with whatever display names you want
-  const AGENT_NAMES = [
-    'Bob A.', 'Cathy T.', 'Jake L.', 'Alex R.',
-    'Mike J.', 'Brittany L.', 'John S.'
-  ];
-  const LUNCH_INDEX = 0; // which one should show Lunch + timer
+  // Display names to show + who is on Lunch
+  const AGENT_NAMES  = ['Bob A.','Cathy T.','Jake L.','Alex R.','Mike J.','Brittany L.','John S.'];
+  const LUNCH_INDEX  = 0;
 
-  // --- helpers ---
+  // ---------- helpers ----------
   const pad2 = n => String(n).padStart(2,'0');
   const mmss = s => `${Math.floor(s/60)}:${pad2(s%60)}`;
 
-  function findAgentsTableDoc() {
-    // search main doc + any same-origin iframes
+  function getSameOriginDocs(){
     const docs = [document];
     document.querySelectorAll('iframe').forEach(ifr => {
       try {
-        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (idoc) docs.push(idoc);
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d) docs.push(d);
       } catch {}
     });
+    return docs;
+  }
 
-    for (const doc of docs) {
-      const table = doc.querySelector('#agents-table');
-      if (table) {
-        const container = table.closest('.table-container') || table.parentNode;
-        return { doc, table, container };
-      }
+  // Find the native agents table and its .table-container wrapper
+  function findAgentsTableDoc() {
+    for (const doc of getSameOriginDocs()) {
+      // primary selector seen in your DOM
+      let table = doc.querySelector('#agents-table');
+      // fallbacks just in case markup shifts
+      if (!table) table = doc.querySelector('table#agents-table, .agents tbody ~ table#agents-table');
+      const container = table ? (table.closest('.table-container') || table.parentNode) : null;
+      if (table && container) return { doc, table, container };
     }
     return null;
   }
 
-  function ensureStyles(doc) {
+  function ensureStyles(doc){
     if (doc.getElementById(STYLE_ID)) return;
     const s = doc.createElement('style');
     s.id = STYLE_ID;
     s.textContent = `
-      /* CV Agents – lightweight styles scoped to our panel */
-      #${PANEL_ID}{font:14px/1.35 Arial,Helvetica,sans-serif; color:#222;}
-      #${PANEL_ID} .cv-list{display:flex; flex-direction:column; gap:8px; margin:0; padding:0; list-style:none;}
-      #${PANEL_ID} .cv-row{display:flex; align-items:center; justify-content:space-between;
-        background:#fff; border-radius:6px; padding:8px 10px; box-shadow:0 1px 3px rgba(0,0,0,.08);
-        transition:background .15s ease;}
+      #${PANEL_ID}{font:14px/1.35 Arial,Helvetica,sans-serif;color:#222;}
+      #${PANEL_ID} .cv-list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;}
+      #${PANEL_ID} .cv-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:6px;
+        padding:8px 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:background .15s;}
       #${PANEL_ID} .cv-row:hover{background:#f5f5f5;}
-      #${PANEL_ID} .cv-left{display:flex; align-items:center; gap:10px; min-width:0;}
-      #${PANEL_ID} .cv-avatar{width:22px; height:22px; border-radius:4px; background:#6aa8ff;
-        color:#fff; display:inline-flex; align-items:center; justify-content:center; font-weight:700; font-size:12px;}
-      #${PANEL_ID} .cv-name{font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-      #${PANEL_ID} .cv-status{font-size:12px; color:#555; margin-left:6px; white-space:nowrap;}
-      #${PANEL_ID} .cv-pill{display:inline-block; padding:1px 6px; border-radius:999px; font-size:12px;
-        background:#ffe9a6; color:#7a5b00; border:1px solid #f2d989; margin-right:4px;}
-      #${PANEL_ID} .cv-icons{display:flex; align-items:center; gap:10px; opacity:.65;}
-      #${PANEL_ID} .cv-icon{cursor:pointer; user-select:none;}
+      #${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
+      #${PANEL_ID} .cv-avatar{width:22px;height:22px;border-radius:4px;background:#6aa8ff;color:#fff;
+        display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
+      #${PANEL_ID} .cv-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+      #${PANEL_ID} .cv-status{font-size:12px;color:#555;margin-left:6px;white-space:nowrap;}
+      #${PANEL_ID} .cv-pill{display:inline-block;padding:1px 6px;border-radius:999px;font-size:12px;background:#ffe9a6;
+        color:#7a5b00;border:1px solid #f2d989;margin-right:4px;}
+      #${PANEL_ID} .cv-icons{display:flex;align-items:center;gap:10px;opacity:.65;}
+      #${PANEL_ID} .cv-icon{cursor:pointer;user-select:none;}
       #${PANEL_ID} .cv-row:hover .cv-icons{opacity:1;}
     `;
     (doc.head || doc.documentElement).appendChild(s);
   }
 
-  function buildPanelHTML(doc) {
-    const wrap = doc.createElement('div');
-    wrap.id = PANEL_ID;
+  function buildPanel(doc){
+    const wrap = doc.createElement('div'); wrap.id = PANEL_ID;
+    const ul = doc.createElement('ul'); ul.className = 'cv-list';
 
-    const ul = doc.createElement('ul');
-    ul.className = 'cv-list';
+    AGENT_NAMES.forEach((name,i)=>{
+      const li = doc.createElement('li'); li.className = 'cv-row';
+      const left = doc.createElement('div'); left.className = 'cv-left';
 
-    AGENT_NAMES.forEach((name, i) => {
-      const li = doc.createElement('li');
-      li.className = 'cv-row';
+      const av = doc.createElement('span'); av.className = 'cv-avatar';
+      av.textContent = name.replace(/\./g,'').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
 
-      const left = doc.createElement('div');
-      left.className = 'cv-left';
+      const nm = doc.createElement('span'); nm.className = 'cv-name'; nm.textContent = name;
 
-      const av = doc.createElement('span');
-      av.className = 'cv-avatar';
-      const initials = name.replace(/\./g,'').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
-      av.textContent = initials;
-
-      const nm = doc.createElement('span');
-      nm.className = 'cv-name';
-      nm.textContent = name;
-
-      left.appendChild(av);
-      left.appendChild(nm);
-
-      // optional status
-      const status = doc.createElement('span');
-      status.className = 'cv-status';
-
-      if (i === LUNCH_INDEX) {
-        const now = Date.now();
-        status.innerHTML = `<span class="cv-pill">Lunch</span><span class="cv-lunch-timer">00:00</span>`;
-        status.setAttribute(LUNCH_ATTR, String(now));
+      const st = doc.createElement('span'); st.className = 'cv-status';
+      if (i === LUNCH_INDEX){
+        st.innerHTML = `<span class="cv-pill">Lunch</span><span class="cv-lunch-timer">00:00</span>`;
+        st.setAttribute(LUNCH_ATTR, String(Date.now()));
       }
 
-      left.appendChild(status);
+      left.appendChild(av); left.appendChild(nm); left.appendChild(st);
 
-      // right side icons (hover)
-      const icons = doc.createElement('div');
-      icons.className = 'cv-icons';
-      [
-        {t:'Stats',   c:'📊'},
-        {t:'Queues',  c:'📋'},
-        {t:'Listen',  c:'🎧'},
-      ].forEach(ic => {
-        const span = doc.createElement('span');
-        span.className = 'cv-icon';
-        span.title = ic.t;
-        span.textContent = ic.c;
-        icons.appendChild(span);
+      const icons = doc.createElement('div'); icons.className = 'cv-icons';
+      [{t:'Stats',c:'📊'},{t:'Queues',c:'📋'},{t:'Listen',c:'🎧'}].forEach(ic=>{
+        const x = doc.createElement('span'); x.className='cv-icon'; x.title=ic.t; x.textContent=ic.c; icons.appendChild(x);
       });
 
-      li.appendChild(left);
-      li.appendChild(icons);
-      ul.appendChild(li);
+      li.appendChild(left); li.appendChild(icons); ul.appendChild(li);
     });
 
     wrap.appendChild(ul);
     return wrap;
   }
 
-  function injectAgents() {
+  function injectAgents(){
     const found = findAgentsTableDoc();
-    if (!found) return;
+    if (!found) return false;
+
     const { doc, table, container } = found;
-    if (!container || doc.getElementById(PANEL_ID)) return;
+    if (doc.getElementById(PANEL_ID)) return true;
 
     ensureStyles(doc);
 
-    // hide native table but leave it in DOM
+    // hide native table (non-destructive)
     table.setAttribute('data-cv-hidden','1');
     table.style.display = 'none';
 
-    // insert our panel above it
-    const panel = buildPanelHTML(doc);
+    // insert our panel above the table inside the same container
+    const panel = buildPanel(doc);
     container.insertBefore(panel, container.firstChild);
 
-    // lunch timer
-    if (!doc.__cvAgentsTimer) {
-      doc.__cvAgentsTimer = setInterval(() => {
-        const el = doc.querySelector(`#${PANEL_ID} [${LUNCH_ATTR}]`);
-        if (!el) return;
-        const start = parseInt(el.getAttribute(LUNCH_ATTR),10) || Date.now();
-        const secs = Math.floor((Date.now() - start)/1000);
-        const t = el.querySelector('.cv-lunch-timer');
-        if (t) t.textContent = mmss(secs);
-      }, 1000);
+    // lunch timer tick
+    if (!doc.__cvAgentsTimer){
+      doc.__cvAgentsTimer = setInterval(()=>{
+        const host = doc.querySelector(`#${PANEL_ID} [${LUNCH_ATTR}]`);
+        if (!host) return;
+        const start = parseInt(host.getAttribute(LUNCH_ATTR),10) || Date.now();
+        const secs = Math.floor((Date.now()-start)/1000);
+        const t = host.querySelector('.cv-lunch-timer'); if (t) t.textContent = mmss(secs);
+      },1000);
     }
 
-    // watch for host re-renders
-    attachAgentsObserver(doc);
-    console.info('[cv] agents injected');
+    return true;
   }
 
-  function removeAgents() {
-    const docs = [document];
-    document.querySelectorAll('iframe').forEach(ifr => {
-      try {
-        const idoc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (idoc) docs.push(idoc);
-      } catch {}
-    });
-    for (const doc of docs) {
+  function removeAgents(){
+    for (const doc of getSameOriginDocs()){
       const p = doc.getElementById(PANEL_ID);
       if (p) p.remove();
       const tbl = doc.querySelector('#agents-table[data-cv-hidden="1"]');
-      if (tbl) { tbl.style.display=''; tbl.removeAttribute('data-cv-hidden'); }
-      if (doc.__cvAgentsMO) { try{doc.__cvAgentsMO.disconnect();}catch{} doc.__cvAgentsMO=null; }
-      if (doc.__cvAgentsTimer) { clearInterval(doc.__cvAgentsTimer); doc.__cvAgentsTimer=null; }
+      if (tbl){ tbl.style.display=''; tbl.removeAttribute('data-cv-hidden'); }
+      if (doc.__cvAgentsTimer){ clearInterval(doc.__cvAgentsTimer); doc.__cvAgentsTimer = null; }
     }
   }
 
-  function attachAgentsObserver(doc) {
-    if (doc.__cvAgentsMO) return;
-    const mo = new MutationObserver(() => {
-      if (!AGENTS_REGEX.test(location.href)) return;
-      const havePanel = !!doc.getElementById(PANEL_ID);
-      const table = doc.querySelector('#agents-table');
-      // re-inject if panel vanished or table got re-shown
-      if (!havePanel && table) injectAgents();
-    });
-    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
-    doc.__cvAgentsMO = mo;
+  // ---------- robust wait + observe ----------
+  function waitForAgentsAndInject(tries=0){
+    if (injectAgents()) return;
+    if (tries >= 60) return;              // ~15s @ 250ms
+    setTimeout(()=>waitForAgentsAndInject(tries+1), 250);
   }
 
-  // --- router/watchers (mirrors your other modules) ---
-  function onEnterAgents(){ injectAgents(); }
-  function handleRouteAgents(prev, next){
+  // Observe DOM until table appears (fires even if SPA renders late)
+  function attachPreInjectObserver(){
+    if (document.__cvAgentsPreMO) return;
+    const mo = new MutationObserver(()=>{
+      if (!AGENTS_REGEX.test(location.href)) return;
+      if (injectAgents()) return; // stop once inserted
+    });
+    mo.observe(document.documentElement, { childList:true, subtree:true });
+    document.__cvAgentsPreMO = mo;
+  }
+
+  // ---------- route watching ----------
+  function onEnterAgents(){
+    attachPreInjectObserver();
+    waitForAgentsAndInject();
+  }
+  function onLeaveAgents(){ removeAgents(); }
+
+  function handleRoute(prev,next){
     const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
     if (!was && is) onEnterAgents();
-    if ( was && !is) removeAgents();
+    if ( was && !is) onLeaveAgents();
   }
 
-  (function watchAgentsURL(){
+  (function watchURL(){
     let last = location.href;
-    const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRouteAgents(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRouteAgents(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRouteAgents(prev,now); } })
+    const P = history.pushState, R = history.replaceState;
+    history.pushState    = function(){ const prev=last; const ret=P.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=R.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now);} })
       .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRouteAgents(prev,now); } });
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now);} });
 
     if (AGENTS_REGEX.test(location.href)) onEnterAgents();
   })();
