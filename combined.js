@@ -1248,7 +1248,6 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 
 // ==============================
-<script>
 // ==============================
 // Clarity Voice Agents Panel — with titles + reliable lunch ticker
 // ==============================
@@ -1498,4 +1497,5 @@ if (!window.__cvAgentsPanelAllInOne) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
-</script>
+
+
