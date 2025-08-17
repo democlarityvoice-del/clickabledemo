@@ -1212,7 +1212,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-
+<script>
 
 
 // ==============================
@@ -1434,5 +1434,4 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 </script>
-
 
