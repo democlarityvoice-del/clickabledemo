@@ -1272,7 +1272,8 @@ if (!window.__cvAgentsPanelInit) {
     { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
     { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
     { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
-    { name:'Bob Andersen',      ext:203, online:false, icon:'user',  lunch:true },
+    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  },
+
     { name:'Brittany Lawrence', ext:204, online:true,  icon:'phone' },
     { name:'Alex Roberts',      ext:205, online:true,  icon:'user'  },
     { name:'Mark Sanchez',      ext:206, online:true,  icon:'phone' },
@@ -1503,3 +1504,4 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
