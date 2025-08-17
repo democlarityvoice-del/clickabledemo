@@ -1216,6 +1216,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 
 // ==============================
+// ==============================
 // Clarity Voice Agents List Inject (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvAgentsInjectInit) {
@@ -1226,11 +1227,24 @@ if (!window.__cvAgentsInjectInit) {
   const STYLE_ID     = 'cv-agents-style';
   const LUNCH_ATTR   = 'data-cv-lunch-start';
 
-  // Display names to show + who is on Lunch
-  const AGENT_NAMES  = ['Bob A.','Cathy T.','Jake L.','Alex R.','Mike J.','Brittany L.','John S.'];
-  const LUNCH_INDEX  = 0;
+  // Icons (hosted)
+  const ICON_PERSON  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+  const ICON_PHONE   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
+  const ICON_STATS   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+  const ICON_QUEUES  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  const ICON_LISTEN  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // ---------- helpers ----------
+  // Demo data (replace as you wish). Exactly one will be on lunch.
+  const AGENTS = [
+    { name:'Bob Andersen',       online:true,  icon:'person', lunch:true  },
+    { name:'Cathy Thomas',       online:true,  icon:'phone'               },
+    { name:'Jake Lee',           online:false, icon:'person'              },
+    { name:'Alex Roberts',       online:true,  icon:'phone'               },
+    { name:'Mike Johnson',       online:true,  icon:'person'              },
+    { name:'Brittany Lawrence',  online:false, icon:'phone'               },
+    { name:'John Smith',         online:true,  icon:'person'              },
+  ];
+
   const pad2 = n => String(n).padStart(2,'0');
   const mmss = s => `${Math.floor(s/60)}:${pad2(s%60)}`;
 
@@ -1245,13 +1259,9 @@ if (!window.__cvAgentsInjectInit) {
     return docs;
   }
 
-  // Find the native agents table and its .table-container wrapper
   function findAgentsTableDoc() {
     for (const doc of getSameOriginDocs()) {
-      // primary selector seen in your DOM
       let table = doc.querySelector('#agents-table');
-      // fallbacks just in case markup shifts
-      if (!table) table = doc.querySelector('table#agents-table, .agents tbody ~ table#agents-table');
       const container = table ? (table.closest('.table-container') || table.parentNode) : null;
       if (table && container) return { doc, table, container };
     }
@@ -1263,21 +1273,44 @@ if (!window.__cvAgentsInjectInit) {
     const s = doc.createElement('style');
     s.id = STYLE_ID;
     s.textContent = `
-      #${PANEL_ID}{font:14px/1.35 Arial,Helvetica,sans-serif;color:#222;}
-      #${PANEL_ID} .cv-list{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none;}
-      #${PANEL_ID} .cv-row{display:flex;align-items:center;justify-content:space-between;background:#fff;border-radius:6px;
-        padding:8px 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);transition:background .15s;}
-      #${PANEL_ID} .cv-row:hover{background:#f5f5f5;}
-      #${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
-      #${PANEL_ID} .cv-avatar{width:22px;height:22px;border-radius:4px;background:#6aa8ff;color:#fff;
-        display:inline-flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;}
-      #${PANEL_ID} .cv-name{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-      #${PANEL_ID} .cv-status{font-size:12px;color:#555;margin-left:6px;white-space:nowrap;}
-      #${PANEL_ID} .cv-pill{display:inline-block;padding:1px 6px;border-radius:999px;font-size:12px;background:#ffe9a6;
-        color:#7a5b00;border:1px solid #f2d989;margin-right:4px;}
-      #${PANEL_ID} .cv-icons{display:flex;align-items:center;gap:10px;opacity:.65;}
-      #${PANEL_ID} .cv-icon{cursor:pointer;user-select:none;}
-      #${PANEL_ID} .cv-row:hover .cv-icons{opacity:1;}
+      /* Colors + icon tint helpers */
+      :root{ --cv-green:#19b64a; --cv-row-shadow:0 1px 3px rgba(0,0,0,.08); }
+      #${PANEL_ID}{ font:14px/1.35 Arial,Helvetica,sans-serif; color:#222; }
+      #${PANEL_ID} .cv-list{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:8px; }
+      #${PANEL_ID} .cv-row{
+        display:flex; align-items:center; justify-content:space-between;
+        background:#fff; border-radius:6px; padding:8px 10px; box-shadow:var(--cv-row-shadow);
+        transition:background .15s;
+      }
+      #${PANEL_ID} .cv-row:hover{ background:#f5f5f5; }
+      #${PANEL_ID} .cv-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+
+      /* Leading status icon (person/phone) colored by state */
+      #${PANEL_ID} .cv-led{ width:18px; height:18px; display:inline-flex; align-items:center; justify-content:center; }
+      #${PANEL_ID} .cv-led img{ width:16px; height:16px; display:block; }
+      /* Online = green, Offline = grey (approx tint using filter) */
+      #${PANEL_ID} .cv-led.online img{
+        filter: invert(47%) sepia(78%) saturate(771%) hue-rotate(92deg) brightness(90%) contrast(94%);
+      }
+      #${PANEL_ID} .cv-led.offline img{ filter: grayscale(1) opacity(.45); }
+
+      #${PANEL_ID} .cv-name{ font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      #${PANEL_ID} .cv-status{ font-size:12px; color:#555; margin-left:6px; white-space:nowrap; }
+      #${PANEL_ID} .cv-pill{
+        display:inline-block; padding:1px 6px; border-radius:999px; font-size:12px;
+        background:#ffe9a6; color:#7a5b00; border:1px solid #f2d989; margin-right:4px;
+      }
+
+      /* Right-side hover actions */
+      #${PANEL_ID} .cv-actions{ display:flex; align-items:center; gap:10px; opacity:.65; visibility:hidden; }
+      #${PANEL_ID} .cv-row:hover .cv-actions{ visibility:visible; opacity:1; }
+      #${PANEL_ID} .cv-actions img{ width:16px; height:16px; display:block; cursor:pointer; }
+      #${PANEL_ID} .cv-actions img:hover{ transform: translateY(-1px); }
+
+      /* Keep layout tidy on very narrow right rails */
+      @media (max-width: 420px){
+        #${PANEL_ID} .cv-status{ display:none; }
+      }
     `;
     (doc.head || doc.documentElement).appendChild(s);
   }
@@ -1286,29 +1319,46 @@ if (!window.__cvAgentsInjectInit) {
     const wrap = doc.createElement('div'); wrap.id = PANEL_ID;
     const ul = doc.createElement('ul'); ul.className = 'cv-list';
 
-    AGENT_NAMES.forEach((name,i)=>{
+    const lunchStart = Date.now();
+
+    AGENTS.forEach(a=>{
       const li = doc.createElement('li'); li.className = 'cv-row';
+
       const left = doc.createElement('div'); left.className = 'cv-left';
 
-      const av = doc.createElement('span'); av.className = 'cv-avatar';
-      av.textContent = name.replace(/\./g,'').split(' ').map(p=>p[0]).join('').slice(0,2).toUpperCase();
+      // leading icon (person or phone), tint by online/offline
+      const led = doc.createElement('span'); led.className = 'cv-led ' + (a.online ? 'online' : 'offline');
+      const ledImg = doc.createElement('img');
+      ledImg.src = (a.icon === 'phone') ? ICON_PHONE : ICON_PERSON;
+      ledImg.alt = a.icon === 'phone' ? 'Phone' : 'Person';
+      led.appendChild(ledImg);
 
-      const nm = doc.createElement('span'); nm.className = 'cv-name'; nm.textContent = name;
+      const nm = doc.createElement('span'); nm.className = 'cv-name'; nm.textContent = a.name;
 
       const st = doc.createElement('span'); st.className = 'cv-status';
-      if (i === LUNCH_INDEX){
-        st.innerHTML = `<span class="cv-pill">Lunch</span><span class="cv-lunch-timer">00:00</span>`;
-        st.setAttribute(LUNCH_ATTR, String(Date.now()));
+      if (a.lunch){
+        st.innerHTML = `<span class="cv-pill">Lunch</span><span class="cv-lunch">00:00</span>`;
+        st.setAttribute(LUNCH_ATTR, String(lunchStart));
+      } else {
+        st.textContent = a.online ? 'Online' : 'Offline';
       }
 
-      left.appendChild(av); left.appendChild(nm); left.appendChild(st);
+      left.appendChild(led); left.appendChild(nm); left.appendChild(st);
 
-      const icons = doc.createElement('div'); icons.className = 'cv-icons';
-      [{t:'Stats',c:'📊'},{t:'Queues',c:'📋'},{t:'Listen',c:'🎧'}].forEach(ic=>{
-        const x = doc.createElement('span'); x.className='cv-icon'; x.title=ic.t; x.textContent=ic.c; icons.appendChild(x);
+      // hover actions (Stats, Queues, Listen)
+      const act = doc.createElement('div'); act.className = 'cv-actions';
+      [
+        {title:'Stats',  src:ICON_STATS},
+        {title:'Queues', src:ICON_QUEUES},
+        {title:'Listen in', src:ICON_LISTEN}
+      ].forEach(i=>{
+        const img = doc.createElement('img');
+        img.src = i.src; img.alt = i.title; img.title = i.title;
+        act.appendChild(img);
       });
 
-      li.appendChild(left); li.appendChild(icons); ul.appendChild(li);
+      li.appendChild(left); li.appendChild(act);
+      ul.appendChild(li);
     });
 
     wrap.appendChild(ul);
@@ -1339,10 +1389,9 @@ if (!window.__cvAgentsInjectInit) {
         if (!host) return;
         const start = parseInt(host.getAttribute(LUNCH_ATTR),10) || Date.now();
         const secs = Math.floor((Date.now()-start)/1000);
-        const t = host.querySelector('.cv-lunch-timer'); if (t) t.textContent = mmss(secs);
-      },1000);
+        const t = host.querySelector('.cv-lunch'); if (t) t.textContent = mmss(secs);
+      }, 1000);
     }
-
     return true;
   }
 
@@ -1356,29 +1405,21 @@ if (!window.__cvAgentsInjectInit) {
     }
   }
 
-  // ---------- robust wait + observe ----------
+  // Robust wait + observe (agents list loads late)
   function waitForAgentsAndInject(tries=0){
     if (injectAgents()) return;
     if (tries >= 60) return;              // ~15s @ 250ms
     setTimeout(()=>waitForAgentsAndInject(tries+1), 250);
   }
 
-  // Observe DOM until table appears (fires even if SPA renders late)
   function attachPreInjectObserver(){
     if (document.__cvAgentsPreMO) return;
-    const mo = new MutationObserver(()=>{
-      if (!AGENTS_REGEX.test(location.href)) return;
-      if (injectAgents()) return; // stop once inserted
-    });
+    const mo = new MutationObserver(()=>{ if (AGENTS_REGEX.test(location.href)) injectAgents(); });
     mo.observe(document.documentElement, { childList:true, subtree:true });
     document.__cvAgentsPreMO = mo;
   }
 
-  // ---------- route watching ----------
-  function onEnterAgents(){
-    attachPreInjectObserver();
-    waitForAgentsAndInject();
-  }
+  function onEnterAgents(){ attachPreInjectObserver(); waitForAgentsAndInject(); }
   function onLeaveAgents(){ removeAgents(); }
 
   function handleRoute(prev,next){
