@@ -1788,30 +1788,57 @@ if (!window.__cvAgentsPanelInit) {
   }).observe(document.documentElement, {childList:true, subtree:true});
 
   // open the stats modal when our icon is clicked (or activated by keyboard)
-  function openStatsForRow(row){
-    if (!row || typeof buildStatsModalHTML !== 'function' || typeof openModal !== 'function') return;
+  // === REPLACE your current openStatsForRow with this ===
+function openStatsForRow(row){
+  if (!row || typeof buildStatsModalHTML !== 'function' || typeof openModal !== 'function') return;
 
-    var nameEl = row.querySelector('.cv-name');
-    var name = nameEl ? nameEl.textContent.trim() : 'Agent';
+  // name
+  var nameEl = row.querySelector('.cv-name');
+  var name = nameEl ? nameEl.textContent.trim() : 'Agent';
 
-    // deterministic A/B variant by row index
-    var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
-    var idx = Math.max(0, allRows.indexOf(row));
-    var variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(idx) : ((idx % 2 === 0) ? 'A' : 'B');
+  // stable row index (only used for fallback + default ext)
+  var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
+  var idx = Math.max(0, allRows.indexOf(row));
 
-    var data = (typeof CV_STATS_SETS !== 'undefined') ? CV_STATS_SETS[variant] : null;
-    if (!data) return;
+  // --- get extension as a string, with robust parsing ---
+  function getExt(){
+    // 1) explicit data-ext wins
+    if (row.dataset && row.dataset.ext && /\d/.test(row.dataset.ext)) return String(row.dataset.ext);
 
-    // extension (prefer data-ext on the row)
-    var ext = (row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (idx + 1));
+    // 2) try to parse digits from the row text: "(201)" or "ext 201"
+    var text = nameEl ? nameEl.textContent : '';
+    var m = text && (text.match(/\((?:ext\.?\s*)?(\d{2,6})\)/i) || text.match(/(?:ext\.?\s*)(\d{2,6})/i));
+    if (m) return m[1];
 
-    openModal(document, {
-      title: '', // we render the title inside to match portal look
-      bodyHTML: buildStatsModalHTML(document, name, ext, data),
-      primaryText: 'Close',
-      secondaryText: ''
-    });
+    // 3) fallback: deterministic synthetic ext
+    return String(200 + (idx + 1));
   }
+
+  var ext = getExt();
+  // keep it around for future reads
+  if (row.dataset) row.dataset.ext = ext;
+
+  // --- choose stats variant by extension parity ---
+  var n = parseInt(ext.replace(/[^\d]/g,''), 10);
+  var variant;
+  if (isFinite(n)) {
+    // ODD -> A, EVEN -> B
+    variant = (n % 2 === 0) ? 'B' : 'A';
+  } else {
+    // fallback to prior behavior if no numeric ext found
+    variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(idx) : ((idx % 2 === 0) ? 'A' : 'B');
+  }
+
+  var data = (typeof CV_STATS_SETS !== 'undefined') ? CV_STATS_SETS[variant] : null;
+  if (!data) return;
+
+  openModal(document, {
+    title: '', // we render the portal-style title inside the body
+    bodyHTML: buildStatsModalHTML(document, name, ext, data),
+    primaryText: 'Close',
+    secondaryText: ''
+  });
+}
 
   // delegated click (and keyboard) handler for our injected icon
   document.addEventListener('click', function(e){
@@ -1830,3 +1857,4 @@ if (!window.__cvAgentsPanelInit) {
     openStatsForRow(row);
   }, true);
 })();
+
