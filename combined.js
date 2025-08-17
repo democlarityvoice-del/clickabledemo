@@ -1213,47 +1213,32 @@ tr:hover .cvq-icon{ opacity:.85; }
   })();
 }
 
-
 // ==============================
 // Clarity Voice Agent List Inject (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvAgentListInit) {
   window.__cvAgentListInit = true;
 
-  // ---- ROUTE + TARGETS ----
   const AGENT_LIST_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const PANEL_ID   = 'cv-agents-panel';
-  const STYLE_ID   = 'cv-agents-style';
+  const PANEL_ID  = 'cv-agents-panel';
+  const STYLE_ID  = 'cv-agents-style';
 
-  // try these in order; we’ll use the first one that exists (in doc or same-origin iframes)
-  const AGENT_TARGET_SELECTORS = [
-    '#agent-list-body',
-    '#agents-widget .panel-body',
-    '#agents .panel-body',
-    '#agentsHolder',
-    '#agents-grid',
-    '.agents-list',
-    '#agents'
-  ];
-
-  // ---- DATA ----
+  // Display data
   const AGENTS = [
-    { name: 'Bob A.',       lunch: true  }, // will show Lunch timer
-    { name: 'Cathy T.',     offline: true },
+    { name: 'Bob A.',      lunch: true  }, // shows Lunch • mm:ss
+    { name: 'Cathy T.',    offline: true },
     { name: 'Jake L.' },
     { name: 'Alex R.' },
     { name: 'Mike J.' },
-    { name: 'Brittany L.',  offline: true },
+    { name: 'Brittany L.', offline: true },
     { name: 'John S.' }
   ];
-
   const ICONS = [
     { title: 'Stats',     char: '📊' },
     { title: 'Queues',    char: '📋' },
     { title: 'Listen in', char: '🎧' }
   ];
 
-  // ---- HELPERS ----
   function scheduleInject(fn){
     let fired = false;
     if ('requestAnimationFrame' in window) {
@@ -1261,28 +1246,16 @@ if (!window.__cvAgentListInit) {
     }
     setTimeout(()=>{ if (!fired) fn(); }, 64);
   }
-
   function getSameOriginDocs(){
     const docs = [document];
     document.querySelectorAll('iframe').forEach(ifr=>{
-      try{
+      try {
         const idoc = ifr.contentDocument || ifr.contentWindow?.document;
         if (idoc) docs.push(idoc);
-      }catch{}
+      } catch {}
     });
     return docs;
   }
-
-  function findAgentsRoot(){
-    for (const doc of getSameOriginDocs()){
-      for (const sel of AGENT_TARGET_SELECTORS){
-        const root = doc.querySelector(sel);
-        if (root) return { doc, root };
-      }
-    }
-    return null;
-  }
-
   function formatElapsed(ms){
     const s = Math.floor(ms/1000);
     const m = Math.floor(s/60);
@@ -1290,48 +1263,64 @@ if (!window.__cvAgentListInit) {
     return `${m}:${ss}`;
   }
 
-  // ---- STYLES (head-scoped, updated in-place) ----
+  // Find the Agents container: prefer #agents-table → .table-container
+  function findAgentsRoot(){
+    for (const doc of getSameOriginDocs()){
+      const table = doc.getElementById('agents-table');
+      if (table) {
+        const root = table.closest('.table-container') || table.parentElement;
+        if (root) return { doc, root };
+      }
+      // Fallbacks (just in case)
+      const alt =
+        doc.querySelector('#agents .table-container') ||
+        doc.querySelector('#agents') ||
+        null;
+      if (alt) return { doc, root: alt };
+    }
+    return null;
+  }
+
+  // Styles
   function ensureStyles(doc){
     let s = doc.getElementById(STYLE_ID);
-    if (!s){ s = doc.createElement('style'); s.id = STYLE_ID; (doc.head || doc.documentElement).appendChild(s); }
+    if (!s) { s = doc.createElement('style'); s.id = STYLE_ID; (doc.head || doc.documentElement).appendChild(s); }
     s.textContent = `
-/* container */
 #${PANEL_ID}{ display:flex; flex-direction:column; gap:8px; }
 
 /* row */
-.cv-agent-row{
+#${PANEL_ID} .cv-agent-row{
   display:flex; align-items:center; justify-content:space-between;
   padding:8px 12px; border-radius:6px; background:#fff;
   box-shadow:0 1px 3px rgba(0,0,0,.1); transition:background .15s;
 }
-.cv-agent-row:hover{ background:#f5f5f5; }
+#${PANEL_ID} .cv-agent-row:hover{ background:#f5f5f5; }
 
-/* left block */
-.cv-agent-left{ display:flex; align-items:center; gap:10px; min-width:0; }
-.cv-avatar{
+/* left side */
+#${PANEL_ID} .cv-agent-left{ display:flex; align-items:center; gap:10px; min-width:0; }
+#${PANEL_ID} .cv-avatar{
   width:32px; height:32px; border-radius:50%; background:#9aa4af; color:#fff;
   display:flex; align-items:center; justify-content:center; font-weight:700; font-size:14px;
 }
-.cv-avatar.offline{ filter:grayscale(1); opacity:.6; }
-.cv-agent-name{ font-weight:600; font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.cv-agent-status{ font-size:12px; color:#555; margin-left:6px; white-space:nowrap; }
+#${PANEL_ID} .cv-avatar.offline{ filter:grayscale(1); opacity:.6; }
+#${PANEL_ID} .cv-agent-name{ font-weight:600; font-size:14px; color:#333; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+#${PANEL_ID} .cv-agent-status{ font-size:12px; color:#555; margin-left:6px; white-space:nowrap; }
 
-/* right icons (appear on hover) */
-.cv-agent-icons{ display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .15s; }
-.cv-agent-row:hover .cv-agent-icons{ opacity:1; pointer-events:auto; }
-.cv-agent-icon{ font-size:16px; cursor:pointer; opacity:.7; }
-.cv-agent-icon:hover{ opacity:1; }
+/* right icons (hover only) */
+#${PANEL_ID} .cv-agent-icons{ display:flex; align-items:center; gap:10px; opacity:0; pointer-events:none; transition:opacity .15s; }
+#${PANEL_ID} .cv-agent-row:hover .cv-agent-icons{ opacity:1; pointer-events:auto; }
+#${PANEL_ID} .cv-agent-icon{ font-size:16px; cursor:pointer; opacity:.7; }
+#${PANEL_ID} .cv-agent-icon:hover{ opacity:1; }
     `;
   }
 
-  // ---- BUILD PANEL ----
+  // Build our panel
   function buildPanel(doc){
     const wrap = doc.createElement('div');
     wrap.id = PANEL_ID;
 
     AGENTS.forEach(agent=>{
       const row  = doc.createElement('div'); row.className = 'cv-agent-row';
-
       const left = doc.createElement('div'); left.className = 'cv-agent-left';
 
       const av   = doc.createElement('div'); av.className = 'cv-avatar';
@@ -1342,7 +1331,6 @@ if (!window.__cvAgentListInit) {
 
       left.appendChild(av); left.appendChild(nm);
 
-      // Lunch timer on the designated agent
       if (agent.lunch){
         const st = doc.createElement('div');
         st.className = 'cv-agent-status';
@@ -1369,21 +1357,25 @@ if (!window.__cvAgentListInit) {
     return wrap;
   }
 
-  // ---- INJECT / REMOVE ----
   function injectAgents(){
     const found = findAgentsRoot(); if (!found) return;
     const { doc, root } = found;
 
     ensureStyles(doc);
-    if (doc.getElementById(PANEL_ID)) return; // already injected in this doc
 
-    // Preserve original for clean removal if desired
-    if (!root.__cvAgentsOrigHTML){ root.__cvAgentsOrigHTML = root.innerHTML; }
-    root.setAttribute('data-cv-agents-replaced','1');
-    root.innerHTML = '';
+    // Already injected?
+    if (doc.getElementById(PANEL_ID)) return;
+
+    // Hide native table container once (restorable)
+    if (!root.__cvAgentsOrig){ root.__cvAgentsOrig = root.innerHTML; }
+    if (!root.hasAttribute('data-cv-agents-hidden')){
+      root.setAttribute('data-cv-agents-hidden','1');
+      root.innerHTML = '';
+    }
+
     root.appendChild(buildPanel(doc));
 
-    // single lunch timer per doc
+    // Single lunch timer per doc
     if (!doc.__cvAgentsLunchTimer){
       doc.__cvAgentsLunchTimer = setInterval(()=>{
         const el = doc.querySelector('#'+PANEL_ID+' [data-is-lunch="true"]');
@@ -1393,13 +1385,13 @@ if (!window.__cvAgentListInit) {
       }, 1000);
     }
 
-    // observe re-renders; re-apply if panel gets blown away
+    // Re-inject on SPA re-renders
     if (!doc.__cvAgentsMO){
       const mo = new MutationObserver(()=>{
         if (!AGENT_LIST_REGEX.test(location.href)) return;
-        const exists = doc.getElementById(PANEL_ID);
-        const stillHasRoot = !!findAgentsRoot();
-        if (!exists && stillHasRoot) scheduleInject(injectAgents);
+        const panelExists = !!doc.getElementById(PANEL_ID);
+        const tableStillThere = !!findAgentsRoot();
+        if (!panelExists && tableStillThere) scheduleInject(injectAgents);
       });
       mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
       doc.__cvAgentsMO = mo;
@@ -1412,20 +1404,16 @@ if (!window.__cvAgentListInit) {
       if (panel && panel.parentNode){
         const root = panel.parentNode;
         panel.remove();
-        if (root.__cvAgentsOrigHTML){
-          root.innerHTML = root.__cvAgentsOrigHTML;
-          delete root.__cvAgentsOrigHTML;
-        }
+        if (root.__cvAgentsOrig){ root.innerHTML = root.__cvAgentsOrig; delete root.__cvAgentsOrig; }
+        root.removeAttribute('data-cv-agents-hidden');
       }
       if (doc.__cvAgentsLunchTimer){ clearInterval(doc.__cvAgentsLunchTimer); doc.__cvAgentsLunchTimer = null; }
       if (doc.__cvAgentsMO){ try{ doc.__cvAgentsMO.disconnect(); }catch{} doc.__cvAgentsMO = null; }
     }
   }
 
-  // ---- ROUTING / WATCHERS ----
   function onEnter(){ scheduleInject(injectAgents); }
-
-  function handleRoute(prev, next){
+  function handleRoute(prev,next){
     const was = AGENT_LIST_REGEX.test(prev);
     const is  = AGENT_LIST_REGEX.test(next);
     if (!was && is) onEnter();
@@ -1447,8 +1435,4 @@ if (!window.__cvAgentListInit) {
     if (AGENT_LIST_REGEX.test(location.href)) onEnter();
   })();
 }
-
-
-
-
 
