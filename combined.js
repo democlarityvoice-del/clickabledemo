@@ -1418,16 +1418,26 @@ if (a.lunch) {
     const panel = buildPanel(doc);
     container.insertBefore(panel, table);
 
-    // lunch tick
-    if (!doc.__cvLunchTick){
-      doc.__cvLunchTick = setInterval(() => {
-        doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
-          const start = +(el.getAttribute('data-cv-lunch-start') || Date.now());
-          const s = ((Date.now() - start)/1000)|0;
-          el.textContent = mmss(s);
-        });
-      }, 1000);
+    // lunch tick — make it bulletproof
+if (doc.__cvLunchTick) clearInterval(doc.__cvLunchTick);
+
+function tickLunch() {
+  const els = doc.querySelectorAll('#' + PANEL_ID + ' .cv-sub-time');
+  els.forEach(el => {
+    let start = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
+    if (!Number.isFinite(start) || start <= 0) {
+      start = Date.now();
+      el.setAttribute('data-cv-lunch-start', String(start));
     }
+    const secs = Math.floor((Date.now() - start) / 1000);
+    el.textContent = mmss(secs);
+  });
+}
+
+// paint once immediately, then every second
+tickLunch();
+doc.__cvLunchTick = setInterval(tickLunch, 1000);
+
   }
 
   function remove(){
@@ -1466,6 +1476,7 @@ if (a.lunch) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
 
 
 
