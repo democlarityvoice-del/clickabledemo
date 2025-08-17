@@ -1448,10 +1448,11 @@ if (!window.__cvAgentsPanelInit) {
     for (var i=0;i<n;i++){ var v=values[i], bh=Math.round((v/max)*h), y=h-bh; out.push('<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>'); x+=bw+gap; }
     out.push('</svg>'); return out.join('');
   }
-  function pieHTML(pct,size){ var deg=(Math.max(0,Math.min(100,pct))/100)*360; return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>'; }
-  function buildStatsHTML(doc, name, ext, data){
-    var m=data.metrics, b1=barSVG(data.perHour,10,460,160,6), b2=barSVG(data.perDay,80,460,180,8), p=pieHTML(data.pie.pct1,220);
-    return [
+  function pieHTML(pct, size){
+  pct = Math.max(0, Math.min(100, pct));
+  var deg = (pct/100)*360;
+  return '<div class="cv-chart-pie" data-pct="'+pct.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
+}
       '<div class="cv-stats-wrap">',
         '<div class="cv-stats-head"><div class="cv-stats-title">Statistics for ',name,' (',ext,')</div></div>',
         '<div><ul class="cv-stats-list">',
@@ -1519,20 +1520,20 @@ if (!window.__cvAgentsPanelInit) {
   }
   (function watch(){
     var last = location.href, push=history.pushState, rep=history.replaceState;
-    function route(prev,next){ var was=AGENTS_REGEX.test(prev), is=AGENTS_REGEX.test(next); if(!was&&is) waitAndInject(0); if(was&&!is) remove(); }
+   // REPLACE the old route() with this (and keep the name handleRoute
+  // because your watcher already calls handleRoute)
+  function handleRoute(prev, next){
+    const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeQueuesTiles();
+}
+
     history.pushState=function(){ var p=last; var r=push.apply(this,arguments); var n=location.href; last=n; route(p,n); return r; };
     history.replaceState=function(){ var p=last; var r=rep.apply(this,arguments); var n=location.href; last=n; route(p,n); return r; };
     new MutationObserver(function(){ if(location.href!==last){ var p=last,n=location.href; last=n; route(p,n);} }).observe(document.documentElement,{childList:true,subtree:true});
     window.addEventListener('popstate',function(){ var p=last,n=location.href; if(n!==p){ last=n; route(p,n);} });
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
-}
-// solid pie with centered % label (no donut hole)
-function pieHTML(pct1, size){
-  pct1 = Math.max(0, Math.min(100, pct1));
-  var deg = (pct1/100)*360;
-  // data-pct lets CSS render the number without JS elsewhere
-  return '<div class="cv-chart-pie" data-pct="'+pct1.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
 }
 
 /* charts: flat/sparkline style to match reference */
@@ -1550,4 +1551,5 @@ function pieHTML(pct1, size){
       'font:600 12px/1 Arial;color:#fff;}';
   (document.head||document.documentElement).appendChild(s);
 })();
+
 
