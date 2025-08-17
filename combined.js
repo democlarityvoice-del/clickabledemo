@@ -1356,17 +1356,21 @@ if (!window.__cvAgentsPanelInit) {
       top.appendChild(tools);
       row.appendChild(top);
 
-      if (a.lunch){
-        // Force 00:00 at first paint, then count up
-        const sub = doc.createElement('div');
-        sub.className = 'cv-sub';
-        const t0 = Date.now();
-        sub.innerHTML = `
-          <span class="cv-sub-label">Lunch</span>
-          <span class="cv-sub-time" data-cv-lunch-start="${t0}">00:00</span>
-        `;
-        row.appendChild(sub);
+      // lunch tick
+if (!doc.__cvLunchTick){
+  doc.__cvLunchTick = setInterval(() => {
+    doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time').forEach(el => {
+      let start = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
+      if (!Number.isFinite(start)) {
+        start = Date.now();
+        el.setAttribute('data-cv-lunch-start', String(start));
       }
+      const secs = Math.floor((Date.now() - start) / 1000);
+      el.textContent = mmss(secs);
+    });
+  }, 1000);
+}
+
 
       frag.appendChild(row);
     });
@@ -1437,3 +1441,4 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
