@@ -1763,3 +1763,87 @@ if (!window.__cvAgentsPanelInit) {
   document.addEventListener('click', onStatsClick, true);
 })();
 
+/* ================================
+   AGENT TOOLS: TAG + CLICK (HOTFIX)
+   - Tags tools by index if data-tool is missing
+   - Handles clicks for Stats even if no data attrs
+   ================================ */
+(function(){
+  // Helper: find the panel root safely
+  function panelRoot(doc){ return doc.getElementById(typeof PANEL_ID !== 'undefined' ? PANEL_ID : ''); }
+
+  // Tag tools inside each row by order: 0=stats, 1=queues, 2=listen
+  function tagAgentTools(root){
+    if (!root) return;
+    root.querySelectorAll('.cv-row').forEach(function(row){
+      var tools = row.querySelectorAll('.cv-tools .cv-tool');
+      tools.forEach(function(t, i){
+        if (!t.getAttribute('data-tool')) {
+          if (i === 0) t.setAttribute('data-tool','stats');
+          else if (i === 1) t.setAttribute('data-tool','queues');
+          else if (i === 2) t.setAttribute('data-tool','listen');
+        }
+      });
+    });
+  }
+
+  // Initial tag (in case panel already exists)
+  tagAgentTools(panelRoot(document));
+
+  // Re-tag on mutations (panel re-render, route changes, etc.)
+  new MutationObserver(function(muts){
+    var root = panelRoot(document);
+    if (root) tagAgentTools(root);
+  }).observe(document.documentElement, {subtree:true, childList:true});
+
+  // Robust delegated click: works with class or data attr
+  document.addEventListener('click', function(e){
+    var root = panelRoot(document);
+    if (!root) return;
+
+    // find a tool element by several fallbacks
+    var tool = e.target.closest('.cv-tool, .cv-tool-stats, [data-tool], [aria-label="Stats"], [title="Stats"]');
+    if (!tool || !root.contains(tool)) return;
+
+    // Determine kind from data-tool or fallback to index within its row
+    var kind = (tool.getAttribute('data-tool') || '').toLowerCase();
+    var row  = tool.closest('.cv-row');
+    if (!kind && row){
+      var tools = Array.prototype.slice.call(row.querySelectorAll('.cv-tools .cv-tool'));
+      var idx = tools.indexOf(tool);
+      if (idx === 0) kind = 'stats';
+      else if (idx === 1) kind = 'queues';
+      else if (idx === 2) kind = 'listen';
+    }
+    if (kind !== 'stats') return; // only handle Stats here
+
+    // ---- Open the Stats modal using the functions from the previous block ----
+    try {
+      // name + deterministic A/B
+      var nameEl = row ? row.querySelector('.cv-name') : null;
+      var name = nameEl ? nameEl.textContent.trim() : 'Agent';
+      var allRows = Array.prototype.slice.call(root.querySelectorAll('.cv-row'));
+      var rowIndex = row ? Math.max(0, allRows.indexOf(row)) : 0;
+
+      // Choose A/B set and extension
+      var variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(rowIndex) : ((rowIndex % 2) ? 'B' : 'A');
+      var data = (typeof CV_STATS_SETS !== 'undefined' ? CV_STATS_SETS[variant] : null);
+      if (!data) return;
+      var ext = (row && row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (rowIndex + 1));
+
+      // Use existing modal system
+      if (typeof openModal === 'function') {
+        openModal(document, {
+          title: '',
+          bodyHTML: buildStatsModalHTML(document, name, ext, data),
+          primaryText: 'Close',
+          secondaryText: ''
+        });
+      }
+    } catch(err){
+      // silent fail to avoid breaking your page; uncomment for debug
+      // console.error('Stats modal error:', err);
+    }
+  }, true);
+})();
+
