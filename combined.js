@@ -1764,86 +1764,69 @@ if (!window.__cvAgentsPanelInit) {
 })();
 
 /* ================================
-   AGENT TOOLS: TAG + CLICK (HOTFIX)
-   - Tags tools by index if data-tool is missing
-   - Handles clicks for Stats even if no data attrs
+   WIRE STATS ICON (.cv-tool-stats)
    ================================ */
 (function(){
-  // Helper: find the panel root safely
-  function panelRoot(doc){ return doc.getElementById(typeof PANEL_ID !== 'undefined' ? PANEL_ID : ''); }
-
-  // Tag tools inside each row by order: 0=stats, 1=queues, 2=listen
-  function tagAgentTools(root){
-    if (!root) return;
-    root.querySelectorAll('.cv-row').forEach(function(row){
-      var tools = row.querySelectorAll('.cv-tools .cv-tool');
-      tools.forEach(function(t, i){
-        if (!t.getAttribute('data-tool')) {
-          if (i === 0) t.setAttribute('data-tool','stats');
-          else if (i === 1) t.setAttribute('data-tool','queues');
-          else if (i === 2) t.setAttribute('data-tool','listen');
-        }
-      });
+  // tag any stats icons we injected that don't have a data attribute yet
+  function tagStatsIcons(doc){
+    var root = doc || document;
+    root.querySelectorAll('.cv-tool-stats:not([data-tool])').forEach(function(el){
+      el.setAttribute('data-tool','stats');
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      if (!el.getAttribute('title')) el.setAttribute('title','Stats');
+      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label','Stats');
     });
   }
 
-  // Initial tag (in case panel already exists)
-  tagAgentTools(panelRoot(document));
+  // run once now
+  tagStatsIcons(document);
 
-  // Re-tag on mutations (panel re-render, route changes, etc.)
-  new MutationObserver(function(muts){
-    var root = panelRoot(document);
-    if (root) tagAgentTools(root);
-  }).observe(document.documentElement, {subtree:true, childList:true});
+  // keep tagging if the panel re-renders
+  new MutationObserver(function(){
+    tagStatsIcons(document);
+  }).observe(document.documentElement, {childList:true, subtree:true});
 
-  // Robust delegated click: works with class or data attr
+  // open the stats modal when our icon is clicked (or activated by keyboard)
+  function openStatsForRow(row){
+    if (!row || typeof buildStatsModalHTML !== 'function' || typeof openModal !== 'function') return;
+
+    var nameEl = row.querySelector('.cv-name');
+    var name = nameEl ? nameEl.textContent.trim() : 'Agent';
+
+    // deterministic A/B variant by row index
+    var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
+    var idx = Math.max(0, allRows.indexOf(row));
+    var variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(idx) : ((idx % 2 === 0) ? 'A' : 'B');
+
+    var data = (typeof CV_STATS_SETS !== 'undefined') ? CV_STATS_SETS[variant] : null;
+    if (!data) return;
+
+    // extension (prefer data-ext on the row)
+    var ext = (row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (idx + 1));
+
+    openModal(document, {
+      title: '', // we render the title inside to match portal look
+      bodyHTML: buildStatsModalHTML(document, name, ext, data),
+      primaryText: 'Close',
+      secondaryText: ''
+    });
+  }
+
+  // delegated click (and keyboard) handler for our injected icon
   document.addEventListener('click', function(e){
-    var root = panelRoot(document);
-    if (!root) return;
+    var btn = e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+    if (!btn) return;
+    var row = btn.closest('.cv-row');
+    openStatsForRow(row);
+  }, true);
 
-    // find a tool element by several fallbacks
-    var tool = e.target.closest('.cv-tool, .cv-tool-stats, [data-tool], [aria-label="Stats"], [title="Stats"]');
-    if (!tool || !root.contains(tool)) return;
-
-    // Determine kind from data-tool or fallback to index within its row
-    var kind = (tool.getAttribute('data-tool') || '').toLowerCase();
-    var row  = tool.closest('.cv-row');
-    if (!kind && row){
-      var tools = Array.prototype.slice.call(row.querySelectorAll('.cv-tools .cv-tool'));
-      var idx = tools.indexOf(tool);
-      if (idx === 0) kind = 'stats';
-      else if (idx === 1) kind = 'queues';
-      else if (idx === 2) kind = 'listen';
-    }
-    if (kind !== 'stats') return; // only handle Stats here
-
-    // ---- Open the Stats modal using the functions from the previous block ----
-    try {
-      // name + deterministic A/B
-      var nameEl = row ? row.querySelector('.cv-name') : null;
-      var name = nameEl ? nameEl.textContent.trim() : 'Agent';
-      var allRows = Array.prototype.slice.call(root.querySelectorAll('.cv-row'));
-      var rowIndex = row ? Math.max(0, allRows.indexOf(row)) : 0;
-
-      // Choose A/B set and extension
-      var variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(rowIndex) : ((rowIndex % 2) ? 'B' : 'A');
-      var data = (typeof CV_STATS_SETS !== 'undefined' ? CV_STATS_SETS[variant] : null);
-      if (!data) return;
-      var ext = (row && row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (rowIndex + 1));
-
-      // Use existing modal system
-      if (typeof openModal === 'function') {
-        openModal(document, {
-          title: '',
-          bodyHTML: buildStatsModalHTML(document, name, ext, data),
-          primaryText: 'Close',
-          secondaryText: ''
-        });
-      }
-    } catch(err){
-      // silent fail to avoid breaking your page; uncomment for debug
-      // console.error('Stats modal error:', err);
-    }
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var btn = e.target.closest && e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+    if (!btn) return;
+    e.preventDefault();
+    var row = btn.closest('.cv-row');
+    openStatsForRow(row);
   }, true);
 })();
-
