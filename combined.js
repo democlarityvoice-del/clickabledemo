@@ -1215,8 +1215,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 <script>
 
 
-// ==============================
-<script>
+
 // ==============================
 // Clarity Voice Agents Panel Inject (CALL CENTER MANAGER)
 // ==============================
@@ -1434,4 +1433,5 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 </script>
+
 
