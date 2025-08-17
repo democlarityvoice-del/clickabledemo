@@ -1249,14 +1249,14 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agents Panel — lunch below name, queue-typography, global lunch ticker
+// Clarity Voice Agents Panel — lunch below name, queue-typography, reliable ticker
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
 
   const AGENTS_REGEX       = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const NATIVE_TABLE_SEL   = '#agents-table';       // native table we hide/replace
-  const CONTAINER_SEL      = '.table-container';    // where we insert our panel
+  const NATIVE_TABLE_SEL   = '#agents-table';     // native list we hide
+  const CONTAINER_SEL      = '.table-container';  // where we insert our panel
   const PANEL_ID           = 'cv-agents-panel';
   const PANEL_STYLE_ID     = 'cv-agents-style';
 
@@ -1267,7 +1267,7 @@ if (!window.__cvAgentsPanelInit) {
   const ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
   const ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Agents (phone icon for Mike, Brittany, Mark; Bob on lunch)
+  // Agents (Bob on lunch, Mike/Brittany/Mark show phone icon)
   const AGENTS = [
     { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
     { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
@@ -1279,73 +1279,46 @@ if (!window.__cvAgentsPanelInit) {
     { name:'John Smith',        ext:207, online:true,  icon:'user'  }
   ];
 
-  // ---------- utils ----------
-  const getDocs = () => {
+  // ------- helpers -------
+  const pad2 = n => ('0'+n).slice(-2);
+  const mmss = s => pad2((s/60|0)) + ':' + pad2(s%60);
+
+  function getDocs() {
     const docs = [document];
     document.querySelectorAll('iframe').forEach(ifr => {
       try {
-        const d = ifr.contentDocument || ifr.contentWindow?.document;
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
         if (d) docs.push(d);
       } catch {}
     });
     return docs;
-  };
+  }
 
-  const findBits = () => {
+  function findBits() {
     for (const doc of getDocs()) {
       const table = doc.querySelector(NATIVE_TABLE_SEL);
-      if (table) return { doc, table, container: table.closest(CONTAINER_SEL) || table.parentElement || doc.body };
+      if (table) {
+        const container = table.closest(CONTAINER_SEL) || table.parentElement || doc.body;
+        return { doc, table, container };
+      }
     }
     return null;
-  };
-
-  const pad2 = n => String(n).padStart(2,'0');
-  const mmss = s => `${pad2((s/60|0))}:${pad2(s%60)}`;
-
-  // ---------- global lunch ticker (survives SPA/iframe swaps) ----------
-  function startGlobalLunchTicker(){
-    if (window.__cvAgentsLunchTicker) clearInterval(window.__cvAgentsLunchTicker);
-
-    const tick = () => {
-      getDocs().forEach(d => {
-        d.querySelectorAll('#' + PANEL_ID + ' .cv-sub-time').forEach(el => {
-          let start = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
-          if (!Number.isFinite(start) || start <= 0) {
-            start = Date.now();
-            el.setAttribute('data-cv-lunch-start', String(start));
-          }
-          const secs = Math.floor((Date.now() - start) / 1000);
-          el.textContent = mmss(secs);
-        });
-      });
-    };
-
-    tick();
-    window.__cvAgentsLunchTicker = setInterval(tick, 1000);
   }
-  // ⬅️ Add this single line right here:
-startGlobalLunchTicker();
 
-  // ---------- styles ----------
   function ensureStyles(doc){
     if (doc.getElementById(PANEL_STYLE_ID)) return;
     const s = doc.createElement('style');
     s.id = PANEL_STYLE_ID;
     s.textContent = `
 #${PANEL_ID}{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}
-
-/* row rhythm = queues */
 #${PANEL_ID} .cv-row{display:block;padding:8px 12px;border-bottom:1px solid #eee}
 #${PANEL_ID} .cv-row:last-child{border-bottom:none}
 
-/* top line */
 #${PANEL_ID} .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 #${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0}
 
-/* typography matches queues (regular ~13px) */
 #${PANEL_ID} .cv-name{font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
-/* presence glyph (masked svg) */
 #${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;border-radius:2px;background:#22c55e}
 #${PANEL_ID} .cv-glyph[data-icon="user"]{
   -webkit-mask:url(${ICON_USER}) center/contain no-repeat; mask:url(${ICON_USER}) center/contain no-repeat;
@@ -1354,40 +1327,40 @@ startGlobalLunchTicker();
   -webkit-mask:url(${ICON_PHONE}) center/contain no-repeat; mask:url(${ICON_PHONE}) center/contain no-repeat;
 }
 
-/* hover tools */
 #${PANEL_ID} .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s}
 #${PANEL_ID} .cv-row:hover .cv-tools{opacity:1;visibility:visible}
 #${PANEL_ID} .cv-tool{width:16px;height:16px;opacity:.65;cursor:pointer}
 #${PANEL_ID} .cv-tool:hover{opacity:1}
 #${PANEL_ID} .cv-tool img{width:16px;height:16px;display:block}
 
-/* Lunch subline UNDER the name */
+/* Lunch subline UNDER name */
 #${PANEL_ID} .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-left:26px}
 #${PANEL_ID} .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}
 #${PANEL_ID} .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}
 
-/* gray when offline/lunch */
 #${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af}
 #${PANEL_ID} .is-offline .cv-name{color:#9aa0a6}
-#${PANEL_ID} .is-offline .cv-sub-label,#${PANEL_ID} .cv-sub-time{color:#b3b8bf}
-    `;
+#${PANEL_ID} .is-offline .cv-sub-label,#${PANEL_ID} .is-offline .cv-sub-time{color:#b3b8bf}
+`;
     (doc.head || doc.documentElement).appendChild(s);
   }
 
-  // ---------- build ----------
   function buildPanel(doc){
     const panel = doc.createElement('div');
     panel.id = PANEL_ID;
 
     const frag = doc.createDocumentFragment();
+
     AGENTS.forEach(a => {
-      const isOffline = a.lunch ? true : !a.online;
+      const row = doc.createElement('div');
+      const offline = a.lunch ? true : !a.online;
+      row.className = 'cv-row' + (offline ? ' is-offline' : '');
 
-      const row  = doc.createElement('div');
-      row.className = 'cv-row' + (isOffline ? ' is-offline' : '');
+      const top = doc.createElement('div');
+      top.className = 'cv-top';
 
-      const top  = doc.createElement('div'); top.className  = 'cv-top';
-      const left = doc.createElement('div'); left.className = 'cv-left';
+      const left = doc.createElement('div');
+      left.className = 'cv-left';
 
       const glyph = doc.createElement('span');
       glyph.className = 'cv-glyph';
@@ -1412,10 +1385,10 @@ startGlobalLunchTicker();
       top.appendChild(tools);
       row.appendChild(top);
 
-      // Lunch subline (only for Bob)
       if (a.lunch) {
         const sub = doc.createElement('div');
         sub.className = 'cv-sub';
+        // IMPORTANT: seed once; we do NOT overwrite this attribute in the ticker
         sub.innerHTML = `
           <span class="cv-sub-label">Lunch</span>
           <span class="cv-sub-time" data-cv-lunch-start="${Date.now()}">00:00</span>
@@ -1430,35 +1403,73 @@ startGlobalLunchTicker();
     return panel;
   }
 
-  // ---------- inject/remove ----------
-  function inject(){
-  const bits = findBits(); if (!bits) return;
-  const { doc, table, container } = bits;
+  // Robust ticker: per-document, restarted on inject/route; never overwrites start once set
+  function startLunchTicker(doc){
+    if (!doc) return;
+    if (doc.__cvAgentsLunchTicker) clearInterval(doc.__cvAgentsLunchTicker);
 
-  // If panel already exists, don't rebuild — but DO ensure ticker is running
-  if (doc.getElementById('cv-agents-panel')) {
-    startGlobalLunchTicker();      // <-- make sure Bob ticks
-    return;
+    function tick(){
+      const els = doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time');
+      for (let i=0;i<els.length;i++){
+        const el = els[i];
+        let st = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
+        if (!Number.isFinite(st)) {
+          // if somehow missing, set once and keep it
+          st = Date.now();
+          el.setAttribute('data-cv-lunch-start', String(st));
+        }
+        const secs = Math.floor((Date.now() - st)/1000);
+        const next = mmss(secs);
+        if (el.textContent !== next) el.textContent = next;
+      }
+    }
+    tick();
+    doc.__cvAgentsLunchTicker = setInterval(tick, 1000);
   }
 
-  ensureStyles(doc);
-  table.setAttribute('data-cv-hidden','1');
-  table.style.display = 'none';
+  function stopLunchTicker(doc){
+    if (doc && doc.__cvAgentsLunchTicker){
+      try { clearInterval(doc.__cvAgentsLunchTicker); } catch {}
+      doc.__cvAgentsLunchTicker = null;
+    }
+  }
 
-  const panel = buildPanel(doc);
-  container.insertBefore(panel, table);
+  function inject(){
+    const bits = findBits(); if (!bits) return;
+    const { doc, table, container } = bits;
+    if (doc.getElementById(PANEL_ID)) { startLunchTicker(doc); return; }
 
-  // Also start ticker after first build
-  startGlobalLunchTicker();
-}
+    ensureStyles(doc);
 
-  // ---------- wait & watch ----------
-  function waitAndInject(tries=0){
+    // hide native
+    if (table && table.style) {
+      table.setAttribute('data-cv-hidden','1');
+      table.style.display = 'none';
+    }
+
+    const panel = buildPanel(doc);
+    container.insertBefore(panel, table || null);
+
+    // start/refresh ticker
+    startLunchTicker(doc);
+  }
+
+  function remove(){
+    for (const doc of getDocs()){
+      const p = doc.getElementById(PANEL_ID);
+      if (p) p.remove();
+      const t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
+      if (t){ t.style.display=''; t.removeAttribute('data-cv-hidden'); }
+      stopLunchTicker(doc);
+    }
+  }
+
+  function waitAndInject(tries){
     if (!AGENTS_REGEX.test(location.href)) return;
     const bits = findBits();
     if (bits){ inject(); return; }
-    if (tries >= 40) return; // allow for slow loads
-    setTimeout(()=>waitAndInject(tries+1), 250);
+    if ((tries|0) >= 25) return;
+    setTimeout(()=>waitAndInject((tries|0)+1), 250);
   }
 
   (function watch(){
@@ -1480,9 +1491,3 @@ startGlobalLunchTicker();
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
-
-
-
-
-
-
