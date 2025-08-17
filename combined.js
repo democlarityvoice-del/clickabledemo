@@ -1774,3 +1774,82 @@ if (!window.__cvAgentsPanelInit) {
 })();
 
 
+/* === Agents panel: wire OUR Queues icon to the native Queues-per-Agent modal === */
+(function () {
+  var PANEL_ID = 'cv-agents-panel';
+  var DOMAIN   = 'claritydemo';
+
+  function qsel(root, sel){ return (root || document).querySelector(sel); }
+  function closest(el, sel){ return el && el.closest ? el.closest(sel) : null; }
+
+  function getNS(){
+    var w = window;
+    return w.NSAgentsCallQueues ||
+           (w.parent && w.parent.NSAgentsCallQueues) ||
+           (w.top && w.top.NSAgentsCallQueues) || null;
+  }
+
+  function getExtFromRow(row){
+    // prefer data-ext; fallback parse "Ext 201 (Name)"
+    var d = (row.getAttribute('data-ext') || '').replace(/[^\d]/g,'');
+    if (d) return d;
+    var t = (qsel(row,'.cv-name') || {}).textContent || '';
+    var m = t.match(/Ext\s+(\d{2,6})/i);
+    return m ? m[1] : '';
+  }
+
+  function getAgentName(row){
+    var t = (qsel(row,'.cv-name') || {}).textContent || '';
+    // extract name inside parentheses
+    var m = t.match(/\((.*?)\)\s*$/);
+    return (m && m[1]) ? m[1] : t || 'Agent';
+  }
+
+  function openQueuesModal(ext, agentLabel){
+    var ns = getNS();
+    var sip = 'sip:' + ext + '@' + DOMAIN;
+
+    // kick off the platform fetch (same call the native button makes)
+    if (ns && typeof ns.getQueuesPerAgent === 'function') {
+      try { ns.getQueuesPerAgent(sip, agentLabel); } catch(e){}
+    }
+
+    // synthesize a Bootstrap modal trigger and click it (mirrors native)
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.style.display = 'none';
+    btn.setAttribute('data-toggle','modal');
+    btn.setAttribute('data-target','#queuesPerAgentModal');
+    btn.setAttribute('data-backdrop','static');
+    document.body.appendChild(btn);
+    btn.click();
+    setTimeout(function(){ try{ document.body.removeChild(btn); }catch(e){} }, 0);
+  }
+
+  // delegated click on OUR queues icon only
+  document.addEventListener('click', function(e){
+    var btn = closest(e.target, '#' + PANEL_ID + ' .cv-tool[data-tool="queues"]');
+    if (!btn) return;
+
+    e.preventDefault();
+    var row = closest(btn, '.cv-row'); if (!row) return;
+
+    var ext   = getExtFromRow(row);
+    var label = getAgentName(row);
+    if (!ext) return;
+
+    openQueuesModal(ext, label);
+  }, true);
+
+  // optional keyboard activation (Enter/Space)
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var btn = closest(e.target, '#' + PANEL_ID + ' .cv-tool[data-tool="queues"]');
+    if (!btn) return;
+    e.preventDefault();
+    var row = closest(btn, '.cv-row'); if (!row) return;
+    var ext = getExtFromRow(row); if (!ext) return;
+    openQueuesModal(ext, getAgentName(row));
+  }, true);
+})();
+
