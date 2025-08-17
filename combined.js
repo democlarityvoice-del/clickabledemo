@@ -1695,3 +1695,12 @@ if (!window.__cvAgentsPanelInit) {
     openModal('', buildBody(agentName, ext, data));
   }, true);
 })();
+
+/* STATS PIE microfix — solid pie (no donut) */
+(function(){
+  var s = document.createElement('style');
+  s.textContent =
+    '#cvhf-stats-root .cvhf-pie::after{display:none !important;}' +  /* remove hole */
+    '#cvhf-stats-root .cvhf-pie::before{color:#fff !important;}';    /* white % like ref */
+  (document.head || document.documentElement).appendChild(s);
+})();
