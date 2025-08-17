@@ -1509,3 +1509,176 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 
+/* ===== Agents Stats Modal — APPEND-ONLY (no changes to existing code) ===== */
+(function(){
+  if (window.__cvAgentsStatsAppendOnce) return;
+  window.__cvAgentsStatsAppendOnce = true;
+
+  // ---------- minimal modal (scoped styles & elements) ----------
+  var STYLE_ID = 'cvhf-stats-style';
+  var ROOT_ID  = 'cvhf-stats-root';
+
+  function ensureModal(doc){
+    doc = doc || document;
+    if (!doc.getElementById(STYLE_ID)){
+      var s = doc.createElement('style'); s.id = STYLE_ID;
+      s.textContent = [
+        '#',ROOT_ID,'{position:fixed;inset:0;z-index:2147483646;display:none}',
+        '#',ROOT_ID,'.is-open{display:block}',
+        '#',ROOT_ID,' .cvhf-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}',
+        '#',ROOT_ID,' .cvhf-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);',
+          'background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);',
+          'min-width:360px;max-width:1024px;max-height:80vh;display:flex;flex-direction:column;overflow:auto}',
+        '#',ROOT_ID,' .cvhf-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}',
+        '#',ROOT_ID,' .cvhf-ttl{font:600 14px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
+        '#',ROOT_ID,' .cvhf-x{width:28px;height:28px;border-radius:6px;border:1px solid #e6e6e6;background:#fafafa;cursor:pointer}',
+        '#',ROOT_ID,' .cvhf-x:hover{background:#f1f3f5}',
+        '#',ROOT_ID,' .cvhf-bd{padding:16px;background:#fff}',
+        '#',ROOT_ID,' .cvhf-ft{padding:12px 16px;border-top:1px solid #eee;display:flex;justify-content:flex-end}',
+        '#',ROOT_ID,' .cvhf-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font:600 13px/1 Arial;cursor:pointer}',
+        '#',ROOT_ID,' .cvhf-btn.primary{background:#167a32;border-color:#167a32;color:#fff}',
+
+        /* layout + “chart” look to match your reference (no axes/labels) */
+        '#',ROOT_ID,' .cvhf-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:980px}',
+        '#',ROOT_ID,' .cvhf-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px}',
+        '#',ROOT_ID,' .cvhf-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0}',
+        '#',ROOT_ID,' .cvhf-list{list-style:none;margin:0;padding:0 0 0 8px;font:600 13px/1.6 Arial;color:#222}',
+        '#',ROOT_ID,' .cvhf-list li{display:flex;gap:12px;align-items:baseline}',
+        '#',ROOT_ID,' .cvhf-num{width:44px;text-align:right;color:#333}',
+        '#',ROOT_ID,' .cvhf-card{border:1px solid #eee;border-radius:8px;padding:12px;background:#fff}',
+        '#',ROOT_ID,' .cvhf-card h5{margin:0 0 8px;font:600 12px/1.2 Arial;color:#555}',
+        '#',ROOT_ID,' .cvhf-card svg{display:block;margin:10px 8px 14px}',
+
+        /* solid pie (no donut) with centered % text */
+        '#',ROOT_ID,' .cvhf-pie{position:relative;width:var(--size);height:var(--size);margin:8px auto;border-radius:50%;',
+          'background:conic-gradient(#2f66d0 var(--deg), #d33 0)}',
+        '#',ROOT_ID,' .cvhf-pie::before{content:attr(data-pct) "%";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);',
+          'font:600 12px/1 Arial;color:#fff}'
+      ].join('');
+      (document.head||document.documentElement).appendChild(s);
+    }
+    if (!doc.getElementById(ROOT_ID)){
+      var root = doc.createElement('div'); root.id = ROOT_ID;
+      root.innerHTML = '<div class="cvhf-scrim"></div><div class="cvhf-dialog" role="dialog" aria-modal="true">'+
+        '<div class="cvhf-hd"><div class="cvhf-ttl"></div><button class="cvhf-x" aria-label="Close">×</button></div>'+
+        '<div class="cvhf-bd"></div>'+
+        '<div class="cvhf-ft"><button class="cvhf-btn primary" data-btn="close">Close</button></div>'+
+      '</div>';
+      (document.body||document.documentElement).appendChild(root);
+
+      var close = function(){ root.classList.remove('is-open'); };
+      root.querySelector('.cvhf-scrim').addEventListener('click', close);
+      root.querySelector('.cvhf-x').addEventListener('click', close);
+      root.querySelector('[data-btn="close"]').addEventListener('click', close);
+    }
+    return { root: doc.getElementById(ROOT_ID) };
+  }
+
+  function openModal(title, bodyHTML){
+    var parts = ensureModal(document);
+    var root  = parts.root;
+    root.querySelector('.cvhf-ttl').textContent = title || '';
+    root.querySelector('.cvhf-bd').innerHTML = bodyHTML || '';
+    root.classList.add('is-open');
+  }
+
+  // ---------- tiny render helpers (no axes) ----------
+  function barSVG(values, max, w, h, gap){
+    max = max || Math.max(1, Math.max.apply(null, values));
+    var n = values.length, bw = Math.floor((w - (n+1)*gap)/n), x = gap, out = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
+    for (var i=0;i<n;i++){
+      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
+      out.push('<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
+      x += bw + gap;
+    }
+    out.push('</svg>');
+    return out.join('');
+  }
+  function pieHTML(pct,size){
+    pct = Math.max(0, Math.min(100, pct));
+    var deg = (pct/100)*360;
+    return '<div class="cvhf-pie" data-pct="'+pct.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
+  }
+
+  // ---------- canned data (A / B). Both have 5 outbound, 22 outbound talk time ----------
+  var STATS = {
+    A: {
+      metrics: {
+        callCenterCallsToday: 10, callCenterTalkTime: 13, callCenterAvgTalk: '1:23',
+        inboundCallsToday: 10,   inboundTalkTime: 14,   inboundAvgTalk: '1:23',
+        outboundCallsToday: 5,   outboundTalkTime: 22,  outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
+      perDay:  [27,38,30,24,27,29,28,47,29,42],
+      piePct:  100
+    },
+    B: {
+      metrics: {
+        callCenterCallsToday: 14, callCenterTalkTime: 24, callCenterAvgTalk: '1:46',
+        inboundCallsToday: 16,   inboundTalkTime: 29,   inboundAvgTalk: '1:45',
+        outboundCallsToday: 5,   outboundTalkTime: 22,  outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
+      perDay:  [36,65,39,44,46,27,30,48,50,43],
+      piePct:  88.9
+    }
+  };
+
+  function buildBody(agentName, ext, data){
+    var m = data.metrics;
+    var b1 = barSVG(data.perHour, 10, 460, 160, 6);
+    var b2 = barSVG(data.perDay,  80, 460, 180, 8);
+    var pie= pieHTML(data.piePct, 220);
+    return [
+      '<div class="cvhf-wrap">',
+        '<div class="cvhf-head"><h3 class="cvhf-title">Statistics for ',agentName,' (',ext,')</h3></div>',
+        '<div><ul class="cvhf-list">',
+          '<li><span class="cvhf-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
+          '<li><span class="cvhf-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
+          '<li><span class="cvhf-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
+          '<li><span class="cvhf-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
+          '<li><span class="cvhf-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
+          '<li><span class="cvhf-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
+          '<li><span class="cvhf-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
+          '<li><span class="cvhf-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
+          '<li><span class="cvhf-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
+          '<li><span class="cvhf-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
+        '</ul></div>',
+        '<div class="cvhf-card"><h5>My Calls Per Hour (last 24 hours)</h5>', b1, '</div>',
+        '<div class="cvhf-card"><h5>My Calls Per Day (last 10 days)</h5>',  b2, '</div>',
+        '<div class="cvhf-card"><h5>Calls by Origination Source (last 24 hours)</h5>', pie, '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  // ---------- delegated click handler (Agents panel ONLY) ----------
+  document.addEventListener('click', function(e){
+    var root = document.getElementById('cv-agents-panel');
+    if (!root) return;
+
+    // Click target: explicit stats icon if present, else anything tagged as stats
+    var btn = e.target && e.target.closest &&
+      e.target.closest('#cv-agents-panel .cv-tool[title="Stats"], #cv-agents-panel .cv-tool-stats, #cv-agents-panel [data-tool="stats"]');
+
+    if (!btn || !root.contains(btn)) return;
+
+    // Find the row & parse from the existing label text (read-only)
+    var row = btn.closest('.cv-row'); if (!row) return;
+    var label = (row.querySelector('.cv-name') && row.querySelector('.cv-name').textContent) || '';
+
+    var extMatch  = label.match(/Ext\.?\s*(\d{2,6})/i);
+    var nameMatch = label.match(/\(([^)]+)\)/);
+
+    var ext       = (extMatch && extMatch[1]) || '200';
+    var agentName = (nameMatch && nameMatch[1]) || 'Agent';
+
+    // Even ext → B, Odd → A
+    var variant = (parseInt(ext,10) % 2 === 0) ? 'B' : 'A';
+    var data    = STATS[variant] || STATS.A;
+
+    openModal('', buildBody(agentName, ext, data));
+  }, true);
+})();
+
