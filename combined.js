@@ -1222,11 +1222,16 @@ tr:hover .cvq-icon{ opacity:.85; }
     setTimeout(()=>waitAndInject(tries+1),300);
   }
   function onEnter(){ waitAndInject(0); }
-  function handleRoute(prev,next){
-    const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
-    if (!was && is) onEnter();
-    if ( was && !is) removeQueuesTiles();
+ 
+  function route(prev, next){
+  const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+  if (!was && is) { 
+    waitAndInject(0);
+    startGlobalLunchTicker();   // <-- ensure ticking even if panel pre-existed
   }
+  if (was && !is) remove();
+}
+
 
   // ---- WATCHER: URL (push/replace/popstate + SPA) ----
   (function watchURL(){
@@ -1318,6 +1323,8 @@ if (!window.__cvAgentsPanelInit) {
     tick();
     window.__cvAgentsLunchTicker = setInterval(tick, 1000);
   }
+  // ⬅️ Add this single line right here:
+startGlobalLunchTicker();
 
   // ---------- styles ----------
   function ensureStyles(doc){
@@ -1425,38 +1432,25 @@ if (!window.__cvAgentsPanelInit) {
 
   // ---------- inject/remove ----------
   function inject(){
-    const bits = findBits(); if (!bits) return;
-    const { doc, table, container } = bits;
-    if (doc.getElementById(PANEL_ID)) return;
+  const bits = findBits(); if (!bits) return;
+  const { doc, table, container } = bits;
 
-    ensureStyles(doc);
-
-    // hide native
-    table.setAttribute('data-cv-hidden','1');
-    table.style.display = 'none';
-
-    // insert our panel
-    const panel = buildPanel(doc);
-    container.insertBefore(panel, table);
-
-    // ensure global lunch ticker is running
-    startGlobalLunchTicker();
+  // If panel already exists, don't rebuild — but DO ensure ticker is running
+  if (doc.getElementById('cv-agents-panel')) {
+    startGlobalLunchTicker();      // <-- make sure Bob ticks
+    return;
   }
 
-  function remove(){
-    // remove panel + unhide native
-    for (const doc of getDocs()){
-      const p = doc.getElementById(PANEL_ID);
-      if (p) p.remove();
-      const t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
-      if (t){ t.style.display=''; t.removeAttribute('data-cv-hidden'); }
-    }
-    // stop global ticker
-    if (window.__cvAgentsLunchTicker) {
-      clearInterval(window.__cvAgentsLunchTicker);
-      window.__cvAgentsLunchTicker = null;
-    }
-  }
+  ensureStyles(doc);
+  table.setAttribute('data-cv-hidden','1');
+  table.style.display = 'none';
+
+  const panel = buildPanel(doc);
+  container.insertBefore(panel, table);
+
+  // Also start ticker after first build
+  startGlobalLunchTicker();
+}
 
   // ---------- wait & watch ----------
   function waitAndInject(tries=0){
@@ -1486,6 +1480,7 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
 
 
 
