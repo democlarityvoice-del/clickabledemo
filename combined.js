@@ -1249,16 +1249,16 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agents Panel — ES5-safe, reliable lunch timer + Stats modal
+// Clarity Voice Agents Panel — fixed icon sizing + Stats modal
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
 
-  var AGENTS_REGEX       = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  var NATIVE_TABLE_SEL   = '#agents-table';
-  var CONTAINER_SEL      = '.table-container';
-  var PANEL_ID           = 'cv-agents-panel';
-  var PANEL_STYLE_ID     = 'cv-agents-style';
+  var AGENTS_REGEX     = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  var NATIVE_TABLE_SEL = '#agents-table';
+  var CONTAINER_SEL    = '.table-container';
+  var PANEL_ID         = 'cv-agents-panel';
+  var PANEL_STYLE_ID   = 'cv-agents-style';
 
   // Icons
   var ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
@@ -1267,109 +1267,82 @@ if (!window.__cvAgentsPanelInit) {
   var ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
   var ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // Agents (Bob stays gray/offline; no lunch)
+  // Agents (Bob gray/offline — NO lunch)
   var AGENTS = [
     { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
     { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
     { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
-    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  }, // offline (gray), no lunch
-
+    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  },
     { name:'Brittany Lawrence', ext:204, online:true,  icon:'phone' },
     { name:'Alex Roberts',      ext:205, online:true,  icon:'user'  },
     { name:'Mark Sanchez',      ext:206, online:true,  icon:'phone' },
     { name:'John Smith',        ext:207, online:true,  icon:'user'  }
   ];
 
-  // ===== helpers =====
-  function pad2(n){ return ('0'+n).slice(-2); }
-  function mmss(s){ return pad2((s/60|0)) + ':' + pad2(s%60); }
-
+  // ---------- helpers ----------
   function getDocs(){
-    var docs = [document];
-    var ifrs = document.getElementsByTagName('iframe');
+    var docs = [document], ifrs = document.getElementsByTagName('iframe');
     for (var i=0;i<ifrs.length;i++){
       try {
-        var idoc = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
-        if (idoc) docs.push(idoc);
+        var d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        if (d) docs.push(d);
       } catch(e){}
     }
     return docs;
   }
-
-  function closest(el, sel){
-    while (el && el.nodeType === 1){
-      var m = el.matches || el.msMatchesSelector || el.webkitMatchesSelector;
-      if (m && m.call(el, sel)) return el;
-      el = el.parentNode;
-    }
-    return null;
-  }
-
   function findBits(){
     var docs = getDocs();
     for (var i=0;i<docs.length;i++){
-      var doc = docs[i];
-      var table = doc.querySelector(NATIVE_TABLE_SEL);
+      var doc = docs[i], table = doc.querySelector(NATIVE_TABLE_SEL);
       if (table){
         var container = (table.closest && table.closest(CONTAINER_SEL)) || table.parentElement || doc.body;
-        return { doc: doc, table: table, container: container };
+        return { doc:doc, table:table, container:container };
       }
     }
     return null;
   }
 
-  // ===== panel + styles =====
+  // ---------- styles (ALWAYS refresh) ----------
   function ensureStyles(doc){
-    if (doc.getElementById(PANEL_STYLE_ID)) return;
-    var s = doc.createElement('style');
-    s.id = PANEL_STYLE_ID;
-    var css = [
+    var s = doc.getElementById(PANEL_STYLE_ID);
+    if (!s){ s = doc.createElement('style'); s.id = PANEL_STYLE_ID; (doc.head||doc.documentElement).appendChild(s); }
+    s.textContent = [
       '#',PANEL_ID,'{margin-top:6px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.1);overflow:hidden}',
       '#',PANEL_ID,' .cv-row{display:block;padding:8px 12px;border-bottom:1px solid #eee}',
       '#',PANEL_ID,' .cv-row:last-child{border-bottom:none}',
-
       '#',PANEL_ID,' .cv-top{display:flex;align-items:center;justify-content:space-between;gap:10px}',
       '#',PANEL_ID,' .cv-left{display:flex;align-items:center;gap:10px;min-width:0}',
-
       '#',PANEL_ID,' .cv-name{font:400 13px/1.35 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 
-      /* darker/heavier green + larger glyphs */
+      /* glyphs */
       '#',PANEL_ID,' .cv-glyph{width:20px;height:20px;display:inline-block;border-radius:3px;background:#167a32}',
       '#',PANEL_ID,' .cv-glyph[data-icon="user"]{-webkit-mask:url(',ICON_USER,') center/contain no-repeat;mask:url(',ICON_USER,') center/contain no-repeat;}',
       '#',PANEL_ID,' .cv-glyph[data-icon="phone"]{-webkit-mask:url(',ICON_PHONE,') center/contain no-repeat;mask:url(',ICON_PHONE,') center/contain no-repeat;}',
 
+      /* tools */
       '#',PANEL_ID,' .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s}',
       '#',PANEL_ID,' .cv-row:hover .cv-tools{opacity:1;visibility:visible}',
-      '#',PANEL_ID,' .cv-tool{width:20px;height:20px;opacity:.75;cursor:pointer}',
+      '#',PANEL_ID,' .cv-tool{width:20px;height:20px;opacity:.75;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}',
       '#',PANEL_ID,' .cv-tool:hover{opacity:1}',
       '#',PANEL_ID,' .cv-tool img{width:20px;height:20px;display:block}',
 
-      /* subline aligns under 20px glyph (20 + 10px gap = 30px) */
-      '#',PANEL_ID,' .cv-sub{display:flex;justify-content:space-between;align-items:center;margin-top:4px;padding-left:30px}',
-      '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
-      '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
-
+      /* offline */
       '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',
       '#',PANEL_ID,' .is-offline .cv-name{color:#9aa0a6}',
-      '#',PANEL_ID,' .is-offline .cv-sub-label,#',PANEL_ID,' .is-offline .cv-sub-time{color:#b3b8bf}',
 
-      /* ===== Stats modal styles (scoped by IDs) ===== */
+      /* modal */
       'body.cv-modal-open{overflow:hidden}',
       '#cv-modal-root{position:fixed;inset:0;z-index:2147483646;pointer-events:none}',
       '#cv-modal-root.is-open{pointer-events:auto}',
       '#cv-modal-root .cv-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .18s}',
       '#cv-modal-root.is-open .cv-scrim{opacity:1}',
-      '#cv-modal-root .cv-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.98);min-width:360px;max-width:1024px;max-height:80vh;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;opacity:0;transition:transform .18s,opacity .18s}',
-      '#cv-modal-root.is-open .cv-dialog{opacity:1;transform:translate(-50%,-50%) scale(1)}',
+      '#cv-modal-root .cv-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%) scale(1);min-width:360px;max-width:1024px;max-height:80vh;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;opacity:1}',
       '#cv-modal-root .cv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}',
       '#cv-modal-root .cv-modal-title{font:600 14px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
-      '#cv-modal-root .cv-modal-close{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #e6e6e6;background:#fafafa}',
-      '#cv-modal-root .cv-modal-close:hover{background:#f1f3f5}',
       '#cv-modal-root .cv-modal-body{padding:16px;overflow:auto}',
       '#cv-modal-root .cv-modal-footer{padding:12px 16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px}',
       '#cv-modal-root .cv-btn{padding:8px 12px;border-radius:8px;font:600 13px/1.2 Arial;cursor:pointer;border:1px solid #ddd;background:#fff}',
       '#cv-modal-root .cv-btn-primary{background:#167a32;color:#fff;border-color:#167a32}',
-      /* charts */
       '#cv-modal-root .cv-stats-wrap{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:16px;min-width:980px;}',
       '#cv-modal-root .cv-stats-list{list-style:none;margin:0;padding:0 0 0 8px;font:600 13px/1.6 Arial;color:#222;}',
       '#cv-modal-root .cv-stats-list li{display:flex;gap:12px;align-items:baseline;}',
@@ -1381,27 +1354,22 @@ if (!window.__cvAgentsPanelInit) {
       '#cv-modal-root .cv-stats-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0 0 10px;}',
       '#cv-modal-root .cv-stats-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px;}'
     ].join('');
-    (doc.head || doc.documentElement).appendChild(s);
   }
 
+  // ---------- panel ----------
   function buildPanel(doc){
     var panel = doc.createElement('div');
     panel.id = PANEL_ID;
 
     var frag = doc.createDocumentFragment();
-
     for (var i=0;i<AGENTS.length;i++){
       var a = AGENTS[i];
       var row = doc.createElement('div');
-      var offline = !a.online; // no lunch for anyone; Bob offline shows gray
-      row.className = 'cv-row' + (offline ? ' is-offline' : '');
+      row.className = 'cv-row' + (!a.online ? ' is-offline' : '');
       row.setAttribute('data-ext', String(a.ext));
 
-      var top = doc.createElement('div');
-      top.className = 'cv-top';
-
-      var left = doc.createElement('div');
-      left.className = 'cv-left';
+      var top = doc.createElement('div'); top.className = 'cv-top';
+      var left = doc.createElement('div'); left.className = 'cv-left';
 
       var glyph = doc.createElement('span');
       glyph.className = 'cv-glyph';
@@ -1411,295 +1379,151 @@ if (!window.__cvAgentsPanelInit) {
       name.className = 'cv-name';
       name.textContent = 'Ext ' + a.ext + ' (' + a.name + ')';
 
-      left.appendChild(glyph);
-      left.appendChild(name);
+      left.appendChild(glyph); left.appendChild(name);
 
       var tools = doc.createElement('div');
       tools.className = 'cv-tools';
+      // inline style fallback so icons NEVER blow up; width/height attributes too
+      tools.setAttribute('style','display:flex;align-items:center;gap:10px;');
+
       tools.innerHTML =
-        '<span class="cv-tool cv-tool-stats" data-tool="stats" title="Stats" aria-label="Stats"><img alt="" src="'+ICON_STATS+'"></span>' +
-        '<span class="cv-tool" data-tool="queues" title="Queues" aria-label="Queues"><img alt="" src="'+ICON_QUEUES+'"></span>' +
-        '<span class="cv-tool" data-tool="listen" title="Listen in" aria-label="Listen in"><img alt="" src="'+ICON_LISTEN+'"></span>';
+        '<span class="cv-tool cv-tool-stats" data-tool="stats" title="Stats" aria-label="Stats">' +
+          '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_STATS+'">' +
+        '</span>' +
+        '<span class="cv-tool" data-tool="queues" title="Queues" aria-label="Queues">' +
+          '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_QUEUES+'">' +
+        '</span>' +
+        '<span class="cv-tool" data-tool="listen" title="Listen in" aria-label="Listen in">' +
+          '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_LISTEN+'">' +
+        '</span>';
 
-      top.appendChild(left);
-      top.appendChild(tools);
-      row.appendChild(top);
-
-      frag.appendChild(row);
+      top.appendChild(left); top.appendChild(tools);
+      row.appendChild(top); frag.appendChild(row);
     }
-
     panel.appendChild(frag);
     return panel;
   }
 
-  // ===== lunch ticker (kept; no one has lunch right now) =====
-  function startLunchTicker(doc){
-    if (!doc) return;
-    if (doc.__cvAgentsLunchTicker) { try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){} }
-    function tick(){
-      var list = doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time');
-      for (var i=0;i<list.length;i++){
-        var el = list[i];
-        var st = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
-        if (!isFinite(st)) {
-          st = Date.now();
-          el.setAttribute('data-cv-lunch-start', String(st));
-        }
-        var secs = ((Date.now() - st)/1000) | 0;
-        var txt = mmss(secs);
-        if (el.textContent !== txt) el.textContent = txt;
-      }
-    }
-    tick();
-    doc.__cvAgentsLunchTicker = setInterval(tick, 1000);
-  }
-  function stopLunchTicker(doc){
-    if (doc && doc.__cvAgentsLunchTicker){
-      try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){}
-      doc.__cvAgentsLunchTicker = null;
-    }
-  }
-
-  // ===== Stats modal (self-contained) =====
+  // ---------- modal ----------
   function ensureModalHost(doc){
-    if (doc.getElementById('cv-modal-root')) return;
-    var root = doc.createElement('div');
-    root.id = 'cv-modal-root';
-    (doc.body || doc.documentElement).appendChild(root);
+    if (!doc.getElementById('cv-modal-root')){
+      var root = doc.createElement('div'); root.id = 'cv-modal-root';
+      (doc.body||doc.documentElement).appendChild(root);
+    }
   }
   function openStatsModal(doc, opts){
     ensureModalHost(doc);
     var root = doc.getElementById('cv-modal-root');
     var title = (opts && opts.title) || '';
     var bodyHTML = (opts && opts.bodyHTML) || '';
-    var primaryText = (opts && opts.primaryText) || 'Close';
-    var lock = !!(opts && opts.lock);
-
-    var prev = doc.activeElement;
     root.innerHTML = [
       '<div class="cv-scrim"></div>',
       '<div class="cv-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">',
-        '<div class="cv-modal-header">',
-          '<div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
-          '<button class="cv-modal-close" aria-label="Close">×</button>',
-        '</div>',
+        '<div class="cv-modal-header"><div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
+          '<button class="cv-modal-close" aria-label="Close">×</button></div>',
         '<div class="cv-modal-body">',bodyHTML,'</div>',
-        '<div class="cv-modal-footer">',
-          '<button class="cv-btn cv-btn-primary" data-btn="primary">',primaryText,'</button>',
-        '</div>',
+        '<div class="cv-modal-footer"><button class="cv-btn cv-btn-primary" data-btn="primary">Close</button></div>',
       '</div>'
     ].join('');
 
-    function close(){
-      root.classList.remove('is-open');
-      root.innerHTML = '';
-      doc.body.classList.remove('cv-modal-open');
-      doc.removeEventListener('keydown', onKey);
-      if (prev && prev.focus) { try { prev.focus(); } catch(e){} }
-    }
-    function onKey(e){
-      if (e.key === 'Escape' && !lock){ e.preventDefault(); close(); }
-      if (e.key === 'Tab'){
-        var dialog = root.querySelector('.cv-dialog');
-        if (!dialog) return;
-        var focusables = dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
-        if (!focusables.length) return;
-        var first = focusables[0], last = focusables[focusables.length-1];
-        if (e.shiftKey && doc.activeElement === first){ e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && doc.activeElement === last){ e.preventDefault(); first.focus(); }
-      }
-    }
-
-    var dialog = root.querySelector('.cv-dialog');
-    var scrim  = root.querySelector('.cv-scrim');
-    var xBtn   = root.querySelector('.cv-modal-close');
-    var primary = root.querySelector('[data-btn="primary"]');
-
-    if (!lock){ scrim.addEventListener('click', close); xBtn.addEventListener('click', close); }
-    if (primary) primary.addEventListener('click', close);
-
-    root.classList.add('is-open');
-    doc.body.classList.add('cv-modal-open');
-    doc.addEventListener('keydown', onKey);
-    (primary || xBtn).focus();
+    function close(){ root.classList.remove('is-open'); root.innerHTML=''; document.body.classList.remove('cv-modal-open'); }
+    root.querySelector('.cv-scrim').addEventListener('click', close);
+    root.querySelector('.cv-modal-close').addEventListener('click', close);
+    root.querySelector('[data-btn="primary"]').addEventListener('click', close);
+    root.classList.add('is-open'); document.body.classList.add('cv-modal-open');
   }
 
-  // canned A/B sets; outbound fixed to 5/22
+  // ----- canned stats -----
   var CV_STATS_SETS = {
-    A: { metrics: { callCenterCallsToday:10, callCenterTalkTime:13, callCenterAvgTalk:'1:23',
-                    inboundCallsToday:10, inboundTalkTime:14, inboundAvgTalk:'1:23',
-                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
+    A: { metrics:{callCenterCallsToday:10,callCenterTalkTime:13,callCenterAvgTalk:'1:23',inboundCallsToday:10,inboundTalkTime:14,inboundAvgTalk:'1:23',outboundCallsToday:5,outboundTalkTime:22,outboundAvgTalk:'4:24',avgACW:'0.0'},
          perHour:[4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
-         perDay:[27,38,30,24,27,29,28,47,29,42],
-         pie:{ pct1:100, pct2:0 } },
-    B: { metrics: { callCenterCallsToday:14, callCenterTalkTime:24, callCenterAvgTalk:'1:46',
-                    inboundCallsToday:16, inboundTalkTime:29, inboundAvgTalk:'1:45',
-                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
+         perDay:[27,38,30,24,27,29,28,47,29,42], pie:{pct1:100,pct2:0} },
+    B: { metrics:{callCenterCallsToday:14,callCenterTalkTime:24,callCenterAvgTalk:'1:46',inboundCallsToday:16,inboundTalkTime:29,inboundAvgTalk:'1:45',outboundCallsToday:5,outboundTalkTime:22,outboundAvgTalk:'4:24',avgACW:'0.0'},
          perHour:[1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
-         perDay:[36,65,39,44,46,27,30,48,50,43],
-         pie:{ pct1:88.9, pct2:11.1 } }
+         perDay:[36,65,39,44,46,27,30,48,50,43], pie:{pct1:88.9,pct2:11.1} }
   };
-
-  function cvBarSVG(values, max, width, height, barGapPx){
+  function barSVG(values, max, w, h, gap){
     max = max || Math.max(1, Math.max.apply(null, values));
-    var n = values.length, barW = Math.floor((width - (n+1)*barGapPx) / n);
-    var x = barGapPx, h = height;
-    var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'];
-    for (var i=0;i<n;i++){
-      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
-      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
-      x += barW + barGapPx;
-    }
-    parts.push('</svg>');
-    return parts.join('');
+    var n=values.length, bw=Math.floor((w-(n+1)*gap)/n), x=gap, out=['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
+    for (var i=0;i<n;i++){ var v=values[i], bh=Math.round((v/max)*h), y=h-bh; out.push('<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>'); x+=bw+gap; }
+    out.push('</svg>'); return out.join('');
   }
-  function cvPieHTML(pct1, size){
-    pct1 = Math.max(0, Math.min(100, pct1));
-    var deg1 = (pct1/100)*360;
-    return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg1+'deg;"></div>';
-  }
-  function buildStatsModalHTML(doc, agentName, ext, data){
-    var m = data.metrics;
-    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6);
-    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8);
-    var pie  = cvPieHTML(data.pie.pct1, 220);
-
+  function pieHTML(pct,size){ var deg=(Math.max(0,Math.min(100,pct))/100)*360; return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>'; }
+  function buildStatsHTML(doc, name, ext, data){
+    var m=data.metrics, b1=barSVG(data.perHour,10,460,160,6), b2=barSVG(data.perDay,80,460,180,8), p=pieHTML(data.pie.pct1,220);
     return [
       '<div class="cv-stats-wrap">',
-        '<div class="cv-stats-head"><div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div></div>',
-        '<div>',
-          '<ul class="cv-stats-list">',
-            '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
-            '<li><span class="cv-stats-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
-            '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
-          '</ul>',
-        '</div>',
-        '<div class="cv-chart"><h5>My Calls Per Hour (last 24 hours)</h5>',bar1,'</div>',
-        '<div class="cv-chart"><h5>My Calls Per Day (last 10 days)</h5>',bar2,'</div>',
-        '<div class="cv-chart"><h5>Calls by Origination Source (last 24 hours)</h5>',pie,
-          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'+
-            data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
-        '</div>',
+        '<div class="cv-stats-head"><div class="cv-stats-title">Statistics for ',name,' (',ext,')</div></div>',
+        '<div><ul class="cv-stats-list">',
+          '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
+          '<li><span class="cv-stats-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
+          '<li><span class="cv-stats-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
+          '<li><span class="cv-stats-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
+          '<li><span class="cv-stats-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
+          '<li><span class="cv-stats-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
+          '<li><span class="cv-stats-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
+          '<li><span class="cv-stats-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
+          '<li><span class="cv-stats-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
+          '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
+        '</ul></div>',
+        '<div class="cv-chart"><h5>My Calls Per Hour (last 24 hours)</h5>',b1,'</div>',
+        '<div class="cv-chart"><h5>My Calls Per Day (last 10 days)</h5>',b2,'</div>',
+        '<div class="cv-chart"><h5>Calls by Origination Source (last 24 hours)</h5>',p,(data.pie.pct2?'<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'+data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>':''),'</div>',
       '</div>'
     ].join('');
   }
-
-  function openStatsForRow(doc, row){
+  function openStatsForRow(doc,row){
     if (!row) return;
-    var nameEl = row.querySelector('.cv-name');
-    var name = nameEl ? nameEl.textContent.trim() : 'Agent';
-    var ext = (row.getAttribute('data-ext') || '').replace(/[^\d]/g,'');
-    if (!ext) {
-      // fallback: parse from text "Ext 200 (Name)"
-      var m = name && name.match(/Ext\s+(\d{2,6})/i);
-      ext = m ? m[1] : '200';
-    }
-    // parity split: ODD -> A, EVEN -> B
-    var n = parseInt(ext,10);
-    var variant = (isFinite(n) && n % 2 === 0) ? 'B' : 'A';
-    var data = CV_STATS_SETS[variant];
-
-    openStatsModal(doc, {
-      title: '',
-      bodyHTML: buildStatsModalHTML(doc, name, ext, data),
-      primaryText: 'Close'
-    });
+    var name = (row.querySelector('.cv-name')||{}).textContent || 'Agent';
+    var ext  = (row.getAttribute('data-ext')||'').replace(/[^\d]/g,'') || (name.match(/Ext\s+(\d{2,6})/i)||[])[1] || '200';
+    var v = (parseInt(ext,10)%2===0) ? 'B' : 'A';
+    openStatsModal(doc, { title:'', bodyHTML: buildStatsHTML(doc,name,ext,CV_STATS_SETS[v]) });
   }
 
-  // ===== inject/remove =====
+  // ---------- inject/remove ----------
   function inject(){
     var bits = findBits(); if (!bits) return;
     var doc = bits.doc, table = bits.table, container = bits.container;
-    if (doc.getElementById(PANEL_ID)) { startLunchTicker(doc); return; }
+    if (doc.getElementById(PANEL_ID)) return;
 
     ensureStyles(doc);
 
-    if (table && table.style){
-      table.setAttribute('data-cv-hidden','1');
-      table.style.display = 'none';
-    }
-
+    if (table && table.style){ table.setAttribute('data-cv-hidden','1'); table.style.display='none'; }
     var panel = buildPanel(doc);
-    if (container && container.insertBefore){
-      container.insertBefore(panel, table || null);
-    } else {
-      (doc.body || doc.documentElement).appendChild(panel);
-    }
+    if (container && container.insertBefore){ container.insertBefore(panel, table || null); }
+    else { (doc.body||doc.documentElement).appendChild(panel); }
 
-    // wire Stats clicks once per document
+    // single delegated click
     if (!doc.__cvAgentsStatsWired){
       doc.addEventListener('click', function(e){
-        var root = doc.getElementById(PANEL_ID);
-        if (!root) return;
         var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
         if (!btn) return;
-        var row = btn.closest('.cv-row');
-        openStatsForRow(doc, row);
-      }, true);
-      doc.addEventListener('keydown', function(e){
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        var root = doc.getElementById(PANEL_ID);
-        if (!root) return;
-        var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
-        if (!btn) return;
-        e.preventDefault();
-        var row = btn.closest('.cv-row');
-        openStatsForRow(doc, row);
+        openStatsForRow(doc, btn.closest('.cv-row'));
       }, true);
       doc.__cvAgentsStatsWired = true;
     }
-
-    startLunchTicker(doc);
   }
-
   function remove(){
     var docs = getDocs();
     for (var i=0;i<docs.length;i++){
       var doc = docs[i];
-      var p = doc.getElementById(PANEL_ID);
-      if (p) p.remove();
+      var p = doc.getElementById(PANEL_ID); if (p) p.remove();
       var t = doc.querySelector(NATIVE_TABLE_SEL+'[data-cv-hidden="1"]');
       if (t){ t.style.display=''; t.removeAttribute('data-cv-hidden'); }
-      stopLunchTicker(doc);
     }
   }
-
   function waitAndInject(tries){
-    tries = tries || 0;
-    if (!AGENTS_REGEX.test(location.href)) return;
-    var bits = findBits();
-    if (bits){ inject(); return; }
-    if (tries >= 25) return;
-    setTimeout(function(){ waitAndInject(tries+1); }, 250);
+    tries=tries||0; if (!AGENTS_REGEX.test(location.href)) return;
+    var bits = findBits(); if (bits){ inject(); return; }
+    if (tries>=25) return; setTimeout(function(){ waitAndInject(tries+1); }, 250);
   }
-
   (function watch(){
-    var last = location.href;
-    var push = history.pushState, rep = history.replaceState;
-
-    function route(prev, next){
-      var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
-      if (!was && is) waitAndInject(0);
-      if ( was && !is) remove();
-    }
-
-    history.pushState = function(){
-      var prev=last; var r=push.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
-    };
-    history.replaceState = function(){
-      var prev=last; var r=rep.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
-    };
-    new MutationObserver(function(){ if(location.href!==last){ var prev=last, now=location.href; last=now; route(prev,now);} })
-      .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',function(){ var prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now);} });
-
+    var last = location.href, push=history.pushState, rep=history.replaceState;
+    function route(prev,next){ var was=AGENTS_REGEX.test(prev), is=AGENTS_REGEX.test(next); if(!was&&is) waitAndInject(0); if(was&&!is) remove(); }
+    history.pushState=function(){ var p=last; var r=push.apply(this,arguments); var n=location.href; last=n; route(p,n); return r; };
+    history.replaceState=function(){ var p=last; var r=rep.apply(this,arguments); var n=location.href; last=n; route(p,n); return r; };
+    new MutationObserver(function(){ if(location.href!==last){ var p=last,n=location.href; last=n; route(p,n);} }).observe(document.documentElement,{childList:true,subtree:true});
+    window.addEventListener('popstate',function(){ var p=last,n=location.href; if(n!==p){ last=n; route(p,n);} });
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
