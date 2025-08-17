@@ -1432,122 +1432,54 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
-  // ===== lunch ticker (kept; no one has lunch right now) =====
-  function startLunchTicker(doc){
-    if (!doc) return;
-    if (doc.__cvAgentsLunchTicker) { try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){} }
-    function tick(){
-      var list = doc.querySelectorAll('#'+PANEL_ID+' .cv-sub-time');
-      for (var i=0;i<list.length;i++){
-        var el = list[i];
-        var st = parseInt(el.getAttribute('data-cv-lunch-start'), 10);
-        if (!isFinite(st)) {
-          st = Date.now();
-          el.setAttribute('data-cv-lunch-start', String(st));
-        }
-        var secs = ((Date.now() - st)/1000) | 0;
-        var txt = mmss(secs);
-        if (el.textContent !== txt) el.textContent = txt;
-      }
-    }
-    tick();
-    doc.__cvAgentsLunchTicker = setInterval(tick, 1000);
-  }
-  function stopLunchTicker(doc){
-    if (doc && doc.__cvAgentsLunchTicker){
-      try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){}
-      doc.__cvAgentsLunchTicker = null;
-    }
-  }
-
-  // ===== Stats modal (self-contained) =====
-  function ensureModalHost(doc){
-    if (doc.getElementById('cv-modal-root')) return;
-    var root = doc.createElement('div');
-    root.id = 'cv-modal-root';
-    (doc.body || doc.documentElement).appendChild(root);
-  }
-  function openStatsModal(doc, opts){
-    ensureModalHost(doc);
-    var root = doc.getElementById('cv-modal-root');
-    var title = (opts && opts.title) || '';
-    var bodyHTML = (opts && opts.bodyHTML) || '';
-    var primaryText = (opts && opts.primaryText) || 'Close';
-    var lock = !!(opts && opts.lock);
-
-    var prev = doc.activeElement;
-    root.innerHTML = [
-      '<div class="cv-scrim"></div>',
-      '<div class="cv-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">',
-        '<div class="cv-modal-header">',
-          '<div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
-          '<button class="cv-modal-close" aria-label="Close">×</button>',
-        '</div>',
-        '<div class="cv-modal-body">',bodyHTML,'</div>',
-        '<div class="cv-modal-footer">',
-          '<button class="cv-btn cv-btn-primary" data-btn="primary">',primaryText,'</button>',
-        '</div>',
-      '</div>'
-    ].join('');
-
-    function close(){
-      root.classList.remove('is-open');
-      root.innerHTML = '';
-      doc.body.classList.remove('cv-modal-open');
-      doc.removeEventListener('keydown', onKey);
-      if (prev && prev.focus) { try { prev.focus(); } catch(e){} }
-    }
-    function onKey(e){
-      if (e.key === 'Escape' && !lock){ e.preventDefault(); close(); }
-      if (e.key === 'Tab'){
-        var dialog = root.querySelector('.cv-dialog');
-        if (!dialog) return;
-        var focusables = dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
-        if (!focusables.length) return;
-        var first = focusables[0], last = focusables[focusables.length-1];
-        if (e.shiftKey && doc.activeElement === first){ e.preventDefault(); last.focus(); }
-        else if (!e.shiftKey && doc.activeElement === last){ e.preventDefault(); first.focus(); }
-      }
-    }
-
-    var dialog = root.querySelector('.cv-dialog');
-    var scrim  = root.querySelector('.cv-scrim');
-    var xBtn   = root.querySelector('.cv-modal-close');
-    var primary = root.querySelector('[data-btn="primary"]');
-
-    if (!lock){ scrim.addEventListener('click', close); xBtn.addEventListener('click', close); }
-    if (primary) primary.addEventListener('click', close);
-
-    root.classList.add('is-open');
-    doc.body.classList.add('cv-modal-open');
-    doc.addEventListener('keydown', onKey);
-    (primary || xBtn).focus();
-  }
-
-  // canned A/B sets; outbound fixed to 5/22
+   /* ---------- canned stats (A/B) ---------- */
   var CV_STATS_SETS = {
-    A: { metrics: { callCenterCallsToday:10, callCenterTalkTime:13, callCenterAvgTalk:'1:23',
-                    inboundCallsToday:10, inboundTalkTime:14, inboundAvgTalk:'1:23',
-                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
-         perHour:[4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
-         perDay:[27,38,30,24,27,29,28,47,29,42],
-         pie:{ pct1:100, pct2:0 } },
-    B: { metrics: { callCenterCallsToday:14, callCenterTalkTime:24, callCenterAvgTalk:'1:46',
-                    inboundCallsToday:16, inboundTalkTime:29, inboundAvgTalk:'1:45',
-                    outboundCallsToday:5, outboundTalkTime:22, outboundAvgTalk:'4:24', avgACW:'0.0' },
-         perHour:[1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
-         perDay:[36,65,39,44,46,27,30,48,50,43],
-         pie:{ pct1:88.9, pct2:11.1 } }
+    A: {
+      metrics: {
+        callCenterCallsToday: 10,
+        callCenterTalkTime: 13,
+        callCenterAvgTalk: '1:23',
+        inboundCallsToday: 10,
+        inboundTalkTime: 14,
+        inboundAvgTalk: '1:23',
+        outboundCallsToday: 5,
+        outboundTalkTime: 22,
+        outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
+      perDay:  [27,38,30,24,27,29,28,47,29,42],
+      pie:     { pct1: 100, pct2: 0 }
+    },
+    B: {
+      metrics: {
+        callCenterCallsToday: 14,
+        callCenterTalkTime: 24,
+        callCenterAvgTalk: '1:46',
+        inboundCallsToday: 16,
+        inboundTalkTime: 29,
+        inboundAvgTalk: '1:45',
+        outboundCallsToday: 5,
+        outboundTalkTime: 22,
+        outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
+      perDay:  [36,65,39,44,46,27,30,48,50,43],
+      pie:     { pct1: 88.9, pct2: 11.1 }
+    }
   };
+  function cvChooseStatsSet(rowIndex){ return (rowIndex % 2 === 0) ? 'A' : 'B'; }
 
-  function cvBarSVG(values, max, width, height, barGapPx){
+  /* ---------- tiny chart renderers ---------- */
+  function cvBarSVG(values, max, width, height, barGapPx, color){
     max = max || Math.max(1, Math.max.apply(null, values));
     var n = values.length, barW = Math.floor((width - (n+1)*barGapPx) / n);
     var x = barGapPx, h = height;
     var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'];
     for (var i=0;i<n;i++){
       var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
-      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
+      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"/>');
       x += barW + barGapPx;
     }
     parts.push('</svg>');
@@ -1558,15 +1490,20 @@ if (!window.__cvAgentsPanelInit) {
     var deg1 = (pct1/100)*360;
     return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg1+'deg;"></div>';
   }
+
+  /* ---------- modal body builder ---------- */
   function buildStatsModalHTML(doc, agentName, ext, data){
     var m = data.metrics;
-    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6);
-    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8);
+    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6, '#e57027');
+    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8, '#e57027');
     var pie  = cvPieHTML(data.pie.pct1, 220);
 
     return [
       '<div class="cv-stats-wrap">',
-        '<div class="cv-stats-head"><div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div></div>',
+        '<div class="cv-stats-head">',
+          '<div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div>',
+        '</div>',
+
         '<div>',
           '<ul class="cv-stats-list">',
             '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
@@ -1581,83 +1518,153 @@ if (!window.__cvAgentsPanelInit) {
             '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
           '</ul>',
         '</div>',
-        '<div class="cv-chart"><h5>My Calls Per Hour (last 24 hours)</h5>',bar1,'</div>',
-        '<div class="cv-chart"><h5>My Calls Per Day (last 10 days)</h5>',bar2,'</div>',
-        '<div class="cv-chart"><h5>Calls by Origination Source (last 24 hours)</h5>',pie,
-          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'+
-            data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
+
+        '<div class="cv-chart">',
+          '<h5>My Calls Per Hour (last 24 hours)</h5>',
+          bar1,
+        '</div>',
+
+        '<div class="cv-chart">',
+          '<h5>My Calls Per Day (last 10 days)</h5>',
+          bar2,
+        '</div>',
+
+        '<div class="cv-chart">',
+          '<h5>Calls by Origination Source (last 24 hours)</h5>',
+          pie,
+          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'
+          + data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
         '</div>',
       '</div>'
     ].join('');
   }
 
-  function openStatsForRow(doc, row){
+  /* ---------- event wiring (delegated) ---------- */
+  function onStatsClick(e){
+    var tool = e.target.closest && e.target.closest('.cv-tool[data-tool="stats"]');
+    if (!tool) return;
+
+    var row = tool.closest('.cv-row');
     if (!row) return;
+
     var nameEl = row.querySelector('.cv-name');
-    var name = nameEl ? nameEl.textContent.trim() : 'Agent';
-    var ext = (row.getAttribute('data-ext') || '').replace(/[^\d]/g,'');
-    if (!ext) {
-      // fallback: parse from text "Ext 200 (Name)"
-      var m = name && name.match(/Ext\s+(\d{2,6})/i);
-      ext = m ? m[1] : '200';
-    }
-    // parity split: ODD -> A, EVEN -> B
-    var n = parseInt(ext,10);
-    var variant = (isFinite(n) && n % 2 === 0) ? 'B' : 'A';
+    var name = (nameEl && nameEl.textContent) ? nameEl.textContent.trim() : 'Agent';
+
+    // Determine row index for deterministic A/B set
+    var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
+    var rowIndex = Math.max(0, allRows.indexOf(row));
+    var variant = cvChooseStatsSet(rowIndex);
     var data = CV_STATS_SETS[variant];
 
-    openStatsModal(doc, {
-      title: '',
-      bodyHTML: buildStatsModalHTML(doc, name, ext, data),
-      primaryText: 'Close'
+    // Extension (from data-ext or a generated one)
+    var ext = (row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (rowIndex + 1));
+
+    openModal(document, {
+      title: '', // title rendered in body (to mimic portal look)
+      bodyHTML: buildStatsModalHTML(document, name, ext, data),
+      primaryText: 'Close',
+      secondaryText: ''
     });
   }
 
-  // ===== inject/remove =====
-  function inject(){
-    var bits = findBits(); if (!bits) return;
-    var doc = bits.doc, table = bits.table, container = bits.container;
-    if (doc.getElementById(PANEL_ID)) { startLunchTicker(doc); return; }
+  // Global delegated listener so it survives re-injection
+  document.addEventListener('click', onStatsClick, true);
+})();
 
-    ensureStyles(doc);
-
-    if (table && table.style){
-      table.setAttribute('data-cv-hidden','1');
-      table.style.display = 'none';
-    }
-
-    var panel = buildPanel(doc);
-    if (container && container.insertBefore){
-      container.insertBefore(panel, table || null);
-    } else {
-      (doc.body || doc.documentElement).appendChild(panel);
-    }
-
-    // wire Stats clicks once per document
-    if (!doc.__cvAgentsStatsWired){
-      doc.addEventListener('click', function(e){
-        var root = doc.getElementById(PANEL_ID);
-        if (!root) return;
-        var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
-        if (!btn) return;
-        var row = btn.closest('.cv-row');
-        openStatsForRow(doc, row);
-      }, true);
-      doc.addEventListener('keydown', function(e){
-        if (e.key !== 'Enter' && e.key !== ' ') return;
-        var root = doc.getElementById(PANEL_ID);
-        if (!root) return;
-        var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tool-stats, #'+PANEL_ID+' [data-tool="stats"]');
-        if (!btn) return;
-        e.preventDefault();
-        var row = btn.closest('.cv-row');
-        openStatsForRow(doc, row);
-      }, true);
-      doc.__cvAgentsStatsWired = true;
-    }
-
-    startLunchTicker(doc);
+/* ================================
+   WIRE STATS ICON (.cv-tool-stats)
+   ================================ */
+(function(){
+  // tag any stats icons we injected that don't have a data attribute yet
+  function tagStatsIcons(doc){
+    var root = doc || document;
+    root.querySelectorAll('.cv-tool-stats:not([data-tool])').forEach(function(el){
+      el.setAttribute('data-tool','stats');
+      el.setAttribute('role','button');
+      el.setAttribute('tabindex','0');
+      if (!el.getAttribute('title')) el.setAttribute('title','Stats');
+      if (!el.getAttribute('aria-label')) el.setAttribute('aria-label','Stats');
+    });
   }
+
+  // run once now
+  tagStatsIcons(document);
+
+  // keep tagging if the panel re-renders
+  new MutationObserver(function(){
+    tagStatsIcons(document);
+  }).observe(document.documentElement, {childList:true, subtree:true});
+
+  // open the stats modal when our icon is clicked (or activated by keyboard)
+  // === REPLACE your current openStatsForRow with this ===
+function openStatsForRow(row){
+  if (!row || typeof buildStatsModalHTML !== 'function' || typeof openModal !== 'function') return;
+
+  // name
+  var nameEl = row.querySelector('.cv-name');
+  var name = nameEl ? nameEl.textContent.trim() : 'Agent';
+
+  // stable row index (only used for fallback + default ext)
+  var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
+  var idx = Math.max(0, allRows.indexOf(row));
+
+  // --- get extension as a string, with robust parsing ---
+  function getExt(){
+    // 1) explicit data-ext wins
+    if (row.dataset && row.dataset.ext && /\d/.test(row.dataset.ext)) return String(row.dataset.ext);
+
+    // 2) try to parse digits from the row text: "(201)" or "ext 201"
+    var text = nameEl ? nameEl.textContent : '';
+    var m = text && (text.match(/\((?:ext\.?\s*)?(\d{2,6})\)/i) || text.match(/(?:ext\.?\s*)(\d{2,6})/i));
+    if (m) return m[1];
+
+    // 3) fallback: deterministic synthetic ext
+    return String(200 + (idx + 1));
+  }
+
+  var ext = getExt();
+  // keep it around for future reads
+  if (row.dataset) row.dataset.ext = ext;
+
+  // --- choose stats variant by extension parity ---
+  var n = parseInt(ext.replace(/[^\d]/g,''), 10);
+  var variant;
+  if (isFinite(n)) {
+    // ODD -> A, EVEN -> B
+    variant = (n % 2 === 0) ? 'B' : 'A';
+  } else {
+    // fallback to prior behavior if no numeric ext found
+    variant = (typeof cvChooseStatsSet === 'function') ? cvChooseStatsSet(idx) : ((idx % 2 === 0) ? 'A' : 'B');
+  }
+
+  var data = (typeof CV_STATS_SETS !== 'undefined') ? CV_STATS_SETS[variant] : null;
+  if (!data) return;
+
+  openModal(document, {
+    title: '', // we render the portal-style title inside the body
+    bodyHTML: buildStatsModalHTML(document, name, ext, data),
+    primaryText: 'Close',
+    secondaryText: ''
+  });
+}
+
+  // delegated click (and keyboard) handler for our injected icon
+  document.addEventListener('click', function(e){
+    var btn = e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+    if (!btn) return;
+    var row = btn.closest('.cv-row');
+    openStatsForRow(row);
+  }, true);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key !== 'Enter' && e.key !== ' ') return;
+    var btn = e.target.closest && e.target.closest('.cv-tool-stats, [data-tool="stats"]');
+    if (!btn) return;
+    e.preventDefault();
+    var row = btn.closest('.cv-row');
+    openStatsForRow(row);
+  }, true);
+})();
 
   function remove(){
     var docs = getDocs();
@@ -1703,3 +1710,4 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+
