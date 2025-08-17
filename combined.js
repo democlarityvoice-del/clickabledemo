@@ -1509,15 +1509,15 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 
-/* ===== Agents Stats Modal — APPEND-ONLY (with bar value labels) ===== */
+/* ===== Agents Stats Modal — APPEND-ONLY (axes, ticks, donut) ===== */
 (function(){
-  if (window.__cvAgentsStatsAppendOnce_v2) return;
-  window.__cvAgentsStatsAppendOnce_v2 = true;
+  if (window.__cvAgentsStatsAppend_v3) return;
+  window.__cvAgentsStatsAppend_v3 = true;
 
-  // ---------- minimal modal (scoped styles & elements) ----------
   var STYLE_ID = 'cvhf-stats-style';
   var ROOT_ID  = 'cvhf-stats-root';
 
+  // ---------- styles + host ----------
   function ensureModal(doc){
     doc = doc || document;
     if (!doc.getElementById(STYLE_ID)){
@@ -1538,7 +1538,7 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' .cvhf-btn{padding:8px 12px;border-radius:8px;border:1px solid #ddd;background:#fff;font:600 13px/1 Arial;cursor:pointer}',
         '#',ROOT_ID,' .cvhf-btn.primary{background:#167a32;border-color:#167a32;color:#fff}',
 
-        /* layout + simple “chart” look (no axes) */
+        /* layout and “Google-ish” card look */
         '#',ROOT_ID,' .cvhf-wrap{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-width:980px}',
         '#',ROOT_ID,' .cvhf-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px}',
         '#',ROOT_ID,' .cvhf-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0}',
@@ -1547,16 +1547,22 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' .cvhf-num{width:44px;text-align:right;color:#333}',
         '#',ROOT_ID,' .cvhf-card{border:1px solid #eee;border-radius:8px;padding:12px;background:#fff}',
         '#',ROOT_ID,' .cvhf-card h5{margin:0 0 8px;font:600 12px/1.2 Arial;color:#555}',
-        '#',ROOT_ID,' .cvhf-card svg{display:block;margin:10px 8px 14px}',
+        '#',ROOT_ID,' .cvhf-card svg{display:block;margin:0 8px 2px}',
 
-        /* bar value labels */
-        '#',ROOT_ID,' .cvhf-bar-val{font:600 11px/1 Arial;fill:#444;dominant-baseline:ideographic;text-anchor:middle}',
+        /* axis + grid styling */
+        '#',ROOT_ID,' .cvhf-grid{stroke:#e3e3e3;stroke-width:1;shape-rendering:crispEdges}',
+        '#',ROOT_ID,' .cvhf-baseline{stroke:#bdbdbd;stroke-width:1;shape-rendering:crispEdges}',
+        '#',ROOT_ID,' .cvhf-axis-label{font:11px Arial;fill:#666;text-anchor:end}',
 
-        /* solid pie (no donut) with centered % text */
+        /* bars */
+        '#',ROOT_ID,' .cvhf-bar{fill:#e57027}',
+
+        /* donut pie with centered % */
         '#',ROOT_ID,' .cvhf-pie{position:relative;width:var(--size);height:var(--size);margin:8px auto;border-radius:50%;',
           'background:conic-gradient(#2f66d0 var(--deg), #d33 0)}',
+        '#',ROOT_ID,' .cvhf-pie::after{content:"";position:absolute;inset:35px;background:#fff;border-radius:50%}',
         '#',ROOT_ID,' .cvhf-pie::before{content:attr(data-pct) "%";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);',
-          'font:600 12px/1 Arial;color:#fff}'
+          'font:600 12px/1 Arial;color:#444}'
       ].join('');
       (document.head||document.documentElement).appendChild(s);
     }
@@ -1568,7 +1574,6 @@ if (!window.__cvAgentsPanelInit) {
         '<div class="cvhf-ft"><button class="cvhf-btn primary" data-btn="close">Close</button></div>'+
       '</div>';
       (document.body||document.documentElement).appendChild(root);
-
       var close = function(){ root.classList.remove('is-open'); };
       root.querySelector('.cvhf-scrim').addEventListener('click', close);
       root.querySelector('.cvhf-x').addEventListener('click', close);
@@ -1585,30 +1590,40 @@ if (!window.__cvAgentsPanelInit) {
     root.classList.add('is-open');
   }
 
-  // ---------- tiny render helpers (adds numeric labels to bars) ----------
-  function barSVG(values, max, w, h, gap){
-    max = max || Math.max(1, Math.max.apply(null, values));
-    var n  = values.length;
-    var bw = Math.floor((w - (n+1)*gap)/n);
-    var x  = gap;
-    var out = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
-    for (var i=0;i<n;i++){
-      var v  = values[i];
-      var bh = Math.round((v/max)*h);
-      var y  = h - bh;
-      var cx = x + Math.floor(bw/2);
-      var ty = Math.max(12, y - 3); // keep label visible even for tiny bars
+  // ---------- render helpers (axes + ticks like your screenshot) ----------
+  function barSVG(values, axisMax, w, h, gap){
+    var left = 28, right = 6, top = 6, bottom = 18;
+    var cw = w - left - right, ch = h - top - bottom;
+    var n = values.length, bw = Math.max(2, Math.floor((cw - (n+1)*gap)/n));
+    var maxVal = axisMax || Math.max.apply(null, values) || 1;
 
-      // bar rect
-      out.push('<rect x="'+x+'" y="'+y+'" width="'+bw+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"></rect>');
+    // choose 5 ticks (0..max) for the Google-ish look
+    var ticks = 5;
+    var step  = Math.ceil(maxVal / ticks);
+    var ymax  = step * ticks;
+    var scale = ch / ymax;
 
-      // numeric label (hide when v==0)
-      if (v > 0) out.push('<text class="cvhf-bar-val" x="'+cx+'" y="'+ty+'">'+v+'</text>');
+    var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'];
 
+    // grid & labels
+    for (var i=0;i<=ticks;i++){
+      var v = i*step;
+      var y = top + ch - (v*scale);
+      var cls = (i===0) ? 'cvhf-baseline' : 'cvhf-grid';
+      parts.push('<line class="'+cls+'" x1="'+left+'" y1="'+y+'" x2="'+(left+cw)+'" y2="'+y+'"></line>');
+      parts.push('<text class="cvhf-axis-label" x="'+(left-6)+'" y="'+(y+4)+'">'+v+'</text>');
+    }
+
+    // bars
+    var x = left + gap;
+    for (var j=0;j<n;j++){
+      var v = values[j], bh = Math.round(v*scale), yb = top + ch - bh;
+      parts.push('<rect class="cvhf-bar" x="'+x+'" y="'+yb+'" width="'+bw+'" height="'+bh+'"></rect>');
       x += bw + gap;
     }
-    out.push('</svg>');
-    return out.join('');
+
+    parts.push('</svg>');
+    return parts.join('');
   }
 
   function pieHTML(pct,size){
@@ -1617,36 +1632,26 @@ if (!window.__cvAgentsPanelInit) {
     return '<div class="cvhf-pie" data-pct="'+pct.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
   }
 
-  // ---------- canned data (A / B). Both keep 5 outbound calls & 22 talk time ----------
+  // ---------- canned data (A/B). Both keep 5 outbound calls + 22 talk time ----------
   var STATS = {
     A: {
-      metrics: {
-        callCenterCallsToday: 10, callCenterTalkTime: 13, callCenterAvgTalk: '1:23',
-        inboundCallsToday: 10,   inboundTalkTime: 14,   inboundAvgTalk: '1:23',
-        outboundCallsToday: 5,   outboundTalkTime: 22,  outboundAvgTalk: '4:24',
-        avgACW: '0.0'
-      },
-      perHour: [4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
-      perDay:  [27,38,30,24,27,29,28,47,29,42],
-      piePct:  100
+      metrics:{callCenterCallsToday:10,callCenterTalkTime:13,callCenterAvgTalk:'1:23',inboundCallsToday:10,inboundTalkTime:14,inboundAvgTalk:'1:23',outboundCallsToday:5,outboundTalkTime:22,outboundAvgTalk:'4:24',avgACW:'0.0'},
+      perHour:[4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
+      perDay:[27,38,30,24,27,29,28,47,29,42],
+      piePct:100
     },
     B: {
-      metrics: {
-        callCenterCallsToday: 14, callCenterTalkTime: 24, callCenterAvgTalk: '1:46',
-        inboundCallsToday: 16,   inboundTalkTime: 29,   inboundAvgTalk: '1:45',
-        outboundCallsToday: 5,   outboundTalkTime: 22,  outboundAvgTalk: '4:24',
-        avgACW: '0.0'
-      },
-      perHour: [1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
-      perDay:  [36,65,39,44,46,27,30,48,50,43],
-      piePct:  88.9
+      metrics:{callCenterCallsToday:14,callCenterTalkTime:24,callCenterAvgTalk:'1:46',inboundCallsToday:16,inboundTalkTime:29,inboundAvgTalk:'1:45',outboundCallsToday:5,outboundTalkTime:22,outboundAvgTalk:'4:24',avgACW:'0.0'},
+      perHour:[1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
+      perDay:[36,65,39,44,46,27,30,48,50,43],
+      piePct:88.9
     }
   };
 
   function buildBody(agentName, ext, data){
     var m  = data.metrics;
-    var b1 = barSVG(data.perHour, 10, 460, 160, 6); // bars now show numeric values
-    var b2 = barSVG(data.perDay,  80, 460, 180, 8);
+    var b1 = barSVG(data.perHour, 5, 460, 160, 6);  // 0..5 axis
+    var b2 = barSVG(data.perDay,  40, 460, 180, 8); // 0..40 axis like your ref
     var pie= pieHTML(data.piePct, 220);
     return [
       '<div class="cvhf-wrap">',
@@ -1670,22 +1675,17 @@ if (!window.__cvAgentsPanelInit) {
     ].join('');
   }
 
-  // ---------- delegated click handler (Agents panel ONLY) ----------
+  // ---------- click wiring (Agents panel ONLY) ----------
   document.addEventListener('click', function(e){
-    var root = document.getElementById('cv-agents-panel');
-    if (!root) return;
-
+    var root = document.getElementById('cv-agents-panel'); if (!root) return;
     var btn = e.target && e.target.closest &&
       e.target.closest('#cv-agents-panel .cv-tool[title="Stats"], #cv-agents-panel .cv-tool-stats, #cv-agents-panel [data-tool="stats"]');
-
     if (!btn || !root.contains(btn)) return;
 
     var row = btn.closest('.cv-row'); if (!row) return;
     var label = (row.querySelector('.cv-name') && row.querySelector('.cv-name').textContent) || '';
-
     var extMatch  = label.match(/Ext\.?\s*(\d{2,6})/i);
     var nameMatch = label.match(/\(([^)]+)\)/);
-
     var ext       = (extMatch && extMatch[1]) || '200';
     var agentName = (nameMatch && nameMatch[1]) || 'Agent';
 
