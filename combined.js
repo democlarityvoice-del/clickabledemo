@@ -1212,43 +1212,41 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
-<script>
 
 
-
+// ==============================
 // ==============================
 // Clarity Voice Agents Panel Inject (CALL CENTER MANAGER)
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
 
-  // --- Routes / selectors ---
   const AGENTS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  const NATIVE_TABLE_SEL = '#agents-table';              // the slow-loading table
-  const CONTAINER_FALLBACK_SEL = '.table-container';     // we insert just above the table
+  const NATIVE_TABLE_SEL = '#agents-table';
+  const CONTAINER_FALLBACK_SEL = '.table-container';
   const PANEL_ID = 'cv-agents-panel';
   const PANEL_STYLE_ID = 'cv-agents-style';
 
-  // --- Icons (hosted) ---
-  const ICON_USER     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-  const ICON_PHONE    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
-  const ICON_STATS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
-  const ICON_QUEUES   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-  const ICON_LISTEN   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  // Hosted icons
+  const ICON_USER   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+  const ICON_PHONE  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/office-phone-svgrepo-com.svg';
+  const ICON_STATS  = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+  const ICON_QUEUES = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  const ICON_LISTEN = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
-  // --- Demo agents (extensions + who’s at lunch) ---
+  // Demo agents
   const AGENTS = [
-    { name: 'Mike Johnson',       ext: 200, online: true  },
-    { name: 'Cathy Thomas',       ext: 201, online: true  },
-    { name: 'Jake Lee',           ext: 202, online: false },
-    { name: 'Bob Andersen',       ext: 203, online: false, lunch: true }, // lunch w/ timer
-    { name: 'Brittany Lawrence',  ext: 204, online: false },
-    { name: 'Alex Roberts',       ext: 205, online: true  },
-    { name: 'Mark Sanchez',       ext: 206, online: true  },
-    { name: 'John Smith',         ext: 207, online: true  },
+    { name: 'Mike Johnson',      ext: 200, online: true  },
+    { name: 'Cathy Thomas',      ext: 201, online: true  },
+    { name: 'Jake Lee',          ext: 202, online: false },
+    { name: 'Bob Andersen',      ext: 203, online: false, lunch: true }, // lunch/timer
+    { name: 'Brittany Lawrence', ext: 204, online: false },
+    { name: 'Alex Roberts',      ext: 205, online: true  },
+    { name: 'Mark Sanchez',      ext: 206, online: true  },
+    { name: 'John Smith',        ext: 207, online: true  },
   ];
 
-  // --- Utils ---
+  // Utilities
   const getDocs = () => {
     const docs = [document];
     document.querySelectorAll('iframe').forEach(ifr => {
@@ -1274,7 +1272,6 @@ if (!window.__cvAgentsPanelInit) {
   const pad2 = n => String(n).padStart(2,'0');
   const mmss = secs => `${Math.floor(secs/60)}:${pad2(secs%60)}`;
 
-  // --- Styles (mask coloring so icons can be tinted) ---
   function ensureStyles(doc){
     if (doc.getElementById(PANEL_STYLE_ID)) return;
     const css = `
@@ -1283,14 +1280,12 @@ if (!window.__cvAgentsPanelInit) {
 #${PANEL_ID} .cv-row:last-child{border-bottom:none;}
 #${PANEL_ID} .cv-left{display:flex;align-items:center;gap:10px;min-width:0;}
 #${PANEL_ID} .cv-label{font:600 14px/1.2 Arial, sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-/* status glyph via mask so we can color */
 #${PANEL_ID} .cv-glyph{width:16px;height:16px;display:inline-block;background:#22c55e;border-radius:2px;flex:0 0 16px;}
 #${PANEL_ID} .mask-phone{ -webkit-mask:url(${ICON_PHONE}) center / contain no-repeat; mask:url(${ICON_PHONE}) center / contain no-repeat; }
 #${PANEL_ID} .mask-user { -webkit-mask:url(${ICON_USER})  center / contain no-repeat; mask:url(${ICON_USER})  center / contain no-repeat; }
 #${PANEL_ID} .is-offline .cv-glyph{background:#9ca3af;}
 #${PANEL_ID} .cv-badge{font:600 12px/1 Arial;padding:4px 8px;border-radius:999px;background:#fde68a;color:#7c5c13;margin-left:4px;}
 #${PANEL_ID} .cv-badge .cv-t{font-weight:600;}
-/* hover tools */
 #${PANEL_ID} .cv-tools{display:flex;align-items:center;gap:10px;opacity:0;visibility:hidden;transition:opacity .15s;}
 #${PANEL_ID} .cv-row:hover .cv-tools{opacity:1;visibility:visible;}
 #${PANEL_ID} .cv-tool{width:16px;height:16px;opacity:.6;cursor:pointer;display:inline-block}
@@ -1303,7 +1298,6 @@ if (!window.__cvAgentsPanelInit) {
     (doc.head || doc.documentElement).appendChild(s);
   }
 
-  // --- Build panel HTML ---
   function buildPanel(doc){
     const panel = doc.createElement('div');
     panel.id = PANEL_ID;
@@ -1350,7 +1344,6 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
-  // --- Inject once native table is present ---
   function injectAgentsPanel(){
     const found = findAgentsBits();
     if (!found) return;
@@ -1359,15 +1352,12 @@ if (!window.__cvAgentsPanelInit) {
 
     ensureStyles(doc);
 
-    // hide native table (non-destructive)
     table.setAttribute('data-cv-hidden','1');
     table.style.display = 'none';
 
-    // insert our panel just above the native table so header/search remain
     const panel = buildPanel(doc);
     container.insertBefore(panel, table);
 
-    // lunch timer tick
     if (!doc.__cvLunchTick){
       doc.__cvLunchTick = setInterval(() => {
         doc.querySelectorAll('#'+PANEL_ID+' .cv-t').forEach(el => {
@@ -1379,7 +1369,6 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
-  // --- Remove panel / unhide native ---
   function removeAgentsPanel(){
     for (const doc of getDocs()){
       const p = doc.getElementById(PANEL_ID);
@@ -1389,7 +1378,6 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
-  // --- Waiter (handles slow native load) ---
   function waitAndInject(tries=0){
     if (!AGENTS_REGEX.test(location.href)) return;
     const found = findAgentsBits();
@@ -1398,19 +1386,16 @@ if (!window.__cvAgentsPanelInit) {
     setTimeout(() => waitAndInject(tries+1), 300);
   }
 
-  // --- Observe DOM churn in the panel area ---
   function attachObserver(){
     if (document.__cvAgentsMO) return;
     const mo = new MutationObserver(() => {
       if (!AGENTS_REGEX.test(location.href)) return;
-      // If the native table came back (or re-rendered), re-inject
       if (!document.getElementById(PANEL_ID)) waitAndInject(0);
     });
     mo.observe(document.documentElement, { childList:true, subtree:true });
     document.__cvAgentsMO = mo;
   }
 
-  // --- Route watchers like the rest of your file ---
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
@@ -1432,6 +1417,4 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)){ waitAndInject(0); attachObserver(); }
   })();
 }
-</script>
-
 
