@@ -1527,3 +1527,13 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
+/* --- charts micro-fix: center donut + prevent clipping --- */
+(function(){
+  var s = document.createElement('style');
+  s.textContent =
+    '#cv-modal-root .cv-chart{overflow:visible}' +
+    '#cv-modal-root .cv-chart-pie{position:relative;display:block;margin:8px auto}' +
+    '#cv-modal-root .cv-chart-pie::after{content:"";position:absolute;inset:35px;border-radius:50%;background:#fff}';
+  (document.head||document.documentElement).appendChild(s);
+})();
+
