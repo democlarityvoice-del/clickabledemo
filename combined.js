@@ -1527,13 +1527,27 @@ if (!window.__cvAgentsPanelInit) {
     if (AGENTS_REGEX.test(location.href)) waitAndInject(0);
   })();
 }
-/* --- charts micro-fix: center donut + prevent clipping --- */
+// solid pie with centered % label (no donut hole)
+function pieHTML(pct1, size){
+  pct1 = Math.max(0, Math.min(100, pct1));
+  var deg = (pct1/100)*360;
+  // data-pct lets CSS render the number without JS elsewhere
+  return '<div class="cv-chart-pie" data-pct="'+pct1.toFixed(1)+'" style="--size:'+size+'px; --deg:'+deg+'deg;"></div>';
+}
+
+/* charts: flat/sparkline style to match reference */
 (function(){
   var s = document.createElement('style');
   s.textContent =
-    '#cv-modal-root .cv-chart{overflow:visible}' +
-    '#cv-modal-root .cv-chart-pie{position:relative;display:block;margin:8px auto}' +
-    '#cv-modal-root .cv-chart-pie::after{content:"";position:absolute;inset:35px;border-radius:50%;background:#fff}';
+    /* give SVG bars top/bottom margin so the bottom border doesn't look like an axis */
+    '#cv-modal-root .cv-chart svg{display:block;margin:10px 8px 14px;}'+
+    /* solid pie; center % label; no inner hole */
+    '#cv-modal-root .cv-chart{overflow:visible;}'+
+    '#cv-modal-root .cv-chart-pie{position:relative;display:block;width:var(--size);height:var(--size);margin:8px auto;border-radius:50%;'+
+      'background:conic-gradient(#2f66d0 var(--deg), #d33 0);}'+
+    '#cv-modal-root .cv-chart-pie::after{display:none;}'+
+    '#cv-modal-root .cv-chart-pie::before{content:attr(data-pct) \"%\";position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);'+
+      'font:600 12px/1 Arial;color:#fff;}';
   (document.head||document.documentElement).appendChild(s);
 })();
 
