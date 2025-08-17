@@ -1510,3 +1510,256 @@ if (!window.__cvAgentsPanelInit) {
 }
 
 
+/* ===========================
+   STATS MODAL (append-only)
+   =========================== */
+(function(){
+  var MODAL_STYLE_ID = 'CV_MODAL_STYLE';
+  var MODAL_ROOT_ID  = 'cv-modal-root';
+
+  /* ---------- styles ---------- */
+  function ensureModalStyles(doc){
+    if (doc.getElementById(MODAL_STYLE_ID)) return;
+    var s = doc.createElement('style');
+    s.id = MODAL_STYLE_ID;
+    s.textContent = [
+      'body.cv-modal-open{overflow:hidden}',
+      '#',MODAL_ROOT_ID,'{position:fixed;inset:0;z-index:2147483646;pointer-events:none}',
+      '#',MODAL_ROOT_ID,'.is-open{pointer-events:auto}',
+      '#',MODAL_ROOT_ID,' .cv-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35);opacity:0;transition:opacity .18s}',
+      '#',MODAL_ROOT_ID,'.is-open .cv-scrim{opacity:1}',
+      '#',MODAL_ROOT_ID,' .cv-dialog{position:fixed;top:50%;left:50%;transform:translate(-50%,-46%) scale(.98);min-width:360px;max-width:1024px;max-height:80vh;background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);display:flex;flex-direction:column;opacity:0;transition:transform .18s,opacity .18s}',
+      '#',MODAL_ROOT_ID,'.is-open .cv-dialog{opacity:1;transform:translate(-50%,-50%) scale(1)}',
+      '#',MODAL_ROOT_ID,' .cv-modal-header{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #eee}',
+      '#',MODAL_ROOT_ID,' .cv-modal-title{font:600 14px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
+      '#',MODAL_ROOT_ID,' .cv-modal-close{width:28px;height:28px;border-radius:6px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;border:1px solid #e6e6e6;background:#fafafa}',
+      '#',MODAL_ROOT_ID,' .cv-modal-close:hover{background:#f1f3f5}',
+      '#',MODAL_ROOT_ID,' .cv-modal-body{padding:16px;overflow:auto}',
+      '#',MODAL_ROOT_ID,' .cv-modal-footer{padding:12px 16px;border-top:1px solid #eee;display:flex;justify-content:flex-end;gap:8px}',
+      '#',MODAL_ROOT_ID,' .cv-btn{padding:8px 12px;border-radius:8px;font:600 13px/1.2 Arial;cursor:pointer;border:1px solid #ddd;background:#fff}',
+      '#',MODAL_ROOT_ID,' .cv-btn-primary{background:#167a32;color:#fff;border-color:#167a32}',
+
+      /* charts */
+      '#',MODAL_ROOT_ID,' .cv-stats-wrap{display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:auto;gap:16px;min-width:980px;}',
+      '#',MODAL_ROOT_ID,' .cv-stats-list{list-style:none;margin:0;padding:0 0 0 8px;font:600 13px/1.6 Arial;color:#222;}',
+      '#',MODAL_ROOT_ID,' .cv-stats-list li{display:flex;gap:12px;align-items:baseline;}',
+      '#',MODAL_ROOT_ID,' .cv-stats-num{width:44px;text-align:right;color:#333;}',
+      '#',MODAL_ROOT_ID,' .cv-chart{background:#fff;border:1px solid #eee;border-radius:8px;padding:12px;}',
+      '#',MODAL_ROOT_ID,' .cv-chart h5{margin:0 0 8px 0;font:600 12px/1.2 Arial;color:#555;}',
+      '#',MODAL_ROOT_ID,' .cv-chart-pie{width:var(--size);height:var(--size);border-radius:50%;background:conic-gradient(#2f66d0 var(--deg), #d33 0);} ',
+      '#',MODAL_ROOT_ID,' .cv-chart-pie::after{content:"";width:calc(var(--size) - 70px);height:calc(var(--size) - 70px);background:#fff;border-radius:50%;display:block;margin:auto;margin-top:35px;}',
+      '#',MODAL_ROOT_ID,' .cv-stats-title{font:700 18px/1.2 "Helvetica Neue", Arial;color:#222;margin:0 0 10px;}',
+      '#',MODAL_ROOT_ID,' .cv-stats-head{grid-column:1 / span 2;border-bottom:1px solid #eee;margin-bottom:6px;padding-bottom:6px;}'
+    ].join('');
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+
+  function initModalSystem(doc){
+    ensureModalStyles(doc);
+    if (!doc.getElementById(MODAL_ROOT_ID)) {
+      var root = doc.createElement('div');
+      root.id = MODAL_ROOT_ID;
+      doc.body.appendChild(root);
+    }
+  }
+
+  function openModal(doc, opts){
+    initModalSystem(doc);
+    var root = doc.getElementById(MODAL_ROOT_ID);
+    var title = (opts && opts.title) || '';
+    var bodyHTML = (opts && opts.bodyHTML) || '';
+    var primaryText = (opts && opts.primaryText) || 'Close';
+    var onPrimary = (opts && opts.onPrimary) || null;
+    var lock = !!(opts && opts.lock);
+
+    var prev = doc.activeElement;
+    root.innerHTML = [
+      '<div class="cv-scrim"></div>',
+      '<div class="cv-dialog" role="dialog" aria-modal="true" aria-labelledby="cv-modal-title">',
+        '<div class="cv-modal-header">',
+          '<div class="cv-modal-title" id="cv-modal-title">',title,'</div>',
+          '<button class="cv-modal-close" aria-label="Close">×</button>',
+        '</div>',
+        '<div class="cv-modal-body">',bodyHTML,'</div>',
+        '<div class="cv-modal-footer">',
+          (primaryText ? '<button class="cv-btn cv-btn-primary" data-btn="primary">'+primaryText+'</button>' : ''),
+        '</div>',
+      '</div>'
+    ].join('');
+
+    function close(){
+      root.classList.remove('is-open');
+      root.innerHTML = '';
+      doc.body.classList.remove('cv-modal-open');
+      doc.removeEventListener('keydown', onKey);
+      if (prev && prev.focus) { try { prev.focus(); } catch(e){} }
+    }
+    function onKey(e){
+      if (e.key === 'Escape' && !lock){ e.preventDefault(); close(); }
+      if (e.key === 'Tab'){
+        var dialog = root.querySelector('.cv-dialog');
+        if (!dialog) return;
+        var focusables = dialog.querySelectorAll('button,[href],input,select,textarea,[tabindex]:not([tabindex="-1"])');
+        if (!focusables.length) return;
+        var first = focusables[0], last = focusables[focusables.length-1];
+        if (e.shiftKey && doc.activeElement === first){ e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && doc.activeElement === last){ e.preventDefault(); first.focus(); }
+      }
+    }
+
+    var dialog = root.querySelector('.cv-dialog');
+    var scrim  = root.querySelector('.cv-scrim');
+    var xBtn   = root.querySelector('.cv-modal-close');
+    var primary = root.querySelector('[data-btn="primary"]');
+
+    if (!lock){ scrim.addEventListener('click', close); xBtn.addEventListener('click', close); }
+    if (primary) primary.addEventListener('click', function(){ onPrimary ? onPrimary(close, root) : close(); });
+
+    root.classList.add('is-open');
+    root.classList.add('is-open');
+    doc.body.classList.add('cv-modal-open');
+    doc.addEventListener('keydown', onKey);
+    (primary || xBtn).focus();
+
+    return { close: close, dialog: dialog, root: root };
+  }
+
+  /* ---------- canned stats (A/B) ---------- */
+  var CV_STATS_SETS = {
+    A: {
+      metrics: {
+        callCenterCallsToday: 10,
+        callCenterTalkTime: 13,
+        callCenterAvgTalk: '1:23',
+        inboundCallsToday: 10,
+        inboundTalkTime: 14,
+        inboundAvgTalk: '1:23',
+        outboundCallsToday: 5,
+        outboundTalkTime: 22,
+        outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [4,4,5,0,0,0,0,1,1,4,0,0,0,0,0,0,0,0,0,1,2,3,0,4],
+      perDay:  [27,38,30,24,27,29,28,47,29,42],
+      pie:     { pct1: 100, pct2: 0 }
+    },
+    B: {
+      metrics: {
+        callCenterCallsToday: 14,
+        callCenterTalkTime: 24,
+        callCenterAvgTalk: '1:46',
+        inboundCallsToday: 16,
+        inboundTalkTime: 29,
+        inboundAvgTalk: '1:45',
+        outboundCallsToday: 5,
+        outboundTalkTime: 22,
+        outboundAvgTalk: '4:24',
+        avgACW: '0.0'
+      },
+      perHour: [1,4,5,3,2,2,0,0,0,0,0,0,0,0,0,0,1,4,4,5,0,4,4,5],
+      perDay:  [36,65,39,44,46,27,30,48,50,43],
+      pie:     { pct1: 88.9, pct2: 11.1 }
+    }
+  };
+  function cvChooseStatsSet(rowIndex){ return (rowIndex % 2 === 0) ? 'A' : 'B'; }
+
+  /* ---------- tiny chart renderers ---------- */
+  function cvBarSVG(values, max, width, height, barGapPx, color){
+    max = max || Math.max(1, Math.max.apply(null, values));
+    var n = values.length, barW = Math.floor((width - (n+1)*barGapPx) / n);
+    var x = barGapPx, h = height;
+    var parts = ['<svg xmlns="http://www.w3.org/2000/svg" width="'+width+'" height="'+height+'">'];
+    for (var i=0;i<n;i++){
+      var v = values[i], bh = Math.round((v/max)*h), y = h - bh;
+      parts.push('<rect x="'+x+'" y="'+y+'" width="'+barW+'" height="'+bh+'" rx="2" ry="2" fill="#e57027"/>');
+      x += barW + barGapPx;
+    }
+    parts.push('</svg>');
+    return parts.join('');
+  }
+  function cvPieHTML(pct1, size){
+    pct1 = Math.max(0, Math.min(100, pct1));
+    var deg1 = (pct1/100)*360;
+    return '<div class="cv-chart-pie" style="--size:'+size+'px; --deg:'+deg1+'deg;"></div>';
+  }
+
+  /* ---------- modal body builder ---------- */
+  function buildStatsModalHTML(doc, agentName, ext, data){
+    var m = data.metrics;
+    var bar1 = cvBarSVG(data.perHour, 10, 460, 160, 6, '#e57027');
+    var bar2 = cvBarSVG(data.perDay,  80, 460, 180, 8, '#e57027');
+    var pie  = cvPieHTML(data.pie.pct1, 220);
+
+    return [
+      '<div class="cv-stats-wrap">',
+        '<div class="cv-stats-head">',
+          '<div class="cv-stats-title">Statistics for ',agentName,' (',ext,')</div>',
+        '</div>',
+
+        '<div>',
+          '<ul class="cv-stats-list">',
+            '<li><span class="cv-stats-num">',m.callCenterCallsToday,'</span> <span>Call Center Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.callCenterTalkTime,'</span> <span>Call Center Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.callCenterAvgTalk,'</span> <span>Call Center Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundCallsToday,'</span> <span>Inbound Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundTalkTime,'</span> <span>Inbound Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.inboundAvgTalk,'</span> <span>Inbound Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundCallsToday,'</span> <span>Outbound Calls Today</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundTalkTime,'</span> <span>Outbound Talk Time</span></li>',
+            '<li><span class="cv-stats-num">',m.outboundAvgTalk,'</span> <span>Outbound Average Talk</span></li>',
+            '<li><span class="cv-stats-num">',m.avgACW,'</span> <span>Avg ACW</span></li>',
+          '</ul>',
+        '</div>',
+
+        '<div class="cv-chart">',
+          '<h5>My Calls Per Hour (last 24 hours)</h5>',
+          bar1,
+        '</div>',
+
+        '<div class="cv-chart">',
+          '<h5>My Calls Per Day (last 10 days)</h5>',
+          bar2,
+        '</div>',
+
+        '<div class="cv-chart">',
+          '<h5>Calls by Origination Source (last 24 hours)</h5>',
+          pie,
+          (data.pie.pct2 ? '<div style="font:600 12px/1.2 Arial;color:#555;margin-top:8px;">'
+          + data.pie.pct1.toFixed(1)+'% / '+data.pie.pct2.toFixed(1)+'%</div>' : ''),
+        '</div>',
+      '</div>'
+    ].join('');
+  }
+
+  /* ---------- event wiring (delegated) ---------- */
+  function onStatsClick(e){
+    var tool = e.target.closest && e.target.closest('.cv-tool[data-tool="stats"]');
+    if (!tool) return;
+
+    var row = tool.closest('.cv-row');
+    if (!row) return;
+
+    var nameEl = row.querySelector('.cv-name');
+    var name = (nameEl && nameEl.textContent) ? nameEl.textContent.trim() : 'Agent';
+
+    // Determine row index for deterministic A/B set
+    var allRows = Array.prototype.slice.call((row.parentNode || document).querySelectorAll('.cv-row'));
+    var rowIndex = Math.max(0, allRows.indexOf(row));
+    var variant = cvChooseStatsSet(rowIndex);
+    var data = CV_STATS_SETS[variant];
+
+    // Extension (from data-ext or a generated one)
+    var ext = (row.dataset && row.dataset.ext) ? row.dataset.ext : (200 + (rowIndex + 1));
+
+    openModal(document, {
+      title: '', // title rendered in body (to mimic portal look)
+      bodyHTML: buildStatsModalHTML(document, name, ext, data),
+      primaryText: 'Close',
+      secondaryText: ''
+    });
+  }
+
+  // Global delegated listener so it survives re-injection
+  document.addEventListener('click', onStatsClick, true);
+})();
+
