@@ -2197,28 +2197,32 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 // ==============================
-/* === CV Active Calls Graph — fake 8am→4pm with timed peaks + HTML tooltips === */
+// ==============================
+// CV Active Calls Graph — fake 8am→4pm with timed peaks + HTML tooltips
+// Hides the native chart inside .graphs-panel-home.rounded and draws our own.
+// ==============================
 (function () {
-  if (window.__cvActiveGraph_v3) return;
-  window.__cvActiveGraph_v3 = true;
+  if (window.__cvActiveGraph_v4) return;
+  window.__cvActiveGraph_v4 = true;
 
   var MANAGER_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
   var PANEL_SEL     = '.graphs-panel-home.rounded';
   var CHART_ID      = 'cv-fake-active-graph';
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
+  // ---- styles (hide native, give our host full width) ----
   function ensureStyles(doc){
     var s = doc.getElementById(STYLE_ID);
     if (!s){
       s = doc.createElement('style'); s.id = STYLE_ID;
       s.textContent =
-        '#'+CHART_ID+'{display:block;width:100%;}' +
-        /* hide any native chart inside the panel */
+        '#'+CHART_ID+'{display:block;width:100%;min-height:360px;}' +
         '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
       (doc.head||doc.documentElement).appendChild(s);
     }
   }
 
+  // ---- document helpers ----
   function getDocs(){
     var docs=[document];
     var ifrs=document.querySelectorAll('iframe');
@@ -2230,7 +2234,6 @@ if (!document.__cvqfRowStatusCapture) {
     }
     return docs;
   }
-
   function findPanelDoc(){
     var docs=getDocs();
     for (var i=0;i<docs.length;i++){
@@ -2240,7 +2243,7 @@ if (!document.__cvqfRowStatusCapture) {
     return null;
   }
 
-  // wait until Google Charts is ready (no extra <script> tags)
+  // ---- wait for Google Charts already on page (no extra <script> tags) ----
   function whenGVizReady(cb){
     function ready(){
       try { return window.google && google.visualization && google.visualization.DataTable; }
@@ -2259,6 +2262,7 @@ if (!document.__cvqfRowStatusCapture) {
     })();
   }
 
+  // ---- build 8:00 → 16:00 line with narrow spikes + HTML tooltip saying "All Queues: 5" ----
   function buildData(){
     var now  = new Date();
     var y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
@@ -2290,9 +2294,11 @@ if (!document.__cvqfRowStatusCapture) {
     }
 
     var rows = [];
+    // baseline zeros on the hour
     for (var t=new Date(start); t<=end; t=new Date(t.getTime()+60*60*1000)){
       rows.push([new Date(t), 0, null]);
     }
+    // spikes as three points each (pre/mid/post) for narrow peaks
     for (var i=0;i<PEAKS.length;i++){
       var mid=parseHM(PEAKS[i][0]), val=PEAKS[i][1];
       var pre = new Date(mid.getTime()-3*60*1000);
@@ -2311,10 +2317,15 @@ if (!document.__cvqfRowStatusCapture) {
     return {dt:dt, start:start, end:end};
   }
 
+  // ---- render into the panel ----
   function drawInto(doc, panel){
     ensureStyles(doc);
     var host = doc.getElementById(CHART_ID);
-    if (!host){ host = doc.createElement('div'); host.id = CHART_ID; panel.appendChild(host); }
+    if (!host){
+      host = doc.createElement('div');
+      host.id = CHART_ID;
+      panel.appendChild(host);
+    }
 
     whenGVizReady(function(){
       var built = buildData();
@@ -2322,43 +2333,40 @@ if (!document.__cvqfRowStatusCapture) {
 
       function redraw(){
         var box   = panel.getBoundingClientRect();
-        var width = Math.max(900, Math.floor((box.width||panel.clientWidth||900)));
+        var width = Math.max(900, Math.floor(box.width || panel.clientWidth || 900));
         var height= Math.max(360, Math.min(580, Math.floor(width * 0.50)));
         host.style.height = height + 'px';
 
-        chart.draw(built.dt, {
         var opts = {
-        legend: 'none',
-        lineWidth: 2,
-        focusTarget: 'datum',
-        tooltip: { isHtml: true, trigger: 'focus' },
+          legend: 'none',
+          lineWidth: 2,
+          focusTarget: 'datum',
+          tooltip: { isHtml: true, trigger: 'focus' },
 
-  // give the chart room but keep the bottom small (we're hiding x labels)
-  chartArea: { left: 60, right: 20, top: 20, bottom: 16 },
+          // keep left ticks visible; hide bottom times + vertical gridlines
+          chartArea: { left: 60, right: 20, top: 20, bottom: 16 },
+          hAxis: {
+            viewWindow: { min: built.start, max: built.end },
+            textPosition: 'none',
+            ticks: [],
+            gridlines: { color: 'transparent' },
+            minorGridlines: { color: 'transparent', count: 0 },
+            baselineColor: 'transparent'
+          },
+          vAxis: {
+            viewWindow: { min: 0, max: 6 },
+            ticks: [0, 2, 4, 6],
+            gridlines: { color: '#e9e9e9' },
+            baselineColor: '#bdbdbd'
+          }
+        };
 
-  // X axis: hide labels & vertical gridlines
-  hAxis: {
-    viewWindow: { min: built.start, max: built.end },
-    textPosition: 'none',                 // hide times along the bottom
-    ticks: [],                            // no tick labels
-    gridlines: { color: 'transparent' },  // remove vertical lines
-    minorGridlines: { color: 'transparent', count: 0 },
-    baselineColor: 'transparent'          // hide the x baseline
-  },
+        chart.draw(built.dt, opts);
+      }
 
-  // Y axis: keep 0/2/4/6 with light horizontal gridlines
-  vAxis: {
-    viewWindow: { min: 0, max: 6 },
-    ticks: [0, 2, 4, 6],
-    gridlines: { color: '#e9e9e9' },      // light horizontal lines
-    baselineColor: '#bdbdbd'
-  }
-};
-  
-
-      // initial + double-RAF to catch late layout
+      // initial + double-RAF to catch late layout; keep responsive
       redraw();
-      requestAnimationFrame(()=>requestAnimationFrame(redraw));
+      requestAnimationFrame(function(){ requestAnimationFrame(redraw); });
 
       var win = doc.defaultView || window;
       win.addEventListener('resize', redraw);
@@ -2366,6 +2374,7 @@ if (!document.__cvqfRowStatusCapture) {
     });
   }
 
+  // ---- inject when the manager page is active ----
   function inject(){
     var found = findPanelDoc(); if (!found) return;
     drawInto(found.doc, found.panel);
@@ -2386,4 +2395,3 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
-
