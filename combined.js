@@ -1846,4 +1846,49 @@ if (!window.__cvAgentsPanelInit) {
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
+<script>
+// If NSAgentsCallQueues is present, wrap its getQueuesPerAgent with a fallback
+(function(){
+  var NS = window.NSAgentsCallQueues;
+  if (!NS || typeof NS.getQueuesPerAgent !== 'function') return;
+
+  var orig = NS.getQueuesPerAgent.bind(NS);
+
+  function modalVisible() {
+    try {
+      var d = document;
+      return !!(
+        d.querySelector('#queuesPerAgentModal .modal') ||
+        d.querySelector('#queuesPerAgentModal') ||
+        d.querySelector('.modal.in') ||
+        d.querySelector('.modal-backdrop.in') ||
+        d.querySelector('.modal-backdrop')   // portal variants
+      );
+    } catch(e){ return false; }
+  }
+
+  function openViaPortal(sip, label){
+    var href = '/portal/agents/agentrouting/'
+             + encodeURIComponent(sip) + '/'
+             + encodeURIComponent(label).replace(/%20/g,'+');
+    var lm = (window.loadModal || (parent && parent.loadModal) || (top && top.loadModal));
+    if (typeof lm === 'function') {
+      lm('#queuesPerAgentModal', href);
+    } else {
+      location.href = href;
+    }
+  }
+
+  NS.getQueuesPerAgent = function(sip, label){
+    // Call the native function first
+    try { orig(sip, label); } catch(e){ /* ignore; fallback will handle */ }
+
+    // After a short wait, if no modal/backdrop is visible, use the portal loader
+    setTimeout(function(){
+      if (!modalVisible()) openViaPortal(sip, label);
+    }, 800);
+  };
+})();
+</script>
+
 
