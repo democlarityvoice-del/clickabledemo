@@ -2045,6 +2045,44 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
+/* --- Make Set Status dropdown visible --- */
+#cvqf-root .cvqf-dialog { overflow-y: visible; }        /* body scrolls, dialog can show menus */
+#cvqf-root .cvqf-ft { overflow: visible; position: relative; }
+#cvqf-root #cvqf-setstatus-menu {
+  position: absolute;
+  right: 0;
+  bottom: calc(100% + 6px);   /* open upward above the button */
+  z-index: 3;                 /* above dialog body */
+}
+
+/* --- Column balance so Description doesn't sit on Status --- */
+#cvqf-root table { table-layout: fixed; }
+
+/* Queue # */
+#cvqf-root thead th:nth-child(1),
+#cvqf-root tbody td:nth-child(1) { width: 72px; }
+
+/* Status (pill) */
+#cvqf-root thead th:nth-child(3),
+#cvqf-root tbody td:nth-child(3) { width: 148px; }
+
+/* Wrap Up Time */
+#cvqf-root thead th:nth-child(4),
+#cvqf-root tbody td:nth-child(4) { width: 64px; text-align: center; }
+
+/* Priority */
+#cvqf-root thead th:nth-child(5),
+#cvqf-root tbody td:nth-child(5) { width: 86px; }
+
+/* Description takes the remaining space on one line */
+#cvqf-root thead th:nth-child(2),
+#cvqf-root tbody td:nth-child(2) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+  
   // --- build rows/table
   function buildRows(agent){
     // Everyone gets 300/301/302, Jake(202) also gets 303
@@ -2088,6 +2126,7 @@ if (!window.__cvAgentsPanelInit) {
     return out.join('');
   }
 
+  
   function buildTable(agent){
     return ''
       + '<table class="table table-condensed table-hover">'
@@ -2096,6 +2135,7 @@ if (!window.__cvAgentsPanelInit) {
       + '</table>';
   }
 
+  
   // --- pill helpers
   function setOnePill(pill, online){
     if (!pill) return;
@@ -2172,6 +2212,7 @@ if (!window.__cvAgentsPanelInit) {
     btn.click();
   }, true);
 })();
+
 
 
 
