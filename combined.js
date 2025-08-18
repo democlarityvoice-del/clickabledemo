@@ -2130,6 +2130,32 @@ if (!window.__cvAgentsPanelInit) {
     return { ext: ext, name: name };
   }
   
+// CAPTURE: make row Status dropdown selections stick (runs before click-away)
+if (!document.__cvqfRowStatusCapture) {
+  document.addEventListener('click', function (ev) {
+    var a = ev.target && ev.target.closest && ev.target.closest('#cvqf-root .menu a');
+    if (!a) return;
+
+    // ignore footer "Set Status" menu
+    if (a.closest && a.closest('#cvqf-setstatus-menu')) return;
+
+    ev.preventDefault();
+    ev.stopPropagation();
+
+    var makeOn = a.getAttribute('data-status') === 'on';
+    var menu   = a.closest('.menu');
+    var pill   = menu && menu.parentNode ? menu.parentNode.querySelector('button.pill') : null;
+
+    if (pill) {
+      pill.classList.remove(makeOn ? 'off' : 'on');
+      pill.classList.add(makeOn ? 'on' : 'off');
+      var span = pill.querySelector('span');
+      if (span) span.textContent = makeOn ? 'Online' : 'Offline';
+    }
+    if (menu) menu.style.display = 'none';
+  }, true); // capture phase
+  document.__cvqfRowStatusCapture = true;
+}
 
 
   function openModal(title, html){
@@ -2168,6 +2194,7 @@ if (!window.__cvAgentsPanelInit) {
     btn.click();
   }, true);
 })();
+
 
 
 
