@@ -1254,7 +1254,7 @@ function handleRoute(prev, next){
   if (QUEUES_REGEX.test(location.href)) onEnter();
 })();
 
-
+} // <-- closes __cvQueuesTilesInit
 
 // ==============================
 // ==============================
@@ -1509,7 +1509,11 @@ if (!window.__cvAgentsPanelInit) {
     if (tries >= 25) return;
     setTimeout(function(){ waitAndInject(tries+1); }, 250);
   }
-
+  function route(prev, next){
+    var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+    if (!was && is) waitAndInject(0);
+    if ( was && !is) remove();
+  }
   (function watch(){
     var last = location.href;
     var push = history.pushState, rep = history.replaceState;
@@ -1947,6 +1951,7 @@ if (!window.__cvAgentsPanelInit) {
     openQueues(row);
   }, true);
 })();}catch(_){}
+
 
 
 
