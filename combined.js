@@ -1,4 +1,4 @@
-// ==============================
+  // ==============================
 // Clarity Voice Demo Calls Inject (HOME)
 // ==============================
 if (!window.__cvDemoInit) {
@@ -2141,12 +2141,20 @@ if (!window.__cvAgentsPanelInit) {
   var ID = 'cvqf-style-shape';
   if (document.getElementById(ID)) return;
   var s = document.createElement('style'); s.id = ID;
-  s.textContent = [
-    /* square-ish dialog: narrower width, taller height, centered */
-    '#cvqf-root .cvqf-dialog{',
-      'width:clamp(560px,58vw,760px);',
-      'height:clamp(520px,76vh,820px);',
-    '}',
+  s.textContent += [
+  '/* square-ish dialog: narrower width, taller height, centered */',
+  '#cvqf-root .cvqf-dialog{',
+  '  width:clamp(520px, 48vw, 660px);',
+  '  height:clamp(520px, 72vh, 760px);',
+  '  max-width:calc(100vw - 40px);',
+  '  max-height:calc(100vh - 40px);',
+  '}',
+  '#cvqf-root .cvqf-dialog,',
+  '#cvqf-root .cvqf-bd,',
+  '#cvqf-root #cvqf-body{ overflow-x:hidden; }'
+].join('');
+
+
 
     /* body fills the height; table scrolls inside */
     '#cvqf-root .cvqf-bd{flex:1 1 auto; max-height:none; padding:0 14px 12px;}',
@@ -2167,6 +2175,7 @@ if (!window.__cvAgentsPanelInit) {
   ].join('');
   (document.head || document.documentElement).appendChild(s);
 })();
+
 
 
 
