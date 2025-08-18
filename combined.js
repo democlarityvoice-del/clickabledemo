@@ -1263,7 +1263,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 
 // ==============================
 // ==============================
-// Clarity Voice Agents Panel — ES5-safe, leaving lunch timer in for now to fix later 
+// Clarity Voice AGENTS PANEL — ES5-safe, leaving lunch timer in for now to fix later 
 // ==============================
 if (!window.__cvAgentsPanelInit) {
   window.__cvAgentsPanelInit = true;
@@ -1370,7 +1370,7 @@ if (!window.__cvAgentsPanelInit) {
   (doc.head || doc.documentElement).appendChild(s);
 }
 
-
+// AGENTS PANEL build panel
   function buildPanel(doc){
     var panel = doc.createElement('div');
     panel.id = PANEL_ID;
@@ -1443,7 +1443,7 @@ if (!window.__cvAgentsPanelInit) {
     return panel;
   }
 
-  // Reliable per-document ticker (no optional chaining, no duplicate intervals)
+  // AGENTS PANEL QUEUES  Reliable per-document ticker (no optional chaining, no duplicate intervals)
   function startLunchTicker(doc){
     if (!doc) return;
     if (doc.__cvAgentsLunchTicker) { try { clearInterval(doc.__cvAgentsLunchTicker); } catch(e){} }
@@ -1539,7 +1539,7 @@ if (!window.__cvAgentsPanelInit) {
   })();
 }
 
-/* ===== Agents Stats Modal — APPEND-ONLY (axes, ticks, donut) ===== */
+/* ===== AGENTS PANEL STATS Modal — APPEND-ONLY (axes, ticks, donut) ===== */
 (function(){
   if (window.__cvAgentsStatsAppend_v3) return;
   window.__cvAgentsStatsAppend_v3 = true;
@@ -2168,5 +2168,6 @@ if (!window.__cvAgentsPanelInit) {
     btn.click();
   }, true);
 })();
+
 
 
