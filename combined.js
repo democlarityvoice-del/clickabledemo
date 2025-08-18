@@ -1900,9 +1900,6 @@ if (!window.__cvAgentsPanelInit) {
   }, true);
 })();}catch(e){console.error('[cv queues] init failed:', e);}
 
-/* CV Agents: Queues icon -> Agents Routing (append-only; NO <script> wrappers) */
-;try{(function(){
-  if (document.__cvQWire) return; document.__cvQWire = true;
 
   var PANEL_ID = 'cv-agents-panel';
   var DOMAIN   = 'claritydemo';
@@ -1960,6 +1957,7 @@ if (!window.__cvAgentsPanelInit) {
     openQueues(row);
   }, true);
 })();}catch(_){}
+
 
 
 
