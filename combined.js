@@ -2198,13 +2198,13 @@ if (!document.__cvqfRowStatusCapture) {
 
 // ==============================
 // ==============================
-/* === CV Active Calls Graph — fake 8am→4pm with timed peaks + tooltips === */
+/* === CV Active Calls Graph — fake 8am→4pm with timed peaks + HTML tooltips === */
 (function () {
-  if (window.__cvFakeActiveGraph) return;
-  window.__cvFakeActiveGraph = true;
+  if (window.__cvActiveGraph_v2) return;
+  window.__cvActiveGraph_v2 = true;
 
   var MANAGER_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  var PANEL_SEL     = '.graphs-panel-home.rounded';  // the chart panel (body)
+  var PANEL_SEL     = '.graphs-panel-home.rounded';   // the container you screenshotted
   var CHART_ID      = 'cv-fake-active-graph';
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
@@ -2214,7 +2214,7 @@ if (!document.__cvqfRowStatusCapture) {
       s = doc.createElement('style'); s.id = STYLE_ID;
       s.textContent =
         '#'+CHART_ID+'{width:100%;height:560px;}' +
-        /* hide any native chart inside the panel */
+        /* hide any native chart nodes so only ours shows */
         '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
       (doc.head||doc.documentElement).appendChild(s);
     }
@@ -2241,31 +2241,32 @@ if (!document.__cvqfRowStatusCapture) {
     return null;
   }
 
-  // --- Google Charts loader/ready helper (no extra <script> tags) ---
+  // wait until Google Charts is ready (don’t inject extra <script> tags)
   function whenGVizReady(cb){
-    function ready(){ try { return window.google && google.visualization && google.visualization.DataTable; } catch(_) { return false; } }
+    function ready(){
+      try { return window.google && google.visualization && google.visualization.DataTable; }
+      catch(_) { return false; }
+    }
     function onready(){ try { cb(); } catch(_){} }
     if (ready()) return onready();
     if (window.google && google.charts && google.charts.load){
-      try { google.charts.load('current', {'packages':['corechart']}); } catch(_){}
+      try { google.charts.load('current', {packages:['corechart']}); } catch(_){}
       try { google.charts.setOnLoadCallback(onready); } catch(_){}
     }
-    var tries = 0;
-    (function wait(){
+    var tries=0; (function wait(){
       if (ready()) return onready();
-      if (tries++ > 80) return; // ~4s max
+      if (tries++ > 120) return;   // ~6s cap
       setTimeout(wait,50);
     })();
   }
 
-  // --- Build data: 8:00 → 16:00 with narrow spikes + HTML tooltips on peaks ---
-  function buildDataTable(){
+  function buildData(){
     var now  = new Date();
     var y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
     var start=new Date(y,m,d,8,0,0,0);
     var end  =new Date(y,m,d,16,0,0,0);
 
-    // Define peak times (24h “HH:MM”) and heights; edit here to change the shape.
+    // Narrow peaks; edit times/heights here
     var PEAKS = [
       ['09:45',1],
       ['10:15',1],
@@ -2285,27 +2286,86 @@ if (!document.__cvqfRowStatusCapture) {
       var hh=+hm.slice(0,2), mm=+hm.slice(3,5);
       return new Date(y,m,d,hh,mm,0,0);
     }
-    function fmtTime(dt){
-      return dt.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
-    }
+    function fmt(dt){ return dt.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'}); }
     function tip(dt){
-      return '<div style="padding:6px 8px;white-space:nowrap;"><b>Today, '+fmtTime(dt)+'</b><br>All Queues: 5</div>';
+      return '<div style="padding:6px 8px;white-space:nowrap;"><b>Today, '+fmt(dt)+'</b><br>All Queues: 5</div>';
     }
 
-    // collect points (zeros hourly + spikes as 3 points to make thin peaks)
-    var pts = [];
-    for (var t=new Date(start); t<=end; t=new Date(t.getTime()+60*60*1000)) pts.push([new Date(t), 0, null]);
+    var rows = [];
+    // baseline zeros on the hour
+    for (var t=new Date(start); t<=end; t=new Date(t.getTime()+60*60*1000)){
+      rows.push([new Date(t), 0, null]);
+    }
+    // add spikes as three points each (pre/mid/post) to draw thin peaks
     for (var i=0;i<PEAKS.length;i++){
       var mid=parseHM(PEAKS[i][0]), val=PEAKS[i][1];
       var pre = new Date(mid.getTime()-3*60*1000);
       var post= new Date(mid.getTime()+3*60*1000);
-      pts.push([pre, 0, null]);
-      pts.push([mid, val, tip(mid)]);   // custom HTML tooltip (always “All Queues: 5”)
-      pts.push([post, 0, null]);
+      rows.push([pre, 0,   null]);
+      rows.push([mid, val, tip(mid)]);
+      rows.push([post,0,   null]);
     }
-    // sort by time
-    pts.so
+    rows.sort(function(a,b){ return a[0]-b[0]; });
 
+    var dt = new google.visualization.DataTable();
+    dt.addColumn('datetime','Time');
+    dt.addColumn('number','Active Calls');
+    dt.addColumn({type:'string', role:'tooltip', p:{html:true}});
+    dt.addRows(rows);
+    return {dt:dt, start:start, end:end};
+  }
 
+  function drawInto(doc, panel){
+    ensureStyles(doc);
+    var host = doc.getElementById(CHART_ID);
+    if (!host){ host = doc.createElement('div'); host.id = CHART_ID; panel.appendChild(host); }
 
+    whenGVizReady(function(){
+      var built = buildData();
+      var opts = {
+        legend: 'none',
+        lineWidth: 2,
+        focusTarget: 'datum',
+        tooltip: {isHtml:true, trigger:'focus'},
+        hAxis: {
+          viewWindow: {min: built.start, max: built.end},
+          format: 'h:mm a',
+          gridlines: {count: 9}
+        },
+        vAxis: {
+          viewWindow: {min:0, max:6},
+          ticks: [0,2,4,6]
+        }
+      };
+      var chart = new google.visualization.LineChart(host);
+      chart.draw(built.dt, opts);
 
+      // simple responsiveness per doc
+      if (!doc.__cvActiveGraphResize){
+        doc.__cvActiveGraphResize = true;
+        (doc.defaultView||window).addEventListener('resize', function(){ chart.draw(built.dt, opts); });
+      }
+    });
+  }
+
+  function inject(){
+    var found = findPanelDoc(); if (!found) return;
+    drawInto(found.doc, found.panel);
+  }
+
+  // route watcher + initial render
+  (function watch(){
+    function route(prev,next){
+      var was=MANAGER_REGEX.test(prev), is=MANAGER_REGEX.test(next);
+      if (!was && is) inject();
+    }
+    var last=location.href;
+    var push=history.pushState, rep=history.replaceState;
+    history.pushState=function(){ var p=last; var r=push.apply(this,arguments); var n=location.href; last=n; route(p,n); return r; };
+    history.replaceState=function(){ var p=last; var r=rep.apply(this,arguments);  var n=location.href; last=n; route(p,n); return r; };
+    new MutationObserver(function(){ if(location.href!==last){ var p=last, n=location.href; last=n; route(p,n);} })
+      .observe(document.documentElement,{childList:true,subtree:true});
+
+    if (MANAGER_REGEX.test(location.href)) inject();
+  })();
+})();
