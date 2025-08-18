@@ -2136,6 +2136,38 @@ if (!window.__cvAgentsPanelInit) {
   }, true);
 })();
 
+/* === CV Queues Fake Modal: vertical-square shape + tighter layout === */
+(function(){
+  var ID = 'cvqf-style-shape';
+  if (document.getElementById(ID)) return;
+  var s = document.createElement('style'); s.id = ID;
+  s.textContent = [
+    /* square-ish dialog: narrower width, taller height, centered */
+    '#cvqf-root .cvqf-dialog{',
+      'width:clamp(560px,58vw,760px);',
+      'height:clamp(520px,76vh,820px);',
+    '}',
+
+    /* body fills the height; table scrolls inside */
+    '#cvqf-root .cvqf-bd{flex:1 1 auto; max-height:none; padding:0 14px 12px;}',
+    '#cvqf-root #cvqf-body{height:100%; overflow:auto;}',
+
+    /* table: fixed layout + sensible column widths for the tighter box */
+    '#cvqf-root table{table-layout:fixed;}',
+    '#cvqf-root thead th, #cvqf-root tbody td{padding:9px 8px;}',
+    '#cvqf-root thead th:nth-child(1){width:86px;}',
+    '#cvqf-root thead th:nth-child(3){width:170px;}',   /* Status pill */
+    '#cvqf-root thead th:nth-child(4){width:120px;text-align:center;}', /* Wrap */
+    '#cvqf-root thead th:nth-child(5){width:120px;}',   /* Priority select */
+    '#cvqf-root td.num{text-align:center;}',
+
+    /* buttons look balanced in the tighter box */
+    '#cvqf-root .btn{padding:7px 12px;border-radius:8px;}',
+    '#cvqf-root .pill{padding:5px 12px;border-radius:5px;}'
+  ].join('');
+  (document.head || document.documentElement).appendChild(s);
+})();
+
 
 
 
