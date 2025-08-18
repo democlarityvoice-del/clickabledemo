@@ -2197,28 +2197,27 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 // ==============================
-// ==============================
 /* === CV Active Calls Graph — fake 8am→4pm with timed peaks + HTML tooltips === */
 (function () {
-  if (window.__cvActiveGraph_v2) return;
-  window.__cvActiveGraph_v2 = true;
+  if (window.__cvActiveGraph_v3) return;
+  window.__cvActiveGraph_v3 = true;
 
   var MANAGER_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
-  var PANEL_SEL     = '.graphs-panel-home.rounded';   // the container you screenshotted
+  var PANEL_SEL     = '.graphs-panel-home.rounded';
   var CHART_ID      = 'cv-fake-active-graph';
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
   function ensureStyles(doc){
-  var s = doc.getElementById(STYLE_ID);
-  if (!s){
-    s = doc.createElement('style'); s.id = STYLE_ID;
-    s.textContent =
-      '#'+CHART_ID+'{display:block;width:100%;min-height:340px;}' +
-      '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
-    (doc.head||doc.documentElement).appendChild(s);
+    var s = doc.getElementById(STYLE_ID);
+    if (!s){
+      s = doc.createElement('style'); s.id = STYLE_ID;
+      s.textContent =
+        '#'+CHART_ID+'{display:block;width:100%;}' +
+        /* hide any native chart inside the panel */
+        '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
+      (doc.head||doc.documentElement).appendChild(s);
+    }
   }
-}
-
 
   function getDocs(){
     var docs=[document];
@@ -2241,7 +2240,7 @@ if (!document.__cvqfRowStatusCapture) {
     return null;
   }
 
-  // wait until Google Charts is ready (don’t inject extra <script> tags)
+  // wait until Google Charts is ready (no extra <script> tags)
   function whenGVizReady(cb){
     function ready(){
       try { return window.google && google.visualization && google.visualization.DataTable; }
@@ -2266,7 +2265,6 @@ if (!document.__cvqfRowStatusCapture) {
     var start=new Date(y,m,d,8,0,0,0);
     var end  =new Date(y,m,d,16,0,0,0);
 
-    // Narrow peaks; edit times/heights here
     var PEAKS = [
       ['09:45',1],
       ['10:15',1],
@@ -2292,11 +2290,9 @@ if (!document.__cvqfRowStatusCapture) {
     }
 
     var rows = [];
-    // baseline zeros on the hour
     for (var t=new Date(start); t<=end; t=new Date(t.getTime()+60*60*1000)){
       rows.push([new Date(t), 0, null]);
     }
-    // add spikes as three points each (pre/mid/post) to draw thin peaks
     for (var i=0;i<PEAKS.length;i++){
       var mid=parseHM(PEAKS[i][0]), val=PEAKS[i][1];
       var pre = new Date(mid.getTime()-3*60*1000);
@@ -2322,29 +2318,34 @@ if (!document.__cvqfRowStatusCapture) {
 
     whenGVizReady(function(){
       var built = buildData();
-      var opts = {
-        legend: 'none',
-        lineWidth: 2,
-        focusTarget: 'datum',
-        tooltip: {isHtml:true, trigger:'focus'},
-        hAxis: {
-          viewWindow: {min: built.start, max: built.end},
-          format: 'h:mm a',
-          gridlines: {count: 9}
-        },
-        vAxis: {
-          viewWindow: {min:0, max:6},
-          ticks: [0,2,4,6]
-        }
-      };
       var chart = new google.visualization.LineChart(host);
-      chart.draw(built.dt, opts);
 
-      // simple responsiveness per doc
-      if (!doc.__cvActiveGraphResize){
-        doc.__cvActiveGraphResize = true;
-        (doc.defaultView||window).addEventListener('resize', function(){ chart.draw(built.dt, opts); });
+      function redraw(){
+        var box   = panel.getBoundingClientRect();
+        var width = Math.max(900, Math.floor((box.width||panel.clientWidth||900)));
+        var height= Math.max(360, Math.min(580, Math.floor(width * 0.50)));
+        host.style.height = height + 'px';
+
+        chart.draw(built.dt, {
+          legend:'none',
+          focusTarget:'datum',
+          tooltip:{ isHtml:true, trigger:'focus' },
+          lineWidth:2,
+          width:  width,
+          height: height,
+          chartArea:{ left:48, top:20, width: width-72, height: height-60 },
+          hAxis:{ viewWindow:{ min: built.start, max: built.end }, format:'h:mm a', gridlines:{count:9} },
+          vAxis:{ viewWindow:{ min:0, max:6 }, ticks:[0,2,4,6] }
+        });
       }
+
+      // initial + double-RAF to catch late layout
+      redraw();
+      requestAnimationFrame(()=>requestAnimationFrame(redraw));
+
+      var win = doc.defaultView || window;
+      win.addEventListener('resize', redraw);
+      if ('ResizeObserver' in win) new ResizeObserver(redraw).observe(panel);
     });
   }
 
@@ -2353,7 +2354,6 @@ if (!document.__cvqfRowStatusCapture) {
     drawInto(found.doc, found.panel);
   }
 
-  // route watcher + initial render
   (function watch(){
     function route(prev,next){
       var was=MANAGER_REGEX.test(prev), is=MANAGER_REGEX.test(next);
@@ -2369,4 +2369,3 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
-
