@@ -1514,11 +1514,6 @@ if (!window.__cvAgentsPanelInit) {
     var last = location.href;
     var push = history.pushState, rep = history.replaceState;
 
-    function route(prev, next){
-      var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
-      if (!was && is) waitAndInject(0);
-      if ( was && !is) remove();
-    }
 
     history.pushState = function(){
       var prev=last; var r=push.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
@@ -1952,6 +1947,7 @@ if (!window.__cvAgentsPanelInit) {
     openQueues(row);
   }, true);
 })();}catch(_){}
+
 
 
 
