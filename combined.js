@@ -1719,87 +1719,30 @@ if (!window.__cvAgentsPanelInit) {
   (document.head || document.documentElement).appendChild(s);
 })();
 
-
-/* ---- CV Agents: wire our Queues icon (minimal) ---- */
-(function () {
-  var PID = 'cv-agents-panel';
-  if (document.__cvAgentsQueuesBound) return;
-  document.__cvAgentsQueuesBound = true;
-
-  function getLoadModal() {
-    try {
-      return (window.loadModal || (parent && parent.loadModal) || (top && top.loadModal) || null);
-    } catch (e) { return null; }
-  }
-
-  document.addEventListener('click', function (e) {
-    var btn = e.target && e.target.closest && e.target.closest('#' + PID + ' .cv-tool[data-tool="queues"]');
-    if (!btn) return;
-    e.preventDefault();
-
-    var row  = btn.closest('.cv-row');
-    var name = (row && row.querySelector('.cv-name') || {}).textContent || '';
-    var ext  = (row && row.dataset && row.dataset.ext) || (name.match(/Ext\s+(\d{2,6})/i)||[])[1];
-    if (!ext) { console.warn('[cv] queues: no extension found'); return; }
-
-    var agentLabel = (name.match(/\((.*?)\)/)||[])[1] || name || ('Ext ' + ext);
-    var sip        = 'sip:' + ext + '@claritydemo';
-
-    // 1) Native API (if present on this domain)
-    if (window.NSAgentsCallQueues && typeof window.NSAgentsCallQueues.getQueuesPerAgent === 'function') {
-      console.debug('[cv] queues: using NSAgentsCallQueues', sip, agentLabel);
-      window.NSAgentsCallQueues.getQueuesPerAgent(sip, agentLabel);
-      return;
-    }
-
-    // 2) Portal modal (if loadModal is present)
-    var lm = getLoadModal();
-    var modalUrl = '/portal/queues/agent/' + ext + '@claritydemo';
-    if (typeof lm === 'function') {
-      console.debug('[cv] queues: using loadModal ->', modalUrl);
-      lm('#queuesPerAgentModal', modalUrl);
-      return;
-    }
-
-    // 3) Hard redirect fallback
-    console.debug('[cv] queues: redirect ->', modalUrl);
-    location.href = modalUrl;
-  }, true);
-})();
-/* ---- CV Agents: wire our Queues icon (append-only, minimal) ---- */
-(function () {
+/* === CV Agents: Queues icon — single, final block === */
+(function(){
   var PANEL_ID = 'cv-agents-panel';
   var DOMAIN   = 'claritydemo';
 
-  function withPanelDocs(run){
-    // current doc
-    try { if (document.getElementById(PANEL_ID)) run(document); } catch(e){}
-    // any same-origin iframes (Agents panel may live inside one)
-    document.querySelectorAll('iframe').forEach(function(ifr){
-      try {
-        var d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (d && d.getElementById(PANEL_ID)) run(d);
-      } catch(e){}
-    });
-  }
-
-  withPanelDocs(function(doc){
-    if (doc.__cvAgentsQueuesBound) return;
+  function runIn(doc){
+    if (!doc || doc.__cvAgentsQueuesBound) return;
+    var panel = doc.getElementById(PANEL_ID);
+    if (!panel) return;                 // panel not mounted yet in this doc
     doc.__cvAgentsQueuesBound = true;
 
-    // 1) Tag the Queues button if not already (prefer title="Queues"; fallback: middle tool)
-    doc.querySelectorAll('#'+PANEL_ID+' .cv-row').forEach(function(row){
-      var btn = row.querySelector('.cv-tools [data-tool="queues"]');
-      if (!btn) btn = row.querySelector('.cv-tools .cv-tool[title*="Queues"]');
+    // 1) Tag the Queues button (prefer existing; else middle tool)
+    panel.querySelectorAll('.cv-row').forEach(function(row){
+      var btn = row.querySelector('.cv-tools [data-tool="queues"]')
+             || row.querySelector('.cv-tools .cv-tool[title*="Queues"]');
       if (!btn) {
         var tools = row.querySelectorAll('.cv-tools .cv-tool');
         if (tools && tools[1]) btn = tools[1]; // middle icon
       }
       if (btn) {
-        if (!btn.getAttribute('data-tool')) btn.setAttribute('data-tool','queues');
-        if (!btn.getAttribute('role'))      btn.setAttribute('role','button');
-        if (!btn.getAttribute('tabindex'))  btn.setAttribute('tabindex','0');
-        if (!btn.getAttribute('title'))     btn.setAttribute('title','Queues');
+        btn.setAttribute('data-tool','queues');
+        if (!btn.getAttribute('title'))    btn.setAttribute('title','Queues');
+        if (!btn.getAttribute('role'))     btn.setAttribute('role','button');
+        if (!btn.getAttribute('tabindex')) btn.setAttribute('tabindex','0');
       }
     });
 
@@ -1807,25 +1750,25 @@ if (!window.__cvAgentsPanelInit) {
       var label = ((row.querySelector('.cv-name')||{}).textContent||'').trim();
       var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i);
       var ext  = (row.dataset && row.dataset.ext) || (m ? m[1] : '');
-      var name = (m ? m[2] : '').trim() || 'Agent';
-      return {ext: ext, name: name};
+      var name = (m ? m[2] : 'Agent').trim();
+      return { ext: ext, name: name };
     }
 
     function openQueues(row){
       var p = parseRow(row);
-      if (!p.ext) { console.warn('[cv] queues: no extension parsed'); return; }
+      if (!p.ext) { console.warn('[cv] queues: no extension'); return; }
       var sip = 'sip:'+p.ext+'@'+DOMAIN;
 
-      // A) Native API (preferred)
+      // A) Native API (preferred when present)
       try {
         var NS = doc.defaultView && doc.defaultView.NSAgentsCallQueues;
         if (NS && typeof NS.getQueuesPerAgent === 'function') {
           NS.getQueuesPerAgent(sip, p.name);
           return;
         }
-      } catch(e){}
+      } catch(_) {}
 
-      // B) Platform modal loader
+      // B) Platform modal loader (loadModal)
       try {
         var w  = doc.defaultView || window;
         var lm = w.loadModal || (w.parent && w.parent.loadModal) || (w.top && w.top.loadModal);
@@ -1836,9 +1779,9 @@ if (!window.__cvAgentsPanelInit) {
           lm('#queuesPerAgentModal', href);
           return;
         }
-      } catch(e){}
+      } catch(_) {}
 
-      // C) Hard navigate (last resort)
+      // C) Hard navigate as a last resort
       var url = '/portal/agents/agentrouting/'
               + encodeURIComponent(sip) + '/'
               + encodeURIComponent(p.name).replace(/%20/g,'+');
@@ -1862,6 +1805,28 @@ if (!window.__cvAgentsPanelInit) {
       var row = btn.closest('.cv-row'); if (!row) return;
       openQueues(row);
     }, true);
+  }
+
+  // run now in current doc
+  runIn(document);
+
+  // and any same-origin iframes that already exist
+  document.querySelectorAll('iframe').forEach(function(ifr){
+    try {
+      var d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+      runIn(d);
+    } catch(_) {}
   });
+
+  // re-run as the SPA mounts/replaces nodes
+  new MutationObserver(function(){
+    runIn(document);
+    document.querySelectorAll('iframe').forEach(function(ifr){
+      try {
+        var d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        runIn(d);
+      } catch(_) {}
+    });
+  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
