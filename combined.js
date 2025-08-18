@@ -1400,12 +1400,28 @@ if (!window.__cvAgentsPanelInit) {
       left.appendChild(glyph);
       left.appendChild(name);
 
+      var sip = 'sip:' + a.ext + '@claritydemo';
+      var safeName = encodeURIComponent(a.name).replace(/%20/g,'+');
+      var queuesHref = '/portal/agents/agentrouting/' + encodeURIComponent(sip) + '/' + safeName;
+      // Use the platform modal when available; otherwise let the <a> navigate.
+      var queuesOnClick =
+      "try{var lm=(window.loadModal||parent.loadModal||top.loadModal);"
+    + "if(typeof lm==='function'){lm('#queuesPerAgentModal', this.href);return false;}}catch(e){}";
+
       var tools = doc.createElement('div');
       tools.className = 'cv-tools';
       tools.innerHTML =
-        '<span class="cv-tool" title="Stats"><img alt="" src="'+ICON_STATS+'"></span>' +
-        '<span class="cv-tool" title="Queues"><img alt="" src="'+ICON_QUEUES+'"></span>' +
-        '<span class="cv-tool" title="Listen in"><img alt="" src="'+ICON_LISTEN+'"></span>';
+        '<span class="cv-tool cv-tool-stats" data-tool="stats" title="Stats" aria-label="Stats">'
+        +   '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_STATS+'">'
+        + '</span>'
+        + '<a class="cv-tool" data-tool="queues" title="Queues" aria-label="Queues"'
+        +    ' href="'+queuesHref+'" onclick="'+queuesOnClick+'">'
+              +   '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_QUEUES+'">'
+        + '</a>'
+        + '<span class="cv-tool" data-tool="listen" title="Listen in" aria-label="Listen in">'
+        +   '<img alt="" width="20" height="20" style="width:20px;height:20px;display:block" src="'+ICON_LISTEN+'">'
+        + '</span>';
+
 
       top.appendChild(left);
       top.appendChild(tools);
@@ -1829,4 +1845,5 @@ if (!window.__cvAgentsPanelInit) {
     });
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
+
 
