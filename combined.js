@@ -1901,33 +1901,24 @@ if (!window.__cvAgentsPanelInit) {
 })();}catch(e){console.error('[cv queues] init failed:', e);}
 
 
-/* === CV Queues Fake Modal — vertical-square, ES5-safe, no horiz scroll === */
+/* === CV Queues Fake Modal — vertical-square, real queues, no horiz scroll (drop-in) === */
 (function () {
-  if (window.__cvQueuesFakeInit) return;
-  window.__cvQueuesFakeInit = true;
+  if (window.__cvQueuesFake_v4) return;
+  window.__cvQueuesFake_v4 = true;
 
-  // --- constants
-  var PANEL_ID = 'cv-agents-panel';
+  /* ---- local constants (safe even if defined elsewhere) ---- */
   var ROOT_ID  = 'cvqf-root';
   var STYLE_ID = 'cvqf-style';
+  var PANEL_ID = 'cv-agents-panel';
   var DOMAIN   = 'claritydemo';
 
-  // --- tiny utils
-  function $(sel, root){ return (root || document).querySelector(sel); }
-  function $all(sel, root){ return (root || document).querySelectorAll(sel); }
-  function stopAll(e){ if(e){ try{e.preventDefault();}catch(_){ } try{e.stopPropagation();}catch(_){ } } }
-  function matches(el, sel){
-    if (!el || el.nodeType !== 1) return false;
-    var p = Element.prototype;
-    var fn = p.matches || p.msMatchesSelector || p.webkitMatchesSelector;
-    return fn ? fn.call(el, sel) : false;
-  }
-  function closest(el, sel){
-    while (el && el.nodeType === 1){ if (matches(el, sel)) return el; el = el.parentNode; }
-    return null;
-  }
+  /* ---- tiny helpers (scoped) ---- */
+  function $(sel, root){ return (root||document).querySelector(sel); }
+  function $all(sel, root){ return (root||document).querySelectorAll(sel); }
+  function closest(el, sel){ while (el && el.nodeType===1){ if (el.matches(sel)) return el; el = el.parentNode; } return null; }
+  function stopAll(e){ if(!e) return; e.preventDefault(); e.stopPropagation(); }
 
-  // --- styles + host
+  /* ---- styles + host ---- */
   function ensureHost(){
     if (!document.getElementById(STYLE_ID)){
       var s = document.createElement('style'); s.id = STYLE_ID;
@@ -1937,7 +1928,7 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,'.is-open{display:block}',
         '#',ROOT_ID,' .cvqf-scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}',
 
-        /* dialog (vertical-square like stats) */
+        /* dialog (vertical square like stats) */
         '#',ROOT_ID,' .cvqf-dialog{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);',
           'background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);',
           'width:clamp(520px,44vw,640px);',
@@ -1950,274 +1941,10 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' header{padding:14px 16px;border-bottom:1px solid #eee;',
           'font:600 16px/1.2 "Helvetica Neue", Arial, Helvetica, sans-serif;color:#222}',
         '#',ROOT_ID,' .cvqf-bd{flex:1 1 auto;max-height:none;padding:0 14px 12px;overflow:auto}',
-        '#',ROOT_ID,' .cvqf-ft{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end}',
+        '#',ROOT_ID,' .cvqf-ft{padding:12px 16px;border-top:1px solid #eee;display:flex;gap:10px;justify-content:flex-end;position:relative;overflow:visible}',
 
-        /* table */
-        '#',ROOT_ID,' table{width:100%;border-collapse:collapse;table-layout:fixed}',
-        '#',ROOT_ID,' thead th{font:600 13px/1.2 "Helvetica Neue", Arial;color:#222;text-align:left;',
-          'padding:9px 8px;white-space:nowrap;border-bottom:1px solid #eee}',
-        '#',ROOT_ID,' tbody td{font:400 13px/1.35 "Helvetica Neue", Arial;color:#333;',
-          'padding:9px 8px;border-bottom:1px solid #f0f0f0;white-space:normal;word-break:break-word}',
-        '#',ROOT_ID,' tbody tr:hover{background:#fafafa}',
-        '#',ROOT_ID,' td.num{text-align:center}',
+        /* Set Status menu (drops UP so it’s visible) */
+        '#',ROOT_ID,' #cvqf-setstatus-menu{position:absolute;right:0;bottom:calc(100% + 6px);z-index:3}',
 
-        /* suggested column widths inside tighter box */
-        '#',ROOT_ID,' thead th:nth-child(1){width:86px}',          /* Queue # */
-        '#',ROOT_ID,' thead th:nth-child(3){width:170px}',         /* Status pill */
-        '#',ROOT_ID,' thead th:nth-child(4){width:120px;text-align:center}', /* Wrap time */
-        '#',ROOT_ID,' thead th:nth-child(5){width:120px}',         /* Priority */
-
-        /* inputs & buttons */
-        '#',ROOT_ID,' select{height:28px;font:600 13px/1 Arial}',
-        '#',ROOT_ID,' input[type="number"], select{max-width:72px}',
-        '#',ROOT_ID,' .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}',
-        '#',ROOT_ID,' .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}',
-        '#',ROOT_ID,' .btn:focus{outline:2px solid #0b84ff33;outline-offset:2px}',
-
-        /* status pill + small menu */
-        '#',ROOT_ID,' .pill{display:inline-flex;align-items:center;gap:6px;padding:5px 12px;border-radius:5px;',
-          'font:700 12px/1 Arial;color:#fff;border:none;cursor:pointer}',
-        '#',ROOT_ID,' .pill.off{background:#c4453c}',
-        '#',ROOT_ID,' .pill.on{background:#2e7d32}',
-        '#',ROOT_ID,' .caret{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid #fff}',
-        '#',ROOT_ID,' .menu{position:absolute;background:#fff;border:1px solid #ddd;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:4px 0;display:none;min-width:140px;z-index:2}',
-        '#',ROOT_ID,' .menu a{display:block;padding:8px 10px;font:600 13px/1 Arial;color:#222;text-decoration:none}',
-        '#',ROOT_ID,' .menu a:hover{background:#f5f5f5}',
-
-        /* never show horizontal scrollbars anywhere inside */
-        '#',ROOT_ID,' .cvqf-dialog, #',ROOT_ID,' .cvqf-bd, #',ROOT_ID,' #cvqf-body{overflow-x:hidden}'
-      ].join('');
-      (document.head||document.documentElement).appendChild(s);
-    }
-
-    if (!document.getElementById(ROOT_ID)){
-      var root = document.createElement('div'); root.id = ROOT_ID;
-      root.innerHTML =
-        '<div class="cvqf-scrim" data-act="close"></div>'
-      + '<div class="cvqf-dialog" role="dialog" aria-modal="true">'
-      +   '<header id="cvqf-title"></header>'
-      +   '<div class="cvqf-bd"><div id="cvqf-body"></div></div>'
-      +   '<div class="cvqf-ft">'
-      +     '<div style="margin-right:auto"></div>'
-      +     '<div style="position:relative">'
-      +       '<button class="btn" id="cvqf-setstatus">Set Status ▾</button>'
-      +       '<div class="menu" id="cvqf-setstatus-menu">'
-      +         '<a href="#" data-status="on">Online</a>'
-      +         '<a href="#" data-status="off">Offline</a>'
-      +       '</div>'
-      +     '</div>'
-      +     '<button class="btn" id="cvqf-close">Close</button>'
-      +     '<button class="btn primary" id="cvqf-save">Save</button>'
-      +   '</div>'
-      + '</div>';
-      (document.body||document.documentElement).appendChild(root);
-
-      // footer + backdrop handlers
-      root.addEventListener('click', function(ev){
-        var t = ev.target;
-        if (t.getAttribute && t.getAttribute('data-act')==='close') { $('#'+ROOT_ID).classList.remove('is-open'); }
-        if (t.id==='cvqf-close' || t.id==='cvqf-save') { stopAll(ev); $('#'+ROOT_ID).classList.remove('is-open'); }
-        if (t.id==='cvqf-setstatus'){
-          stopAll(ev);
-          var m=$('#cvqf-setstatus-menu');
-          m.style.display = (m.style.display==='block'?'none':'block');
-        }
-        if (closest(t, '#cvqf-setstatus-menu a')){
-          stopAll(ev);
-          var a = closest(t, 'a');
-          setAllRowsStatus(a.getAttribute('data-status')==='on');
-          $('#cvqf-setstatus-menu').style.display='none';
-        }
-      });
-
-      // global click-away for any open menus (row menus + footer menu)
-      document.addEventListener('click', function(ev){
-        if (!(closest(ev.target, '#cvqf-setstatus') || closest(ev.target, '#cvqf-setstatus-menu'))){
-          var fm = $('#cvqf-setstatus-menu'); if (fm) fm.style.display='none';
-        }
-        var menus = $all('#'+ROOT_ID+' .menu');
-        for (var i=0;i<menus.length;i++){
-          if (!(closest(ev.target, '#'+ROOT_ID+' .menu') || closest(ev.target, '#'+ROOT_ID+' button.pill'))){
-            menus[i].style.display='none';
-          }
-        }
-      });
-    }
-  }
-
-/* --- Make Set Status dropdown visible --- */
-#cvqf-root .cvqf-dialog { overflow-y: visible; }        /* body scrolls, dialog can show menus */
-#cvqf-root .cvqf-ft { overflow: visible; position: relative; }
-#cvqf-root #cvqf-setstatus-menu {
-  position: absolute;
-  right: 0;
-  bottom: calc(100% + 6px);   /* open upward above the button */
-  z-index: 3;                 /* above dialog body */
-}
-
-/* --- Column balance so Description doesn't sit on Status --- */
-#cvqf-root table { table-layout: fixed; }
-
-/* Queue # */
-#cvqf-root thead th:nth-child(1),
-#cvqf-root tbody td:nth-child(1) { width: 72px; }
-
-/* Status (pill) */
-#cvqf-root thead th:nth-child(3),
-#cvqf-root tbody td:nth-child(3) { width: 148px; }
-
-/* Wrap Up Time */
-#cvqf-root thead th:nth-child(4),
-#cvqf-root tbody td:nth-child(4) { width: 64px; text-align: center; }
-
-/* Priority */
-#cvqf-root thead th:nth-child(5),
-#cvqf-root tbody td:nth-child(5) { width: 86px; }
-
-/* Description takes the remaining space on one line */
-#cvqf-root thead th:nth-child(2),
-#cvqf-root tbody td:nth-child(2) {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-  
-  // --- build rows/table
-  function buildRows(agent){
-    // Everyone gets 300/301/302, Jake(202) also gets 303
-    var rows = [
-      {num:'300', title:'Main Routing (300)'},
-      {num:'301', title:'New Sales (301)'},
-      {num:'302', title:'Existing Customer (302)'}
-    ];
-    if (String(agent.ext) === '202') rows.push({num:'303', title:'Billing (303)'});
-
-    // Jake(202) & Bob(203) open Offline, others Online
-    var offlineDefault = (String(agent.ext) === '202' || String(agent.ext) === '203');
-
-    var out = [];
-    for (var i=0;i<rows.length;i++){
-      var r = rows[i];
-      var cls = offlineDefault ? 'off' : 'on';
-      var label = offlineDefault ? 'Offline' : 'Online';
-      out.push(
-        '<tr>'
-          + '<td>'+r.num+'</td>'
-          + '<td>'+r.title.replace(/\s+\(\d+\)$/,"")+'</td>'
-          + '<td>'
-            + '<div style="position:relative;display:inline-block">'
-              + '<button class="pill '+cls+'" data-p="pill"><span>'+label+'</span> <i class="caret"></i></button>'
-              + '<div class="menu" data-p="menu">'
-                + '<a href="#" data-status="on">Online</a>'
-                + '<a href="#" data-status="off">Offline</a>'
-              + '</div>'
-            + '</div>'
-          + '</td>'
-          + '<td class="num">0</td>'
-          + '<td>'
-            + '<select data-p="priority">'
-              + (function(){ var o=''; for (var j=0;j<=19;j++){ o+='<option value="'+j+'">'+j+'</option>'; } return o; })()
-            + '</select>'
-          + '</td>'
-        + '</tr>'
-      );
-    }
-    return out.join('');
-  }
-
-  
-  function buildTable(agent){
-    return ''
-      + '<table class="table table-condensed table-hover">'
-      +   '<thead><tr><th>Queue</th><th>Description</th><th>Status</th><th>Wrap Up Time</th><th>Priority</th></tr></thead>'
-      +   '<tbody id="cvqf-tbody">'+ buildRows(agent) +'</tbody>'
-      + '</table>';
-  }
-
-  
-  // --- pill helpers
-  function setOnePill(pill, online){
-    if (!pill) return;
-    pill.classList.remove(online ? 'off' : 'on');
-    pill.classList.add(online ? 'on' : 'off');
-    var span = pill.querySelector('span');
-    if (span) span.textContent = online ? 'Online' : 'Offline';
-  }
-  function setAllRowsStatus(online){
-    var pills = $all('#'+ROOT_ID+' #cvqf-tbody button.pill');
-    for (var i=0;i<pills.length;i++) setOnePill(pills[i], online);
-  }
-
-  // --- wire row menus inside modal
-  function wireRowMenus(root){
-    var tbody = $('#cvqf-tbody', root);
-    if (!tbody) return;
-    tbody.addEventListener('click', function(ev){
-      var pill = closest(ev.target, 'button.pill');
-      if (pill){
-        stopAll(ev);
-        var wrap = pill.parentNode;
-        var menu = wrap.querySelector('.menu');
-        menu.style.display = (menu.style.display==='block' ? 'none' : 'block');
-        return;
-      }
-      var a = closest(ev.target, '.menu a');
-      if (a){
-        stopAll(ev);
-        var makeOn = a.getAttribute('data-status')==='on';
-        var wrap2 = closest(a, 'div');
-        var p = wrap2.querySelector('button.pill');
-        setOnePill(p, makeOn);
-        closest(a, '.menu').style.display='none';
-      }
-    });
-  }
-
-  // --- parse agent from Agents panel row
-  function parseAgentFromRow(row){
-    var label = ((row && row.querySelector('.cv-name'))||{}).textContent || '';
-    var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i) || [];
-    var ext  = (row && row.dataset && row.dataset.ext) || m[1] || '';
-    var name = (m[2]||'').trim() || 'Agent';
-    return { ext: ext, name: name };
-  }
-
-  // --- open modal
-  function openModal(title, html){
-    ensureHost();
-    $('#cvqf-title').textContent = title || '';
-    $('#cvqf-body').innerHTML = html || '';
-    $('#'+ROOT_ID).classList.add('is-open');
-    wireRowMenus($('#'+ROOT_ID));
-  }
-
-  // --- intercept Queues icon (keep original data-tool="queues")
-  document.addEventListener('click', function(ev){
-    var btn = closest(ev.target, '#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
-    if (!btn) return;
-    stopAll(ev); // prevent any platform modal/navigation
-    var row = closest(btn, '.cv-row'); if (!row) return;
-    var agent = parseAgentFromRow(row);
-    var title = 'Queues for '+agent.name+' (sip:'+agent.ext+'@'+DOMAIN+')';
-    openModal(title, buildTable(agent));
-  }, true);
-
-  // keyboard support
-  document.addEventListener('keydown', function(ev){
-    if (ev.key !== 'Enter' && ev.key !== ' ') return;
-    var btn = closest(ev.target, '#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
-    if (!btn) return;
-    stopAll(ev);
-    btn.click();
-  }, true);
-})();
-
-
-
-
-
-
-
-
-
+        /* table (fixed layout; no horiz scroll) */
+        '#',ROOT_ID,' table{width:100%;border-collapse:collapse;table-l_
