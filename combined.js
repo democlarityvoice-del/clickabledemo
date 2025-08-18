@@ -2136,7 +2136,7 @@ if (!window.__cvAgentsPanelInit) {
   }, true);
 })();
 
-/* === CV Queues Fake Modal: vertical-square shape + tighter layout === */
+/* === CV Queues Fake Modal: vertical-square shape + no horiz scroll === */
 (function () {
   var ID = 'cvqf-style-shape';
   if (document.getElementById(ID)) return;
@@ -2144,21 +2144,45 @@ if (!window.__cvAgentsPanelInit) {
   var s = document.createElement('style');
   s.id = ID;
   s.textContent = [
-    '/* square-ish dialog: narrower width, taller height, centered */',
+    /* square-ish dialog: narrower & taller like stats */
     '#cvqf-root .cvqf-dialog{',
-    '  width:clamp(520px,48vw,660px);',
-    '  height:clamp(520px,72vh,760px);',
-    '  max-width:calc(100vw - 40px);',
-    '  max-height:calc(100vh - 40px);',
+    '  width:clamp(520px,44vw,640px) !important;',   /* tweak 44vw→46/48vw if you want wider */
+    '  height:clamp(520px,74vh,760px) !important;',
+    '  max-width:calc(100vw - 40px) !important;',
+    '  max-height:calc(100vh - 40px) !important;',
     '}',
+
+    /* body scroll only vertical; kill horizontal scrollbar */
     '#cvqf-root .cvqf-dialog,',
     '#cvqf-root .cvqf-bd,',
-    '#cvqf-root #cvqf-body{overflow-x:hidden;}'
+    '#cvqf-root #cvqf-body{',
+    '  overflow-x:hidden !important;',
+    '}',
+
+    /* make table fully responsive inside the narrower dialog */
+    '#cvqf-root #cvqf-body table{',
+    '  width:100% !important;',
+    '  max-width:100% !important;',
+    '  table-layout:fixed !important;',
+    '  border-collapse:collapse;',
+    '}',
+
+    /* prevent columns from forcing overflow */
+    '#cvqf-root #cvqf-body th,',
+    '#cvqf-root #cvqf-body td{',
+    '  white-space:normal;',            /* allow wrapping if needed */
+    '  word-break:break-word;',
+    '}',
+
+    /* keep Priority input from ballooning */
+    '#cvqf-root #cvqf-body input[type="number"],',
+    '#cvqf-root #cvqf-body select{',
+    '  max-width:72px;',
+    '}'
   ].join('');
 
   (document.head || document.documentElement).appendChild(s);
 })();
-
 
 
     /* body fills the height; table scrolls inside */
@@ -2180,6 +2204,7 @@ if (!window.__cvAgentsPanelInit) {
   ].join('');
   (document.head || document.documentElement).appendChild(s);
 })();
+
 
 
 
