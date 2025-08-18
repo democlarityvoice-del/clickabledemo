@@ -2327,17 +2327,34 @@ if (!document.__cvqfRowStatusCapture) {
         host.style.height = height + 'px';
 
         chart.draw(built.dt, {
-          legend:'none',
-          focusTarget:'datum',
-          tooltip:{ isHtml:true, trigger:'focus' },
-          lineWidth:2,
-          width:  width,
-          height: height,
-          chartArea:{ left:48, top:20, width: width-72, height: height-60 },
-          hAxis:{ viewWindow:{ min: built.start, max: built.end }, format:'h:mm a', gridlines:{count:9} },
-          vAxis:{ viewWindow:{ min:0, max:6 }, ticks:[0,2,4,6] }
-        });
-      }
+        var opts = {
+        legend: 'none',
+        lineWidth: 2,
+        focusTarget: 'datum',
+        tooltip: { isHtml: true, trigger: 'focus' },
+
+  // give the chart room but keep the bottom small (we're hiding x labels)
+  chartArea: { left: 60, right: 20, top: 20, bottom: 16 },
+
+  // X axis: hide labels & vertical gridlines
+  hAxis: {
+    viewWindow: { min: built.start, max: built.end },
+    textPosition: 'none',                 // hide times along the bottom
+    ticks: [],                            // no tick labels
+    gridlines: { color: 'transparent' },  // remove vertical lines
+    minorGridlines: { color: 'transparent', count: 0 },
+    baselineColor: 'transparent'          // hide the x baseline
+  },
+
+  // Y axis: keep 0/2/4/6 with light horizontal gridlines
+  vAxis: {
+    viewWindow: { min: 0, max: 6 },
+    ticks: [0, 2, 4, 6],
+    gridlines: { color: '#e9e9e9' },      // light horizontal lines
+    baselineColor: '#bdbdbd'
+  }
+};
+  
 
       // initial + double-RAF to catch late layout
       redraw();
@@ -2369,3 +2386,4 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
