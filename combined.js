@@ -1847,48 +1847,60 @@ if (!window.__cvAgentsPanelInit) {
 })();
 
 
-// If NSAgentsCallQueues is present, wrap its getQueuesPerAgent with a fallback
-(function(){
-  var NS = window.NSAgentsCallQueues;
-  if (!NS || typeof NS.getQueuesPerAgent !== 'function') return;
+;try{(function(){
+  var PANEL_ID = 'cv-agents-panel';
+  if (document.__cvQueuesBoundV3) return;
+  document.__cvQueuesBoundV3 = true;
 
-  var orig = NS.getQueuesPerAgent.bind(NS);
-
-  function modalVisible() {
+  function getLoadModal(win){
     try {
-      var d = document;
-      return !!(
-        d.querySelector('#queuesPerAgentModal .modal') ||
-        d.querySelector('#queuesPerAgentModal') ||
-        d.querySelector('.modal.in') ||
-        d.querySelector('.modal-backdrop.in') ||
-        d.querySelector('.modal-backdrop')   // portal variants
-      );
-    } catch(e){ return false; }
+      var w = win || window;
+      return w.loadModal || (w.parent && w.parent.loadModal) || (w.top && w.top.loadModal) || null;
+    } catch(e){ return null; }
   }
 
-  function openViaPortal(sip, label){
+  function parseRow(row){
+    var label = ((row && row.querySelector('.cv-name'))||{}).textContent || '';
+    var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i) || [];
+    var ext  = (row && row.dataset && row.dataset.ext) || m[1];
+    var name = (m[2]||'').trim() || 'Agent';
+    return { ext: ext, name: name };
+  }
+
+  function openQueues(row){
+    var p = parseRow(row);
+    if (!p.ext) { console.warn('[cv queues] no extension parsed'); return; }
+    var sip = 'sip:'+p.ext+'@claritydemo';
+
+    // Try the native call first (if it exists)
+    try {
+      if (window.NSAgentsCallQueues && typeof window.NSAgentsCallQueues.getQueuesPerAgent === 'function') {
+        window.NSAgentsCallQueues.getQueuesPerAgent(sip, p.name);
+        return;
+      }
+    } catch(e){ /* ignore and fall back */ }
+
+    // Fallback: portal modal or hard navigate
     var href = '/portal/agents/agentrouting/'
              + encodeURIComponent(sip) + '/'
-             + encodeURIComponent(label).replace(/%20/g,'+');
-    var lm = (window.loadModal || (parent && parent.loadModal) || (top && top.loadModal));
-    if (typeof lm === 'function') {
-      lm('#queuesPerAgentModal', href);
-    } else {
-      location.href = href;
-    }
+             + encodeURIComponent(p.name).replace(/%20/g,'+');
+
+    var lm = getLoadModal();
+    if (typeof lm === 'function') lm('#queuesPerAgentModal', href);
+    else location.href = href;
   }
 
-  NS.getQueuesPerAgent = function(sip, label){
-    // Call the native function first
-    try { orig(sip, label); } catch(e){ /* ignore; fallback will handle */ }
+  // Delegate clicks to our Queues icon
+  document.addEventListener('click', function(e){
+    var qbtn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
+    if (!qbtn) return;
+    e.preventDefault();
+    var row = qbtn.closest('.cv-row'); if (!row) return;
+    openQueues(row);
+  }, true);
+})();}catch(e){console.error('[cv queues] init failed:', e);}
 
-    // After a short wait, if no modal/backdrop is visible, use the portal loader
-    setTimeout(function(){
-      if (!modalVisible()) openViaPortal(sip, label);
-    }, 800);
-  };
-})();
+
 
 
 
