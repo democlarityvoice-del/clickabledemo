@@ -2196,5 +2196,116 @@ if (!document.__cvqfRowStatusCapture) {
 })();
 
 
+// ==============================
+// ==============================
+/* === CV Active Calls Graph — fake 8am→4pm with timed peaks + tooltips === */
+(function () {
+  if (window.__cvFakeActiveGraph) return;
+  window.__cvFakeActiveGraph = true;
+
+  var MANAGER_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  var PANEL_SEL     = '.graphs-panel-home.rounded';  // the chart panel (body)
+  var CHART_ID      = 'cv-fake-active-graph';
+  var STYLE_ID      = 'cv-fake-active-graph-style';
+
+  function ensureStyles(doc){
+    var s = doc.getElementById(STYLE_ID);
+    if (!s){
+      s = doc.createElement('style'); s.id = STYLE_ID;
+      s.textContent =
+        '#'+CHART_ID+'{width:100%;height:560px;}' +
+        /* hide any native chart inside the panel */
+        '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
+      (doc.head||doc.documentElement).appendChild(s);
+    }
+  }
+
+  function getDocs(){
+    var docs=[document];
+    var ifrs=document.querySelectorAll('iframe');
+    for (var i=0;i<ifrs.length;i++){
+      try{
+        var d=ifrs[i].contentDocument||(ifrs[i].contentWindow&&ifrs[i].contentWindow.document);
+        if (d) docs.push(d);
+      }catch(_){}
+    }
+    return docs;
+  }
+
+  function findPanelDoc(){
+    var docs=getDocs();
+    for (var i=0;i<docs.length;i++){
+      var p=docs[i].querySelector(PANEL_SEL);
+      if (p) return {doc:docs[i], panel:p};
+    }
+    return null;
+  }
+
+  // --- Google Charts loader/ready helper (no extra <script> tags) ---
+  function whenGVizReady(cb){
+    function ready(){ try { return window.google && google.visualization && google.visualization.DataTable; } catch(_) { return false; } }
+    function onready(){ try { cb(); } catch(_){} }
+    if (ready()) return onready();
+    if (window.google && google.charts && google.charts.load){
+      try { google.charts.load('current', {'packages':['corechart']}); } catch(_){}
+      try { google.charts.setOnLoadCallback(onready); } catch(_){}
+    }
+    var tries = 0;
+    (function wait(){
+      if (ready()) return onready();
+      if (tries++ > 80) return; // ~4s max
+      setTimeout(wait,50);
+    })();
+  }
+
+  // --- Build data: 8:00 → 16:00 with narrow spikes + HTML tooltips on peaks ---
+  function buildDataTable(){
+    var now  = new Date();
+    var y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
+    var start=new Date(y,m,d,8,0,0,0);
+    var end  =new Date(y,m,d,16,0,0,0);
+
+    // Define peak times (24h “HH:MM”) and heights; edit here to change the shape.
+    var PEAKS = [
+      ['09:45',1],
+      ['10:15',1],
+      ['11:55',1],
+      ['13:10',1],
+      ['14:20',1],
+      ['15:00',2],
+      ['15:41',5],
+      ['15:44',6],
+      ['15:51',5],
+      ['15:56',4],
+      ['15:58',3],
+      ['16:00',2]
+    ];
+
+    function parseHM(hm){
+      var hh=+hm.slice(0,2), mm=+hm.slice(3,5);
+      return new Date(y,m,d,hh,mm,0,0);
+    }
+    function fmtTime(dt){
+      return dt.toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+    }
+    function tip(dt){
+      return '<div style="padding:6px 8px;white-space:nowrap;"><b>Today, '+fmtTime(dt)+'</b><br>All Queues: 5</div>';
+    }
+
+    // collect points (zeros hourly + spikes as 3 points to make thin peaks)
+    var pts = [];
+    for (var t=new Date(start); t<=end; t=new Date(t.getTime()+60*60*1000)) pts.push([new Date(t), 0, null]);
+    for (var i=0;i<PEAKS.length;i++){
+      var mid=parseHM(PEAKS[i][0]), val=PEAKS[i][1];
+      var pre = new Date(mid.getTime()-3*60*1000);
+      var post= new Date(mid.getTime()+3*60*1000);
+      pts.push([pre, 0, null]);
+      pts.push([mid, val, tip(mid)]);   // custom HTML tooltip (always “All Queues: 5”)
+      pts.push([post, 0, null]);
+    }
+    // sort by time
+    pts.so
+
+
 
 
