@@ -1900,6 +1900,67 @@ if (!window.__cvAgentsPanelInit) {
   }, true);
 })();}catch(e){console.error('[cv queues] init failed:', e);}
 
+/* CV Agents: Queues icon -> Agents Routing (append-only; NO <script> wrappers) */
+;try{(function(){
+  if (document.__cvQWire) return; document.__cvQWire = true;
+
+  var PANEL_ID = 'cv-agents-panel';
+  var DOMAIN   = 'claritydemo';
+
+  function parse(row){
+    var label = ((row && row.querySelector('.cv-name'))||{}).textContent || '';
+    var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i) || [];
+    var ext  = (row && row.dataset && row.dataset.ext) || m[1];
+    var name = (m[2]||'').trim() || 'Agent';
+    return { ext: ext, name: name };
+  }
+
+  function openQueues(row){
+    var p = parse(row);
+    if (!p.ext) return;
+    var sip = 'sip:'+p.ext+'@'+DOMAIN;
+
+    // A) Native (preferred if present)
+    try {
+      var NS = window.NSAgentsCallQueues;
+      if (NS && typeof NS.getQueuesPerAgent === 'function'){
+        NS.getQueuesPerAgent(sip, p.name);
+        return;
+      }
+    } catch(_){}
+
+    // B) Portal modal loader
+    var href = '/portal/agents/agentrouting/'
+             + encodeURIComponent(sip) + '/'
+             + encodeURIComponent(p.name).replace(/%20/g,'+');
+    try {
+      var lm = window.loadModal || (parent && parent.loadModal) || (top && top.loadModal);
+      if (typeof lm === 'function'){ lm('#queuesPerAgentModal', href); return; }
+    } catch(_){}
+
+    // C) Hard navigate
+    location.href = href;
+  }
+
+  // Delegate only to our panel’s Queues icon (click + keyboard)
+  document.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
+    if (!btn) return;
+    e.preventDefault();
+    var row = btn.closest('.cv-row'); if (!row) return;
+    openQueues(row);
+  }, true);
+
+  document.addEventListener('keydown', function(e){
+    if (e.key!=='Enter' && e.key!==' ') return;
+    var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
+    if (!btn) return;
+    e.preventDefault();
+    var row = btn.closest('.cv-row'); if (!row) return;
+    openQueues(row);
+  }, true);
+})();}catch(_){}
+
 
 
 
