@@ -1766,3 +1766,102 @@ if (!window.__cvAgentsPanelInit) {
     location.href = modalUrl;
   }, true);
 })();
+/* ---- CV Agents: wire our Queues icon (append-only, minimal) ---- */
+(function () {
+  var PANEL_ID = 'cv-agents-panel';
+  var DOMAIN   = 'claritydemo';
+
+  function withPanelDocs(run){
+    // current doc
+    try { if (document.getElementById(PANEL_ID)) run(document); } catch(e){}
+    // any same-origin iframes (Agents panel may live inside one)
+    document.querySelectorAll('iframe').forEach(function(ifr){
+      try {
+        var d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d && d.getElementById(PANEL_ID)) run(d);
+      } catch(e){}
+    });
+  }
+
+  withPanelDocs(function(doc){
+    if (doc.__cvAgentsQueuesBound) return;
+    doc.__cvAgentsQueuesBound = true;
+
+    // 1) Tag the Queues button if not already (prefer title="Queues"; fallback: middle tool)
+    doc.querySelectorAll('#'+PANEL_ID+' .cv-row').forEach(function(row){
+      var btn = row.querySelector('.cv-tools [data-tool="queues"]');
+      if (!btn) btn = row.querySelector('.cv-tools .cv-tool[title*="Queues"]');
+      if (!btn) {
+        var tools = row.querySelectorAll('.cv-tools .cv-tool');
+        if (tools && tools[1]) btn = tools[1]; // middle icon
+      }
+      if (btn) {
+        if (!btn.getAttribute('data-tool')) btn.setAttribute('data-tool','queues');
+        if (!btn.getAttribute('role'))      btn.setAttribute('role','button');
+        if (!btn.getAttribute('tabindex'))  btn.setAttribute('tabindex','0');
+        if (!btn.getAttribute('title'))     btn.setAttribute('title','Queues');
+      }
+    });
+
+    function parseRow(row){
+      var label = ((row.querySelector('.cv-name')||{}).textContent||'').trim();
+      var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i);
+      var ext  = (row.dataset && row.dataset.ext) || (m ? m[1] : '');
+      var name = (m ? m[2] : '').trim() || 'Agent';
+      return {ext: ext, name: name};
+    }
+
+    function openQueues(row){
+      var p = parseRow(row);
+      if (!p.ext) { console.warn('[cv] queues: no extension parsed'); return; }
+      var sip = 'sip:'+p.ext+'@'+DOMAIN;
+
+      // A) Native API (preferred)
+      try {
+        var NS = doc.defaultView && doc.defaultView.NSAgentsCallQueues;
+        if (NS && typeof NS.getQueuesPerAgent === 'function') {
+          NS.getQueuesPerAgent(sip, p.name);
+          return;
+        }
+      } catch(e){}
+
+      // B) Platform modal loader
+      try {
+        var w  = doc.defaultView || window;
+        var lm = w.loadModal || (w.parent && w.parent.loadModal) || (w.top && w.top.loadModal);
+        if (typeof lm === 'function') {
+          var href = '/portal/agents/agentrouting/'
+                   + encodeURIComponent(sip) + '/'
+                   + encodeURIComponent(p.name).replace(/%20/g,'+');
+          lm('#queuesPerAgentModal', href);
+          return;
+        }
+      } catch(e){}
+
+      // C) Hard navigate (last resort)
+      var url = '/portal/agents/agentrouting/'
+              + encodeURIComponent(sip) + '/'
+              + encodeURIComponent(p.name).replace(/%20/g,'+');
+      location.href = url;
+    }
+
+    // 2) Delegated handlers (click + keyboard) scoped to our panel
+    doc.addEventListener('click', function(e){
+      var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
+      if (!btn) return;
+      e.preventDefault();
+      var row = btn.closest('.cv-row'); if (!row) return;
+      openQueues(row);
+    }, true);
+
+    doc.addEventListener('keydown', function(e){
+      if (e.key !== 'Enter' && e.key !== ' ') return;
+      var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
+      if (!btn) return;
+      e.preventDefault();
+      var row = btn.closest('.cv-row'); if (!row) return;
+      openQueues(row);
+    }, true);
+  });
+})();
+
