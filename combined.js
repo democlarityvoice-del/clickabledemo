@@ -1227,38 +1227,33 @@ tr:hover .cvq-icon{ opacity:.85; }
   }
   function detachObserver(doc){ if(doc.__cvqMO){ try{doc.__cvqMO.disconnect();}catch{} delete doc.__cvqMO; } }
 
-  // ---- WATCHER: Route Changes (enter/leave manager page) ----
-  function waitAndInject(tries){
-    tries = tries || 0;
-    const found = findQueuesDoc();
-    if (found && (found.body || tries>=3)) { scheduleInject(injectQueuesTiles); return; }
-    if (tries>=12) return;
-    setTimeout(()=>waitAndInject(tries+1),300);
-  }
-  function onEnter(){ waitAndInject(0); }
- 
-  function route(prev, next){
-  const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
-  if (!was && is) { 
-    waitAndInject(0);
-    startGlobalLunchTicker();   // <-- ensure ticking even if panel pre-existed
-  }
-  if (was && !is) remove();
+// ---- WATCHER: Route Changes (enter/leave manager page) ----
+function waitAndInject(tries){
+  tries = tries || 0;
+  const found = findQueuesDoc();
+  if (found && (found.body || tries >= 3)) { scheduleInject(injectQueuesTiles); return; }
+  if (tries >= 12) return;
+  setTimeout(()=>waitAndInject(tries+1),300);
+}
+function onEnter(){ waitAndInject(0); }
+
+function handleRoute(prev, next){
+  const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
+  if (!was && is) onEnter();
+  if ( was && !is) removeQueuesTiles();
 }
 
+(function watchURL(){
+  let last = location.href;
+  const push = history.pushState, rep = history.replaceState;
+  history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+  history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
+  new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+    .observe(document.documentElement,{childList:true,subtree:true});
+  window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
+  if (QUEUES_REGEX.test(location.href)) onEnter();
+})();
 
-  // ---- WATCHER: URL (push/replace/popstate + SPA) ----
-  (function watchURL(){
-    let last = location.href;
-    const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
-      .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
-    if (QUEUES_REGEX.test(location.href)) onEnter();
-  })();
-}
 
 
 // ==============================
@@ -1957,6 +1952,7 @@ if (!window.__cvAgentsPanelInit) {
     openQueues(row);
   }, true);
 })();}catch(_){}
+
 
 
 
