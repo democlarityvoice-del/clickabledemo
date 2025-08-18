@@ -628,14 +628,14 @@ if (!window.__cvQueuesTilesInit) {
   const PANEL_ID       = 'cvq-panel';
   const PANEL_STYLE_ID = 'cvq-panel-style';
 
-  // ---- DECLARE ICON URL CONSTANTS (HOSTED SVGs) ----
+  // ---- DECLARE CALL CENTER ICON URL CONSTANTS (HOSTED SVGs) ----
   const ICON_USER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
   const ICON_EDIT    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
   const ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   const ICON_PHONE   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   const ICON_ARROW   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/arrow-up-solid-full.svg';
 
-  // ---- DECLARE REAL ROUTES (claritydemo) ----
+  // ---- DECLARE CALL CENTER REAL ROUTES (claritydemo) ----
   const IDLE_LINKS = {
     main:     '/portal/callqueues/editagents/300@claritydemo/Ring+All',
     sales:    '/portal/callqueues/editagents/301@claritydemo/Round-robin',
@@ -649,7 +649,7 @@ if (!window.__cvQueuesTilesInit) {
     billing:  '/portal/callqueues/edit/303@claritydemo'
   };
 
-  // ---- DECLARE QUEUE DATA (demo counts) ----
+  // ---- DECLARE CALL CENTER QUEUE DATA (demo counts) ----
   const QUEUE_DATA = [
     { key:'main',     title:'Main Routing (300)',      active:0, waiting:0, timer:false, idle:7 },
     { key:'sales',    title:'New Sales (301)',         active:3, waiting:1, timer:true,  idle:6 },
@@ -657,7 +657,7 @@ if (!window.__cvQueuesTilesInit) {
     { key:'billing',  title:'Billing (303)',           active:0, waiting:0, timer:false, idle:1 }
   ];
 
-  // ---- UTIL: scheduleInject (safe RAF/timeout) ----
+  // ---- UTIL: CALL CENTER scheduleInject (safe RAF/timeout) ----
   function scheduleInject(fn) {
     let fired = false;
     if ('requestAnimationFrame' in window) {
@@ -666,7 +666,7 @@ if (!window.__cvQueuesTilesInit) {
     setTimeout(() => { if (!fired) fn(); }, 64);
   }
 
-  // ---- UTIL: getSameOriginDocs (document + inner iframes) ----
+  // ---- UTIL: CALL CENTER getSameOriginDocs (document + inner iframes) ----
   function getSameOriginDocs(){
     const docs = [document];
     const ifrs = document.querySelectorAll('iframe');
@@ -679,7 +679,7 @@ if (!window.__cvQueuesTilesInit) {
     return docs;
   }
 
-  // ---- UTIL: findQueuesDoc (locate body/container/table) ----
+  // ---- UTIL: CALL CENTER findQueuesDoc (locate body/container/table) ----
   function findQueuesDoc(){
     const docs = getSameOriginDocs();
     for (let i=0;i<docs.length;i++){
@@ -693,7 +693,7 @@ if (!window.__cvQueuesTilesInit) {
     return null;
   }
 
-  // ---- UTIL: mmss (format seconds) ----
+  // ---- UTIL: CALL CENTER mmss (format seconds) ----
   function mmss(sec){
     sec |= 0;
     const m = String((sec/60|0)).padStart(2,'0');
@@ -701,7 +701,7 @@ if (!window.__cvQueuesTilesInit) {
     return m + ':' + s;
   }
 
-  // ---- UTIL: matches / closest (compat) ----
+  // ---- UTIL: CALL CENTER matches / closest (compat) ----
   function matches(el, sel){
     if (!el || el.nodeType !== 1) return false;
     const p = Element.prototype;
@@ -716,7 +716,7 @@ if (!window.__cvQueuesTilesInit) {
     return null;
   }
 
-  // ---- UTIL: find loadModal on window/parent/top ----
+  // ---- UTIL: CALL CENTER find loadModal on window/parent/top ----
   function getLoadModal(doc){
     const w = (doc && doc.defaultView) || window;
     return (typeof w.loadModal === 'function' && w.loadModal) ||
@@ -725,7 +725,7 @@ if (!window.__cvQueuesTilesInit) {
            null;
   }
 
-  // ---- CACHES FOR MODAL ROWS (stable while open) ----
+  // ---- CACHES FOR CALL CENTER MODAL ROWS (stable while open) ----
   const REAL_DIDS      = ['(248) 436-3443','(248) 436-3449','(313) 995-9080'];
   const SAFE_FAKE_AC   = ['900','700','999','888','511','600','311','322','456'];
   const AGENT_EXT_POOL = [201,203,204,207,211,215,218,219,222,227,231,235];
@@ -736,7 +736,7 @@ if (!window.__cvQueuesTilesInit) {
   function pickAgentExt(i){ return AGENT_EXT_POOL[i % AGENT_EXT_POOL.length]; }
   function pickRealDID(i){ return REAL_DIDS[i % REAL_DIDS.length]; }
 
-  // ---- ACTION: Build "Active Calls" rows for modal ----
+  // ---- ACTION: Build CALL CENTER "Active Calls" rows for modal ----
   function makeActiveRows(qkey, count){
     if (!CVQ_CACHE.active[qkey]) {
       const now = Date.now();
@@ -763,7 +763,7 @@ if (!window.__cvQueuesTilesInit) {
     return CVQ_CACHE.active[qkey];
   }
 
-  // ---- ACTION: Build "Callers Waiting" rows for modal ----
+  // ---- ACTION: Build CALL CENTER "Callers Waiting" rows for modal ----
   function makeWaitingRows(qkey, count){
     if (!CVQ_CACHE.waiting[qkey]) {
       const now = Date.now();
@@ -792,7 +792,7 @@ if (!window.__cvQueuesTilesInit) {
 
 
 
-// ---- ACTION: Ensure Styles + Modal Host (create/update once) ----
+// ---- ACTION: Ensure CALL CENTER Styles + Modal Host (create/update once) ----
 function ensureStyles(doc){
   // move modal slightly right (affects BOTH Active Calls & Callers Waiting)
   var SHIFT_PX = 80;
@@ -822,7 +822,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
 .cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
 
-/* --- CVQ MODAL: default hidden; open with .is-open --- */
+/* --- CVQ MODAL: CALL CENTER default hidden; open with .is-open --- */
 .cvq-modal-backdrop{
   position:fixed; inset:0; background:rgba(0,0,0,.35);
   z-index:9998; display:none;
@@ -864,7 +864,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-modal table th:first-child,
 .cvq-modal table td:first-child{ padding-left:22px; }
 
-/* center Agent / Duration / Actions (works for both modals) */
+/* CALL CENTER Agent / Duration / Actions (works for both modals) */
 .cvq-modal table thead th:nth-child(4),
 .cvq-modal table thead th:nth-child(5),
 .cvq-modal table thead th:nth-child(6),
@@ -903,7 +903,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
-  // ---- ACTION: Open / Close Modal (single, canonical) ----
+  // ---- ACTION: CALL CENTER Open / Close Modal (single, canonical) ----
   function openModal(doc, title, tableHTML){
     const bd = doc.getElementById('cvq-backdrop');
     const md = doc.getElementById('cvq-modal');
@@ -928,7 +928,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     if (doc.__cvqModalTimer){ clearInterval(doc.__cvqModalTimer); doc.__cvqModalTimer=null; }
   }
 
-  // ---- ACTION: Build Panel HTML (renders all queue rows) ----
+  // ---- ACTION: Build CALL CENTER Panel HTML (renders all queue rows) ----
   function buildPanelHTML(){
     const rows = QUEUE_DATA.map((d)=>{
       const waitCell = d.timer
@@ -947,19 +947,19 @@ tr:hover .cvq-icon{ opacity:.85; }
         <td class="text-center"><input type="checkbox" tabindex="-1" /></td>
         <td class="cvq-queue">${d.title}</td>
 
-        <!-- ---- ACTION: Active Calls count — opens modal ---- -->
+        <!-- ---- ACTION: CALL CENTER Active Calls count — opens modal ---- -->
         <td class="text-center">
           <a class="cvq-link" data-act="active">${d.active}</a>
         </td>
 
-        <!-- ---- ACTION: Callers Waiting count — opens modal ---- -->
+        <!-- ---- ACTION: CALL CENTER Callers Waiting count — opens modal ---- -->
         <td class="text-center">
           <a class="cvq-link" data-act="waiting">${d.waiting}</a>
         </td>
 
         <td class="text-center">${waitCell}</td>
 
-        <!-- ---- ACTION: Agents Idle — routes to real “Edit Agents” ---- -->
+        <!-- ---- ACTION: CALL CENTER Agents Idle — routes to real “Edit Agents” ---- -->
         <td class="text-center">
           <a class="cvq-link cvq-idle"
              href="${agentsHref}"
@@ -967,7 +967,7 @@ tr:hover .cvq-icon{ opacity:.85; }
              onclick="${agentsOnClick}">${idleCount}</a>
         </td>
 
-        <!-- ---- ACTIONS CELL: Edit Agents / Edit Queue buttons ---- -->
+        <!-- ---- ACTIONS CELL: CALL CENTER Edit Agents / Edit Queue buttons ---- -->
         <td class="cvq-actions">
           <a class="cvq-icon" title="Edit Agents" aria-label="Edit Agents"
              href="${agentsHref}"
@@ -1003,7 +1003,7 @@ tr:hover .cvq-icon{ opacity:.85; }
         </table>
       </div>`;
   }
-/* === CV Queues: make "Edit Agents" / "Edit Queue" icons a bit larger === */
+/* === CV Queues: CALL CENTER Make "Edit Agents" / "Edit Queue" icons a bit larger === */
 (function () {
   var s = document.createElement('style');
   s.textContent = `
@@ -1018,7 +1018,7 @@ tr:hover .cvq-icon{ opacity:.85; }
   (document.head || document.documentElement).appendChild(s);
 })();
 
-  // ---- ACTION: Build "Active Calls" Modal Table ----
+  // ---- ACTION: CALL CENTER Build "Active Calls" Modal Table ----
   function buildActiveTable(rows){
     const body = rows.map((r)=>`
       <tr>
@@ -1041,7 +1041,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       </table>`;
   }
 
-  // ---- ACTION: Build "Callers Waiting" Modal Table ----
+  // ---- ACTION: CALL CENTER Build "Callers Waiting" Modal Table ----
   function buildWaitingTable(rows){
     const body = rows.map((r,i)=>`
       <tr data-row="${i}">
@@ -1068,12 +1068,12 @@ tr:hover .cvq-icon{ opacity:.85; }
       </table>`;
   }
 
-  // ---- ACTION: Wire Clicks (counts → modals; agents/queue → route) ----
+  // ---- ACTION: CALL CENTER Wire Clicks (counts → modals; agents/queue → route) ----
   function addQueuesClickHandlers(doc){
     if (doc.__cvqClicksWired) return;
     doc.__cvqClicksWired = true;
 
-    // ---- ACTION: Active/Waiting Counts — open modals (capture to beat host) ----
+    // ---- ACTION: CALL CENTER Active/Waiting Counts — open modals (capture to beat host) ----
     doc.addEventListener('click', (e)=>{
       const link = closest(e.target, '#'+PANEL_ID+' .cvq-link');
       if (!link) return;
@@ -1094,7 +1094,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       }
     }, true);
 
-    // ---- ACTION: Agents Idle / Edit Agents / Edit Queue — platform modal or navigate ----
+    // ---- ACTION: CALL CENTER Agents Idle / Edit Agents / Edit Queue — platform modal or navigate ----
     doc.addEventListener('click', (e)=>{
       const nav = closest(e.target, '#'+PANEL_ID+' .cvq-idle, #'+PANEL_ID+' .cvq-actions a');
       if (!nav) return;
@@ -1106,7 +1106,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       if (lm) { e.preventDefault(); lm(targetSel, href); }
     }, true);
 
-    // ---- ACTION: Waiting-table Interactions (inside modal) ----
+    // ---- ACTION: CALL CENTER Waiting-table Interactions (inside modal) ----
     doc.addEventListener('click', (e)=>{
       const modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
@@ -1139,7 +1139,7 @@ tr:hover .cvq-icon{ opacity:.85; }
       }
     });
 
-    // ---- ACTION: Click-away inside modal closes kebabs ----
+    // ---- ACTION: CALL CENTER Click-away inside modal closes kebabs ----
     doc.addEventListener('click', (e)=>{
       const modal = closest(e.target, '#cvq-modal');
       if (!modal) return;
@@ -1149,7 +1149,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     });
   }
 
-  // ---- ACTION: Inject Queues Tiles (create panel + timers + handlers) ----
+  // ---- ACTION: CALL CENTER Inject Queues Tiles (create panel + timers + handlers) ----
   function injectQueuesTiles(){
     const found = findQueuesDoc(); if (!found) return;
     const doc = found.doc, body = found.body, container = found.container;
@@ -1191,7 +1191,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     attachObserver(doc);
   }
 
-  // ---- ACTION: Remove Queues Tiles (cleanup + unhide originals) ----
+  // ---- ACTION: CALL CENTER Remove Queues Tiles (cleanup + unhide originals) ----
   function removeQueuesTiles(){
     const docs = getSameOriginDocs();
     for (let i=0;i<docs.length;i++){
@@ -1205,7 +1205,7 @@ tr:hover .cvq-icon{ opacity:.85; }
     }
   }
 
-  // ---- WATCHER: Observe SPA Rerenders (re-inject if needed) ----
+  // ---- WATCHER: CALL CENTER Observe SPA Rerenders (re-inject if needed) ----
   function attachObserver(doc){
     if (doc.__cvqMO) return;
     const mo = new MutationObserver(()=>{
@@ -1227,7 +1227,7 @@ tr:hover .cvq-icon{ opacity:.85; }
   }
   function detachObserver(doc){ if(doc.__cvqMO){ try{doc.__cvqMO.disconnect();}catch{} delete doc.__cvqMO; } }
 
-  // ---- WATCHER: Route Changes (enter/leave manager page) ----
+  // ---- WATCHER: CALL CENTER Route Changes (enter/leave manager page) ----
   function waitAndInject(tries){
     tries = tries || 0;
     const found = findQueuesDoc();
@@ -1247,7 +1247,7 @@ tr:hover .cvq-icon{ opacity:.85; }
 }
 
 
-  // ---- WATCHER: URL (push/replace/popstate + SPA) ----
+  // ---- WATCHER: CALL CENTER URL (push/replace/popstate + SPA) ----
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
@@ -2034,11 +2034,17 @@ if (!window.__cvAgentsPanelInit) {
     ];
     if (String(agent.ext)==='202') rows.push({num:'303', title:'Billing (303)'});
 
-    var offlineDefault = (String(agent.ext)==='202' || String(agent.ext)==='203');
+    var defaultOnline = !(window.CURRENT && window.CURRENT.default === 'off');
+
 
     var out = [];
     for (var i=0;i<rows.length;i++){
-      var r = rows[i], cls = offlineDefault ? 'off' : 'on', label = offlineDefault ? 'Offline' : 'Online';
+      var r = rows[i];
+      var saved  = getState(window.CURRENT && window.CURRENT.ext, r.num);
+      var online = (typeof saved !== 'undefined') ? (saved === 'on') : defaultOnline;
+      var cls    = online ? 'on' : 'off';
+      var label  = online ? 'Online' : 'Offline';
+
       out.push(
         '<tr>'
           + '<td>'+r.num+'</td>'
@@ -2100,6 +2106,17 @@ if (!window.__cvAgentsPanelInit) {
         var wrap2 = closest(a, 'div');
         var p = wrap2.querySelector('button.pill');
         setOnePill(p, makeOn);
+        try{
+          var qRow = closest(a, 'tr');
+          var qNum = qRow && qRow.cells && qRow.cells[0] ? qRow.cells[0].textContent.trim() : null;
+          if (qNum){
+              if (!window.CVQF_STATE) window.CVQF_STATE = Object.create(null);
+              if (!window.CURRENT) window.CURRENT = { ext:'', default:'on' };
+              if (!window.CVQF_STATE[window.CURRENT.ext]) window.CVQF_STATE[window.CURRENT.ext] = Object.create(null);
+              window.CVQF_STATE[window.CURRENT.ext][qNum] = makeOn ? 'on' : 'off';
+          }
+          } catch(_){}
+
         closest(a, '.menu').style.display='none';
       }
     });
@@ -2113,17 +2130,6 @@ if (!window.__cvAgentsPanelInit) {
     return { ext: ext, name: name };
   }
   
-
- // mirror panel Online/Offline at open-time + reset per-open state
-if (typeof window.CVQF_STATE === 'undefined') window.CVQF_STATE = Object.create(null);
-if (!window.CURRENT) window.CURRENT = { ext:'', default:'on' };
-
-var panelRow     = row;
-var panelOffline = !!(panelRow && panelRow.classList.contains('is-offline'));
-
-window.CURRENT.ext     = String(agent.ext || '');
-window.CURRENT.default = panelOffline ? 'off' : 'on';
-window.CVQF_STATE[window.CURRENT.ext] = Object.create(null); // forget old choices for this agent (this open only)
 
 
   function openModal(title, html){
@@ -2140,6 +2146,16 @@ window.CVQF_STATE[window.CURRENT.ext] = Object.create(null); // forget old choic
     stopAll(ev);
     var row = closest(btn, '.cv-row'); if (!row) return;
     var agent = parseAgentFromRow(row);
+    
+// mirror panel Online/Offline at open-time + reset per-open state
+  if (typeof window.CVQF_STATE === 'undefined') window.CVQF_STATE = Object.create(null);
+  if (!window.CURRENT) window.CURRENT = { ext:'', default:'on' };
+
+  var panelOffline = !!row.classList.contains('is-offline');
+  window.CURRENT.ext     = String(agent.ext || '');
+  window.CURRENT.default = panelOffline ? 'off' : 'on';
+  window.CVQF_STATE[window.CURRENT.ext] = Object.create(null); // clear per-open choices
+
     var title = 'Queues for '+agent.name+' (sip:'+agent.ext+'@'+DOMAIN+')';
     openModal(title, buildTable(agent));
   }, true);
@@ -2152,4 +2168,5 @@ window.CVQF_STATE[window.CURRENT.ext] = Object.create(null); // forget old choic
     btn.click();
   }, true);
 })();
+
 
