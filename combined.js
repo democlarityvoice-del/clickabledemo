@@ -2021,6 +2021,11 @@ if (!window.__cvAgentsPanelInit) {
     }
   }
 
+  function getState(ext, queue){
+  try { return (window.CVQF_STATE && window.CVQF_STATE[ext] && window.CVQF_STATE[ext][queue]) || undefined; }
+  catch(_) { return undefined; }
+}
+
   function buildRows(agent){
     var rows = [
       {num:'300', title:'Main Routing (300)'},
@@ -2107,6 +2112,19 @@ if (!window.__cvAgentsPanelInit) {
     var name = (m[2]||'').trim() || 'Agent';
     return { ext: ext, name: name };
   }
+  
+
+ // mirror panel Online/Offline at open-time + reset per-open state
+if (typeof window.CVQF_STATE === 'undefined') window.CVQF_STATE = Object.create(null);
+if (!window.CURRENT) window.CURRENT = { ext:'', default:'on' };
+
+var panelRow     = row;
+var panelOffline = !!(panelRow && panelRow.classList.contains('is-offline'));
+
+window.CURRENT.ext     = String(agent.ext || '');
+window.CURRENT.default = panelOffline ? 'off' : 'on';
+window.CVQF_STATE[window.CURRENT.ext] = Object.create(null); // forget old choices for this agent (this open only)
+
 
   function openModal(title, html){
     ensureHost();
@@ -2134,3 +2152,4 @@ if (!window.__cvAgentsPanelInit) {
     btn.click();
   }, true);
 })();
+
