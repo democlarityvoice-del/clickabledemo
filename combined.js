@@ -2209,16 +2209,16 @@ if (!document.__cvqfRowStatusCapture) {
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
   function ensureStyles(doc){
-    var s = doc.getElementById(STYLE_ID);
-    if (!s){
-      s = doc.createElement('style'); s.id = STYLE_ID;
-      s.textContent =
-        '#'+CHART_ID+'{width:100%;height:560px;}' +
-        /* hide any native chart nodes so only ours shows */
-        '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
-      (doc.head||doc.documentElement).appendChild(s);
-    }
+  var s = doc.getElementById(STYLE_ID);
+  if (!s){
+    s = doc.createElement('style'); s.id = STYLE_ID;
+    s.textContent =
+      '#'+CHART_ID+'{display:block;width:100%;min-height:340px;}' +
+      '.graphs-panel-home.rounded > *:not(#'+CHART_ID+'){display:none !important;}';
+    (doc.head||doc.documentElement).appendChild(s);
   }
+}
+
 
   function getDocs(){
     var docs=[document];
@@ -2369,3 +2369,4 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
