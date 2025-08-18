@@ -1846,7 +1846,7 @@ if (!window.__cvAgentsPanelInit) {
   }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
-<script>
+
 // If NSAgentsCallQueues is present, wrap its getQueuesPerAgent with a fallback
 (function(){
   var NS = window.NSAgentsCallQueues;
@@ -1889,6 +1889,7 @@ if (!window.__cvAgentsPanelInit) {
     }, 800);
   };
 })();
-</script>
+
+
 
 
