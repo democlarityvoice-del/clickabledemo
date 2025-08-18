@@ -1227,34 +1227,39 @@ tr:hover .cvq-icon{ opacity:.85; }
   }
   function detachObserver(doc){ if(doc.__cvqMO){ try{doc.__cvqMO.disconnect();}catch{} delete doc.__cvqMO; } }
 
-// ---- WATCHER: Route Changes (enter/leave manager page) ----
-function waitAndInject(tries){
-  tries = tries || 0;
-  const found = findQueuesDoc();
-  if (found && (found.body || tries >= 3)) { scheduleInject(injectQueuesTiles); return; }
-  if (tries >= 12) return;
-  setTimeout(()=>waitAndInject(tries+1),300);
+  // ---- WATCHER: Route Changes (enter/leave manager page) ----
+  function waitAndInject(tries){
+    tries = tries || 0;
+    const found = findQueuesDoc();
+    if (found && (found.body || tries>=3)) { scheduleInject(injectQueuesTiles); return; }
+    if (tries>=12) return;
+    setTimeout(()=>waitAndInject(tries+1),300);
+  }
+  function onEnter(){ waitAndInject(0); }
+ 
+  function route(prev, next){
+  const was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+  if (!was && is) { 
+    waitAndInject(0);
+    startGlobalLunchTicker();   // <-- ensure ticking even if panel pre-existed
+  }
+  if (was && !is) remove();
 }
-function onEnter(){ waitAndInject(0); }
 
-function handleRoute(prev, next){
-  const was = QUEUES_REGEX.test(prev), is = QUEUES_REGEX.test(next);
-  if (!was && is) onEnter();
-  if ( was && !is) removeQueuesTiles();
+
+  // ---- WATCHER: URL (push/replace/popstate + SPA) ----
+  (function watchURL(){
+    let last = location.href;
+    const push = history.pushState, rep = history.replaceState;
+    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+      .observe(document.documentElement,{childList:true,subtree:true});
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
+    if (QUEUES_REGEX.test(location.href)) onEnter();
+  })();
 }
 
-(function watchURL(){
-  let last = location.href;
-  const push = history.pushState, rep = history.replaceState;
-  history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
-  history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-  new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
-    .observe(document.documentElement,{childList:true,subtree:true});
-  window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
-  if (QUEUES_REGEX.test(location.href)) onEnter();
-})();
-
-} // <-- closes __cvQueuesTilesInit
 
 // ==============================
 // ==============================
@@ -1509,15 +1514,16 @@ if (!window.__cvAgentsPanelInit) {
     if (tries >= 25) return;
     setTimeout(function(){ waitAndInject(tries+1); }, 250);
   }
-  function route(prev, next){
-    var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
-    if (!was && is) waitAndInject(0);
-    if ( was && !is) remove();
-  }
+
   (function watch(){
     var last = location.href;
     var push = history.pushState, rep = history.replaceState;
 
+    function route(prev, next){
+      var was = AGENTS_REGEX.test(prev), is = AGENTS_REGEX.test(next);
+      if (!was && is) waitAndInject(0);
+      if ( was && !is) remove();
+    }
 
     history.pushState = function(){
       var prev=last; var r=push.apply(this,arguments); var now=location.href; last=now; route(prev,now); return r;
@@ -1893,69 +1899,6 @@ if (!window.__cvAgentsPanelInit) {
     openQueues(row);
   }, true);
 })();}catch(e){console.error('[cv queues] init failed:', e);}
-
-
-  var PANEL_ID = 'cv-agents-panel';
-  var DOMAIN   = 'claritydemo';
-
-  function parse(row){
-    var label = ((row && row.querySelector('.cv-name'))||{}).textContent || '';
-    var m = label.match(/Ext\s*(\d{2,6})\s*\((.+?)\)/i) || [];
-    var ext  = (row && row.dataset && row.dataset.ext) || m[1];
-    var name = (m[2]||'').trim() || 'Agent';
-    return { ext: ext, name: name };
-  }
-
-  function openQueues(row){
-    var p = parse(row);
-    if (!p.ext) return;
-    var sip = 'sip:'+p.ext+'@'+DOMAIN;
-
-    // A) Native (preferred if present)
-    try {
-      var NS = window.NSAgentsCallQueues;
-      if (NS && typeof NS.getQueuesPerAgent === 'function'){
-        NS.getQueuesPerAgent(sip, p.name);
-        return;
-      }
-    } catch(_){}
-
-    // B) Portal modal loader
-    var href = '/portal/agents/agentrouting/'
-             + encodeURIComponent(sip) + '/'
-             + encodeURIComponent(p.name).replace(/%20/g,'+');
-    try {
-      var lm = window.loadModal || (parent && parent.loadModal) || (top && top.loadModal);
-      if (typeof lm === 'function'){ lm('#queuesPerAgentModal', href); return; }
-    } catch(_){}
-
-    // C) Hard navigate
-    location.href = href;
-  }
-
-  // Delegate only to our panel’s Queues icon (click + keyboard)
-  document.addEventListener('click', function(e){
-    var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
-    if (!btn) return;
-    e.preventDefault();
-    var row = btn.closest('.cv-row'); if (!row) return;
-    openQueues(row);
-  }, true);
-
-  document.addEventListener('keydown', function(e){
-    if (e.key!=='Enter' && e.key!==' ') return;
-    var btn = e.target && e.target.closest && e.target.closest('#'+PANEL_ID+' .cv-tools [data-tool="queues"]');
-    if (!btn) return;
-    e.preventDefault();
-    var row = btn.closest('.cv-row'); if (!row) return;
-    openQueues(row);
-  }, true);
-})();}catch(_){}
-
-
-
-
-
 
 
 
