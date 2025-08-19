@@ -2395,3 +2395,348 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
+// Clarity Voice – Reports (Queue Stats) Overlay – v1
+// Single-file, safe, reversible injection for: /portal/stats/queuestats/queue/
+// Non-destructive: inserts a srcdoc iframe; does NOT modify backend/state.
+// Author: ChatGPT for Regina Jennings
+
+(function CVReportsOverlay() {
+  const TARGET_PATH_FRAGMENT = "/portal/stats/queuestats/queue/";
+  const IFRAME_ID = "cv-reports-iframe";
+  const HOST_ID = "cv-reports-host";
+
+  // Only run on the Queue Stats reports page
+  if (!location.pathname.includes("/portal/stats/queuestats/queue")) return;
+  if (document.getElementById(IFRAME_ID)) return; // already injected
+
+  const host = document.createElement("div");
+  host.id = HOST_ID;
+  host.style.cssText = [
+    "position: relative",
+    "z-index: 2147483000",
+    "margin: 8px 0 16px 0",
+    "background: #fff",
+    "border: 1px solid #dcdcdc",
+    "border-radius: 8px",
+    "box-shadow: 0 1px 2px rgba(0,0,0,.06)",
+  ].join(";");
+
+  const iframe = document.createElement("iframe");
+  iframe.id = IFRAME_ID;
+  iframe.setAttribute("title", "Clarity Voice – Reports (Queue Stats) Overlay");
+  iframe.setAttribute("frameborder", "0");
+  iframe.style.cssText = "width:100%; height:1000px; border:0; display:block;";
+  iframe.srcdoc = buildSrcdoc();
+  host.appendChild(iframe);
+
+  // Prefer inserting inside #content; fall back to body
+  const content = document.querySelector('#content') || document.body;
+  content.prepend(host);
+
+  // Optional: keep the host visible if parent container toggles layout
+  const ro = new ResizeObserver(() => {
+    // Make the iframe tall enough to avoid cramped charts/tables
+    const min = 900; // guard against teeny tiny chart
+    const desired = Math.max(min, Math.round(window.innerHeight * 0.9));
+    iframe.style.height = desired + "px";
+  });
+  ro.observe(document.documentElement);
+
+  // --- helpers ---
+  function buildSrcdoc() {
+    const brandOrange = "#e57027"; // Clarity accent
+    const blue = "#0B76C5";       // Linky/stat blue
+
+    // Static dataset for v1 – mirrors the screenshot shape for Call Volume
+    // Timestamps: Yesterday 12:00 am .. Today 9:00 pm (10 points)
+    const now = new Date();
+    const msHour = 3600 * 1000;
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const todayMidnight = d.getTime();
+    const points = [
+      { t: todayMidnight - 24*msHour, v: 0,  lbl: "Yesterday, 12:00 am" },
+      { t: todayMidnight - 19*msHour, v: 0,  lbl: "Yesterday, 5:00 am" },
+      { t: todayMidnight - 14*msHour, v: 10, lbl: "Yesterday, 10:00 am" },
+      { t: todayMidnight - 9*msHour,  v: 17, lbl: "Yesterday, 3:00 pm" },
+      { t: todayMidnight - 4*msHour,  v: 0,  lbl: "Yesterday, 8:00 pm" },
+      { t: todayMidnight + 1*msHour,  v: 0,  lbl: "Today, 1:00 am" },
+      { t: todayMidnight + 6*msHour,  v: 11, lbl: "Today, 6:00 am" },
+      { t: todayMidnight + 11*msHour, v: 20, lbl: "Today, 11:00 am" },
+      { t: todayMidnight + 16*msHour, v: 15, lbl: "Today, 4:00 pm" },
+      { t: todayMidnight + 21*msHour, v: 0,  lbl: "Today, 9:00 pm" },
+    ];
+
+    // Table rows (exact values from Regina)
+    const rows = [
+      { q: 300, name: 'Main Routing',      vol: 76, handled: 47, offered: 75, talk: '08:42', abandon: '16%',  handle: '08:49', wait: '07:34' },
+      { q: 301, name: 'New Sales',         vol: 50, handled: 50, offered: 50, talk: '05:52', abandon: '0%',   handle: '05:52', wait: '00:11' },
+      { q: 302, name: 'Existing Customer', vol: 26, handled: 21, offered: 26, talk: '03:58', abandon: '19.2%',handle: '04:13', wait: '01:11' },
+      { q: 303, name: 'Billing',           vol: 19, handled: 11, offered: 19, talk: '05:25', abandon: '0%',   handle: '05:25', wait: '00:31' },
+    ];
+
+    const headerTooltipCopy = {
+      vol: 'Total inbound + outbound events entering queues in the selected window.',
+      handled: 'Calls answered by agents (excludes abandons/transfers).',
+      offered: 'Total calls presented to queues (includes handled + abandoned).',
+      talk: 'Average talk time for handled calls.',
+      abandon: 'Percentage of offered calls that abandoned before agent answer.',
+      handle: 'Average handle time (talk + after-call work).',
+      wait: 'Average customer wait time before answer.',
+    };
+
+    // Formatters
+    function pad(n){ return (n<10? '0':'') + n; }
+    function ampm(h){ return h===0? '12 am' : h<12? h+" am" : (h===12? '12 pm' : (h-12)+" pm"); }
+    function formatUpTo(ts){
+      const dt = new Date(ts);
+      let h = dt.getHours();
+      const m = pad(dt.getMinutes());
+      const am = h>=12 ? 'pm' : 'am';
+      h = h % 12; if (h===0) h=12;
+      return `${pad(dt.getMonth()+1)}/${pad(dt.getDate())}/${dt.getFullYear()} ${h}:${m} ${am}`;
+    }
+
+    // Build CSV lazily in the frame
+    const csv = [
+      ['Queue','Name','Call Volume','Calls Handled','Calls Offered','Avg. Talk Time','Abandon Rate','Avg. Handle Time','Avg. Wait Time'],
+      ...rows.map(r => [r.q, r.name, r.vol, r.handled, r.offered, r.talk, r.abandon, r.handle, r.wait])
+    ].map(r => r.map(v => '"'+String(v).replace(/"/g,'""')+'"').join(',')).join('\n');
+
+    // HTML srcdoc
+    return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root{ --brand:${brandOrange}; --blue:${blue}; --muted:#6b6f73; --line:#e5e7eb; }
+    html,body{ margin:0; padding:0; font-family: Helvetica, Arial, sans-serif; color:#333; }
+    .wrap{ padding: 16px 16px 24px; }
+    .tabs{ display:flex; gap:24px; font-size:14px; margin-bottom:8px; }
+    .tabs a{ color:#2367a2; text-decoration:none; }
+    .tabs a.active{ color:#222; font-weight:600; cursor:default; }
+
+    .toolbar{ display:flex; justify-content:space-between; align-items:center; gap:12px; margin-bottom:8px; }
+    .left{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .right{ display:flex; gap:8px; }
+    .btn{ border:1px solid #d1d5db; background:#f8f9fa; padding:6px 10px; border-radius:6px; font-size:13px; cursor:pointer; }
+    .btn:hover{ background:#f3f4f6; }
+
+    .picker{ border:1px solid #d1d5db; padding:6px 8px; border-radius:6px; background:#fff; font-size:13px; }
+    .metric-select{ border:1px solid #d1d5db; border-radius:6px; padding:6px 8px; font-size:13px; }
+
+    .card{ border:1px solid #e5e7eb; border-radius:8px; padding:12px; background:#fff; }
+    .card + .card{ margin-top:12px; }
+
+    /* Chart */
+    .chart-wrap{ width:100%; height:360px; position:relative; }
+    .chart{ width:100%; height:100%; display:block; }
+    .axis{ stroke:#cbd5e1; stroke-width:1; }
+    .series{ fill:none; stroke: var(--blue); stroke-width:2; }
+    .pt{ fill: var(--blue); cursor:default; }
+    .tooltip{ position:absolute; pointer-events:none; background:#fff; border:1px solid #d1d5db; padding:6px 8px; border-radius:6px; font-size:12px; box-shadow:0 2px 6px rgba(0,0,0,.08); transform:translate(-50%, -110%); white-space:nowrap; }
+
+    /* Table */
+    .meta{ font-size:13px; margin:4px 4px 8px; color:#444; }
+    table{ width:100%; border-collapse:collapse; font-size:13px; }
+    thead th{ text-align:left; background:#f3f4f6; padding:10px 8px; border-bottom:1px solid #e5e7eb; position:sticky; top:0; }
+    tbody td{ padding:10px 8px; border-bottom:1px solid #f1f5f9; }
+    tbody tr:hover{ background:#fbfdff; }
+    .num{ text-align:right; }
+    .click{ color: var(--blue); cursor: pointer; font-weight:600; }
+    .gray{ color:#9aa1a9; font-weight:600; }
+    .hint{ color:#94a3b8; font-size:12px; margin-left:4px; }
+    .header-help{ color:#9aa1a9; font-weight:600; margin-left:4px; }
+
+    /* Make sure the chart never renders tiny */
+    @media (max-width: 760px){ .chart-wrap{ height:300px; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="tabs" aria-label="Report tabs">
+      <a class="active" href="#">Queue Stats</a>
+      <a href="#" aria-disabled="true">Agent Stats</a>
+      <a href="#" aria-disabled="true">Agent Availability</a>
+      <a href="#" aria-disabled="true">Dialed Number Stats</a>
+      <a href="#" aria-disabled="true">Abandoned Calls</a>
+    </div>
+
+    <div class="toolbar">
+      <div class="left">
+        <input class="picker" type="text" value="${formatDate(points[0].t)}" aria-label="Start date"/>
+        <select class="picker"><option>12:00 am</option></select>
+        <span>to</span>
+        <input class="picker" type="text" value="${formatDate(points[points.length-1].t)}" aria-label="End date"/>
+        <select class="picker"><option>11:59 pm</option></select>
+      </div>
+      <div class="right">
+        <button class="btn" id="btn-settings" aria-label="Settings">Settings</button>
+        <button class="btn" id="btn-email" aria-label="Email Reports">Email Reports</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+        <div>
+          <label for="metric" style="font-size:14px; font-weight:600;"> <span id="metricLabel">Call Volume</span> </label>
+          <select id="metric" class="metric-select" style="margin-left:6px;">
+            <option selected>Call Volume</option>
+            <option>Calls Handled</option>
+            <option>Calls Offered</option>
+            <option>Avg. Talk Time</option>
+            <option>Abandon Rate</option>
+            <option>Avg. Handle Time</option>
+            <option>Avg. Wait Time</option>
+          </select>
+        </div>
+        <div>
+          <button class="btn" id="btn-print">Print</button>
+          <button class="btn" id="btn-download">Download</button>
+        </div>
+      </div>
+
+      <div class="chart-wrap">
+        <svg id="chart" class="chart" role="img" aria-label="Line chart for selected metric" xmlns="http://www.w3.org/2000/svg"></svg>
+        <div id="tooltip" class="tooltip" style="display:none"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="meta" id="upTo">Showing data up to ${formatUpTo(Date.now())}</div>
+      <div style="overflow:auto; max-height: 520px;">
+        <table aria-label="Queue stats table" id="table">
+          <thead>
+            <tr>
+              <th style="width:62px;">Queue</th>
+              <th>Name</th>
+              <th class="num" title="${headerTooltipCopy.vol}">Call Volume<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.handled}">Calls Handled<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.offered}">Calls Offered<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.talk}">Avg. Talk Time<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.abandon}">Abandon Rate<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.handle}">Avg. Handle Time<span class="header-help">ℹ︎</span></th>
+              <th class="num" title="${headerTooltipCopy.wait}">Avg. Wait Time<span class="header-help">ℹ︎</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map(r => rowHTML(r)).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const blue = getComputedStyle(document.documentElement).getPropertyValue('--blue');
+
+    document.getElementById('btn-print').onclick = () => { try{ window.print(); }catch(e){} };
+    document.getElementById('btn-download').onclick = () => {
+      const blob = new Blob([`${csv}\n`], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = 'queue-stats.csv';
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 500);
+    };
+
+    document.getElementById('metric').addEventListener('change', (e)=>{
+      document.getElementById('metricLabel').textContent = e.target.value;
+      // v1: we keep the same series, label only (identical load)
+    });
+
+    // Chart rendering (SVG)
+    const svg = document.getElementById('chart');
+    const tip = document.getElementById('tooltip');
+    function renderChart(){
+      const w = svg.clientWidth || svg.parentElement.clientWidth; const h = svg.clientHeight || 360;
+      svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+      while (svg.firstChild) svg.removeChild(svg.firstChild);
+
+      const padL = 40, padR = 10, padT = 10, padB = 24;
+      const innerW = w - padL - padR; const innerH = h - padT - padB;
+      const max = Math.max(20, ...points.map(p=>p.v));
+      const x = (i)=> padL + (innerW * i/(points.length-1));
+      const y = (v)=> padT + innerH - (v/max)*innerH;
+
+      // x-axis baseline
+      const axis = document.createElementNS('http://www.w3.org/2000/svg','line');
+      axis.setAttribute('x1', padL); axis.setAttribute('x2', w-padR);
+      axis.setAttribute('y1', padT+innerH); axis.setAttribute('y2', padT+innerH);
+      axis.setAttribute('class','axis'); svg.appendChild(axis);
+
+      // Line path
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      const d = points.map((p,i)=> (i? 'L':'M') + x(i) + ' ' + y(p.v)).join(' ');
+      path.setAttribute('d', d); path.setAttribute('class','series');
+      svg.appendChild(path);
+
+      // Points
+      points.forEach((p,i)=>{
+        const c = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        c.setAttribute('cx', x(i)); c.setAttribute('cy', y(p.v)); c.setAttribute('r', 3);
+        c.setAttribute('class','pt');
+        c.addEventListener('mouseenter', (ev)=>{
+          tip.style.display = 'block';
+          tip.textContent = `${p.lbl} — All Queues: ${p.v}`;
+          const rect = svg.getBoundingClientRect();
+          tip.style.left = (ev.clientX - rect.left) + 'px';
+          tip.style.top = (ev.clientY - rect.top) + 'px';
+        });
+        c.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+        svg.appendChild(c);
+      });
+    }
+    renderChart();
+    // Re-render on resize to avoid tiny charts
+    let resizeTO; window.addEventListener('resize', ()=>{ clearTimeout(resizeTO); resizeTO = setTimeout(renderChart, 100); });
+
+    // Live-updating "Showing data up to" timestamp
+    setInterval(()=>{ document.getElementById('upTo').textContent = 'Showing data up to ' + '${formatUpTo(Date.now())}'.replace(/\$/,''); }, 60000);
+
+    // Build table row HTML (clickability: abandon only if > 0)
+    function rowHTML(r){
+      const td = (v, cls='')=>`<td class="num ${cls}">${v}</td>`;
+      const clickable = (v)=>`<span class="click" role="button" tabindex="0">${v}</span>`;
+      const maybeClick = (v)=> String(v).endsWith('%') && parseFloat(v)===0 ? `<span class="gray">${v}</span>` : clickable(v);
+      return `
+        <tr>
+          <td>${r.q}</td>
+          <td>${r.name}</td>
+          ${td(clickable(r.vol))}
+          ${td(clickable(r.handled))}
+          ${td(clickable(r.offered))}
+          ${td(clickable(r.talk))}
+          ${td(maybeClick(r.abandon))}
+          ${td(clickable(r.handle))}
+          ${td(clickable(r.wait))}
+        </tr>`;
+    }
+
+    // Delegate click handling (detail frame to be added later)
+    document.getElementById('table').addEventListener('click', (e)=>{
+      const t = e.target; if (!t.classList.contains('click')) return;
+      // Placeholder: no-op; wired in next phase
+      console.log('[cv] detail link clicked:', t.textContent);
+    });
+
+    // Helpers available inside srcdoc
+    function formatDate(ts){
+      const dt = new Date(ts); const mm = String(dt.getMonth()+1).padStart(2,'0');
+      const dd = String(dt.getDate()).padStart(2,'0'); const yyyy = dt.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
+  </script>
+</body>
+</html>`;
+
+    // --- inline helpers for template ---
+    function formatDate(ts){
+      const dt = new Date(ts); const mm = String(dt.getMonth()+1).padStart(2,'0');
+      const dd = String(dt.getDate()).padStart(2,'0'); const yyyy = dt.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    }
+  }
+})();
