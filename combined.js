@@ -2975,3 +2975,29 @@ html,body{ margin:0; padding:0; font-family: Helvetica, Arial, sans-serif; color
   else init();
 })();
 
+/* ===== CV emergency shim (append-only) — fixes stray globals so nothing crashes ===== */
+(function () {
+  if (window.__cvHotfix_v1) return;
+  window.__cvHotfix_v1 = true;
+
+  // Used by a stray route() in Queues Tiles; safe default matches Manager page
+  if (typeof window.AGENTS_REGEX === 'undefined') {
+    window.AGENTS_REGEX = /\/portal\/agents\/manager(?:[\/?#]|$)/;
+  }
+
+  // Some watchers call handleRoute(prev,next) — define a safe no-op to avoid ReferenceError
+  if (typeof window.handleRoute !== 'function') {
+    window.handleRoute = function () { /* intentionally blank */ };
+  }
+
+  // A stray call to startGlobalLunchTicker(); make it a no-op if missing
+  if (typeof window.startGlobalLunchTicker !== 'function') {
+    window.startGlobalLunchTicker = function () {};
+  }
+
+  // One block calls remove(); define a benign no-op if not present (does not touch Element.prototype.remove)
+  if (typeof window.remove !== 'function') {
+    window.remove = function () {};
+  }
+})();
+
