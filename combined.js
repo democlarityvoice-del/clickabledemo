@@ -2396,6 +2396,53 @@ if (!document.__cvqfRowStatusCapture) {
   })();
 })();
 
+/* ===== CV no-conflict patch v2 (append-only) ===== */
+(function () {
+  if (window.__cvNoConflict_v2) return;
+  window.__cvNoConflict_v2 = true;
+
+  // 1) If both report overlays exist, keep v1.1 and remove the older v1 host.
+  (function () {
+    var v11 = document.getElementById('cv-rpt-v1-host');
+    var v10 = document.getElementById('cv-reports-host');
+    if (v11 && v10) { try { v10.remove(); } catch (e) {} }
+  })();
+
+  // 2) Guard missing handleRoute() referenced by one watcher.
+  if (typeof window.handleRoute !== 'function') {
+    window.handleRoute = function () { /* no-op */ };
+  }
+
+  // 3) Provide a SAFE global remove() only if none exists.
+  //    It cleans up our injected panels without touching native DOM.
+  if (typeof window.remove !== 'function') {
+    window.remove = function () {
+      try {
+        // Agents panel
+        document.querySelectorAll('#cv-agents-panel').forEach(function (n) { n.remove(); });
+        // Queues tiles panel
+        document.querySelectorAll('#cvq-panel').forEach(function (n) { n.remove(); });
+        // Unhide any originals we hid
+        document.querySelectorAll('[data-cv-hidden="1"]').forEach(function (n) {
+          n.style.display = ''; n.removeAttribute('data-cv-hidden');
+        });
+        // Close our modals if open
+        var cvqf = document.getElementById('cvqf-root'); if (cvqf) cvqf.classList.remove('is-open');
+        var cvhf = document.getElementById('cvhf-stats-root'); if (cvhf) cvhf.classList.remove('is-open');
+      } catch (e) {}
+    };
+  }
+
+  // 4) Sanity check: flag any accidental "<script" text inside our <style> tags.
+  (function () {
+    var bad = Array.prototype.filter.call(document.querySelectorAll('style[id]'), function (s) {
+      return /<\s*script/i.test(s.textContent || '');
+    });
+    if (bad.length) console.warn('[cv] Found script-like text inside style tags:', bad.map(function (n) { return n.id; }));
+  })();
+})();
+
+
 // Clarity Voice – Reports (Queue Stats) Overlay – v1
 // Single-file, safe, reversible injection for: /portal/stats/queuestats/queue/
 // Non-destructive: inserts a srcdoc iframe; does NOT modify backend/state.
@@ -3000,4 +3047,5 @@ html,body{ margin:0; padding:0; font-family: Helvetica, Arial, sans-serif; color
     window.remove = function () {};
   }
 })();
+
 
