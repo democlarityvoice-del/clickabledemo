@@ -2397,7 +2397,8 @@ if (!document.__cvqfRowStatusCapture) {
 })();
 
 /* ==============================
-   CVR — Call Center Reports (FAKE, CHART + TABLE + CLICK MODAL) v3
+ /* ==============================
+   CVR — Call Center Reports (FAKE CHART+TABLE+MODAL) v3 — DROP-IN
    ============================== */
 (function () {
   if (window.__cvrReportsFake_v3) return;
@@ -2406,7 +2407,6 @@ if (!document.__cvqfRowStatusCapture) {
   // --- routes / selectors (reports only) ---
   const RX_ROUTE   = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
   const RX_BODY    = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
-  // explicit “graph” containers we’ll replace/hide
   const RX_GRAPH   = '.graphs-panel, .graphs-panel-home, .graphs, .graph, #chart, [class*="graph"]';
   const RX_FALLBACK_CONTAINER = '.reports-container, .report-container, .table-container, .panel, .card';
 
@@ -2417,10 +2417,6 @@ if (!document.__cvqfRowStatusCapture) {
   const RX_TABLE_ID  = 'cvrx-reports-table';
   const RX_MODAL_ID  = 'cvrx-reports-modal';
   const RX_HIDE_ATTR = 'data-cvrx-hidden';
-
-  // --- tiny logger (disabled) ---
-  const DEBUG = false;
-  function log(){ if (DEBUG) try { console.log('[CVRX]', ...arguments); } catch(_){} }
 
   // --- doc helpers (main + same-origin iframes) ---
   function docs(){
@@ -2436,25 +2432,20 @@ if (!document.__cvqfRowStatusCapture) {
 
   function findSpot(){
     for (const doc of docs()){
-      const href = (doc.defaultView || window).location.href;
-      if (!RX_ROUTE.test(href)) continue; // only consider docs that ARE on /reports/callcenter
-       const body = doc.querySelector(RX_BODY) || doc.body || doc.documentElement;
-     
-      // prefer a specific graph container
+      const body = doc.querySelector(RX_BODY) || doc.body || doc.documentElement;
+      if (!body) continue;
       const graph = body.querySelector(RX_GRAPH);
       if (graph) return { doc, body, graph, container: graph.parentNode };
-      // fallback: any reasonable reports container
       const box  = body.querySelector(RX_FALLBACK_CONTAINER) || body;
       return { doc, body, graph: null, container: box };
     }
     return null;
   }
 
-  // --- styles (blue clickable counts, table, modal) ---
+  // --- styles ---
   function ensureStyles(doc){
     if (doc.getElementById(RX_STYLE_ID)) return;
-    const s = doc.createElement('style');
-    s.id = RX_STYLE_ID;
+    const s = doc.createElement('style'); s.id = RX_STYLE_ID;
     s.textContent = `
 #${RX_ROOT_ID}{box-sizing:border-box;margin:6px 0 10px;padding:12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.09);font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 #${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
@@ -2470,20 +2461,16 @@ if (!document.__cvqfRowStatusCapture) {
 #${RX_TABLE_ID} .num{text-align:center}
 #${RX_TABLE_ID} a.cvrx-link{color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer}
 #${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
-
-/* modal (lightweight) */
 #${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
 #${RX_MODAL_ID}.is-open{display:block}
 #${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
-#${RX_MODAL_ID} .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;
-  box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
+#${RX_MODAL_ID} .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
 #${RX_MODAL_ID} header{padding:12px 16px;border-bottom:1px solid #eee;font:700 14px/1.2 Arial;color:#222}
 #${RX_MODAL_ID} .bd{padding:12px;overflow:auto}
 #${RX_MODAL_ID} .ft{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:flex-end}
 #${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
 #${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
-`;
-    (doc.head||doc.documentElement).appendChild(s);
+`; (doc.head||doc.documentElement).appendChild(s);
   }
 
   // --- data (fake) ---
@@ -2517,7 +2504,7 @@ if (!document.__cvqfRowStatusCapture) {
     }
   };
 
-  // --- chart (Google Charts if present; otherwise simple SVG fallback) ---
+  // --- chart helpers ---
   function whenGVizReady(cb){
     function ready(){ try { return window.google && google.visualization && google.visualization.DataTable; } catch(_) { return false; } }
     function go(){ try{ cb(); }catch(_){} }
@@ -2532,8 +2519,7 @@ if (!document.__cvqfRowStatusCapture) {
   function drawChartGViz(host, rangeKey){
     const range = DATA[rangeKey] || DATA.today;
     const now=new Date(); const y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
-    const dt=new google.visualization.DataTable();
-    let opts;
+    const dt=new google.visualization.DataTable(); let opts;
 
     if (range.chart.kind==='hourly'){
       dt.addColumn('datetime','Time'); dt.addColumn('number','Active Calls');
@@ -2646,7 +2632,7 @@ if (!document.__cvqfRowStatusCapture) {
       </div>`;
   }
 
-  // --- little modal for the clickable counts ---
+  // --- modal ---
   function ensureModal(doc){
     if (doc.getElementById(RX_MODAL_ID)) return;
     const root = doc.createElement('div'); root.id = RX_MODAL_ID;
@@ -2675,7 +2661,7 @@ if (!document.__cvqfRowStatusCapture) {
     if (doc.__cvrxWired) return;
     doc.__cvrxWired = true;
 
-    // our fallback range buttons
+    // fallback range buttons
     doc.addEventListener('click', (e)=>{
       const b = e.target && e.target.closest && e.target.closest('#'+RX_ROOT_ID+' [data-cvrx-range]');
       if (!b) return;
@@ -2684,7 +2670,7 @@ if (!document.__cvqfRowStatusCapture) {
       drawChart(doc, k); renderTable(doc, k);
     }, true);
 
-    // listen to your toolbar (if present)
+    // toolbar range (if present)
     doc.addEventListener('click', (e)=>{
       const b = e.target && e.target.closest && e.target.closest('#cvr-rep-toolbar [data-cvr-range]');
       if (!b) return;
@@ -2703,7 +2689,6 @@ if (!document.__cvqfRowStatusCapture) {
       const labelMap = { volume:'Call Volume', handled:'Calls Handled', abandoned:'Calls Abandoned', xfers:'Transfers Out' };
       const title = (labelMap[metric]||'Details') + ' — Queue ' + q;
 
-      // quick fake details table
       const rows = Array.from({length:Math.min(12, Math.max(5, parseInt(a.textContent,10)||5))}, (_,i)=>{
         return `<tr><td>${i+1}</td><td>(3${i}1) 555-01${String(i).padStart(2,'0')}</td><td>${metric==='abandoned'?'Abandoned':'Handled'}</td><td>${(i%2)?'Inbound':'Outbound'}</td><td class="num">${(2+i%6)}:${String(10+i%50).padStart(2,'0')}</td></tr>`;
       }).join('');
@@ -2744,21 +2729,22 @@ if (!document.__cvqfRowStatusCapture) {
     list.forEach(n=>{ n.style.display=''; n.removeAttribute(RX_HIDE_ATTR); });
   }
 
+  // --- inject/remove/observe ---
   function inject(){
     if (!RX_ROUTE.test(location.href)) return;
     const found = findSpot(); if (!found) return;
+    const { doc, container, graph } = found;
 
+    if (doc.getElementById(RX_ROOT_ID)) return;
 
     ensureStyles(doc);
 
-    // create our root
     const wrap = doc.createElement('div'); wrap.innerHTML = buildRootHTML();
     const root = wrap.firstElementChild;
 
-    // insert *above* the native graph (or as first in container)
     if (graph && graph.parentNode){
-      graph.parentNode.insertBefore(root, graph);   // <- guarantees above
-      hideNative(doc, graph);                       // <- hide the native graph
+      graph.parentNode.insertBefore(root, graph);
+      hideNative(doc, graph);
     } else if (container && container.firstChild){
       container.insertBefore(root, container.firstChild);
     } else {
@@ -2782,7 +2768,6 @@ if (!document.__cvqfRowStatusCapture) {
     }
   }
 
-  // --- observers / routing ---
   function observe(doc){
     if (doc.__cvrxMO) return;
     const MO = (doc.defaultView||window).MutationObserver;
@@ -2811,23 +2796,25 @@ if (!document.__cvqfRowStatusCapture) {
     const was=RX_ROUTE.test(prev), is=RX_ROUTE.test(next);
     if (!was && is) onEnter();
     if ( was && !is) removeAll();
-    if (is && !document.getElementById(RX_ROOT_ID)) onEnter();
+    if (is && !document.getElementById(RX_ROOT_ID) && findSpot()) onEnter();
   }
 
+  // --- SPA watch ---
   (function watch(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
     history.pushState = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; route(prev,now); return ret; };
     history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; route(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now);} else if (RX_ROUTE.test(last) && !document.getElementById(RX_ROOT_ID) && findSpot()){ onEnter(); } })
-      .observe(document.documentElement,{childList:true,subtree:true});
+    new MutationObserver(()=>{ 
+      if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now);} 
+      else if (RX_ROUTE.test(last) && !document.getElementById(RX_ROOT_ID) && findSpot()){ onEnter(); } 
+    }).observe(document.documentElement,{childList:true,subtree:true});
     window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now); } });
     if (RX_ROUTE.test(location.href)) onEnter();
   })();
 })();
 
-
-/* ===== CVR Reports — Summary Table (exact columns, blue links, above graph) ===== */
+/* ===== CVR Reports — Summary Table (exact columns, blue links, above graph) — DROP-IN ===== */
 (function(){
   if (window.__cvrRepSummary_v1) return;
   window.__cvrRepSummary_v1 = true;
@@ -2844,7 +2831,7 @@ if (!document.__cvqfRowStatusCapture) {
   function docs(){
     var out=[document], ifrs=document.querySelectorAll('iframe');
     for (var i=0;i<ifrs.length;i++){ try{
-      var d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+      var d = ifrs[i].contentDocument || (ifr.contentWindow && ifrs[i].contentWindow.document);
       if (d) out.push(d);
     }catch(_){}} return out;
   }
@@ -2871,7 +2858,6 @@ if (!document.__cvqfRowStatusCapture) {
       '#'+TABLE_ID+' .num{ text-align:center }' +
       '#'+TABLE_ID+' .link{ color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer }' +
       '#'+TABLE_ID+' .link:hover{ text-decoration:underline }' +
-      /* modal */
       '#'+MODAL_ID+'{position:fixed;inset:0;display:none;z-index:2147483646}' +
       '#'+MODAL_ID+'.open{display:block}' +
       '#'+MODAL_ID+' .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}' +
@@ -2909,11 +2895,9 @@ if (!document.__cvqfRowStatusCapture) {
   function pad2(n){ return ('0'+n).slice(-2); }
   function mmss(s){ s=s|0; return pad2((s/60|0))+':'+pad2(s%60); }
 
-  // ---- canned demo data per range (kept tiny & editable) ----
+  // ---- canned demo data per range ----
   var RANGE = 'today';
   function dataFor(range){
-    // If you supplied specific numbers earlier, drop them here.
-    // These are just placeholders you can edit inline.
     var sets = {
       today: [
         {queue:'300', name:'Main Routing',      vol:42, handled:39,  sla:'92%', talk:'2:14', wait:'0:41'},
@@ -2937,6 +2921,7 @@ if (!document.__cvqfRowStatusCapture) {
     return sets[range] || sets.today;
   }
 
+  // ---- inject / render ----
   function buildTableHTML(rows){
     var thead =
       '<thead><tr>' +
@@ -2964,39 +2949,21 @@ if (!document.__cvqfRowStatusCapture) {
     return '<div id="'+TABLE_ID+'"><table>'+thead+tbody+'</table></div>';
   }
 
-  function buildDetailsTable(title, count){
-    // small fake list up to 12 rows; safe NANPA-ish caller IDs
-    var ac = ['313','248','989','517','810'], i, rows=[];
-    var max = Math.max(1, Math.min(12, +count||0));
-    for (i=0;i<max;i++){
-      var from = ac[i%ac.length] + '-555-01' + pad2((Math.random()*100)|0);
-      var to   = '(248) 436-' + (3000 + ((i*37)%9000));
-      var agent= 'Ext. ' + (200 + ((i*5)%40));
-      var dur  = mmss(40 + ((i*13)%400));
-      rows.push('<tr><td>'+from+'</td><td>'+to+'</td><td class="num">'+agent+'</td><td class="num">'+dur+'</td></tr>');
-    }
-    return ''+
-      '<div style="font:600 13px/1.35 Helvetica,Arial;margin:0 0 8px">'+title+'</div>'+
-      '<table class="table table-condensed table-hover" style="width:100%">'+
-        '<thead><tr><th>From</th><th>To</th><th class="num">Agent</th><th class="num">Duration</th></tr></thead>'+
-        '<tbody>'+rows.join('')+'</tbody>'+
-      '</table>';
-  }
-
-  // ---- inject / render ----
   function inject(){
+    if (!ROUTE_RE.test(location.href)) return;
     var found = findAnchorDoc();
     if (!found) return;
     var doc = found.doc, anchor = found.anchor;
     if (doc.getElementById(TABLE_ID)) return;
+
     ensureStyles(doc);
     ensureModal(doc);
+
     var wrap = doc.createElement('div'); wrap.innerHTML = buildTableHTML(dataFor(RANGE));
     var block = wrap.firstElementChild;
     try { anchor.parentNode.insertBefore(block, anchor); }
     catch(_){ (doc.body||doc.documentElement).appendChild(block); }
 
-    // delegated clicks for blue numbers -> modal
     doc.addEventListener('click', function(e){
       var a = e.target && e.target.closest ? e.target.closest('#'+TABLE_ID+' .link') : null;
       if (!a) return;
@@ -3007,21 +2974,37 @@ if (!document.__cvqfRowStatusCapture) {
       var metric = a.getAttribute('data-metric');
       var count  = a.textContent || '0';
       var ttl = (metric==='handled' ? 'Calls Handled' : 'Call Volume') + ' — ' + nm + ' ('+q+')';
-      openModal(doc, ttl, buildDetailsTable(ttl, count));
+      openModal(doc, ttl, (function(){
+        var ac = ['313','248','989','517','810'], i, rows=[];
+        var max = Math.max(1, Math.min(12, +count||0));
+        function pad2(n){ return ('0'+n).slice(-2); }
+        function mmss(s){ s=s|0; return pad2((s/60|0))+':'+pad2(s%60); }
+        for (i=0;i<max;i++){
+          var from = ac[i%ac.length] + '-555-01' + pad2((Math.random()*100)|0);
+          var to   = '(248) 436-' + (3000 + ((i*37)%9000));
+          var agent= 'Ext. ' + (200 + ((i*5)%40));
+          var dur  = mmss(40 + ((i*13)%400));
+          rows.push('<tr><td>'+from+'</td><td>'+to+'</td><td class="num">'+agent+'</td><td class="num">'+dur+'</td></tr>');
+        }
+        return ''+
+          '<div style="font:600 13px/1.35 Helvetica,Arial;margin:0 0 8px">'+ttl+'</div>'+
+          '<table class="table table-condensed table-hover" style="width:100%">'+
+          '<thead><tr><th>From</th><th>To</th><th class="num">Agent</th><th class="num">Duration</th></tr></thead>'+
+          '<tbody>'+rows.join('')+'</tbody></table>';
+      })());
     }, true);
   }
 
   function render(){
+    if (!ROUTE_RE.test(location.href)) return;
     var found = findAnchorDoc(); if (!found) return;
     var doc = found.doc;
     var root = doc.getElementById(TABLE_ID); if (!root) return inject();
-    var tbl  = buildTableHTML(dataFor(RANGE));
-    // replace inner entirely to keep it simple & idempotent
-    var wrap = doc.createElement('div'); wrap.innerHTML = tbl;
+    var wrap = doc.createElement('div'); wrap.innerHTML = buildTableHTML(dataFor(RANGE));
     root.parentNode.replaceChild(wrap.firstElementChild, root);
   }
 
-  // ---- observe toolbar range buttons (Today / 7d / 30d) ----
+  // toolbar range buttons (Today / 7d / 30d)
   document.addEventListener('click', function(e){
     var btn = e.target && e.target.closest && e.target.closest('#cvr-rep-toolbar [data-cvr-range]');
     if (!btn) return;
@@ -3029,42 +3012,36 @@ if (!document.__cvqfRowStatusCapture) {
     if (r === 'today' || r === '7d' || r === '30d'){ RANGE = r; try{ render(); }catch(_){ } }
   }, true);
 
- // ---- keep present across SPA swaps ----
-function waitAndInject(tries){
-  tries = tries || 0;
-
-  // Check if any same-origin window (self or iframe) is on the reports route
-  const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
-    .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
-
-  if (!matches) return;
-
-  var found = findAnchorDoc();
-  if (found){ inject(); return; }
-  if (tries >= 24) return;
-  setTimeout(function(){ waitAndInject(tries+1); }, 250);
-}
-
-(function watch(){
-  var last = location.href;
-  var p = history.pushState, r = history.replaceState;
-  function route(prev, next){
-    var was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
-    if (!was && is) waitAndInject(0);
+  // ---- keep present across SPA swaps ----
+  function waitAndInject(tries){
+    tries = tries || 0;
+    if (!ROUTE_RE.test(location.href)) return;
+    var found = findAnchorDoc();
+    if (found){ inject(); return; }
+    if (tries >= 24) return;
+    setTimeout(function(){ waitAndInject(tries+1); }, 250);
   }
-  history.pushState = function(){ var prev=last; var ret=p.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
-  history.replaceState = function(){ var prev=last; var ret=r.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
-  new MutationObserver(function(){
-    if (location.href !== last){ var prev=last, now=location.href; last=now; route(prev, now); }
-    // if DOM swapped but URL unchanged, ensure it exists
-    const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
-      .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
-    if (matches && !document.getElementById(TABLE_ID)) waitAndInject(0);
-  }).observe(document.documentElement, { childList:true, subtree:true });
-  window.addEventListener('popstate', function(){ var prev=last, now=location.href; if (now!==prev){ last=now; route(prev, now);} });
 
-  const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
-    .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
-  if (matches) waitAndInject(0);
-})();
+  (function watch(){
+    var last = location.href;
+    var p = history.pushState, r = history.replaceState;
+
+    function route(prev, next){
+      var was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
+      if (!was && is) waitAndInject(0);
+      if ( was && !is) { /* leaving reports */ }
+    }
+
+    history.pushState = function(){ var prev=last; var ret=p.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+    history.replaceState = function(){ var prev=last; var ret=r.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+
+    new MutationObserver(function(){
+      if (location.href !== last){ var prev=last, now=location.href; last=now; route(prev, now); }
+      if (ROUTE_RE.test(last) && !document.getElementById(TABLE_ID)) waitAndInject(0);
+    }).observe(document.documentElement, { childList:true, subtree:true });
+
+    window.addEventListener('popstate', function(){ var prev=last, now=location.href; if (now!==prev){ last=now; route(prev, now);} });
+
+    if (ROUTE_RE.test(location.href)) waitAndInject(0);
+  })();
 })();
