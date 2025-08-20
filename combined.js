@@ -2406,7 +2406,7 @@ if (!document.__cvqfRowStatusCapture) {
 
   // --- routes / selectors (reports only) ---
   const RX_ROUTE   = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
-  const RX_BODY    = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
+  const RX_BODY = '#modal-body-reports, #callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
   const RX_GRAPH   = '.graphs-panel, .graphs-panel-home, .graphs, .graph, #chart, [class*="graph"]';
   const RX_FALLBACK_CONTAINER = '.reports-container, .report-container, .table-container, .panel, .card';
 
@@ -3045,4 +3045,5 @@ if (!document.__cvqfRowStatusCapture) {
     if (ROUTE_RE.test(location.href)) waitAndInject(0);
   })();
 })();
+
 
