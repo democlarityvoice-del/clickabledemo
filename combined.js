@@ -2380,7 +2380,7 @@ if (!document.__cvqfRowStatusCapture) {
     drawInto(found.doc, found.panel);
   }
 
-  (function watch(){
+   (function watch(){
     function route(prev,next){
       var was=MANAGER_REGEX.test(prev), is=MANAGER_REGEX.test(next);
       if (!was && is) inject();
@@ -2394,6 +2394,10 @@ if (!document.__cvqfRowStatusCapture) {
 
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
+
+  // trigger injection now
+  waitAndInject(0);
+
 })();
 
 /* ==============================
@@ -2860,8 +2864,5 @@ function route(prev, next){
   if (RX_ROUTE.test(location.href)) inject();
 })();
 
-  }
 
-  // trigger injection now
-  waitAndInject(0);
-})();
+
