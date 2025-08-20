@@ -2988,7 +2988,9 @@ function renderTable(doc){
   });
 
     if (QUEUE_STATS_REGEX.test(location.href)) onQueueStatsPageEnter();
-})(); // ← this line is MISSING in your version
+  })();
+})();
+
 
 
 
