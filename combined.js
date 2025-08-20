@@ -2405,7 +2405,7 @@ if (!document.__cvqfRowStatusCapture) {
   window.__cvrReportsFake_v3 = true;
 
   // --- routes / selectors (reports only) ---
-  const RX_ROUTE   = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  const RX_ROUTE   = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
   const RX_BODY    = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
   const RX_GRAPH   = '.graphs-panel, .graphs-panel-home, .graphs, .graph, #chart, [class*="graph"]';
   const RX_FALLBACK_CONTAINER = '.reports-container, .report-container, .table-container, .panel, .card';
@@ -2820,7 +2820,7 @@ if (!document.__cvqfRowStatusCapture) {
   window.__cvrRepSummary_v1 = true;
 
   // ---- constants (unique) ----
-  var ROUTE_RE   = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  var ROUTE_RE   = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
   var BODY_SEL   = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
   var ANCHOR_SEL = '.graphs-panel, .graphs-panel-home, .graphs, .report-container, .reports-container, .table-container, .panel, .card';
   var TABLE_ID   = 'cvr-rep-summary';
@@ -3045,3 +3045,4 @@ if (!document.__cvqfRowStatusCapture) {
     if (ROUTE_RE.test(location.href)) waitAndInject(0);
   })();
 })();
+
