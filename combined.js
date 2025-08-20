@@ -2395,3 +2395,125 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
+
+// --- ATTEMPT NUMBER 9 JILLION TO GET THE DUMB REPORTS TO LOAD ---
+
+// --- Inject when the manager page is active ---
+if (document.getElementById(RX_ROOT_ID)) return; // Prevent duplicate injection
+
+function inject() {
+  var found = findPanelDoc();
+  if (!found) return;
+  drawInto(found.doc, found.panel);
+}
+
+(function watch() {
+  function route(prev, next) {
+    var was = MANAGER_REGEX.test(prev), is = MANAGER_REGEX.test(next);
+    if (!was && is) inject();
+  }
+
+  var last = location.href;
+  var push = history.pushState, rep = history.replaceState;
+
+  history.pushState = function () {
+    var p = last;
+    var r = push.apply(this, arguments);
+    var n = location.href;
+    last = n;
+    route(p, n);
+    return r;
+  };
+
+  history.replaceState = function () {
+    var p = last;
+    var r = rep.apply(this, arguments);
+    var n = location.href;
+    last = n;
+    route(p, n);
+    return r;
+  };
+
+  new MutationObserver(function () {
+    if (location.href !== last) {
+      var p = last, n = location.href;
+      last = n;
+      route(p, n);
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
+
+  if (MANAGER_REGEX.test(location.href)) inject();
+})();
+
+
+// ---- Inject when the queue stats page is active ----
+if (/\/portal\/stats\/queuestats\/queue\//.test(location.href)) {
+  if (!document.getElementById('cv-queue-stats-wrapper')) {
+    const wrapper = document.createElement('div');
+    wrapper.id = 'cv-queue-stats-wrapper';
+    wrapper.style.marginTop = '20px';
+
+    const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+
+    const table = document.createElement('table');
+    table.className = 'cv-queue-table';
+    table.innerHTML = `
+      <thead>
+        <tr>
+          <th></th>
+          <th>Queue</th>
+          <th>Name</th>
+          <th>Calls Handled</th>
+          <th>Calls Offered</th>
+          <th>Avg. Talk Time</th>
+          <th>Avg. Hold Time</th>
+          <th>Abandon Rate</th>
+          <th>Avg. Handle Time</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${[300, 301, 302, 303].map((q, i) => {
+          const colors = ['red', 'blue', 'green', 'purple'];
+          return `
+            <tr>
+              <td><input type="checkbox" style="accent-color: ${colors[i % colors.length]}"></td>
+              <td>${q}</td>
+              <td>Sample Queue ${i + 1}</td>
+              <td>${Math.floor(Math.random() * 40)}</td>
+              <td>${Math.floor(Math.random() * 45)}</td>
+              <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+              <td>${String(Math.floor(Math.random() * 2)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+              <td>${Math.random() > 0.5 ? Math.floor(Math.random() * 50) + '%' : '0%'}</td>
+              <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+            </tr>
+          `;
+        }).join('')}
+      </tbody>
+    `;
+
+    const icon = document.createElement('img');
+    icon.src = iconUrl;
+    icon.alt = 'Queue icon';
+    icon.style.width = '20px';
+    icon.style.verticalAlign = 'middle';
+    icon.style.marginRight = '10px';
+
+    const tableHeader = document.createElement('h3');
+    tableHeader.textContent = ' Live Queue Stats';
+    tableHeader.prepend(icon);
+
+    const tableSettings = document.createElement('div');
+    tableSettings.style.float = 'right';
+    tableSettings.innerHTML = `
+      <button id="table-settings-button">Table Settings &#9662;</button>
+    `;
+
+    wrapper.appendChild(tableSettings);
+    wrapper.appendChild(tableHeader);
+    wrapper.appendChild(table);
+
+    const contentArea = document.querySelector('#content');
+    if (contentArea) contentArea.appendChild(wrapper);
+  }
+}
