@@ -2376,9 +2376,14 @@ if (!document.__cvqfRowStatusCapture) {
 
   // ---- inject when the manager page is active ----
   function inject(){
-    var found = findPanelDoc(); if (!found) return;
-    drawInto(found.doc, found.panel);
-  }
+  if (document.getElementById(RX_ROOT_ID)) return;  // Prevent duplicate injection
+
+  var found = findPanelDoc();
+  if (!found) return;
+
+  drawInto(found.doc, found.panel);
+}
+
 
    (function watch(){
     function route(prev,next){
@@ -2987,6 +2992,7 @@ function renderTable(doc){
   if (RX_ROUTE.test(location.href)) inject();
 })();
 })();
+
 
 
 
