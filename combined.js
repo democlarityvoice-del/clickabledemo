@@ -2454,11 +2454,9 @@ function ensureStyles(doc){
     s.id = RX_STYLE_ID;
     (doc.head || doc.documentElement).appendChild(s);
   }
-  // paste your latest CSS string here:
+
+  // Your Portal-mimic CSS goes inside this template literal
   s.textContent = `
-    /* … your Portal-mimic CSS … */
-  `;
-}
 
 #${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 
@@ -2977,6 +2975,7 @@ function renderTable(doc){
     if (RX_ROUTE.test(location.href)) inject();
   })();
 })();
+
 
 
 
