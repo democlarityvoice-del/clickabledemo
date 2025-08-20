@@ -2395,9 +2395,6 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 
-  // trigger injection now
-  waitAndInject(0);
-
 })();
 
 /* ==============================
@@ -2861,8 +2858,12 @@ function route(prev, next){
     }
   });
 
-  if (RX_ROUTE.test(location.href)) inject();
+      if (RX_ROUTE.test(location.href)) inject();
+
+    // ✅ THIS is the correct place
+    waitAndInject(0);
 })();
+
 
 
 
