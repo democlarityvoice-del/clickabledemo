@@ -2447,12 +2447,19 @@ if (!document.__cvqfRowStatusCapture) {
   const SERIES = seedSeries();
 
  // --- styles ---
-function ensureStyles(doc) {
-  if (doc.getElementById(RX_STYLE_ID)) return;
-  const s = doc.createElement('style');
-  s.id = RX_STYLE_ID;
+function ensureStyles(doc){
+  let s = doc.getElementById(RX_STYLE_ID);
+  if (!s) {
+    s = doc.createElement('style');
+    s.id = RX_STYLE_ID;
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+  // paste your latest CSS string here:
   s.textContent = `
-/* overall */
+    /* … your Portal-mimic CSS … */
+  `;
+}
+
 #${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 
 /* header title matches Portal (blue dropdown-looking link) */
@@ -2970,5 +2977,6 @@ function renderTable(doc){
     if (RX_ROUTE.test(location.href)) inject();
   })();
 })();
+
 
 
