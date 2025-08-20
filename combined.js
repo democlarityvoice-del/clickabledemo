@@ -1251,11 +1251,11 @@ tr:hover .cvq-icon{ opacity:.85; }
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
+    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; route(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; route(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now); } })
       .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now); } });
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
@@ -3056,4 +3056,8 @@ if (!document.__cvqfRowStatusCapture) {
     if (ROUTE_RE.test(location.href)) waitAndInject(0);
   })();
 })();
+
+
+
+
 
