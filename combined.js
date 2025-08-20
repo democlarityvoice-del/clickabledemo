@@ -2426,6 +2426,8 @@ if (!document.__cvqfRowStatusCapture) {
     { q: '303', name: 'Billing',             vol: 19, handled: 11, offered: 19, talk: '05:25', aband: '0%',  handle: '05:25', wait: '00:31' },
   ];
 
+ console.log("✅ Call Center Reports v3.5 overlay script is running");
+
   // --- chart seed: 2 days of points (mimics the real shape & tooltips) ---
   function seedSeries() {
     const now = new Date();
@@ -2985,4 +2987,5 @@ new MutationObserver(() => {
 
   })(); // ← closes inner function
 })();     // ← closes outer function
+
 
