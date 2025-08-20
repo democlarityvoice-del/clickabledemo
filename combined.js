@@ -89,7 +89,7 @@ if (!window.__cvDemoInit) {
     </table>
   </div>
 
-
+<script>
 (function () {
   // Pools
   const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
@@ -3056,6 +3056,4 @@ if (!document.__cvqfRowStatusCapture) {
     if (ROUTE_RE.test(location.href)) waitAndInject(0);
   })();
 })();
-
-
 
