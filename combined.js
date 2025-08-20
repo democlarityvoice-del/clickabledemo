@@ -2403,19 +2403,20 @@ if (!document.__cvqfRowStatusCapture) {
 })();
 
 /* ==============================
-   CVR — Call Center Reports (FAKE CHART+TABLE+MODAL) v3 — DROP-IN
-   ============================== */
+<!-- CVR — Call Center Reports (FAKE CHART+TABLE+MODAL) v3.6 — UNIFIED DROP-IN -->
 (function () {
-  if (window.__cvrReportsFake_v3) return;
-  window.__cvrReportsFake_v3 = true;
+  // --- singleton guard (new key so older flags can't block us) ---
+  if (window.__cvrReportsFake_unified) return;
+  window.__cvrReportsFake_unified = true;
+  console.log("✅ CVR Reports overlay v3.6 (unified)");
 
   // --- route + anchors (this page only) ---
   const RX_ROUTE = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
   const CONTAINER_SEL = '#modal-body-reports';
 
   // --- unique IDs/flags ---
-  const RX_ROOT_ID   = 'cvrx-reports-root';
-  const RX_STYLE_ID  = 'cvrx-reports-style-v4';
+  const RX_ROOT_ID   = 'cvrx-reports-root';         // keep stable
+  const RX_STYLE_ID  = 'cvrx-reports-style-v5';     // new style id
   const RX_MODAL_ID  = 'cvrx-reports-modal';
   const RX_HIDE_ATTR = 'data-cvrx-hidden';
   const RX_CHART_ID  = 'cvrx-reports-chart';
@@ -2425,50 +2426,45 @@ if (!document.__cvqfRowStatusCapture) {
 
   // --- data (exact rows you provided) ---
   const ROWS = [
-    { q: '300', name: 'Main Routing',        vol: 76, handled: 47, offered: 75, talk: '08:42', aband: '16%', handle: '08:49', wait: '07:34' },
-    { q: '301', name: 'New Sales',           vol: 50, handled: 50, offered: 50, talk: '05:52', aband: '0%',  handle: '05:52', wait: '00:11' },
-    { q: '302', name: 'Existing Customer',   vol: 26, handled: 21, offered: 26, talk: '03:58', aband: '19.2%', handle: '04:13', wait: '01:11' },
-    { q: '303', name: 'Billing',             vol: 19, handled: 11, offered: 19, talk: '05:25', aband: '0%',  handle: '05:25', wait: '00:31' },
+    { q: '300', name: 'Main Routing',        vol: 76, handled: 47, offered: 75, talk: '08:42',  aband: '16%',   handle: '08:49', wait: '07:34' },
+    { q: '301', name: 'New Sales',           vol: 50, handled: 50, offered: 50, talk: '05:52',  aband: '0%',    handle: '05:52', wait: '00:11' },
+    { q: '302', name: 'Existing Customer',   vol: 26, handled: 21, offered: 26, talk: '03:58',  aband: '19.2%', handle: '04:13', wait: '01:11' },
+    { q: '303', name: 'Billing',             vol: 19, handled: 11, offered: 19, talk: '05:25',  aband: '0%',    handle: '05:25', wait: '00:31' },
   ];
 
- console.log("✅ Call Center Reports v3.5 overlay script is running");
-
-  // --- chart seed: 2 days of points (mimics the real shape & tooltips) ---
+  // --- chart seed: 2 days of points (mimics real shape & tooltips) ---
   function seedSeries() {
     const now = new Date();
-    // Build 30 points from "yesterday 9:00 am" → "today 9:00 pm" roughly every ~1–2h
     const pts = [];
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 9, 0, 0, 0);
     const steps = [
-      0, 2, 3, 7, 9, 5, 0, 0, 0,  // yesterday morning → night
-      0, 0, 8, 11, 20, 9, 10, 16, 12, 5, 2, 0, 0   // today morning → night (peak around late morning / afternoon)
+      0, 2, 3, 7, 9, 5, 0, 0, 0,                          // yesterday
+      0, 0, 8, 11, 20, 9, 10, 16, 12, 5, 2, 0, 0          // today (peak late AM/PM)
     ];
     let t = start;
     for (let i = 0; i < steps.length; i++) {
       pts.push({ t: new Date(t), v: steps[i] });
-      // alternate 1h / 1.5h steps for a more “organic” spacing
-      t = new Date(t.getTime() + (i % 2 ? 90 : 60) * 60 * 1000);
+      t = new Date(t.getTime() + (i % 2 ? 90 : 60) * 60 * 1000); // 1h/1.5h
     }
     return pts;
   }
   const SERIES = seedSeries();
 
+  // --- styles ---
+  function ensureStyles(doc) {
+    // remove any legacy tag(s)
+    const old1 = doc.getElementById('cvrx-reports-style');
+    const old2 = doc.getElementById('cvrx-reports-style-v4');
+    try { old1 && old1.remove(); } catch(_) {}
+    try { old2 && old2.remove(); } catch(_) {}
 
-// --- styles ---
-function ensureStyles(doc){
-  // kill any legacy tag from older builds so our new CSS actually applies
-  const legacy = doc.getElementById('cvrx-reports-style');
-  if (legacy) try { legacy.remove(); } catch (_){}
-
-  // if our current style exists, update it (don’t early-return with stale rules)
-  let s = doc.getElementById(RX_STYLE_ID);
-  if (!s) {
-    s = doc.createElement('style');
-    s.id = RX_STYLE_ID;
-    (doc.head || doc.documentElement).appendChild(s);
-  }
-
-  s.textContent = `
+    let s = doc.getElementById(RX_STYLE_ID);
+    if (!s) {
+      s = doc.createElement('style');
+      s.id = RX_STYLE_ID;
+      (doc.head || doc.documentElement).appendChild(s);
+    }
+    s.textContent = `
 #${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 #${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;padding:0}
 #${RX_ROOT_ID} .cvrx-ttl{display:inline-flex;align-items:center;gap:6px;font:700 14px/1.2 Arial;color:#1080c9;text-decoration:none}
@@ -2514,226 +2510,66 @@ function ensureStyles(doc){
 #${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
 #${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
 `;
-}
-
-
-// --- title + root block (visual only; no behavior change) ---
-function buildRootHTML(){
-  return `
-    <div id="${RX_ROOT_ID}">
-      <div class="cvrx-head">
-        <a href="#" class="cvrx-ttl" aria-haspopup="listbox" aria-expanded="false">
-          <span>Call Volume</span><span class="caret" aria-hidden="true"></span>
-        </a>
-      </div>
-      <div id="${RX_CHART_ID}"></div>
-      <div id="${RX_TABLE_ID}"></div>
-    </div>`;
-}
-
-// --- chart (SVG with axis numbers + bottom labels like Portal) ---
-function drawChart(doc){
-  const host = doc.getElementById(RX_CHART_ID); if (!host) return;
-
-  host.innerHTML = '';
-  const tip = doc.createElement('div');
-  tip.id = RX_TIP_ID;
-  host.appendChild(tip);
-
-  const w = Math.max(980, host.clientWidth || 980);
-  const h = 360, padL = 60, padR = 12, padT = 24, padB = 38;
-  const svgNS = 'http://www.w3.org/2000/svg';
-  const svg = doc.createElementNS(svgNS, 'svg');
-  svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
-  host.appendChild(svg);
-
-  // x/y scales
-  const xs = SERIES.map(p => p.t.getTime());
-  const ys = SERIES.map(p => p.v);
-  const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
-  const maxYraw = Math.max(20, Math.max.apply(null, ys));
-  const maxY = Math.ceil(maxYraw/5)*5; // nice 5s
-  const cw = w - padL - padR, ch = h - padT - padB;
-
-  const X = (t) => padL + ((t - minX) / (maxX - minX)) * cw;
-  const Y = (v) => padT + (1 - (v / maxY)) * ch;
-
-  // gridlines
-  const gGrid = doc.createElementNS(svgNS, 'g');
-  gGrid.setAttribute('stroke', '#e5e5e5');
-  [0, .25, .5, .75, 1].forEach(f => {
-    const y = padT + f*ch;
-    const line = doc.createElementNS(svgNS, 'line');
-    line.setAttribute('x1', padL); line.setAttribute('x2', w - padR);
-    line.setAttribute('y1', y);    line.setAttribute('y2', y);
-    gGrid.appendChild(line);
-  });
-  svg.appendChild(gGrid);
-
-  // left axis numbers (0..maxY step 5)
-  const yAxis = doc.createElementNS(svgNS, 'g'); yAxis.setAttribute('class','yaxis');
-  for (let v=0; v<=maxY; v+=5){
-    const t = doc.createElementNS(svgNS, 'text');
-    t.setAttribute('class','axistext');
-    t.setAttribute('x', padL - 8);
-    t.setAttribute('y', Y(v));
-    t.textContent = String(v);
-    yAxis.appendChild(t);
   }
-  svg.appendChild(yAxis);
-
-  // bottom axis labels (10 evenly-spaced ticks)
-  const xAxis = doc.createElementNS(svgNS, 'g'); xAxis.setAttribute('class','xaxis');
-  const ticks = 10;
-  for (let i=0;i<=ticks;i++){
-    const tt = minX + (i/ticks)*(maxX-minX);
-    const label = labelForTime(new Date(tt));
-    const T = doc.createElementNS(svgNS, 'text');
-    T.setAttribute('class','axistext');
-    T.setAttribute('x', X(tt));
-    T.setAttribute('y', padT + ch + 6);
-    T.setAttribute('text-anchor','middle');
-    T.textContent = label;
-    xAxis.appendChild(T);
-  }
-  svg.appendChild(xAxis);
-
-  // line path
-  const d = SERIES.map((p, i) => `${i ? 'L' : 'M'}${X(p.t.getTime())} ${Y(p.v)}`).join(' ');
-  const path = doc.createElementNS(svgNS, 'path');
-  path.setAttribute('d', d);
-  path.setAttribute('fill', 'none');
-  path.setAttribute('stroke', '#0b54ff');
-  path.setAttribute('stroke-width', '2');
-  svg.appendChild(path);
-
-  // points + hover hits
-  SERIES.forEach((p, i) => {
-    const cx = X(p.t.getTime()), cy = Y(p.v);
-    const c = doc.createElementNS(svgNS, 'circle');
-    c.setAttribute('cx', cx); c.setAttribute('cy', cy);
-    c.setAttribute('r', '3'); c.setAttribute('fill', '#0b54ff');
-    svg.appendChild(c);
-
-    const nextX = i < SERIES.length - 1 ? X(SERIES[i+1].t.getTime()) : (w - padR);
-    const prevX = i > 0 ? X(SERIES[i-1].t.getTime()) : padL;
-    const hit = doc.createElementNS(svgNS, 'rect');
-    hit.setAttribute('x', (prevX + cx) / 2);
-    hit.setAttribute('y', padT);
-    hit.setAttribute('width', Math.max(8, (nextX - prevX) / 2));
-    hit.setAttribute('height', ch);
-    hit.setAttribute('fill', 'transparent');
-    hit.addEventListener('mousemove', (e) => {
-      const rect = host.getBoundingClientRect();
-      tip.style.display = 'block';
-      tip.textContent = `${labelForTime(p.t)}\nAll Queues: ${p.v}`;
-      tip.style.left = (e.clientX - rect.left + 12) + 'px';
-      tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
-    });
-    hit.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
-    svg.appendChild(hit);
-  });
-
-  // responsive redraw
-  const ro = new (doc.defaultView || window).ResizeObserver(() => drawChart(doc));
-  ro.observe(host);
-  host.__ro = ro;
-}
-
-// --- table ---
-function cellNum(val, label, allowClick) {
-  const n = parseFloat(String(val).replace(/[^\d.]/g,''));
-  if (!n) return `<span class="zero">0</span>`;
-  if (!allowClick) return `<span class="text-blue">${val}</span>`;
-  return `<a class="cvrx-link" data-cvrx="${label}">${val}</a>`;
-}
-
-function renderTable(doc){
-  const wrap = doc.getElementById(RX_TABLE_ID); if (!wrap) return;
-
-  const body = ROWS.map(r => `
-    <tr data-q="${r.q}">
-      <td class="num"><input type="checkbox" aria-label="Select ${r.name}"/></td>
-      <td class="num">${r.q}</td>
-      <td>${r.name}</td>
-      <td class="num">${cellNum(r.vol, 'vol', true)}</td>
-      <td class="num">${cellNum(r.handled, 'handled', true)}</td>
-      <td class="num">${cellNum(r.offered, 'offered', true)}</td>
-      <td class="num">${cellNum(r.talk, 'talk', false)}</td>
-      <td class="num">${cellNum(r.aband, 'aband', false)}</td>
-      <td class="num">${cellNum(r.handle, 'handle', false)}</td>
-      <td class="num">${cellNum(r.wait, 'wait', false)}</td>
-    </tr>
-  `).join('');
-
-  wrap.innerHTML = `
-    <div class="cvrx-tablebar">
-      <button type="button" class="btn-lite" id="cvrx-table-settings">Table Settings <span class="caret" aria-hidden="true"></span></button>
-    </div>
-    <div class="table-container scrollable-small">
-      <table class="table table-condensed table-hover">
-        <thead>
-          <tr>
-            <th style="width:28px"></th>
-            <th style="width:60px" title="Queue number"><a class="hdr" href="#">Queue</a></th>
-            <th title="Queue name"><a class="hdr" href="#">Name</a></th>
-            <th class="num" title="Total calls for the period"><a class="hdr" href="#">Call Volume</a> <span class="i">i</span></th>
-            <th class="num" title="Calls successfully handled"><a class="hdr" href="#">Calls Handled</a> <span class="i">i</span></th>
-            <th class="num" title="Calls offered to the queue"><a class="hdr" href="#">Calls Offered</a> <span class="i">i</span></th>
-            <th class="num" title="Average talk time"><a class="hdr" href="#">Avg. Talk Time</a> <span class="i">i</span></th>
-            <th class="num" title="Percent abandoned"><a class="hdr" href="#">Abandon Rate</a> <span class="i">i</span></th>
-            <th class="num" title="Average handle time"><a class="hdr" href="#">Avg. Handle Time</a> <span class="i">i</span></th>
-            <th class="num" title="Average wait time"><a class="hdr" href="#">Avg. Wait Time</a> <span class="i">i</span></th>
-          </tr>
-        </thead>
-        <tbody>${body}</tbody>
-      </table>
-    </div>`;
-}
 
   // --- utilities ---
   const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
   const fmtDay = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
   function labelForTime(d) {
     const now = new Date();
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const today   = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const thatDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     const deltaDays = Math.round((thatDay - today) / 86400000);
     const dayWord = deltaDays === -1 ? 'Yesterday' : (deltaDays === 0 ? 'Today' : fmtDay.format(d));
     return `${dayWord}, ${fmt.format(d)}`;
   }
 
-  // --- chart (SVG line with hover tooltips) ---
-  function drawChart(doc){
-    const host = doc.getElementById(RX_CHART_ID); if (!host) return;
+  // --- root block ---
+  function buildRootHTML() {
+    return `
+      <div id="${RX_ROOT_ID}">
+        <div class="cvrx-head">
+          <a href="#" class="cvrx-ttl" aria-haspopup="listbox" aria-expanded="false">
+            <span>Call Volume</span><span class="caret" aria-hidden="true"></span>
+          </a>
+        </div>
+        <div id="${RX_CHART_ID}"></div>
+        <div id="${RX_TABLE_ID}"></div>
+      </div>`;
+  }
 
-    // Clear
+  // --- chart (SVG with axis numbers + bottom labels + tooltips) ---
+  function drawChart(doc) {
+    const host = doc.getElementById(RX_CHART_ID);
+    if (!host) return;
+
     host.innerHTML = '';
     const tip = doc.createElement('div');
     tip.id = RX_TIP_ID;
     host.appendChild(tip);
 
     const w = Math.max(980, host.clientWidth || 980);
-    const h = 360, padL = 60, padR = 12, padT = 24, padB = 30;
+    const h = 360, padL = 60, padR = 12, padT = 24, padB = 38;
     const svgNS = 'http://www.w3.org/2000/svg';
     const svg = doc.createElementNS(svgNS, 'svg');
     svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
     host.appendChild(svg);
 
-    // x/y scales
     const xs = SERIES.map(p => p.t.getTime());
     const ys = SERIES.map(p => p.v);
     const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
-    const maxY = Math.max(20, Math.max.apply(null, ys));
+    const maxYraw = Math.max(20, Math.max.apply(null, ys));
+    const maxY = Math.ceil(maxYraw/5)*5; // nice steps of 5
     const cw = w - padL - padR, ch = h - padT - padB;
 
     const X = (t) => padL + ((t - minX) / (maxX - minX)) * cw;
     const Y = (v) => padT + (1 - (v / maxY)) * ch;
 
-    // gridlines + baseline
-    const gGrid = doc.createElementNS(svgNS, 'g'); gGrid.setAttribute('stroke', '#e5e5e5'); gGrid.setAttribute('stroke-width', '1');
+    // gridlines
+    const gGrid = doc.createElementNS(svgNS, 'g');
+    gGrid.setAttribute('stroke', '#e5e5e5');
     [0, .25, .5, .75, 1].forEach(f => {
-      const y = padT + f * ch;
+      const y = padT + f*ch;
       const line = doc.createElementNS(svgNS, 'line');
       line.setAttribute('x1', padL); line.setAttribute('x2', w - padR);
       line.setAttribute('y1', y);    line.setAttribute('y2', y);
@@ -2741,7 +2577,35 @@ function renderTable(doc){
     });
     svg.appendChild(gGrid);
 
-    // path
+    // left axis numbers (0..maxY step 5)
+    const yAxis = doc.createElementNS(svgNS, 'g'); yAxis.setAttribute('class','yaxis');
+    for (let v=0; v<=maxY; v+=5){
+      const t = doc.createElementNS(svgNS, 'text');
+      t.setAttribute('class','axistext');
+      t.setAttribute('x', padL - 8);
+      t.setAttribute('y', Y(v));
+      t.textContent = String(v);
+      yAxis.appendChild(t);
+    }
+    svg.appendChild(yAxis);
+
+    // bottom axis labels (10 ticks)
+    const xAxis = doc.createElementNS(svgNS, 'g'); xAxis.setAttribute('class','xaxis');
+    const ticks = 10;
+    for (let i=0;i<=ticks;i++){
+      const tt = minX + (i/ticks)*(maxX-minX);
+      const label = labelForTime(new Date(tt));
+      const T = doc.createElementNS(svgNS, 'text');
+      T.setAttribute('class','axistext');
+      T.setAttribute('x', X(tt));
+      T.setAttribute('y', padT + ch + 6);
+      T.setAttribute('text-anchor','middle');
+      T.textContent = label;
+      xAxis.appendChild(T);
+    }
+    svg.appendChild(xAxis);
+
+    // line path
     const d = SERIES.map((p, i) => `${i ? 'L' : 'M'}${X(p.t.getTime())} ${Y(p.v)}`).join(' ');
     const path = doc.createElementNS(svgNS, 'path');
     path.setAttribute('d', d);
@@ -2750,21 +2614,18 @@ function renderTable(doc){
     path.setAttribute('stroke-width', '2');
     svg.appendChild(path);
 
-    // hit targets (vertical bands) + circles (optional)
+    // points + hover hits
     SERIES.forEach((p, i) => {
-      // small circle to help visual parity with original
+      const cx = X(p.t.getTime()), cy = Y(p.v);
       const c = doc.createElementNS(svgNS, 'circle');
-      c.setAttribute('cx', X(p.t.getTime()));
-      c.setAttribute('cy', Y(p.v));
-      c.setAttribute('r', '3');
-      c.setAttribute('fill', '#0b54ff');
+      c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+      c.setAttribute('r', '3'); c.setAttribute('fill', '#0b54ff');
       svg.appendChild(c);
 
-      // transparent hit rect
       const nextX = i < SERIES.length - 1 ? X(SERIES[i+1].t.getTime()) : (w - padR);
       const prevX = i > 0 ? X(SERIES[i-1].t.getTime()) : padL;
       const hit = doc.createElementNS(svgNS, 'rect');
-      hit.setAttribute('x', (prevX + X(p.t.getTime())) / 2);
+      hit.setAttribute('x', (prevX + cx) / 2);
       hit.setAttribute('y', padT);
       hit.setAttribute('width', Math.max(8, (nextX - prevX) / 2));
       hit.setAttribute('height', ch);
@@ -2783,11 +2644,10 @@ function renderTable(doc){
     // responsive redraw
     const ro = new (doc.defaultView || window).ResizeObserver(() => drawChart(doc));
     ro.observe(host);
-    // store to avoid GC
     host.__ro = ro;
   }
 
-  // --- table ---
+  // --- “Showing data up to …” ---
   function renderUpto(doc){
     const el = doc.getElementById(RX_UPTO_ID); if (!el) return;
     const now = new Date();
@@ -2798,10 +2658,11 @@ function renderTable(doc){
     el.textContent = `Showing data up to ${d}`;
   }
 
+  // --- table helpers ---
   function cellNum(val, label, allowClick) {
     const n = parseFloat(String(val).replace(/[^\d.]/g,''));
     if (!n) return `<span class="zero">0</span>`;
-    if (!allowClick) return `<span class="zero">${val}</span>`;
+    if (!allowClick) return `<span class="text-blue">${val}</span>`;
     return `<a class="cvrx-link" data-cvrx="${label}">${val}</a>`;
   }
 
@@ -2828,15 +2689,15 @@ function renderTable(doc){
         <table class="table table-condensed table-hover">
           <thead>
             <tr>
-              <th style="width:60px;" title="Queue number">Queue</th>
-              <th title="Queue name">Name</th>
-              <th class="num" title="Total calls for the period">Call Volume</th>
-              <th class="num" title="Calls successfully handled">Calls Handled</th>
-              <th class="num" title="Calls offered to the queue">Calls Offered</th>
-              <th class="num" title="Average talk time">Avg. Talk Time</th>
-              <th class="num" title="Percent abandoned">Abandon Rate</th>
-              <th class="num" title="Average handle time">Avg. Handle Time</th>
-              <th class="num" title="Average wait time">Avg. Wait Time</th>
+              <th style="width:60px" title="Queue number"><a class="hdr" href="#">Queue</a></th>
+              <th title="Queue name"><a class="hdr" href="#">Name</a></th>
+              <th class="num" title="Total calls for the period"><a class="hdr" href="#">Call Volume</a> <span class="i">i</span></th>
+              <th class="num" title="Calls successfully handled"><a class="hdr" href="#">Calls Handled</a> <span class="i">i</span></th>
+              <th class="num" title="Calls offered to the queue"><a class="hdr" href="#">Calls Offered</a> <span class="i">i</span></th>
+              <th class="num" title="Average talk time"><a class="hdr" href="#">Avg. Talk Time</a> <span class="i">i</span></th>
+              <th class="num" title="Percent abandoned"><a class="hdr" href="#">Abandon Rate</a> <span class="i">i</span></th>
+              <th class="num" title="Average handle time"><a class="hdr" href="#">Avg. Handle Time</a> <span class="i">i</span></th>
+              <th class="num" title="Average wait time"><a class="hdr" href="#">Avg. Wait Time</a> <span class="i">i</span></th>
             </tr>
           </thead>
           <tbody>${body}</tbody>
@@ -2845,7 +2706,36 @@ function renderTable(doc){
     renderUpto(doc);
   }
 
-  // --- click wiring (open a simple modal table) ---
+  // --- modal (finally wired) ---
+  function ensureModal(doc){
+    let m = doc.getElementById(RX_MODAL_ID);
+    if (m) return m;
+    m = doc.createElement('div');
+    m.id = RX_MODAL_ID;
+    m.innerHTML = `
+      <div class="scrim" data-close="1"></div>
+      <div class="dlg" role="dialog" aria-modal="true" aria-labelledby="${RX_MODAL_ID}-title">
+        <header id="${RX_MODAL_ID}-title">Details</header>
+        <div class="bd"></div>
+        <div class="ft"><button type="button" class="btn" data-close="1">Close</button></div>
+      </div>`;
+    doc.body.appendChild(m);
+    m.addEventListener('click', (e)=>{ if (e.target && e.target.getAttribute('data-close')==='1') closeModal(doc); });
+    doc.addEventListener('keydown', (e)=>{ if (e.key === 'Escape') closeModal(doc); });
+    return m;
+  }
+  function openModal(doc, title, html){
+    const m = ensureModal(doc);
+    m.querySelector('header').textContent = title || 'Details';
+    m.querySelector('.bd').innerHTML = html || '';
+    m.classList.add('is-open');
+  }
+  function closeModal(doc){
+    const m = doc.getElementById(RX_MODAL_ID);
+    if (m) m.classList.remove('is-open');
+  }
+
+  // --- click wiring (open modal table) ---
   function wireClicks(doc){
     if (doc.__cvrxWired) return;
     doc.__cvrxWired = true;
@@ -2858,22 +2748,29 @@ function renderTable(doc){
       const labelMap = { vol:'Call Volume', handled:'Calls Handled', offered:'Calls Offered' };
       const title = (labelMap[metric]||'Details') + ' — Queue ' + q;
 
-      const rows = Array.from({length:10}, (_,i)=>{
-        return `<tr><td>${i+1}</td><td>(3${i}1) 555-01${String(i).padStart(2,'0')}</td><td>${metric==='handled'?'Handled':'Offered'}</td><td class="num">${(2+i%6)}:${String(10+i%50).padStart(2,'0')}</td></tr>`;
-      }).join('');
-      const html =
-        '<div class="table-container scrollable-small"><table class="table table-condensed table-hover">'
-        + '<thead><tr><th>#</th><th>Caller ID</th><th>Result</th><th class="num">Duration</th></tr></thead>'
-        + '<tbody>'+rows+'</tbody></table></div>';
+      const rows = Array.from({length:10}, (_,i)=>(
+        `<tr><td>${i+1}</td><td>(3${i}1) 555-01${String(i).padStart(2,'0')}</td><td>${metric==='handled'?'Handled':'Offered'}</td><td class="num">${(2+i%6)}:${String(10+i%50).padStart(2,'0')}</td></tr>`
+      )).join('');
+      const html = `
+        <div class="table-container scrollable-small">
+          <table class="table table-condensed table-hover">
+            <thead><tr><th>#</th><th>Caller ID</th><th>Result</th><th class="num">Duration</th></tr></thead>
+            <tbody>${rows}</tbody>
+          </table>
+        </div>`;
       openModal(doc, title, html);
     }, true);
   }
 
-  // --- root + render ---
-  function buildRootHTML(){
+  // --- inject / remove / observe ---
+  function buildRootHTML(){ // (kept small wrapper)
     return `
       <div id="${RX_ROOT_ID}">
-        <div class="cvrx-head"><h3>Call Volume</h3></div>
+        <div class="cvrx-head">
+          <a href="#" class="cvrx-ttl" aria-haspopup="listbox" aria-expanded="false">
+            <span>Call Volume</span><span class="caret" aria-hidden="true"></span>
+          </a>
+        </div>
         <div id="${RX_CHART_ID}"></div>
         <div id="${RX_TABLE_ID}"></div>
       </div>`;
@@ -2883,7 +2780,10 @@ function renderTable(doc){
     if (!RX_ROUTE.test(location.href)) return;
     const doc = document;
     const container = doc.querySelector(CONTAINER_SEL);
-    if (!container || doc.getElementById(RX_ROOT_ID)) return;
+    if (!container) return;
+
+    // IMPORTANT: scope the "already injected" check to the container
+    if (container.querySelector('#' + RX_ROOT_ID)) return;
 
     // hide existing children
     Array.from(container.children).forEach(el => {
@@ -2908,13 +2808,14 @@ function renderTable(doc){
 
   function removeAll(){
     const doc = document;
+    const container = doc.querySelector(CONTAINER_SEL);
+
     const el = doc.getElementById(RX_ROOT_ID);
     if (el) try { el.remove(); } catch (_) {}
 
     const m = doc.getElementById(RX_MODAL_ID);
     if (m) try { m.remove(); } catch (_) {}
 
-    const container = doc.querySelector(CONTAINER_SEL);
     if (container) {
       container.querySelectorAll(`[${RX_HIDE_ATTR}="1"]`).forEach(el => {
         el.style.display = '';
@@ -2930,7 +2831,8 @@ function renderTable(doc){
     if (!MO) return;
     const mo = new MO(() => {
       if (!RX_ROUTE.test(location.href)) return;
-      if (!doc.getElementById(RX_ROOT_ID) && doc.querySelector(CONTAINER_SEL)) inject();
+      const container = doc.querySelector(CONTAINER_SEL);
+      if (container && !container.querySelector('#' + RX_ROOT_ID)) inject();
     });
     mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
     doc.__cvrxMO = mo;
@@ -2953,45 +2855,48 @@ function renderTable(doc){
     const was = RX_ROUTE.test(prev), is = RX_ROUTE.test(next);
     if (!was && is) onEnter();
     if ( was && !is) removeAll();
-    if (is && !document.getElementById(RX_ROOT_ID) && document.querySelector(CONTAINER_SEL)) onEnter();
+    if (is) onEnter();
   }
 
-// --- SPA watch (history + URL changes + initial) ---
-(function watch(){
-  let last = location.href;
-  const push = history.pushState;
-  const rep  = history.replaceState;
+  // --- SPA watch (history + URL changes + initial) ---
+  (function watch(){
+    let last = location.href;
+    const push = history.pushState;
+    const rep  = history.replaceState;
 
-  history.pushState = function(){
-    const prev = last;
-    const ret  = push.apply(this, arguments);
-    const now  = location.href; last = now; route(prev, now);
-    return ret;
-  };
-  history.replaceState = function(){
-    const prev = last;
-    const ret  = rep.apply(this, arguments);
-    const now  = location.href; last = now; route(prev, now);
-    return ret;
-  };
+    history.pushState = function(){
+      const prev = last;
+      const ret  = push.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now);
+      return ret;
+    };
+    history.replaceState = function(){
+      const prev = last;
+      const ret  = rep.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now);
+      return ret;
+    };
 
-  new MutationObserver(() => {
-    const now = location.href;
-    if (now !== last) {
-      const prev = last; last = now; route(prev, now);
-    } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID) && document.querySelector(CONTAINER_SEL)) {
-      inject();
-    }
-  }).observe(document.documentElement, { childList: true, subtree: true });
+    new MutationObserver(() => {
+      const now = location.href;
+      if (now !== last) {
+        const prev = last; last = now; route(prev, now);
+      } else if (RX_ROUTE.test(now)) {
+        onEnter();
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
 
-  window.addEventListener('popstate', () => {
-    const prev = last; const now = location.href;
-    if (now !== prev) { last = now; route(prev, now); }
-  });
+    window.addEventListener('popstate', () => {
+      const prev = last; const now = location.href;
+      if (now !== prev) { last = now; route(prev, now); }
+    });
 
-  if (RX_ROUTE.test(location.href)) inject();
+    if (RX_ROUTE.test(location.href)) inject();
+  })();
 })();
-})();
+
+
+
 
 
 
