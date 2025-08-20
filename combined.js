@@ -2398,126 +2398,75 @@ if (!document.__cvqfRowStatusCapture) {
 })();
 
 /* ==============================
- /* ==============================
    CVR — Call Center Reports (FAKE CHART+TABLE+MODAL) v3 — DROP-IN
    ============================== */
 (function () {
   if (window.__cvrReportsFake_v3) return;
   window.__cvrReportsFake_v3 = true;
 
-    const RX_STATS_PAGE = /\/portal\/stats\/queuestats\/queue/;
-
-  function waitAndInjectReports(retry = 0) {
-    const container = document.querySelector('#modal-body-reports');
-    console.log('[CVR FAKE REPORTS] Retry', retry, 'Container:', !!container);
-  
-  if (!container) {
-    if (retry < 30) setTimeout(() => waitAndInjectReports(retry + 1), 500);
-    return;
-  }
-
-  if (document.getElementById('fake_reports_injected')) return;
-
-  container.innerHTML = '';
-  container.innerHTML = buildFakeQueueStatsHTML();
-}
-
-  if (RX_STATS_PAGE.test(location.href)) waitAndInjectReports(0);
-
-    function buildFakeQueueStatsHTML() {
-    return `
-      <div id="fake_reports_injected">
-        <h3 style="text-align:center;">Queue Stats (Simulated)</h3>
-        <svg width="980" height="300" style="background:#eef">
-          <line x1="50" y1="150" x2="930" y2="150" stroke="#338" stroke-width="2"/>
-          <circle cx="150" cy="120" r="5" fill="#33f"/>
-          <circle cx="300" cy="140" r="5" fill="#33f"/>
-          <circle cx="450" cy="100" r="5" fill="#33f"/>
-          <circle cx="600" cy="160" r="5" fill="#33f"/>
-          <circle cx="750" cy="130" r="5" fill="#33f"/>
-          <circle cx="900" cy="110" r="5" fill="#33f"/>
-        </svg>
-        <table style="width:100%; border-collapse: collapse; margin-top: 20px;" border="1">
-          <thead>
-            <tr>
-              <th>Queue</th>
-              <th>Name</th>
-              <th>Call Volume</th>
-              <th>Calls Handled</th>
-              <th>Service Level</th>
-              <th>Avg. Talk Time</th>
-              <th>Avg. Wait Time</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td>300</td><td>Main Routing</td><td>83</td><td>76</td><td>92%</td><td>3:14</td><td>0:42</td></tr>
-            <tr><td>301</td><td>New Sales</td><td>64</td><td>64</td><td>100%</td><td>4:10</td><td>0:15</td></tr>
-            <tr><td>302</td><td>Existing Customer</td><td>98</td><td>97</td><td>99%</td><td>2:55</td><td>0:25</td></tr>
-            <tr><td>303</td><td>Billing</td><td>27</td><td>25</td><td>92%</td><td>3:30</td><td>1:12</td></tr>
-          </tbody>
-        </table>
-      </div>
-    `;
-  }
-
-
-  // --- routes / selectors (reports only) ---
-  const RX_ROUTE   = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
-  const RX_BODY = '#modal-body-reports, #callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
-  const RX_GRAPH   = '.graphs-panel, .graphs-panel-home, .graphs, .graph, #chart, [class*="graph"]';
-  const RX_FALLBACK_CONTAINER = '.reports-container, .report-container, .table-container, .panel, .card';
+  // --- route + anchors (this page only) ---
+  const RX_ROUTE = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
+  const CONTAINER_SEL = '#modal-body-reports';
 
   // --- unique IDs/flags ---
   const RX_ROOT_ID   = 'cvrx-reports-root';
   const RX_STYLE_ID  = 'cvrx-reports-style';
-  const RX_CHART_ID  = 'cvrx-reports-chart';
-  const RX_TABLE_ID  = 'cvrx-reports-table';
   const RX_MODAL_ID  = 'cvrx-reports-modal';
   const RX_HIDE_ATTR = 'data-cvrx-hidden';
+  const RX_CHART_ID  = 'cvrx-reports-chart';
+  const RX_TABLE_ID  = 'cvrx-reports-table';
+  const RX_UPTO_ID   = 'cvrx-reports-upto';
+  const RX_TIP_ID    = 'cvrx-reports-tip';
 
-  // --- doc helpers (main + same-origin iframes) ---
-  function docs(){
-    const out=[document];
-    document.querySelectorAll('iframe').forEach(ifr=>{
-      try{
-        const d=ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-        if (d) out.push(d);
-      }catch(_){}
-    });
-    return out;
-  }
+  // --- data (exact rows you provided) ---
+  const ROWS = [
+    { q: '300', name: 'Main Routing',        vol: 76, handled: 47, offered: 75, talk: '08:42', aband: '16%', handle: '08:49', wait: '07:34' },
+    { q: '301', name: 'New Sales',           vol: 50, handled: 50, offered: 50, talk: '05:52', aband: '0%',  handle: '05:52', wait: '00:11' },
+    { q: '302', name: 'Existing Customer',   vol: 26, handled: 21, offered: 26, talk: '03:58', aband: '19.2%', handle: '04:13', wait: '01:11' },
+    { q: '303', name: 'Billing',             vol: 19, handled: 11, offered: 19, talk: '05:25', aband: '0%',  handle: '05:25', wait: '00:31' },
+  ];
 
-  function findSpot(){
-    for (const doc of docs()){
-      const body = doc.querySelector(RX_BODY) || doc.body || doc.documentElement;
-      if (!body) continue;
-      const graph = body.querySelector(RX_GRAPH);
-      if (graph) return { doc, body, graph, container: graph.parentNode };
-      const box  = body.querySelector(RX_FALLBACK_CONTAINER) || body;
-      return { doc, body, graph: null, container: box };
+  // --- chart seed: 2 days of points (mimics the real shape & tooltips) ---
+  function seedSeries() {
+    const now = new Date();
+    // Build 30 points from "yesterday 9:00 am" → "today 9:00 pm" roughly every ~1–2h
+    const pts = [];
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 9, 0, 0, 0);
+    const steps = [
+      0, 2, 3, 7, 9, 5, 0, 0, 0,  // yesterday morning → night
+      0, 0, 8, 11, 20, 9, 10, 16, 12, 5, 2, 0, 0   // today morning → night (peak around late morning / afternoon)
+    ];
+    let t = start;
+    for (let i = 0; i < steps.length; i++) {
+      pts.push({ t: new Date(t), v: steps[i] });
+      // alternate 1h / 1.5h steps for a more “organic” spacing
+      t = new Date(t.getTime() + (i % 2 ? 90 : 60) * 60 * 1000);
     }
-    return null;
+    return pts;
   }
+  const SERIES = seedSeries();
 
   // --- styles ---
-  function ensureStyles(doc){
+  function ensureStyles(doc) {
     if (doc.getElementById(RX_STYLE_ID)) return;
-    const s = doc.createElement('style'); s.id = RX_STYLE_ID;
+    const s = doc.createElement('style');
+    s.id = RX_STYLE_ID;
     s.textContent = `
-#${RX_ROOT_ID}{box-sizing:border-box;margin:6px 0 10px;padding:12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.09);font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
-#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
+#${RX_ROOT_ID}{box-sizing:border-box;margin:6px 0 10px;padding:12px 0 0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
+#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;padding:0 6px}
 #${RX_ROOT_ID} .cvrx-head h3{margin:0;font:700 14px/1.2 "Helvetica Neue", Arial}
-#${RX_ROOT_ID} .cvrx-ranges button{border:1px solid #d9d9d9;background:#fff;border-radius:6px;padding:6px 10px;font:600 12px/1 Arial;cursor:pointer}
-#${RX_ROOT_ID} .cvrx-ranges button:hover{background:#f7f7f7}
-#${RX_CHART_ID}{min-height:300px}
-#${RX_TABLE_ID}{margin-top:10px}
+#${RX_CHART_ID}{position:relative;min-height:300px;background:#eef}
+#${RX_CHART_ID} svg{display:block;width:100%;height:360px}
+#${RX_TIP_ID}{position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:6px;padding:6px 8px;font:600 12px/1.2 Arial;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:3}
+#${RX_TABLE_ID}{margin-top:12px}
 #${RX_TABLE_ID} .table{width:100%;border-collapse:collapse;background:#fff}
-#${RX_TABLE_ID} thead th{padding:8px 12px;border-bottom:1px solid #e6e6e6;text-align:left;white-space:nowrap}
+#${RX_TABLE_ID} thead th{padding:8px 12px;border-bottom:1px solid #e6e6e6;text-align:left;white-space:nowrap;font-weight:700}
 #${RX_TABLE_ID} tbody td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
-#${RX_TABLE_ID} tbody tr:hover{background:#fafafa}
 #${RX_TABLE_ID} .num{text-align:center}
 #${RX_TABLE_ID} a.cvrx-link{color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer}
 #${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
+#${RX_TABLE_ID} .zero{color:#999;font-weight:600}
+#${RX_UPTO_ID}{margin:8px 0 4px;color:#333;font-weight:600}
 #${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
 #${RX_MODAL_ID}.is-open{display:block}
 #${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
@@ -2527,169 +2476,11 @@ if (!document.__cvqfRowStatusCapture) {
 #${RX_MODAL_ID} .ft{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:flex-end}
 #${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
 #${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
-`; (doc.head||doc.documentElement).appendChild(s);
+`;
+    (doc.head || doc.documentElement).appendChild(s);
   }
 
-  // --- data (fake) ---
-  const DATA = {
-    today : {
-      chart: { kind:'hourly', peaks:[['09:45',1],['10:15',1],['11:55',1],['13:10',1],['14:20',1],['15:00',2],['15:41',5],['15:44',6],['15:51',5],['15:56',4],['15:58',3],['16:00',2]] },
-      rows: [
-        {q:'300', name:'Main Routing',      vol:18, handled:17, aband:1,  abandRate:'5.6%',  sl:'94%', talk:'02:34', wait:'00:46', longTalk:'08:12', longWait:'02:10', xfers:3},
-        {q:'301', name:'New Sales',         vol:23, handled:22, aband:1,  abandRate:'4.3%',  sl:'96%', talk:'03:12', wait:'00:39', longTalk:'07:42', longWait:'01:44', xfers:5},
-        {q:'302', name:'Existing Customer', vol:12, handled:11, aband:1,  abandRate:'8.3%',  sl:'92%', talk:'04:05', wait:'01:02', longTalk:'11:05', longWait:'02:41', xfers:2},
-        {q:'303', name:'Billing',           vol: 9, handled: 9, aband:0,  abandRate:'0.0%',  sl:'100%',talk:'02:59', wait:'00:31', longTalk:'06:18', longWait:'01:03', xfers:1}
-      ]
-    },
-    '7d'  : {
-      chart: { kind:'daily', values:[44,52,47,39,48,56,51] },
-      rows: [
-        {q:'300', name:'Main Routing',      vol:126, handled:118, aband:8,  abandRate:'6.3%', sl:'93%', talk:'02:41', wait:'00:49', longTalk:'12:14', longWait:'03:10', xfers:21},
-        {q:'301', name:'New Sales',         vol:161, handled:154, aband:7,  abandRate:'4.3%', sl:'95%', talk:'03:18', wait:'00:41', longTalk:'10:32', longWait:'02:52', xfers:28},
-        {q:'302', name:'Existing Customer', vol: 98, handled: 91, aband:7,  abandRate:'7.1%', sl:'91%', talk:'04:07', wait:'01:05', longTalk:'15:05', longWait:'05:01', xfers:17},
-        {q:'303', name:'Billing',           vol: 74, handled: 74, aband:0,  abandRate:'0.0%', sl:'100%',talk:'03:02', wait:'00:34', longTalk:'09:44', longWait:'02:14', xfers:11}
-      ]
-    },
-    '30d' : {
-      chart: { kind:'daily', values:[42,45,48,51,39,56,47,44,52,46,49,41,58,53,45,50,38,55,57,43,52,46,49,40,61,54,47,45,50,44] },
-      rows: [
-        {q:'300', name:'Main Routing',      vol:570, handled:540, aband:30, abandRate:'5.3%', sl:'95%', talk:'02:39', wait:'00:47', longTalk:'18:28', longWait:'06:14', xfers:89},
-        {q:'301', name:'New Sales',         vol:690, handled:662, aband:28, abandRate:'4.1%', sl:'96%', talk:'03:16', wait:'00:40', longTalk:'16:04', longWait:'05:22', xfers:102},
-        {q:'302', name:'Existing Customer', vol:420, handled:395, aband:25, abandRate:'6.0%', sl:'91%', talk:'04:03', wait:'01:03', longTalk:'21:11', longWait:'08:17', xfers:66},
-        {q:'303', name:'Billing',           vol:310, handled:309, aband:1,  abandRate:'0.3%', sl:'100%',talk:'03:00', wait:'00:33', longTalk:'13:07', longWait:'04:10', xfers:39}
-      ]
-    }
-  };
-
-  // --- chart helpers ---
-  function whenGVizReady(cb){
-    function ready(){ try { return window.google && google.visualization && google.visualization.DataTable; } catch(_) { return false; } }
-    function go(){ try{ cb(); }catch(_){} }
-    if (ready()) return go();
-    if (window.google && google.charts && google.charts.load){
-      try { google.charts.load('current', {packages:['corechart']}); } catch(_){}
-      try { google.charts.setOnLoadCallback(go); } catch(_){}
-    }
-    let tries=0;(function wait(){ if (ready()) return go(); if (tries++>120) return; setTimeout(wait,50); })();
-  }
-
-  function drawChartGViz(host, rangeKey){
-    const range = DATA[rangeKey] || DATA.today;
-    const now=new Date(); const y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
-    const dt=new google.visualization.DataTable(); let opts;
-
-    if (range.chart.kind==='hourly'){
-      dt.addColumn('datetime','Time'); dt.addColumn('number','Active Calls');
-      for (let hh=8; hh<=16; hh++) dt.addRow([new Date(y,m,d,hh,0,0,0), 0]);
-      range.chart.peaks.forEach(([hm,val])=>{
-        const hh=+hm.slice(0,2), mm=+hm.slice(3,5);
-        const mid=new Date(y,m,d,hh,mm,0,0);
-        dt.addRow([new Date(mid.getTime()-3*60*1000), 0]);
-        dt.addRow([mid, val]);
-        dt.addRow([new Date(mid.getTime()+3*60*1000), 0]);
-      });
-      opts = {
-        legend:'none', lineWidth:2, focusTarget:'datum',
-        chartArea:{left:60,right:20,top:20,bottom:16},
-        hAxis:{textPosition:'none',gridlines:{color:'transparent'},minorGridlines:{color:'transparent',count:0},baselineColor:'transparent'},
-        vAxis:{viewWindow:{min:0,max:6},ticks:[0,2,4,6],gridlines:{color:'#e9e9e9'},baselineColor:'#bdbdbd'}
-      };
-    } else {
-      dt.addColumn('date','Date'); dt.addColumn('number','Call Volume');
-      const vals=range.chart.values.slice();
-      const start=new Date(y,m,d-(vals.length-1));
-      for (let i=0;i<vals.length;i++){
-        const day=new Date(start.getFullYear(),start.getMonth(),start.getDate()+i);
-        dt.addRow([day, vals[i]]);
-      }
-      const vmax=Math.max.apply(null, vals.concat(10)), tick=Math.ceil(vmax/5);
-      opts = {
-        legend:'none', lineWidth:2, focusTarget:'category',
-        chartArea:{left:60,right:20,top:20,bottom:28},
-        hAxis:{gridlines:{color:'#f0f0f0'}},
-        vAxis:{viewWindow:{min:0},ticks:[0,tick,2*tick,3*tick,4*tick,5*tick],gridlines:{color:'#e9e9e9'},baselineColor:'#bdbdbd'}
-      };
-    }
-
-    const chart=new google.visualization.LineChart(host);
-    function redraw(){
-      const box=host.parentNode.getBoundingClientRect();
-      const w=Math.max(900, Math.floor(box.width || host.parentNode.clientWidth || 900));
-      const h=Math.max(320, Math.min(560, Math.floor(w*0.45)));
-      host.style.height=h+'px';
-      chart.draw(dt, opts);
-    }
-    redraw(); requestAnimationFrame(()=>requestAnimationFrame(redraw));
-    (host.ownerDocument.defaultView||window).addEventListener('resize', redraw);
-  }
-
-  function drawChartFallback(host, rangeKey){
-    const range = DATA[rangeKey] || DATA.today;
-    const w=Math.max(900, host.clientWidth||900), h=340, pad=28;
-    const vals=(range.chart.kind==='daily') ? range.chart.values.slice()
-               : [0,0,0,1,0,0,1,0,0,1,0,0,0,0,0,1,0,0,2,0,0,5,6,5,4,3,2,0];
-    const max=Math.max.apply(null, vals.concat(1));
-    const cw=w-pad*2, ch=h-pad*2, step=cw/Math.max(vals.length-1,1);
-    const path=vals.map((v,i)=> (i?'L':'M')+(pad+i*step)+' '+(pad+ch-(v/max)*ch)).join(' ');
-    host.innerHTML='<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
-      +'<rect width="'+w+'" height="'+h+'" fill="#fff"/><g stroke="#e9e9e9">'
-      +[0,0.25,0.5,0.75,1].map(f=>'<line x1="'+pad+'" y1="'+(pad+f*ch)+'" x2="'+(w-pad)+'" y2="'+(pad+f*ch)+'"/>').join('')
-      +'</g><path d="'+path+'" fill="none" stroke="#2f66d0" stroke-width="2"/></svg>';
-  }
-
-  function drawChart(doc, rangeKey){
-    const host = doc.getElementById(RX_CHART_ID); if (!host) return;
-    whenGVizReady(()=>{ try { drawChartGViz(host, rangeKey); } catch(_){ drawChartFallback(host, rangeKey); } });
-    setTimeout(()=>{ if (!host.querySelector('svg')) drawChartFallback(host, rangeKey); }, 6200);
-  }
-
-  // --- table + clickable blue numbers ---
-  function renderTable(doc, rangeKey){
-    const rows = (DATA[rangeKey] || DATA.today).rows;
-    const wrap = doc.getElementById(RX_TABLE_ID); if (!wrap) return;
-
-    const body = rows.map(r=>`
-      <tr data-q="${r.q}">
-        <td class="num">${r.q}</td>
-        <td>${r.name}</td>
-        <td class="num"><a class="cvrx-link" data-cvrx-metric="volume">${r.vol}</a></td>
-        <td class="num"><a class="cvrx-link" data-cvrx-metric="handled">${r.handled}</a></td>
-        <td class="num"><a class="cvrx-link" data-cvrx-metric="abandoned">${r.aband}</a></td>
-        <td class="num">${r.abandRate}</td>
-        <td class="num">${r.sl}</td>
-        <td class="num">${r.talk}</td>
-        <td class="num">${r.wait}</td>
-        <td class="num">${r.longTalk}</td>
-        <td class="num">${r.longWait}</td>
-        <td class="num"><a class="cvrx-link" data-cvrx-metric="xfers">${r.xfers}</a></td>
-      </tr>
-    `).join('');
-
-    wrap.innerHTML = `
-      <div class="table-container scrollable-small">
-        <table class="table table-condensed table-hover">
-          <thead>
-            <tr>
-              <th style="width:60px;">Queue</th>
-              <th>Name</th>
-              <th class="num">Call Volume</th>
-              <th class="num">Calls Handled</th>
-              <th class="num">Calls Abandoned</th>
-              <th class="num">Abandon Rate</th>
-              <th class="num">Service Level</th>
-              <th class="num">Avg Talk</th>
-              <th class="num">Avg Wait</th>
-              <th class="num">Longest Talk</th>
-              <th class="num">Longest Wait</th>
-              <th class="num">Transfers Out</th>
-            </tr>
-          </thead>
-          <tbody>${body}</tbody>
-        </table>
-      </div>`;
-  }
-
-  // --- modal ---
+  // --- modal (for clickable numbers) ---
   function ensureModal(doc){
     if (doc.getElementById(RX_MODAL_ID)) return;
     const root = doc.createElement('div'); root.id = RX_MODAL_ID;
@@ -2714,46 +2505,181 @@ if (!document.__cvqfRowStatusCapture) {
     doc.getElementById('cvrx-m-bd').innerHTML = html;
     doc.getElementById(RX_MODAL_ID).classList.add('is-open');
   }
+
+  // --- utilities ---
+  const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
+  const fmtDay = new Intl.DateTimeFormat(undefined, { weekday: 'long' });
+  function labelForTime(d) {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const thatDay = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    const deltaDays = Math.round((thatDay - today) / 86400000);
+    const dayWord = deltaDays === -1 ? 'Yesterday' : (deltaDays === 0 ? 'Today' : fmtDay.format(d));
+    return `${dayWord}, ${fmt.format(d)}`;
+  }
+
+  // --- chart (SVG line with hover tooltips) ---
+  function drawChart(doc){
+    const host = doc.getElementById(RX_CHART_ID); if (!host) return;
+
+    // Clear
+    host.innerHTML = '';
+    const tip = doc.createElement('div');
+    tip.id = RX_TIP_ID;
+    host.appendChild(tip);
+
+    const w = Math.max(980, host.clientWidth || 980);
+    const h = 360, padL = 60, padR = 12, padT = 24, padB = 30;
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = doc.createElementNS(svgNS, 'svg');
+    svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
+    host.appendChild(svg);
+
+    // x/y scales
+    const xs = SERIES.map(p => p.t.getTime());
+    const ys = SERIES.map(p => p.v);
+    const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+    const maxY = Math.max(20, Math.max.apply(null, ys));
+    const cw = w - padL - padR, ch = h - padT - padB;
+
+    const X = (t) => padL + ((t - minX) / (maxX - minX)) * cw;
+    const Y = (v) => padT + (1 - (v / maxY)) * ch;
+
+    // gridlines + baseline
+    const gGrid = doc.createElementNS(svgNS, 'g'); gGrid.setAttribute('stroke', '#e5e5e5'); gGrid.setAttribute('stroke-width', '1');
+    [0, .25, .5, .75, 1].forEach(f => {
+      const y = padT + f * ch;
+      const line = doc.createElementNS(svgNS, 'line');
+      line.setAttribute('x1', padL); line.setAttribute('x2', w - padR);
+      line.setAttribute('y1', y);    line.setAttribute('y2', y);
+      gGrid.appendChild(line);
+    });
+    svg.appendChild(gGrid);
+
+    // path
+    const d = SERIES.map((p, i) => `${i ? 'L' : 'M'}${X(p.t.getTime())} ${Y(p.v)}`).join(' ');
+    const path = doc.createElementNS(svgNS, 'path');
+    path.setAttribute('d', d);
+    path.setAttribute('fill', 'none');
+    path.setAttribute('stroke', '#0b54ff');
+    path.setAttribute('stroke-width', '2');
+    svg.appendChild(path);
+
+    // hit targets (vertical bands) + circles (optional)
+    SERIES.forEach((p, i) => {
+      // small circle to help visual parity with original
+      const c = doc.createElementNS(svgNS, 'circle');
+      c.setAttribute('cx', X(p.t.getTime()));
+      c.setAttribute('cy', Y(p.v));
+      c.setAttribute('r', '3');
+      c.setAttribute('fill', '#0b54ff');
+      svg.appendChild(c);
+
+      // transparent hit rect
+      const nextX = i < SERIES.length - 1 ? X(SERIES[i+1].t.getTime()) : (w - padR);
+      const prevX = i > 0 ? X(SERIES[i-1].t.getTime()) : padL;
+      const hit = doc.createElementNS(svgNS, 'rect');
+      hit.setAttribute('x', (prevX + X(p.t.getTime())) / 2);
+      hit.setAttribute('y', padT);
+      hit.setAttribute('width', Math.max(8, (nextX - prevX) / 2));
+      hit.setAttribute('height', ch);
+      hit.setAttribute('fill', 'transparent');
+      hit.addEventListener('mousemove', (e) => {
+        const rect = host.getBoundingClientRect();
+        tip.style.display = 'block';
+        tip.textContent = `${labelForTime(p.t)}\nAll Queues: ${p.v}`;
+        tip.style.left = (e.clientX - rect.left + 12) + 'px';
+        tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
+      });
+      hit.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+      svg.appendChild(hit);
+    });
+
+    // responsive redraw
+    const ro = new (doc.defaultView || window).ResizeObserver(() => drawChart(doc));
+    ro.observe(host);
+    // store to avoid GC
+    host.__ro = ro;
+  }
+
+  // --- table ---
+  function renderUpto(doc){
+    const el = doc.getElementById(RX_UPTO_ID); if (!el) return;
+    const now = new Date();
+    const d = new Intl.DateTimeFormat(undefined, {
+      month: '2-digit', day: '2-digit', year: 'numeric',
+      hour: 'numeric', minute: '2-digit'
+    }).format(now);
+    el.textContent = `Showing data up to ${d}`;
+  }
+
+  function cellNum(val, label, allowClick) {
+    const n = parseFloat(String(val).replace(/[^\d.]/g,''));
+    if (!n) return `<span class="zero">0</span>`;
+    if (!allowClick) return `<span class="zero">${val}</span>`;
+    return `<a class="cvrx-link" data-cvrx="${label}">${val}</a>`;
+  }
+
+  function renderTable(doc){
+    const wrap = doc.getElementById(RX_TABLE_ID); if (!wrap) return;
+
+    const body = ROWS.map(r => `
+      <tr data-q="${r.q}">
+        <td class="num">${r.q}</td>
+        <td>${r.name}</td>
+        <td class="num">${cellNum(r.vol, 'vol', true)}</td>
+        <td class="num">${cellNum(r.handled, 'handled', true)}</td>
+        <td class="num">${cellNum(r.offered, 'offered', true)}</td>
+        <td class="num">${cellNum(r.talk, 'talk', false)}</td>
+        <td class="num">${cellNum(r.aband, 'aband', false)}</td>
+        <td class="num">${cellNum(r.handle, 'handle', false)}</td>
+        <td class="num">${cellNum(r.wait, 'wait', false)}</td>
+      </tr>
+    `).join('');
+
+    wrap.innerHTML = `
+      <div id="${RX_UPTO_ID}"></div>
+      <div class="table-container scrollable-small">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+              <th style="width:60px;" title="Queue number">Queue</th>
+              <th title="Queue name">Name</th>
+              <th class="num" title="Total calls for the period">Call Volume</th>
+              <th class="num" title="Calls successfully handled">Calls Handled</th>
+              <th class="num" title="Calls offered to the queue">Calls Offered</th>
+              <th class="num" title="Average talk time">Avg. Talk Time</th>
+              <th class="num" title="Percent abandoned">Abandon Rate</th>
+              <th class="num" title="Average handle time">Avg. Handle Time</th>
+              <th class="num" title="Average wait time">Avg. Wait Time</th>
+            </tr>
+          </thead>
+          <tbody>${body}</tbody>
+        </table>
+      </div>`;
+    renderUpto(doc);
+  }
+
+  // --- click wiring (open a simple modal table) ---
   function wireClicks(doc){
     if (doc.__cvrxWired) return;
     doc.__cvrxWired = true;
-
-    // fallback range buttons
     doc.addEventListener('click', (e)=>{
-      const b = e.target && e.target.closest && e.target.closest('#'+RX_ROOT_ID+' [data-cvrx-range]');
-      if (!b) return;
-      e.preventDefault();
-      const k = b.getAttribute('data-cvrx-range');
-      drawChart(doc, k); renderTable(doc, k);
-    }, true);
-
-    // toolbar range (if present)
-    doc.addEventListener('click', (e)=>{
-      const b = e.target && e.target.closest && e.target.closest('#cvr-rep-toolbar [data-cvr-range]');
-      if (!b) return;
-      e.preventDefault();
-      const k = b.getAttribute('data-cvr-range');
-      drawChart(doc, k); renderTable(doc, k);
-    }, true);
-
-    // clickable counts → modal
-    doc.addEventListener('click', (e)=>{
-      const a = e.target && e.target.closest && e.target.closest('#'+RX_TABLE_ID+' a.cvrx-link');
+      const a = e.target && e.target.closest && e.target.closest(`#${RX_TABLE_ID} a.cvrx-link`);
       if (!a) return;
       e.preventDefault();
       const tr = a.closest('tr'); const q = tr ? tr.getAttribute('data-q') : '';
-      const metric = a.getAttribute('data-cvrx-metric');
-      const labelMap = { volume:'Call Volume', handled:'Calls Handled', abandoned:'Calls Abandoned', xfers:'Transfers Out' };
+      const metric = a.getAttribute('data-cvrx');
+      const labelMap = { vol:'Call Volume', handled:'Calls Handled', offered:'Calls Offered' };
       const title = (labelMap[metric]||'Details') + ' — Queue ' + q;
 
-      const rows = Array.from({length:Math.min(12, Math.max(5, parseInt(a.textContent,10)||5))}, (_,i)=>{
-        return `<tr><td>${i+1}</td><td>(3${i}1) 555-01${String(i).padStart(2,'0')}</td><td>${metric==='abandoned'?'Abandoned':'Handled'}</td><td>${(i%2)?'Inbound':'Outbound'}</td><td class="num">${(2+i%6)}:${String(10+i%50).padStart(2,'0')}</td></tr>`;
+      const rows = Array.from({length:10}, (_,i)=>{
+        return `<tr><td>${i+1}</td><td>(3${i}1) 555-01${String(i).padStart(2,'0')}</td><td>${metric==='handled'?'Handled':'Offered'}</td><td class="num">${(2+i%6)}:${String(10+i%50).padStart(2,'0')}</td></tr>`;
       }).join('');
       const html =
         '<div class="table-container scrollable-small"><table class="table table-condensed table-hover">'
-        + '<thead><tr><th>#</th><th>Caller ID</th><th>Result</th><th>Type</th><th class="num">Duration</th></tr></thead>'
+        + '<thead><tr><th>#</th><th>Caller ID</th><th>Result</th><th class="num">Duration</th></tr></thead>'
         + '<tbody>'+rows+'</tbody></table></div>';
-
       openModal(doc, title, html);
     }, true);
   }
@@ -2762,168 +2688,122 @@ if (!document.__cvqfRowStatusCapture) {
   function buildRootHTML(){
     return `
       <div id="${RX_ROOT_ID}">
-        <div class="cvrx-head">
-          <h3>Call Volume</h3>
-          <div class="cvrx-ranges" aria-label="Range (fallback)">
-            <button type="button" data-cvrx-range="today">Today</button>
-            <button type="button" data-cvrx-range="7d">7 days</button>
-            <button type="button" data-cvrx-range="30d">30 days</button>
-          </div>
-        </div>
+        <div class="cvrx-head"><h3>Call Volume</h3></div>
         <div id="${RX_CHART_ID}"></div>
         <div id="${RX_TABLE_ID}"></div>
       </div>`;
   }
 
-  function hideNative(doc, graphEl){
-    if (graphEl && !graphEl.hasAttribute(RX_HIDE_ATTR)){
-      graphEl.setAttribute(RX_HIDE_ATTR, '1');
-      graphEl.style.display = 'none';
-    }
-  }
-  function unhideNative(doc){
-    const list = doc.querySelectorAll('['+RX_HIDE_ATTR+'="1"]');
-    list.forEach(n=>{ n.style.display=''; n.removeAttribute(RX_HIDE_ATTR); });
-  }
-
- // --- inject/remove/observe ---
-function inject(){
-  if (!RX_ROUTE.test(location.href)) return;
-
-  const doc = document;
-  const container = doc.querySelector('#modal-body-reports');
-  if (!container || doc.getElementById(RX_ROOT_ID)) return;
-
-  // Hide all existing children inside the container
-  Array.from(container.children).forEach(el => {
-    if (!el.id || el.id !== RX_ROOT_ID) {
-      el.setAttribute('data-cvrx-hidden', '1');
-      el.style.display = 'none';
-    }
-  });
-
-  ensureStyles(doc);
-
-  const wrap = doc.createElement('div');
-  wrap.innerHTML = buildRootHTML();
-  const root = wrap.firstElementChild;
-
-  container.appendChild(root);
-
-  wireClicks(doc);
-  drawChart(doc, 'today');
-  renderTable(doc, 'today');
-  observe(doc);
-}
-
-function removeAll(){
-  const doc = document;
-  const el = doc.getElementById(RX_ROOT_ID);
-  if (el) try { el.remove(); } catch (_) {}
-
-  const m = doc.getElementById(RX_MODAL_ID);
-  if (m) try { m.remove(); } catch (_) {}
-
-  const container = doc.querySelector('#modal-body-reports');
-  if (container) {
-    container.querySelectorAll('[data-cvrx-hidden="1"]').forEach(el => {
-      el.style.display = '';
-      el.removeAttribute('data-cvrx-hidden');
-    });
-  }
-
-  unobserve(doc);
-}
-
-function observe(doc){
-  if (doc.__cvrxMO) return;
-  const MO = (doc.defaultView || window).MutationObserver;
-  if (!MO) return;
-  const mo = new MO(() => {
+  function inject(){
     if (!RX_ROUTE.test(location.href)) return;
-    if (!doc.getElementById(RX_ROOT_ID) && doc.querySelector('#modal-body-reports')) inject();
-  });
-  mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
-  doc.__cvrxMO = mo;
-}
+    const doc = document;
+    const container = doc.querySelector(CONTAINER_SEL);
+    if (!container || doc.getElementById(RX_ROOT_ID)) return;
 
-function unobserve(doc){
-  const mo = doc.__cvrxMO;
-  if (mo && mo.disconnect) try { mo.disconnect(); } catch (_) {}
-  delete doc.__cvrxMO;
-}
+    // hide existing children
+    Array.from(container.children).forEach(el => {
+      if (!el.id || el.id !== RX_ROOT_ID) {
+        el.setAttribute(RX_HIDE_ATTR, '1');
+        el.style.display = 'none';
+      }
+    });
 
-function schedule(fn){
-  let fired = false;
-  if ('requestAnimationFrame' in window){
-    requestAnimationFrame(() => requestAnimationFrame(() => { fired = true; try { fn(); } catch (_) {} }));
+    ensureStyles(doc);
+
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildRootHTML();
+    const root = wrap.firstElementChild;
+    container.appendChild(root);
+
+    wireClicks(doc);
+    drawChart(doc);
+    renderTable(doc);
+    observe(doc);
   }
-  setTimeout(() => { if (!fired) try { fn(); } catch (_) {} }, 3600);
-}
 
-function onEnter(){ schedule(inject); }
+  function removeAll(){
+    const doc = document;
+    const el = doc.getElementById(RX_ROOT_ID);
+    if (el) try { el.remove(); } catch (_) {}
 
-function route(prev, next){
-  const was = RX_ROUTE.test(prev), is = RX_ROUTE.test(next);
-  if (!was && is) onEnter();
-  if ( was && !is) removeAll();
-  if (is && !document.getElementById(RX_ROOT_ID) && document.querySelector('#modal-body-reports')) onEnter();
-}
+    const m = doc.getElementById(RX_MODAL_ID);
+    if (m) try { m.remove(); } catch (_) {}
 
-// --- SPA watch ---
-(function watch(){
-  let last = location.href;
-  const push = history.pushState;
-  const rep = history.replaceState;
+    const container = doc.querySelector(CONTAINER_SEL);
+    if (container) {
+      container.querySelectorAll(`[${RX_HIDE_ATTR}="1"]`).forEach(el => {
+        el.style.display = '';
+        el.removeAttribute(RX_HIDE_ATTR);
+      });
+    }
+    unobserve(doc);
+  }
 
-  history.pushState = function(){
-    const prev = last;
-    const ret = push.apply(this, arguments);
-    const now = location.href;
-    last = now;
-    route(prev, now);
-    return ret;
-  };
+  function observe(doc){
+    if (doc.__cvrxMO) return;
+    const MO = (doc.defaultView || window).MutationObserver;
+    if (!MO) return;
+    const mo = new MO(() => {
+      if (!RX_ROUTE.test(location.href)) return;
+      if (!doc.getElementById(RX_ROOT_ID) && doc.querySelector(CONTAINER_SEL)) inject();
+    });
+    mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
+    doc.__cvrxMO = mo;
+  }
+  function unobserve(doc){
+    const mo = doc.__cvrxMO;
+    if (mo && mo.disconnect) try { mo.disconnect(); } catch (_) {}
+    delete doc.__cvrxMO;
+  }
 
-  history.replaceState = function(){
-    const prev = last;
-    const ret = rep.apply(this, arguments);
-    const now = location.href;
-    last = now;
-    route(prev, now);
-    return ret;
-  };
+  function schedule(fn){
+    let fired = false;
+    if ('requestAnimationFrame' in window){
+      requestAnimationFrame(() => requestAnimationFrame(() => { fired = true; try { fn(); } catch (_) {} }));
+    }
+    setTimeout(() => { if (!fired) try { fn(); } catch (_) {} }, 3600);
+  }
+  function onEnter(){ schedule(inject); }
+  function route(prev, next){
+    const was = RX_ROUTE.test(prev), is = RX_ROUTE.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeAll();
+    if (is && !document.getElementById(RX_ROOT_ID) && document.querySelector(CONTAINER_SEL)) onEnter();
+  }
 
-  new MutationObserver(() => {
-    const now = location.href;
-    if (now !== last) {
+  // --- SPA watch (history + URL changes + initial) ---
+  (function watch(){
+    let last = location.href;
+    const push = history.pushState;
+    const rep  = history.replaceState;
+
+    history.pushState = function(){
       const prev = last;
-      last = now;
-      route(prev, now);
-    } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID)) {
-      inject();
-    }
-  }).observe(document.documentElement, { childList: true, subtree: true });
+      const ret  = push.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now);
+      return ret;
+    };
+    history.replaceState = function(){
+      const prev = last;
+      const ret  = rep.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now);
+      return ret;
+    };
 
-  window.addEventListener('popstate', () => {
-    const prev = last;
-    const now = location.href;
-    if (now !== prev) {
-      last = now;
-      route(prev, now);
-    }
-  });
+    new MutationObserver(() => {
+      const now = location.href;
+      if (now !== last) {
+        const prev = last; last = now; route(prev, now);
+      } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID)) {
+        inject();
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
 
-      if (RX_ROUTE.test(location.href)) inject();
+    window.addEventListener('popstate', () => {
+      const prev = last; const now = location.href;
+      if (now !== prev) { last = now; route(prev, now); }
+    });
 
-    // ✅ THIS is the correct place
-        waitAndInject(0);
-  });
+    if (RX_ROUTE.test(location.href)) inject();
+  })();
 })();
-
-
-
-
-
-
-
