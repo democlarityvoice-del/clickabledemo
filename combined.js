@@ -2941,62 +2941,39 @@ function renderTable(doc){
     if (is && !document.getElementById(RX_ROOT_ID) && document.querySelector(CONTAINER_SEL)) onEnter();
   }
 
-  // --- SPA watch (history + URL changes + initial) ---
-(function watchQueueStatsURLChanges() {
+// --- SPA watch (history + URL changes + initial) ---
+(function watch(){
   let last = location.href;
-  const origPush = history.pushState;
-  const origReplace = history.replaceState;
+  const push = history.pushState;
+  const rep  = history.replaceState;
 
-  history.pushState = function () {
+  history.pushState = function(){
     const prev = last;
-    const ret  = origPush.apply(this, arguments);
-    const now  = location.href;
-    last = now;
-    handleQueueStatsRouteChange(prev, now);
+    const ret  = push.apply(this, arguments);
+    const now  = location.href; last = now; route(prev, now);
+    return ret;
+  };
+  history.replaceState = function(){
+    const prev = last;
+    const ret  = rep.apply(this, arguments);
+    const now  = location.href; last = now; route(prev, now);
     return ret;
   };
 
-  history.replaceState = function () {
-    const prev = last;
-    const ret  = origReplace.apply(this, arguments);
-    const now  = location.href;
-    last = now;
-    handleQueueStatsRouteChange(prev, now);
-    return ret;
-  };
-
-  let mutationLock = false;
   new MutationObserver(() => {
-    if (mutationLock) return;
-    if (location.href !== last) {
-      const prev = last;
-      const now  = location.href;
-      last = now;
-      mutationLock = true;
-      handleQueueStatsRouteChange(prev, now);
-      setTimeout(() => { mutationLock = false; }, 500); // cooldown
+    const now = location.href;
+    if (now !== last) {
+      const prev = last; last = now; route(prev, now);
+    } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID) && document.querySelector(CONTAINER_SEL)) {
+      inject();
     }
   }).observe(document.documentElement, { childList: true, subtree: true });
 
   window.addEventListener('popstate', () => {
-    const prev = last;
-    const now  = location.href;
-    if (now !== prev) {
-      last = now;
-      handleQueueStatsRouteChange(prev, now);
-    }
+    const prev = last; const now = location.href;
+    if (now !== prev) { last = now; route(prev, now); }
   });
 
-    if (QUEUE_STATS_REGEX.test(location.href)) onQueueStatsPageEnter();
-  })();
+  if (RX_ROUTE.test(location.href)) inject();
 })();
-
-
-
-
-
-
-
-
-
-
+})();
