@@ -2410,7 +2410,7 @@ if (!document.__cvqfRowStatusCapture) {
 
   // --- unique IDs/flags ---
   const RX_ROOT_ID   = 'cvrx-reports-root';
-  const RX_STYLE_ID  = 'cvrx-reports-style';
+  const RX_STYLE_ID  = 'cvrx-reports-style-v4';
   const RX_MODAL_ID  = 'cvrx-reports-modal';
   const RX_HIDE_ATTR = 'data-cvrx-hidden';
   const RX_CHART_ID  = 'cvrx-reports-chart';
@@ -2450,15 +2450,23 @@ if (!document.__cvqfRowStatusCapture) {
 
  // --- styles ---
 function ensureStyles(doc){
+  // kill any legacy tag from older builds so our new CSS actually applies
+  const legacy = doc.getElementById('cvrx-reports-style');
+  if (legacy) try { legacy.remove(); } catch (_){}
+
+  // if our current style exists, update it (don’t early-return with stale rules)
   let s = doc.getElementById(RX_STYLE_ID);
   if (!s) {
     s = doc.createElement('style');
     s.id = RX_STYLE_ID;
     (doc.head || doc.documentElement).appendChild(s);
   }
-
-  // Your Portal-mimic CSS goes inside this template literal
   s.textContent = `
+    /* your updated portal-matching CSS here (the exact block you already wrote) */
+  `;
+}
+
+
 
 #${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 
@@ -2977,3 +2985,4 @@ function renderTable(doc){
   if (RX_ROUTE.test(location.href)) inject();
 })();
 })();
+
