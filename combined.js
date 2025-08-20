@@ -2400,19 +2400,34 @@ if (!document.__cvqfRowStatusCapture) {
 // --- ATTEMPT NUMBER 9 JILLION TO GET THE DUMB REPORTS TO LOAD ---
 
 // ---- ATTEMPT NUMBER 9 JILLION TO GET THE DUMB REPORTS TO LOAD ----
-(function injectQueueStatsOverlay() {
-  // -------- DECLARE QUEUE STATS REPORT CONSTANTS -------- //
+// ==============================
+// Clarity Voice Queue Stats Inject
+// ==============================
+if (!window.__cvQueueStatsInit) {
+  window.__cvQueueStatsInit = true;
+
+  const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
   const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
-  // ---- Inject only on the queue stats page ----
-  if (!/\/portal\/stats\/queuestats\/queue\//.test(location.href)) return;
+  if (QUEUE_STATS_REGEX.test(location.href)) {
+    // Prevent duplicate injection
+    if (document.getElementById(RX_ROOT_ID)) return;
 
-  // ---- Prevent duplicate injection ----
-  if (document.getElementById(RX_ROOT_ID)) return;
+    // Target the modal-body-reports container
+    const container = document.querySelector('#modal-body-reports');
+    if (!container) return;
 
-  const wrapper = document.createElement('div');
-  wrapper.id = RX_ROOT_ID;
-  wrapper.style.marginTop = '20px';
+    const wrapper = document.createElement('div');
+    wrapper.id = RX_ROOT_ID;
+    wrapper.style.marginTop = '20px';
+
+    container.appendChild(wrapper);
+
+    // Render the chart/table here
+    buildQueueStatsChart(wrapper);
+  }
+}
+
 
   const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
@@ -2476,6 +2491,7 @@ if (!document.__cvqfRowStatusCapture) {
   const contentArea = document.querySelector('#content');
   if (contentArea) contentArea.appendChild(wrapper);
 })();
+
 
 
 
