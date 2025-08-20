@@ -2448,7 +2448,8 @@ if (!document.__cvqfRowStatusCapture) {
   }
   const SERIES = seedSeries();
 
- // --- styles ---
+
+// --- styles ---
 function ensureStyles(doc){
   // kill any legacy tag from older builds so our new CSS actually applies
   const legacy = doc.getElementById('cvrx-reports-style');
@@ -2464,57 +2465,19 @@ function ensureStyles(doc){
 
   s.textContent = `
 #${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
-#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:0 6px 8px;border-bottom:1px solid #e5e5e5}
-#${RX_ROOT_ID} .cvrx-ttl{display:inline-flex;align-items:center;gap:6px;font:700 14px/1.2 Arial;color:#1080c9;text-decoration:none;cursor:default}
+#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;padding:0}
+#${RX_ROOT_ID} .cvrx-ttl{display:inline-flex;align-items:center;gap:6px;font:700 14px/1.2 Arial;color:#1080c9;text-decoration:none}
 #${RX_ROOT_ID} .cvrx-ttl:hover{text-decoration:underline}
 #${RX_ROOT_ID} .cvrx-ttl .caret{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;transform:translateY(1px)}
 
-#${RX_CHART_ID}{position:relative;min-height:300px}
-#${RX_CHART_ID} svg{display:block;width:100%;height:360px}
-#${RX_TIP_ID}{position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:6px;padding:6px 8px;font:600 12px/1.2 Arial;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:3}
-
-#${RX_TABLE_ID}{margin-top:12px}
-#${RX_TABLE_ID} .table{width:100%;border-collapse:collapse;background:#fff}
-#${RX_TABLE_ID} thead th{padding:8px 12px;border-bottom:1px solid #e6e6e6;text-align:left;white-space:nowrap;font-weight:700}
-#${RX_TABLE_ID} tbody td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
-#${RX_TABLE_ID} .num{text-align:center}
-#${RX_TABLE_ID} a.cvrx-link{color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer}
-#${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
-#${RX_TABLE_ID} .zero{color:#999;font-weight:600}
-#${RX_UPTO_ID}{margin:8px 0 4px;color:#333;font-weight:600}
-
-#${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
-#${RX_MODAL_ID}.is-open{display:block}
-#${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
-#${RX_MODAL_ID} .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
-#${RX_MODAL_ID} header{padding:12px 16px;border-bottom:1px solid #eee;font:700 14px/1.2 Arial;color:#222}
-#${RX_MODAL_ID} .bd{padding:12px;overflow:auto}
-#${RX_MODAL_ID} .ft{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:flex-end}
-#${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
-#${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
-`;
-
-
-
-#${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
-
-/* header title matches Portal (blue dropdown-looking link) */
-#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;padding:0}
-#${RX_ROOT_ID} .cvrx-ttl{display:inline-flex;align-items:center;gap:6px;font:700 14px/1.2 Arial;color:#1080c9;text-decoration:none}
-#${RX_ROOT_ID} .cvrx-ttl:hover{ text-decoration:underline }
-#${RX_ROOT_ID} .cvrx-ttl .caret{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;transform:translateY(1px)}
-
-/* chart — white bg, grid + axes numbers like screenshot */
 #${RX_CHART_ID}{position:relative;min-height:320px;background:#fff;border:1px solid #e6e6e6;border-radius:4px;padding:0 0 6px}
 #${RX_CHART_ID} svg{display:block;width:100%;height:360px}
 #${RX_CHART_ID} .axistext{font:600 12px/1.2 Arial;fill:#6b6b6b}
 #${RX_CHART_ID} .xaxis .axistext{dominant-baseline:hanging}
 #${RX_CHART_ID} .yaxis .axistext{text-anchor:end}
 
-/* tooltip */
 #${RX_TIP_ID}{position:absolute;pointer-events:none;background:#fff;border:1px solid #d9d9d9;border-radius:6px;padding:6px 8px;font:600 12px/1.2 Arial;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:3;white-space:pre}
 
-/* table */
 #${RX_TABLE_ID}{margin-top:10px}
 #${RX_TABLE_ID} .cvrx-tablebar{display:flex;justify-content:flex-end;margin:4px 0 6px}
 #${RX_TABLE_ID} .btn-lite{padding:6px 10px;border:1px solid #cfcfcf;border-radius:4px;background:#f7f7f7;cursor:pointer;font:600 12px/1 Arial;color:#333}
@@ -2534,9 +2497,20 @@ function ensureStyles(doc){
 #${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
 #${RX_TABLE_ID} .text-blue{color:#1080c9;font-weight:700}
 #${RX_TABLE_ID} .zero{color:#999;font-weight:600}
+#${RX_UPTO_ID}{margin:8px 0 4px;color:#333;font-weight:600}
+
+#${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
+#${RX_MODAL_ID}.is-open{display:block}
+#${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
+#${RX_MODAL_ID} .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
+#${RX_MODAL_ID} header{padding:12px 16px;border-bottom:1px solid #eee;font:700 14px/1.2 Arial;color:#222}
+#${RX_MODAL_ID} .bd{padding:12px;overflow:auto}
+#${RX_MODAL_ID} .ft{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:flex-end}
+#${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
+#${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
 `;
-  (doc.head || doc.documentElement).appendChild(s);
 }
+
 
 // --- title + root block (visual only; no behavior change) ---
 function buildRootHTML(){
@@ -3013,5 +2987,6 @@ function renderTable(doc){
   if (RX_ROUTE.test(location.href)) inject();
 })();
 })();
+
 
 
