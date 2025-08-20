@@ -2402,27 +2402,34 @@ if (!document.__cvqfRowStatusCapture) {
 
 // ==============================
 // ==============================
+// ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
 if (!window.__cvQueueStatsInit) {
   window.__cvQueueStatsInit = true;
 
-  const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
-  const RX_ROOT_ID = 'cv-queue-stats-wrapper';
+  (function injectQueueStatsOverlay() {
+    const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
+    const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
-  if (QUEUE_STATS_REGEX.test(location.href)) {
-    // Prevent duplicate injection
-    if (document.getElementById(RX_ROOT_ID)) return;
+    if (QUEUE_STATS_REGEX.test(location.href)) {
+      // Prevent duplicate injection
+      if (document.getElementById(RX_ROOT_ID)) return;
 
-    // Target the modal-body-reports container
-    const container = document.querySelector('#modal-body-reports');
-    if (!container) return;
+      // Target the modal-body-reports container
+      const container = document.querySelector('#modal-body-reports');
+      if (!container) return;
 
-    const wrapper = document.createElement('div');
-    wrapper.id = RX_ROOT_ID;
-    wrapper.style.marginTop = '20px';
+      const wrapper = document.createElement('div');
+      wrapper.id = RX_ROOT_ID;
+      wrapper.style.marginTop = '20px';
+      container.appendChild(wrapper);
 
-    // ==== Build Table ====
+      buildQueueStatsChart(wrapper);
+    }
+  })();
+
+  function buildQueueStatsChart(wrapper) {
     const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
     const table = document.createElement('table');
@@ -2474,22 +2481,10 @@ if (!window.__cvQueueStatsInit) {
 
     const tableSettings = document.createElement('div');
     tableSettings.style.float = 'right';
-    tableSettings.innerHTML = `
-      <button id="table-settings-button">Table Settings &#9662;</button>
-    `;
+    tableSettings.innerHTML = `<button id="table-settings-button">Table Settings &#9662;</button>`;
 
-    // ==== Append content ====
     wrapper.appendChild(tableSettings);
     wrapper.appendChild(tableHeader);
     wrapper.appendChild(table);
-
-    container.appendChild(wrapper); // ✅ only append once, here
   }
 }
-
-
-
-
-
-
-
