@@ -2449,6 +2449,11 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 // ---- Inject when the queue stats page is active ----
+
+// -------- DECLARE QUEUE STATS REPORT CONSTANTS -------- //
+const RX_ROOT_ID = 'cv-queue-stats-wrapper';
+
+
 if (/\/portal\/stats\/queuestats\/queue\//.test(location.href)) {
   if (!document.getElementById('cv-queue-stats-wrapper')) {
     const wrapper = document.createElement('div');
@@ -2518,4 +2523,5 @@ if (/\/portal\/stats\/queuestats\/queue\//.test(location.href)) {
     if (contentArea) contentArea.appendChild(wrapper);
   }
 }
+
 
