@@ -2446,39 +2446,95 @@ if (!document.__cvqfRowStatusCapture) {
   }
   const SERIES = seedSeries();
 
-  // --- styles ---
-  function ensureStyles(doc) {
-    if (doc.getElementById(RX_STYLE_ID)) return;
-    const s = doc.createElement('style');
-    s.id = RX_STYLE_ID;
-    s.textContent = `
-#${RX_ROOT_ID}{box-sizing:border-box;margin:6px 0 10px;padding:12px 0 0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
-#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px;padding:0 6px}
-#${RX_ROOT_ID} .cvrx-head h3{margin:0;font:700 14px/1.2 "Helvetica Neue", Arial}
-#${RX_CHART_ID}{position:relative;min-height:300px;background:#eef}
+  function ensureStyles(doc){
+  if (doc.getElementById(RX_STYLE_ID)) return;
+  const s = doc.createElement('style');
+  s.id = RX_STYLE_ID;
+  s.textContent = `
+/* ------- Card / container ------- */
+#${RX_ROOT_ID}{
+  box-sizing:border-box;
+  margin:8px 0 10px;
+  padding:12px 0 0;
+  background:#fff;
+  border:1px solid #e6e6e6;
+  border-radius:8px;
+  font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;
+  color:#222
+}
+#${RX_ROOT_ID} .cvrx-head{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:12px;margin:0 0 8px;padding:10px 12px 6px
+}
+#${RX_ROOT_ID} .cvrx-head h3{
+  margin:0;font:700 14px/1.2 "Helvetica Neue", Arial;color:#1f2328
+}
+
+/* ------- Chart ------- */
+#${RX_CHART_ID}{position:relative;min-height:300px}
 #${RX_CHART_ID} svg{display:block;width:100%;height:360px}
-#${RX_TIP_ID}{position:absolute;pointer-events:none;background:#fff;border:1px solid #ddd;border-radius:6px;padding:6px 8px;font:600 12px/1.2 Arial;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:3}
-#${RX_TABLE_ID}{margin-top:12px}
-#${RX_TABLE_ID} .table{width:100%;border-collapse:collapse;background:#fff}
-#${RX_TABLE_ID} thead th{padding:8px 12px;border-bottom:1px solid #e6e6e6;text-align:left;white-space:nowrap;font-weight:700}
-#${RX_TABLE_ID} tbody td{padding:8px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle}
+#${RX_TIP_ID}{
+  position:absolute;pointer-events:none;
+  background:#fff;border:1px solid #d8dee4;border-radius:6px;
+  padding:6px 8px;font:600 12px/1.2 Arial;
+  box-shadow:0 4px 16px rgba(0,0,0,.12);
+  display:none;z-index:3;white-space:pre;color:#24292f
+}
+
+/* ------- “Showing data up to …” ------- */
+#${RX_UPTO_ID}{
+  margin:10px 12px 6px;color:#333;font-weight:600
+}
+
+/* ------- Table ------- */
+#${RX_TABLE_ID}{margin-top:6px}
+#${RX_TABLE_ID} .table{
+  width:100%;border-collapse:collapse;background:#fff;table-layout:fixed
+}
+#${RX_TABLE_ID} thead th{
+  position:sticky;top:0;z-index:1;
+  background:#f6f8fa;color:#24292f;
+  padding:9px 12px;border-top:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6;
+  text-align:left;white-space:nowrap;font-weight:700
+}
+#${RX_TABLE_ID} tbody td{
+  padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#24292f
+}
+#${RX_TABLE_ID} tbody tr:hover{background:#fafbfc}
 #${RX_TABLE_ID} .num{text-align:center}
-#${RX_TABLE_ID} a.cvrx-link{color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer}
+#${RX_TABLE_ID} a.cvrx-link{
+  color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer
+}
 #${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
-#${RX_TABLE_ID} .zero{color:#999;font-weight:600}
-#${RX_UPTO_ID}{margin:8px 0 4px;color:#333;font-weight:600}
+#${RX_TABLE_ID} .zero{color:#8c959f;font-weight:600}
+
+/* ------- Modal ------- */
 #${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
 #${RX_MODAL_ID}.is-open{display:block}
 #${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
-#${RX_MODAL_ID} .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:10px;box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}
-#${RX_MODAL_ID} header{padding:12px 16px;border-bottom:1px solid #eee;font:700 14px/1.2 Arial;color:#222}
+#${RX_MODAL_ID} .dlg{
+  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
+  background:#fff;border-radius:10px;border:1px solid #e6e6e6;
+  box-shadow:0 24px 48px rgba(0,0,0,.2);
+  width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden
+}
+#${RX_MODAL_ID} header{
+  padding:12px 16px;border-bottom:1px solid #eee;
+  font:700 14px/1.2 Arial;color:#222
+}
 #${RX_MODAL_ID} .bd{padding:12px;overflow:auto}
-#${RX_MODAL_ID} .ft{padding:10px 12px;border-top:1px solid #eee;display:flex;justify-content:flex-end}
-#${RX_MODAL_ID} .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}
+#${RX_MODAL_ID} .ft{
+  padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end
+}
+#${RX_MODAL_ID} .btn{
+  padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;
+  cursor:pointer;font:600 13px/1 Arial
+}
 #${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
 `;
-    (doc.head || doc.documentElement).appendChild(s);
-  }
+  (doc.head || doc.documentElement).appendChild(s);
+}
 
   // --- modal (for clickable numbers) ---
   function ensureModal(doc){
@@ -2807,3 +2863,4 @@ if (!document.__cvqfRowStatusCapture) {
     if (RX_ROUTE.test(location.href)) inject();
   })();
 })();
+
