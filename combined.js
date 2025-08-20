@@ -2397,115 +2397,176 @@ if (!document.__cvqfRowStatusCapture) {
 })();
 
 /* ==============================
-   CVX Listen Stub + Toast v1  (APPEND-ONLY, NO-CONFLICT)
+   CVR Call Center Reports — Delayed Bootstrap (APPEND-ONLY, NO-CONFLICT)
    ============================== */
 (function () {
-  if (window.__cvxListenInit_v1) return;
-  window.__cvxListenInit_v1 = true;
+  if (window.__cvrReportsInit_v1) return;
+  window.__cvrReportsInit_v1 = true;
 
-  // ----- CVX constants (unique, prefixed) -----
-  const CVX_TOAST_STYLE_ID = 'cvx-toast-style';
-  const CVX_TOAST_ROOT_ID  = 'cvx-toast-root';
-  const CVX_WIRED_FLAG     = '__cvxListenWired_v1';
+  // ---- UNIQUE CONSTANTS (no collisions) ----
+  var CVR_DEBUG        = true;
+  var CVR_WIRED_FLAG   = '__cvrReportsWired_v1';
+  var CVR_REGEX        = /\/portal\/reports\/callcenter(?:[\/?#]|$)/;   // <— Reports route
+  var CVR_CARD_ID      = 'cvr-reports-card';
+  var CVR_STYLE_ID     = 'cvr-reports-style';
+  var CVR_OBS_FLAG     = '__cvrReportsMO_v1';
 
-  // Targets:
-  //  - Home iframe:    .listen-btn
-  //  - Agents panel:   #cv-agents-panel [data-tool="listen"] (and common fallbacks)
-  //  - Queues modal:   #cvq-modal .cvq-icon[title="Listen in"]
-  const CVX_SEL_HOME_LISTEN   = '.listen-btn';
-  const CVX_SEL_AGENT_LISTEN  =
-    '#cv-agents-panel .cv-tool[data-tool="listen"],' +
-    '#cv-agents-panel .cv-tool[aria-label="Listen in"],' +
-    '#cv-agents-panel .cv-tool[title="Listen in"]';
-  const CVX_SEL_MODAL_LISTEN  =
-    '#cvq-modal .cvq-icon[title="Listen in"],' +
-    '#cvq-modal .cvq-icon[aria-label="Listen in"]';
+  // Containers we’ll accept as “ready enough” (broad but safe; reports-only URL gate)
+  var CVR_BODY_SEL =
+    '#callcenter-reports-body, #reports-body, .reports-body, #report-body, ' +
+    '#home-reports-body, [id*="reports"][class*="body"]';
+  var CVR_CONTAINER_SEL =
+    '.table-container, .graphs-panel, .reports-container, .report-container, ' +
+    '.reports-panel, .graphs, .panel, .card';
 
-  // ----- utilities -----
-  function cvxGetSameOriginDocs() {
-    const docs = [document];
-    const ifrs = document.querySelectorAll('iframe');
-    for (let i = 0; i < ifrs.length; i++) {
+  // ---- util: log ----
+  function cvrLog(){ if (CVR_DEBUG) try { console.debug('[cvr reports]', [].slice.call(arguments)); } catch(_) {} }
+
+  // ---- util: same-origin docs (main + iframes) ----
+  function cvrDocs(){
+    var docs = [document];
+    var ifrs = document.querySelectorAll('iframe');
+    for (var i=0;i<ifrs.length;i++){
       try {
-        const d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        var d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
         if (d) docs.push(d);
-      } catch (_) { /* cross-origin; ignore */ }
+      } catch(_) {}
     }
     return docs;
   }
 
-  function cvxEnsureToastHost(doc) {
-    // style (once per doc)
-    if (!doc.getElementById(CVX_TOAST_STYLE_ID)) {
-      const s = doc.createElement('style');
-      s.id = CVX_TOAST_STYLE_ID;
-      s.textContent =
-        '#' + CVX_TOAST_ROOT_ID + '{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);' +
-        'z-index:2147483646;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}' +
-        '.cvx-toast{font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#fff;background:#111;' +
-        'border-radius:8px;padding:8px 12px;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:.98;' +
-        'transition:transform .18s ease, opacity .18s ease; will-change: transform, opacity}' +
-        '.cvx-toast.cvx-hide{opacity:0; transform:translate(-50%, 8px);}';
-      (doc.head || doc.documentElement).appendChild(s);
+  // ---- util: find reports doc + anchor to inject BEFORE (non-destructive) ----
+  function cvrFindReportsDoc(){
+    var docs = cvrDocs();
+    for (var i=0;i<docs.length;i++){
+      var doc = docs[i];
+      var body = doc.querySelector(CVR_BODY_SEL) || doc.body || doc.documentElement;
+      if (!body) continue;
+      var container = body.querySelector(CVR_CONTAINER_SEL);
+      // Require that the body actually contains something tangible
+      var anchor = container || body.firstElementChild;
+      if (anchor) return { doc: doc, body: body, container: container, anchor: anchor };
     }
-    // root host (once per doc)
-    if (!doc.getElementById(CVX_TOAST_ROOT_ID)) {
-      const host = doc.createElement('div');
-      host.id = CVX_TOAST_ROOT_ID;
-      host.setAttribute('role', 'status');
-      host.setAttribute('aria-live', 'polite');
-      (doc.body || doc.documentElement).appendChild(host);
+    return null;
+  }
+
+  // ---- styles (scoped, no global bleed; no <script> inserts) ----
+  function cvrEnsureStyles(doc){
+    if (doc.getElementById(CVR_STYLE_ID)) return;
+    var s = doc.createElement('style'); s.id = CVR_STYLE_ID;
+    s.textContent =
+      '#' + CVR_CARD_ID + '{' +
+        'box-sizing:border-box;margin:6px 0 10px;padding:10px 12px;' +
+        'border-radius:6px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.09);' +
+        'font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222;' +
+      '}' +
+      '#' + CVR_CARD_ID + ' small{font-weight:400;color:#666;margin-left:6px}';
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+
+  // ---- build a harmless “I’m alive” card so you see it fire ----
+  function cvrBuildCardHTML(){
+    return '' +
+      '<div id="'+CVR_CARD_ID+'">' +
+        'Call Center Reports helper is active <small>(delayed bootstrap succeeded)</small>' +
+      '</div>';
+  }
+
+  // ---- inject (idempotent per-document) ----
+  function cvrInject(){
+    var found = cvrFindReportsDoc(); if (!found) { cvrLog('no container yet'); return; }
+    var doc = found.doc, anchor = found.anchor;
+    if (doc.getElementById(CVR_CARD_ID)) { cvrLog('card already present'); return; }
+    cvrEnsureStyles(doc);
+    var wrap = doc.createElement('div'); wrap.innerHTML = cvrBuildCardHTML();
+    var card = wrap.firstElementChild;
+    try {
+      anchor.parentNode.insertBefore(card, anchor);
+      cvrLog('card injected (before anchor)');
+    } catch(e) {
+      (doc.body || doc.documentElement).appendChild(card);
+      cvrLog('card injected (append fallback)');
+    }
+    cvrAttachObserver(doc);
+  }
+
+  // ---- remove everywhere when leaving the route ----
+  function cvrRemove(){
+    var docs = cvrDocs();
+    for (var i=0;i<docs.length;i++){
+      var d = docs[i];
+      var card = d.getElementById(CVR_CARD_ID);
+      if (card) try { card.remove(); } catch(_){}
+      cvrDetachObserver(d);
     }
   }
 
-  function cvxShowToast(doc, message) {
-    cvxEnsureToastHost(doc);
-    const host = doc.getElementById(CVX_TOAST_ROOT_ID);
-    if (!host) return;
-
-    // keep at most 3 live toasts
-    while (host.children.length > 2) host.removeChild(host.firstChild);
-
-    const t = doc.createElement('div');
-    t.className = 'cvx-toast';
-    t.textContent = message;
-    host.appendChild(t);
-
-    // gentle auto-hide
-    setTimeout(() => { t.classList.add('cvx-hide'); }, 1600);
-    setTimeout(() => { try { t.remove(); } catch (_) {} }, 2000);
+  // ---- observer: keep card present across SPA swaps (reports only) ----
+  function cvrAttachObserver(doc){
+    if (doc[CVR_OBS_FLAG]) return;
+    var mo = new (doc.defaultView || window).MutationObserver(function(){
+      if (!CVR_REGEX.test(location.href)) return;
+      // Recreate card if removed and the body still exists
+      if (!doc.getElementById(CVR_CARD_ID)) {
+        var found = cvrFindReportsDoc();
+        if (found) cvrInject();
+      }
+    });
+    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
+    doc[CVR_OBS_FLAG] = mo;
+  }
+  function cvrDetachObserver(doc){
+    var mo = doc[CVR_OBS_FLAG];
+    if (mo && mo.disconnect) { try { mo.disconnect(); } catch(_){} }
+    delete doc[CVR_OBS_FLAG];
   }
 
-  // ----- wire clicks in a document (once per doc) -----
-  function cvxWireDoc(doc) {
-    if (!doc || doc[CVX_WIRED_FLAG]) return;
-    doc[CVX_WIRED_FLAG] = true;
-
-    doc.addEventListener('click', function (e) {
-      const el = e.target && e.target.closest
-        ? e.target.closest(
-            CVX_SEL_HOME_LISTEN + ',' +
-            CVX_SEL_AGENT_LISTEN + ',' +
-            CVX_SEL_MODAL_LISTEN
-          )
-        : null;
-
-      if (!el) return;
-      // No preventDefault: keep behavior purely additive/simulated.
-      cvxShowToast(doc, 'Starting live listen (simulated)');
-    }, false);
+  // ---- wait pattern: double-RAF + ~3.6s safety + 250ms retries (≈6s) ----
+  function cvrWaitAndInject(tries){
+    tries = tries || 0;
+    if (!CVR_REGEX.test(location.href)) return;
+    var found = cvrFindReportsDoc();
+    if (found) { cvrInject(); return; }
+    if (tries >= 25) { cvrLog('giving up wait → attempt inject anyway'); cvrInject(); return; }
+    setTimeout(function(){ cvrWaitAndInject(tries+1); }, 250);
+  }
+  function cvrOnEnter(){
+    cvrLog('enter reports → delayed init');
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(function(){ requestAnimationFrame(function(){ cvrWaitAndInject(0); }); });
+    }
+    setTimeout(function(){ cvrWaitAndInject(0); }, 3600);
   }
 
-  // ----- init: current doc + current same-origin iframes -----
-  (function cvxInitAll() {
-    const docs = cvxGetSameOriginDocs();
-    for (let i = 0; i < docs.length; i++) cvxWireDoc(docs[i]);
+  // ---- URL routing watchers (push/replace/mutation/popstate) ----
+  (function cvrWatch(){
+    var last = location.href;
+    var push = history.pushState, rep = history.replaceState;
+
+    function route(prev, next){
+      var was = CVR_REGEX.test(prev), is = CVR_REGEX.test(next);
+      if (!was && is) cvrOnEnter();
+      if ( was && !is) cvrRemove();
+    }
+
+    history.pushState = function(){
+      var prev = last; var ret = push.apply(this, arguments);
+      var now  = location.href; last = now; route(prev, now); return ret;
+    };
+    history.replaceState = function(){
+      var prev = last; var ret = rep.apply(this, arguments);
+      var now  = location.href; last = now; route(prev, now); return ret;
+    };
+    new MutationObserver(function(){
+      if (location.href !== last){
+        var prev = last, now = location.href; last = now; route(prev, now);
+      }
+    }).observe(document.documentElement, { childList:true, subtree:true });
+    window.addEventListener('popstate', function(){
+      var prev = last, now = location.href; if (now !== prev){ last = now; route(prev, now); }
+    });
+
+    if (CVR_REGEX.test(location.href)) cvrOnEnter();
   })();
-
-  // ----- observe for future iframes (wire as they appear) -----
-  new MutationObserver(function () {
-    const docs = cvxGetSameOriginDocs();
-    for (let i = 0; i < docs.length; i++) cvxWireDoc(docs[i]);
-  }).observe(document.documentElement, { childList: true, subtree: true });
 })();
 
