@@ -2570,3 +2570,203 @@ if (!document.__cvqfRowStatusCapture) {
   })();
 })();
 
+// ==============================
+// Clarity Voice — Call Center Reports (safe, slow-load, non-invasive)
+// ==============================
+if (!window.__cvCallCenterReportsInit) {
+  window.__cvCallCenterReportsInit = true;
+
+  // ---- UNIQUE CONSTANTS (no collisions) ----
+  const CVR_REP_REGEX        = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  const CVR_REP_BODY_SEL     = '#callcenter-reports-body, #reports-body, .reports-body';
+  const CVR_REP_CONT_SEL     = '.reports-container, .report-container, .table-container, .graphs-panel, .panel, .card';
+  const CVR_REP_TOOLBAR_ID   = 'cvr-rep-toolbar';
+  const CVR_REP_STYLE_ID     = 'cvr-rep-style';
+  const CVR_REP_DEBUG_PREFIX = '[CVR reports]';
+
+  // ---- helpers ----
+  function cvrRepLog(){ try { console.log.apply(console, [CVR_REP_DEBUG_PREFIX].concat([].slice.call(arguments))); } catch(_){} }
+
+  function cvrRepSchedule(fn){
+    let fired = false;
+    if ('requestAnimationFrame' in window) {
+      requestAnimationFrame(() => requestAnimationFrame(() => { fired = true; try{ fn(); }catch(_){} }));
+    }
+    // same “agents panel” slow-load cushion (≈3–4s)
+    setTimeout(() => { if (!fired) try{ fn(); }catch(_){} }, 3600);
+  }
+
+  function cvrRepDocs(){
+    const docs = [document];
+    document.querySelectorAll('iframe').forEach(ifr => {
+      try {
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d) docs.push(d);
+      } catch(_) {}
+    });
+    return docs;
+  }
+
+  function cvrRepFindDoc(){
+    for (const doc of cvrRepDocs()){
+      const body = doc.querySelector(CVR_REP_BODY_SEL) || doc.body || doc.documentElement;
+      if (!body) continue;
+      const container = body.querySelector(CVR_REP_CONT_SEL);
+      const anchor = container || body.firstElementChild || body;
+      if (anchor) return { doc, body, anchor, via: container ? 'container' : 'body' };
+    }
+    return null;
+  }
+
+  function cvrRepEnsureStyles(doc){
+    if (doc.getElementById(CVR_REP_STYLE_ID)) return;
+    const s = doc.createElement('style');
+    s.id = CVR_REP_STYLE_ID;
+    s.textContent = `
+      #${CVR_REP_TOOLBAR_ID}{
+        box-sizing:border-box;
+        margin:6px 0 10px;
+        padding:10px 12px;
+        background:#fff;
+        border-radius:6px;
+        box-shadow:0 1px 3px rgba(0,0,0,.09);
+        display:flex; align-items:center; justify-content:space-between; gap:12px;
+        font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif; color:#222;
+      }
+      #${CVR_REP_TOOLBAR_ID} .cvr-rep-actions button{
+        border:1px solid #d9d9d9; background:#fff; border-radius:6px; padding:6px 10px;
+        font:600 12px/1 Arial; cursor:pointer;
+      }
+      #${CVR_REP_TOOLBAR_ID} .cvr-rep-actions button:hover{ background:#f7f7f7; }
+    `;
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+
+  function cvrRepBuildToolbarHTML(){
+    return `
+      <div id="${CVR_REP_TOOLBAR_ID}" role="region" aria-label="CV Reports">
+        <div>Call Center Reports <span style="font-weight:400;color:#666;">(mounted)</span></div>
+        <div class="cvr-rep-actions">
+          <button type="button" data-cvr-range="today">Today</button>
+          <button type="button" data-cvr-range="7d">7 days</button>
+          <button type="button" data-cvr-range="30d">30 days</button>
+        </div>
+      </div>
+    `;
+  }
+
+  function cvrRepWire(doc){
+    if (doc.__cvrRepWired) return;
+    doc.__cvrRepWired = true;
+    doc.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest && e.target.closest('#'+CVR_REP_TOOLBAR_ID+' [data-cvr-range]');
+      if (!btn) return;
+      e.preventDefault();
+      const r = btn.getAttribute('data-cvr-range');
+      // stub only: prove click wiring without touching host state
+      cvrRepLog('range clicked ->', r);
+    }, true);
+  }
+
+  function cvrRepInject(){
+    const found = cvrRepFindDoc();
+    if (!found) { cvrRepLog('no reports container yet'); return; }
+    const { doc, anchor, via } = found;
+    if (doc.getElementById(CVR_REP_TOOLBAR_ID)) { cvrRepLog('toolbar already present'); return; }
+    cvrRepEnsureStyles(doc);
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = cvrRepBuildToolbarHTML();
+    const bar = wrap.firstElementChild;
+    try {
+      anchor.parentNode.insertBefore(bar, anchor);
+      cvrRepLog('toolbar injected via', via);
+    } catch(_) {
+      (doc.body || doc.documentElement).appendChild(bar);
+      cvrRepLog('toolbar appended to body');
+    }
+    cvrRepWire(doc);
+    cvrRepAttachObserver(doc);
+  }
+
+  function cvrRepRemove(){
+    for (const doc of cvrRepDocs()){
+      const el = doc.getElementById(CVR_REP_TOOLBAR_ID);
+      if (el) el.remove();
+      const mo = doc.__cvrRepMO;
+      if (mo && mo.disconnect) { try { mo.disconnect(); } catch(_){} }
+      delete doc.__cvrRepMO;
+    }
+    cvrRepLog('removed');
+  }
+
+  function cvrRepAttachObserver(doc){
+    if (doc.__cvrRepMO) return;
+    const MO = (doc.defaultView || window).MutationObserver;
+    if (!MO) return;
+    const mo = new MO(() => {
+      if (!CVR_REP_REGEX.test(location.href)) return;
+      if (!doc.getElementById(CVR_REP_TOOLBAR_ID)) cvrRepSchedule(cvrRepInject);
+    });
+    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
+    doc.__cvrRepMO = mo;
+  }
+
+  function cvrRepWaitAndInject(tries){
+    tries = tries || 0;
+    const found = cvrRepFindDoc();
+    if (found){ cvrRepInject(); return; }
+    if (tries >= 25) return;
+    setTimeout(() => cvrRepWaitAndInject(tries+1), 250);
+  }
+
+  function cvrRepOnEnter(){
+    // double-RAF + slow-load fallback (matches Agents panel behavior)
+    cvrRepSchedule(() => cvrRepWaitAndInject(0));
+  }
+
+  function cvrRepRoute(prev, next){
+    const was = CVR_REP_REGEX.test(prev);
+    const is  = CVR_REP_REGEX.test(next);
+    if (!was && is) cvrRepOnEnter();
+    if ( was && !is) cvrRepRemove();
+
+    // if SPA doesn’t change URL but DOM swaps in, still try
+    if (!is && cvrRepFindDoc()) cvrRepOnEnter();
+  }
+
+  // ---- URL/watch (local wrapper, no global function names) ----
+  (function cvrRepWatch(){
+    let last = location.href;
+    const _push = history.pushState;
+    const _repl = history.replaceState;
+
+    history.pushState = function(){
+      const prev = last; const ret = _push.apply(this, arguments);
+      const now = location.href; last = now; cvrRepRoute(prev, now); return ret;
+    };
+    history.replaceState = function(){
+      const prev = last; const ret = _repl.apply(this, arguments);
+      const now = location.href; last = now; cvrRepRoute(prev, now); return ret;
+    };
+
+    new MutationObserver(() => {
+      // catch in-place URL swaps and DOM-only transitions
+      if (location.href !== last){
+        const prev = last, now = location.href; last = now; cvrRepRoute(prev, now);
+      } else if (!document.getElementById(CVR_REP_TOOLBAR_ID) && cvrRepFindDoc()){
+        cvrRepOnEnter();
+      }
+    }).observe(document.documentElement, { childList:true, subtree:true });
+
+    window.addEventListener('popstate', () => {
+      const prev = last, now = location.href;
+      if (now !== prev){ last = now; cvrRepRoute(prev, now); }
+    });
+
+    // initial
+    if (CVR_REP_REGEX.test(location.href) || cvrRepFindDoc()) cvrRepOnEnter();
+    else cvrRepLog('standing by for reports route…');
+  })();
+}
+// ==============================
+
