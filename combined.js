@@ -2861,8 +2861,11 @@ function route(prev, next){
       if (RX_ROUTE.test(location.href)) inject();
 
     // ✅ THIS is the correct place
-    waitAndInject(0);
+        waitAndInject(0);
+  });
 })();
+
+
 
 
 
