@@ -2859,3 +2859,9 @@ function route(prev, next){
 
   if (RX_ROUTE.test(location.href)) inject();
 })();
+
+  }
+
+  // trigger injection now
+  waitAndInject(0);
+})();
