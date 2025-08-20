@@ -2436,8 +2436,10 @@ if (!document.__cvqfRowStatusCapture) {
 
   function findSpot(){
     for (const doc of docs()){
-      const body = doc.querySelector(RX_BODY) || doc.body || doc.documentElement;
-      if (!body) continue;
+      const href = (doc.defaultView || window).location.href;
+      if (!RX_ROUTE.test(href)) continue; // only consider docs that ARE on /reports/callcenter
+       const body = doc.querySelector(RX_BODY) || doc.body || doc.documentElement;
+     
       // prefer a specific graph container
       const graph = body.querySelector(RX_GRAPH);
       if (graph) return { doc, body, graph, container: graph.parentNode };
@@ -3027,38 +3029,42 @@ if (!document.__cvqfRowStatusCapture) {
     if (r === 'today' || r === '7d' || r === '30d'){ RANGE = r; try{ render(); }catch(_){ } }
   }, true);
 
-  // ---- keep present across SPA swaps ----
-  function waitAndInject(tries){
-    tries = tries || 0;
-    if (!ROUTE_RE.test(location.href)) return;
-    var found = findAnchorDoc();
-    if (found){ inject(); return; }
-    if (tries >= 24) return;
-    setTimeout(function(){ waitAndInject(tries+1); }, 250);
+ // ---- keep present across SPA swaps ----
+function waitAndInject(tries){
+  tries = tries || 0;
+
+  // Check if any same-origin window (self or iframe) is on the reports route
+  const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
+    .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
+
+  if (!matches) return;
+
+  var found = findAnchorDoc();
+  if (found){ inject(); return; }
+  if (tries >= 24) return;
+  setTimeout(function(){ waitAndInject(tries+1); }, 250);
+}
+
+(function watch(){
+  var last = location.href;
+  var p = history.pushState, r = history.replaceState;
+  function route(prev, next){
+    var was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
+    if (!was && is) waitAndInject(0);
   }
+  history.pushState = function(){ var prev=last; var ret=p.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+  history.replaceState = function(){ var prev=last; var ret=r.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+  new MutationObserver(function(){
+    if (location.href !== last){ var prev=last, now=location.href; last=now; route(prev, now); }
+    // if DOM swapped but URL unchanged, ensure it exists
+    const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
+      .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
+    if (matches && !document.getElementById(TABLE_ID)) waitAndInject(0);
+  }).observe(document.documentElement, { childList:true, subtree:true });
+  window.addEventListener('popstate', function(){ var prev=last, now=location.href; if (now!==prev){ last=now; route(prev, now);} });
 
-  (function watch(){
-    var last = location.href;
-    var p = history.pushState, r = history.replaceState;
-    function route(prev, next){
-      var was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
-      if (!was && is) waitAndInject(0);
-    }
-    history.pushState = function(){ var prev=last; var ret=p.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
-    history.replaceState = function(){ var prev=last; var ret=r.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
-    new MutationObserver(function(){
-      if (location.href !== last){ var prev=last, now=location.href; last=now; route(prev, now); }
-      // if DOM swapped but URL unchanged, ensure it exists
-      if (ROUTE_RE.test(last) && !document.getElementById(TABLE_ID)) waitAndInject(0);
-    }).observe(document.documentElement, { childList:true, subtree:true });
-    window.addEventListener('popstate', function(){ var prev=last, now=location.href; if (now!==prev){ last=now; route(prev, now);} });
-
-    if (ROUTE_RE.test(location.href)) waitAndInject(0);
-  })();
+  const matches = [window, ...Array.from(document.querySelectorAll('iframe')).map(f => f.contentWindow)]
+    .some(w => { try { return ROUTE_RE.test(w.location.href); } catch { return false; } });
+  if (matches) waitAndInject(0);
 })();
-
-
-
-
-
-
+})();
