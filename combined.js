@@ -2942,45 +2942,59 @@ function renderTable(doc){
   }
 
   // --- SPA watch (history + URL changes + initial) ---
-  (function watch(){
-    let last = location.href;
-    const push = history.pushState;
-    const rep  = history.replaceState;
+(function watchQueueStatsURLChanges() {
+  let last = location.href;
+  const origPush = history.pushState;
+  const origReplace = history.replaceState;
 
-    history.pushState = function(){
+  history.pushState = function () {
+    const prev = last;
+    const ret  = origPush.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleQueueStatsRouteChange(prev, now);
+    return ret;
+  };
+
+  history.replaceState = function () {
+    const prev = last;
+    const ret  = origReplace.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleQueueStatsRouteChange(prev, now);
+    return ret;
+  };
+
+  let mutationLock = false;
+  new MutationObserver(() => {
+    if (mutationLock) return;
+    if (location.href !== last) {
       const prev = last;
-      const ret  = push.apply(this, arguments);
-      const now  = location.href; last = now; route(prev, now);
-      return ret;
-    };
-    history.replaceState = function(){
-      const prev = last;
-      const ret  = rep.apply(this, arguments);
-      const now  = location.href; last = now; route(prev, now);
-      return ret;
-    };
+      const now  = location.href;
+      last = now;
+      mutationLock = true;
+      handleQueueStatsRouteChange(prev, now);
+      setTimeout(() => { mutationLock = false; }, 500); // cooldown
+    }
+  }).observe(document.documentElement, { childList: true, subtree: true });
 
+  window.addEventListener('popstate', () => {
+    const prev = last;
+    const now  = location.href;
+    if (now !== prev) {
+      last = now;
+      handleQueueStatsRouteChange(prev, now);
+    }
+  });
 
-
-let injectedOnce = false;
-
-new MutationObserver(() => {
-  const now = location.href;
-  if (now !== last) {
-    const prev = last; last = now;
-    injectedOnce = false;
-    route(prev, now);
-  } else if (RX_ROUTE.test(now) && !injectedOnce) {
-    inject();
-    injectedOnce = true;
-  }
-}).observe(document.documentElement, { childList: true, subtree: true });
-
+  if (QUEUE_STATS_REGEX.test(location.href)) onQueueStatsPageEnter();
+})();
 
 
 
   })(); // ← closes inner function
 })();     // ← closes outer function
+
 
 
 
