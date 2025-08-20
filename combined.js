@@ -2962,30 +2962,25 @@ function renderTable(doc){
 
 
 
-let mutationLock = false;
-let mutationTimer = null;
+let injectedOnce = false;
 
 new MutationObserver(() => {
-  if (mutationLock) return;
-
-  clearTimeout(mutationTimer);
-  mutationTimer = setTimeout(() => {
-    const now = location.href;
-    if (now !== last) {
-      const prev = last;
-      last = now;
-      route(prev, now);
-    } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID)) {
-      mutationLock = true;
-      inject();
-      setTimeout(() => mutationLock = false, 500); // short cooldown
-    }
-  }, 100); // debounce delay
+  const now = location.href;
+  if (now !== last) {
+    const prev = last; last = now;
+    injectedOnce = false;
+    route(prev, now);
+  } else if (RX_ROUTE.test(now) && !injectedOnce) {
+    inject();
+    injectedOnce = true;
+  }
 }).observe(document.documentElement, { childList: true, subtree: true });
+
 
 
 
   })(); // ← closes inner function
 })();     // ← closes outer function
+
 
 
