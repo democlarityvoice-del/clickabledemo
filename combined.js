@@ -2446,121 +2446,228 @@ if (!document.__cvqfRowStatusCapture) {
   }
   const SERIES = seedSeries();
 
-  function ensureStyles(doc){
+ // --- styles ---
+function ensureStyles(doc) {
   if (doc.getElementById(RX_STYLE_ID)) return;
   const s = doc.createElement('style');
   s.id = RX_STYLE_ID;
   s.textContent = `
-/* ------- Card / container ------- */
-#${RX_ROOT_ID}{
-  box-sizing:border-box;
-  margin:8px 0 10px;
-  padding:12px 0 0;
-  background:#fff;
-  border:1px solid #e6e6e6;
-  border-radius:8px;
-  font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;
-  color:#222
-}
-#${RX_ROOT_ID} .cvrx-head{
-  display:flex;align-items:center;justify-content:space-between;
-  gap:12px;margin:0 0 8px;padding:10px 12px 6px
-}
-#${RX_ROOT_ID} .cvrx-head h3{
-  margin:0;font:700 14px/1.2 "Helvetica Neue", Arial;color:#1f2328
-}
+/* overall */
+#${RX_ROOT_ID}{box-sizing:border-box;margin:8px 0 14px;padding:0;background:#fff;border-radius:6px;font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
 
-/* ------- Chart ------- */
-#${RX_CHART_ID}{position:relative;min-height:300px}
+/* header title matches Portal (blue dropdown-looking link) */
+#${RX_ROOT_ID} .cvrx-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 6px;padding:0}
+#${RX_ROOT_ID} .cvrx-ttl{display:inline-flex;align-items:center;gap:6px;font:700 14px/1.2 Arial;color:#1080c9;text-decoration:none}
+#${RX_ROOT_ID} .cvrx-ttl:hover{ text-decoration:underline }
+#${RX_ROOT_ID} .cvrx-ttl .caret{display:inline-block;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;transform:translateY(1px)}
+
+/* chart — white bg, grid + axes numbers like screenshot */
+#${RX_CHART_ID}{position:relative;min-height:320px;background:#fff;border:1px solid #e6e6e6;border-radius:4px;padding:0 0 6px}
 #${RX_CHART_ID} svg{display:block;width:100%;height:360px}
-#${RX_TIP_ID}{
-  position:absolute;pointer-events:none;
-  background:#fff;border:1px solid #d8dee4;border-radius:6px;
-  padding:6px 8px;font:600 12px/1.2 Arial;
-  box-shadow:0 4px 16px rgba(0,0,0,.12);
-  display:none;z-index:3;white-space:pre;color:#24292f
-}
+#${RX_CHART_ID} .axistext{font:600 12px/1.2 Arial;fill:#6b6b6b}
+#${RX_CHART_ID} .xaxis .axistext{dominant-baseline:hanging}
+#${RX_CHART_ID} .yaxis .axistext{text-anchor:end}
 
-/* ------- “Showing data up to …” ------- */
-#${RX_UPTO_ID}{
-  margin:10px 12px 6px;color:#333;font-weight:600
-}
+/* tooltip */
+#${RX_TIP_ID}{position:absolute;pointer-events:none;background:#fff;border:1px solid #d9d9d9;border-radius:6px;padding:6px 8px;font:600 12px/1.2 Arial;box-shadow:0 2px 8px rgba(0,0,0,.12);display:none;z-index:3;white-space:pre}
 
-/* ------- Table ------- */
-#${RX_TABLE_ID}{margin-top:6px}
-#${RX_TABLE_ID} .table{
-  width:100%;border-collapse:collapse;background:#fff;table-layout:fixed
-}
-#${RX_TABLE_ID} thead th{
-  position:sticky;top:0;z-index:1;
-  background:#f6f8fa;color:#24292f;
-  padding:9px 12px;border-top:1px solid #e6e6e6;border-bottom:1px solid #e6e6e6;
-  text-align:left;white-space:nowrap;font-weight:700
-}
-#${RX_TABLE_ID} tbody td{
-  padding:9px 12px;border-bottom:1px solid #f0f0f0;vertical-align:middle;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#24292f
-}
-#${RX_TABLE_ID} tbody tr:hover{background:#fafbfc}
+/* table */
+#${RX_TABLE_ID}{margin-top:10px}
+#${RX_TABLE_ID} .cvrx-tablebar{display:flex;justify-content:flex-end;margin:4px 0 6px}
+#${RX_TABLE_ID} .btn-lite{padding:6px 10px;border:1px solid #cfcfcf;border-radius:4px;background:#f7f7f7;cursor:pointer;font:600 12px/1 Arial;color:#333}
+#${RX_TABLE_ID} .btn-lite:hover{background:#efefef}
+#${RX_TABLE_ID} .btn-lite .caret{display:inline-block;margin-left:6px;width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid currentColor;transform:translateY(2px)}
+
+#${RX_TABLE_ID} .table{width:100%;border-collapse:collapse;background:#fff;border:1px solid #e6e6e6;border-radius:4px;overflow:hidden}
+#${RX_TABLE_ID} thead th{padding:9px 12px;border-bottom:1px solid #eee;text-align:left;white-space:nowrap;font-weight:700}
+#${RX_TABLE_ID} thead a.hdr{color:#1080c9;text-decoration:none}
+#${RX_TABLE_ID} thead a.hdr:hover{text-decoration:underline}
+#${RX_TABLE_ID} thead .i{display:inline-block;width:14px;height:14px;margin-left:6px;border-radius:50%;border:1px solid #d0d0d0;background:#f3f3f3;color:#6f6f6f;font:700 10px/14px Arial;text-align:center;vertical-align:1px}
+
+#${RX_TABLE_ID} tbody td{padding:9px 12px;border-bottom:1px solid #f1f1f1;vertical-align:middle}
+#${RX_TABLE_ID} tbody tr:hover{background:#fafafa}
 #${RX_TABLE_ID} .num{text-align:center}
-#${RX_TABLE_ID} a.cvrx-link{
-  color:#0b84ff;text-decoration:none;font-weight:700;cursor:pointer
-}
+#${RX_TABLE_ID} a.cvrx-link{color:#1080c9;text-decoration:none;font-weight:700;cursor:pointer}
 #${RX_TABLE_ID} a.cvrx-link:hover{text-decoration:underline}
-#${RX_TABLE_ID} .zero{color:#8c959f;font-weight:600}
-
-/* ------- Modal ------- */
-#${RX_MODAL_ID}{position:fixed;inset:0;z-index:2147483646;display:none}
-#${RX_MODAL_ID}.is-open{display:block}
-#${RX_MODAL_ID} .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}
-#${RX_MODAL_ID} .dlg{
-  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);
-  background:#fff;border-radius:10px;border:1px solid #e6e6e6;
-  box-shadow:0 24px 48px rgba(0,0,0,.2);
-  width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden
-}
-#${RX_MODAL_ID} header{
-  padding:12px 16px;border-bottom:1px solid #eee;
-  font:700 14px/1.2 Arial;color:#222
-}
-#${RX_MODAL_ID} .bd{padding:12px;overflow:auto}
-#${RX_MODAL_ID} .ft{
-  padding:10px 12px;border-top:1px solid #eee;display:flex;gap:8px;justify-content:flex-end
-}
-#${RX_MODAL_ID} .btn{
-  padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;
-  cursor:pointer;font:600 13px/1 Arial
-}
-#${RX_MODAL_ID} .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}
+#${RX_TABLE_ID} .text-blue{color:#1080c9;font-weight:700}
+#${RX_TABLE_ID} .zero{color:#999;font-weight:600}
 `;
   (doc.head || doc.documentElement).appendChild(s);
 }
 
-  // --- modal (for clickable numbers) ---
-  function ensureModal(doc){
-    if (doc.getElementById(RX_MODAL_ID)) return;
-    const root = doc.createElement('div'); root.id = RX_MODAL_ID;
-    root.innerHTML =
-      '<div class="scrim"></div>'
-    + '<div class="dlg" role="dialog" aria-modal="true">'
-    +   '<header id="cvrx-m-ttl"></header>'
-    +   '<div class="bd" id="cvrx-m-bd"></div>'
-    +   '<div class="ft"><button class="btn" id="cvrx-m-close">Close</button>'
-    +   '<button class="btn primary" id="cvrx-m-ok">OK</button></div>'
-    + '</div>';
-    (doc.body||doc.documentElement).appendChild(root);
-    root.addEventListener('click', (e)=>{
-      if (e.target.id==='cvrx-m-close' || e.target.classList.contains('scrim') || e.target.id==='cvrx-m-ok'){
-        root.classList.remove('is-open');
-      }
+// --- title + root block (visual only; no behavior change) ---
+function buildRootHTML(){
+  return `
+    <div id="${RX_ROOT_ID}">
+      <div class="cvrx-head">
+        <a href="#" class="cvrx-ttl" aria-haspopup="listbox" aria-expanded="false">
+          <span>Call Volume</span><span class="caret" aria-hidden="true"></span>
+        </a>
+      </div>
+      <div id="${RX_CHART_ID}"></div>
+      <div id="${RX_TABLE_ID}"></div>
+    </div>`;
+}
+
+// --- chart (SVG with axis numbers + bottom labels like Portal) ---
+function drawChart(doc){
+  const host = doc.getElementById(RX_CHART_ID); if (!host) return;
+
+  host.innerHTML = '';
+  const tip = doc.createElement('div');
+  tip.id = RX_TIP_ID;
+  host.appendChild(tip);
+
+  const w = Math.max(980, host.clientWidth || 980);
+  const h = 360, padL = 60, padR = 12, padT = 24, padB = 38;
+  const svgNS = 'http://www.w3.org/2000/svg';
+  const svg = doc.createElementNS(svgNS, 'svg');
+  svg.setAttribute('width', '100%'); svg.setAttribute('height', h);
+  host.appendChild(svg);
+
+  // x/y scales
+  const xs = SERIES.map(p => p.t.getTime());
+  const ys = SERIES.map(p => p.v);
+  const minX = Math.min.apply(null, xs), maxX = Math.max.apply(null, xs);
+  const maxYraw = Math.max(20, Math.max.apply(null, ys));
+  const maxY = Math.ceil(maxYraw/5)*5; // nice 5s
+  const cw = w - padL - padR, ch = h - padT - padB;
+
+  const X = (t) => padL + ((t - minX) / (maxX - minX)) * cw;
+  const Y = (v) => padT + (1 - (v / maxY)) * ch;
+
+  // gridlines
+  const gGrid = doc.createElementNS(svgNS, 'g');
+  gGrid.setAttribute('stroke', '#e5e5e5');
+  [0, .25, .5, .75, 1].forEach(f => {
+    const y = padT + f*ch;
+    const line = doc.createElementNS(svgNS, 'line');
+    line.setAttribute('x1', padL); line.setAttribute('x2', w - padR);
+    line.setAttribute('y1', y);    line.setAttribute('y2', y);
+    gGrid.appendChild(line);
+  });
+  svg.appendChild(gGrid);
+
+  // left axis numbers (0..maxY step 5)
+  const yAxis = doc.createElementNS(svgNS, 'g'); yAxis.setAttribute('class','yaxis');
+  for (let v=0; v<=maxY; v+=5){
+    const t = doc.createElementNS(svgNS, 'text');
+    t.setAttribute('class','axistext');
+    t.setAttribute('x', padL - 8);
+    t.setAttribute('y', Y(v));
+    t.textContent = String(v);
+    yAxis.appendChild(t);
+  }
+  svg.appendChild(yAxis);
+
+  // bottom axis labels (10 evenly-spaced ticks)
+  const xAxis = doc.createElementNS(svgNS, 'g'); xAxis.setAttribute('class','xaxis');
+  const ticks = 10;
+  for (let i=0;i<=ticks;i++){
+    const tt = minX + (i/ticks)*(maxX-minX);
+    const label = labelForTime(new Date(tt));
+    const T = doc.createElementNS(svgNS, 'text');
+    T.setAttribute('class','axistext');
+    T.setAttribute('x', X(tt));
+    T.setAttribute('y', padT + ch + 6);
+    T.setAttribute('text-anchor','middle');
+    T.textContent = label;
+    xAxis.appendChild(T);
+  }
+  svg.appendChild(xAxis);
+
+  // line path
+  const d = SERIES.map((p, i) => `${i ? 'L' : 'M'}${X(p.t.getTime())} ${Y(p.v)}`).join(' ');
+  const path = doc.createElementNS(svgNS, 'path');
+  path.setAttribute('d', d);
+  path.setAttribute('fill', 'none');
+  path.setAttribute('stroke', '#0b54ff');
+  path.setAttribute('stroke-width', '2');
+  svg.appendChild(path);
+
+  // points + hover hits
+  SERIES.forEach((p, i) => {
+    const cx = X(p.t.getTime()), cy = Y(p.v);
+    const c = doc.createElementNS(svgNS, 'circle');
+    c.setAttribute('cx', cx); c.setAttribute('cy', cy);
+    c.setAttribute('r', '3'); c.setAttribute('fill', '#0b54ff');
+    svg.appendChild(c);
+
+    const nextX = i < SERIES.length - 1 ? X(SERIES[i+1].t.getTime()) : (w - padR);
+    const prevX = i > 0 ? X(SERIES[i-1].t.getTime()) : padL;
+    const hit = doc.createElementNS(svgNS, 'rect');
+    hit.setAttribute('x', (prevX + cx) / 2);
+    hit.setAttribute('y', padT);
+    hit.setAttribute('width', Math.max(8, (nextX - prevX) / 2));
+    hit.setAttribute('height', ch);
+    hit.setAttribute('fill', 'transparent');
+    hit.addEventListener('mousemove', (e) => {
+      const rect = host.getBoundingClientRect();
+      tip.style.display = 'block';
+      tip.textContent = `${labelForTime(p.t)}\nAll Queues: ${p.v}`;
+      tip.style.left = (e.clientX - rect.left + 12) + 'px';
+      tip.style.top  = (e.clientY - rect.top  - 10) + 'px';
     });
-  }
-  function openModal(doc, title, html){
-    ensureModal(doc);
-    doc.getElementById('cvrx-m-ttl').textContent = title;
-    doc.getElementById('cvrx-m-bd').innerHTML = html;
-    doc.getElementById(RX_MODAL_ID).classList.add('is-open');
-  }
+    hit.addEventListener('mouseleave', () => { tip.style.display = 'none'; });
+    svg.appendChild(hit);
+  });
+
+  // responsive redraw
+  const ro = new (doc.defaultView || window).ResizeObserver(() => drawChart(doc));
+  ro.observe(host);
+  host.__ro = ro;
+}
+
+// --- table ---
+function cellNum(val, label, allowClick) {
+  const n = parseFloat(String(val).replace(/[^\d.]/g,''));
+  if (!n) return `<span class="zero">0</span>`;
+  if (!allowClick) return `<span class="text-blue">${val}</span>`;
+  return `<a class="cvrx-link" data-cvrx="${label}">${val}</a>`;
+}
+
+function renderTable(doc){
+  const wrap = doc.getElementById(RX_TABLE_ID); if (!wrap) return;
+
+  const body = ROWS.map(r => `
+    <tr data-q="${r.q}">
+      <td class="num"><input type="checkbox" aria-label="Select ${r.name}"/></td>
+      <td class="num">${r.q}</td>
+      <td>${r.name}</td>
+      <td class="num">${cellNum(r.vol, 'vol', true)}</td>
+      <td class="num">${cellNum(r.handled, 'handled', true)}</td>
+      <td class="num">${cellNum(r.offered, 'offered', true)}</td>
+      <td class="num">${cellNum(r.talk, 'talk', false)}</td>
+      <td class="num">${cellNum(r.aband, 'aband', false)}</td>
+      <td class="num">${cellNum(r.handle, 'handle', false)}</td>
+      <td class="num">${cellNum(r.wait, 'wait', false)}</td>
+    </tr>
+  `).join('');
+
+  wrap.innerHTML = `
+    <div class="cvrx-tablebar">
+      <button type="button" class="btn-lite" id="cvrx-table-settings">Table Settings <span class="caret" aria-hidden="true"></span></button>
+    </div>
+    <div class="table-container scrollable-small">
+      <table class="table table-condensed table-hover">
+        <thead>
+          <tr>
+            <th style="width:28px"></th>
+            <th style="width:60px" title="Queue number"><a class="hdr" href="#">Queue</a></th>
+            <th title="Queue name"><a class="hdr" href="#">Name</a></th>
+            <th class="num" title="Total calls for the period"><a class="hdr" href="#">Call Volume</a> <span class="i">i</span></th>
+            <th class="num" title="Calls successfully handled"><a class="hdr" href="#">Calls Handled</a> <span class="i">i</span></th>
+            <th class="num" title="Calls offered to the queue"><a class="hdr" href="#">Calls Offered</a> <span class="i">i</span></th>
+            <th class="num" title="Average talk time"><a class="hdr" href="#">Avg. Talk Time</a> <span class="i">i</span></th>
+            <th class="num" title="Percent abandoned"><a class="hdr" href="#">Abandon Rate</a> <span class="i">i</span></th>
+            <th class="num" title="Average handle time"><a class="hdr" href="#">Avg. Handle Time</a> <span class="i">i</span></th>
+            <th class="num" title="Average wait time"><a class="hdr" href="#">Avg. Wait Time</a> <span class="i">i</span></th>
+          </tr>
+        </thead>
+        <tbody>${body}</tbody>
+      </table>
+    </div>`;
+}
 
   // --- utilities ---
   const fmt = new Intl.DateTimeFormat(undefined, { hour: 'numeric', minute: '2-digit' });
@@ -2863,4 +2970,5 @@ if (!document.__cvqfRowStatusCapture) {
     if (RX_ROUTE.test(location.href)) inject();
   })();
 })();
+
 
