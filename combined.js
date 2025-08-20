@@ -2395,3 +2395,184 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
+/* ==============================
+   CVR Call Center Reports — Unified (single block, no repeats)
+   ============================== */
+(function () {
+  if (window.__cvCallCenterReports_v2) return;
+  window.__cvCallCenterReports_v2 = true;
+
+  const DEBUG = false;
+  const ROUTE_RE          = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  const BODY_SEL          = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
+  const CONT_SEL          = '.reports-container, .report-container, .table-container, .graphs-panel, .panel, .card';
+  const TOOLBAR_ID        = 'cvr-rep-toolbar';
+  const STYLE_ID          = 'cvr-rep-style';
+
+  function log(){ if (!DEBUG) return; try { console.log('[CVR reports]', ...arguments); } catch(_){} }
+
+  function schedule(fn){
+    let fired = false;
+    if ('requestAnimationFrame' in window){
+      requestAnimationFrame(() => requestAnimationFrame(() => { fired = true; try{ fn(); }catch{} }));
+    }
+    // match Agents panel slow-load (≈3–4s) in case host paints late
+    setTimeout(() => { if (!fired) try{ fn(); }catch{} }, 3600);
+  }
+
+  function docs(){
+    const out = [document];
+    document.querySelectorAll('iframe').forEach(ifr => {
+      try {
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d) out.push(d);
+      } catch(_) {}
+    });
+    return out;
+  }
+
+  function findDoc(){
+    for (const doc of docs()){
+      const body = doc.querySelector(BODY_SEL) || doc.body || doc.documentElement;
+      if (!body) continue;
+      const container = body.querySelector(CONT_SEL);
+      const anchor = container || body.firstElementChild || body;
+      if (anchor) return { doc, anchor, via: container ? 'container' : 'body' };
+    }
+    return null;
+  }
+
+  function ensureStyles(doc){
+    if (doc.getElementById(STYLE_ID)) return;
+    const s = doc.createElement('style');
+    s.id = STYLE_ID;
+    s.textContent = [
+      '#',TOOLBAR_ID,'{box-sizing:border-box;margin:6px 0 10px;padding:10px 12px;',
+      'background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.09);',
+      'display:flex;align-items:center;justify-content:space-between;gap:12px;',
+      'font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}',
+      '#',TOOLBAR_ID,' .cvr-rep-actions button{border:1px solid #d9d9d9;background:#fff;',
+      'border-radius:6px;padding:6px 10px;font:600 12px/1 Arial;cursor:pointer}',
+      '#',TOOLBAR_ID,' .cvr-rep-actions button:hover{background:#f7f7f7}'
+    ].join('');
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+
+  function buildToolbarHTML(){
+    return (
+      '<div id="'+TOOLBAR_ID+'" role="region" aria-label="CV Reports">'
+      + '<div>Call Center Reports <span style="font-weight:400;color:#666;">(mounted)</span></div>'
+      + '<div class="cvr-rep-actions">'
+      +   '<button type="button" data-cvr-range="today">Today</button>'
+      +   '<button type="button" data-cvr-range="7d">7 days</button>'
+      +   '<button type="button" data-cvr-range="30d">30 days</button>'
+      + '</div>'
+      + '</div>'
+    );
+  }
+
+  function wire(doc){
+    if (doc.__cvrRepWired) return;
+    doc.__cvrRepWired = true;
+    doc.addEventListener('click', (e) => {
+      const btn = e.target && e.target.closest && e.target.closest('#'+TOOLBAR_ID+' [data-cvr-range]');
+      if (!btn) return;
+      e.preventDefault();
+      log('range clicked →', btn.getAttribute('data-cvr-range'));
+    }, true);
+  }
+
+  function attachObserver(doc){
+    if (doc.__cvrRepMO) return;
+    const MO = (doc.defaultView || window).MutationObserver;
+    if (!MO) return;
+    const mo = new MO(() => {
+      if (!ROUTE_RE.test(location.href)) return;
+      if (!doc.getElementById(TOOLBAR_ID)) schedule(inject);
+    });
+    mo.observe(doc.documentElement || doc, { childList: true, subtree: true });
+    doc.__cvrRepMO = mo;
+  }
+
+  function detachObserver(doc){
+    const mo = doc.__cvrRepMO;
+    if (mo && mo.disconnect){ try { mo.disconnect(); } catch(_){} }
+    delete doc.__cvrRepMO;
+  }
+
+  function inject(){
+    const found = findDoc();
+    if (!found){ log('no reports container yet'); return; }
+    const { doc, anchor, via } = found;
+    if (doc.getElementById(TOOLBAR_ID)){ log('toolbar already present'); return; }
+
+    ensureStyles(doc);
+    const wrap = doc.createElement('div'); wrap.innerHTML = buildToolbarHTML();
+    const bar = wrap.firstElementChild;
+
+    try { anchor.parentNode.insertBefore(bar, anchor); log('injected via', via); }
+    catch(_) { (doc.body || doc.documentElement).appendChild(bar); log('appended to body'); }
+
+    wire(doc);
+    attachObserver(doc);
+  }
+
+  function removeAll(){
+    for (const doc of docs()){
+      const el = doc.getElementById(TOOLBAR_ID);
+      if (el) try { el.remove(); } catch(_){}
+      detachObserver(doc);
+    }
+    log('removed');
+  }
+
+  function waitAndInject(tries){
+    tries = tries || 0;
+    const found = findDoc();
+    if (found){ inject(); return; }
+    if (tries >= 25) return;               // ~6s cap @ 250ms
+    setTimeout(() => waitAndInject(tries + 1), 250);
+  }
+
+  function onEnter(){ schedule(() => waitAndInject(0)); }
+
+  function route(prev, next){
+    const was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeAll();
+
+    // If SPA swaps DOM without changing URL, still try once
+    if (is && !document.getElementById(TOOLBAR_ID) && findDoc()) onEnter();
+  }
+
+  (function watch(){
+    let last = location.href;
+    const push = history.pushState, repl = history.replaceState;
+
+    history.pushState = function(){
+      const prev = last; const ret = push.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now); return ret;
+    };
+    history.replaceState = function(){
+      const prev = last; const ret = repl.apply(this, arguments);
+      const now  = location.href; last = now; route(prev, now); return ret;
+    };
+
+    new MutationObserver(() => {
+      if (location.href !== last){
+        const prev = last, now = location.href; last = now; route(prev, now);
+      } else if (ROUTE_RE.test(last) && !document.getElementById(TOOLBAR_ID) && findDoc()){
+        onEnter();
+      }
+    }).observe(document.documentElement, { childList: true, subtree: true });
+
+    window.addEventListener('popstate', () => {
+      const prev = last, now = location.href;
+      if (now !== prev){ last = now; route(prev, now); }
+    });
+
+    if (ROUTE_RE.test(location.href) || findDoc()) onEnter();
+    else log('standby for reports route…');
+  })();
+})();
