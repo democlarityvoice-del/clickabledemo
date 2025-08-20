@@ -2958,28 +2958,31 @@ function renderTable(doc){
       return ret;
     };
 
-    new MutationObserver(() => {
-      const now = location.href;
-      if (now !== last) {
-        const prev = last; last = now; route(prev, now);
-      } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID)) {
-        inject();
-      }
-    }).observe(document.documentElement, { childList: true, subtree: true });
-
-    window.addEventListener('popstate', () => {
-      const prev = last; const now = location.href;
-      if (now !== prev) { last = now; route(prev, now); }
-    });
-
-    if (RX_ROUTE.test(location.href)) inject();
-  })();
-})();
 
 
+let mutationLock = false;
+let mutationTimer = null;
+
+new MutationObserver(() => {
+  if (mutationLock) return;
+
+  clearTimeout(mutationTimer);
+  mutationTimer = setTimeout(() => {
+    const now = location.href;
+    if (now !== last) {
+      const prev = last;
+      last = now;
+      route(prev, now);
+    } else if (RX_ROUTE.test(now) && !document.getElementById(RX_ROOT_ID)) {
+      mutationLock = true;
+      inject();
+      setTimeout(() => mutationLock = false, 500); // short cooldown
+    }
+  }, 100); // debounce delay
+}).observe(document.documentElement, { childList: true, subtree: true });
 
 
 
-
-
+  })(); // ← closes inner function
+})();     // ← closes outer function
 
