@@ -2743,9 +2743,9 @@ if (!document.__cvqfRowStatusCapture) {
   }
 
   function inject(){
+    if (!RX_ROUTE.test(location.href)) return;
     const found = findSpot(); if (!found) return;
-    const { doc, container, graph } = found;
-    if (doc.getElementById(RX_ROOT_ID)) return;
+
 
     ensureStyles(doc);
 
@@ -2809,7 +2809,7 @@ if (!document.__cvqfRowStatusCapture) {
     const was=RX_ROUTE.test(prev), is=RX_ROUTE.test(next);
     if (!was && is) onEnter();
     if ( was && !is) removeAll();
-    if (is && !document.getElementById(RX_ROOT_ID) && findSpot()) onEnter();
+    if (is && !document.getElementById(RX_ROOT_ID)) onEnter();
   }
 
   (function watch(){
@@ -2820,7 +2820,7 @@ if (!document.__cvqfRowStatusCapture) {
     new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now);} else if (RX_ROUTE.test(last) && !document.getElementById(RX_ROOT_ID) && findSpot()){ onEnter(); } })
       .observe(document.documentElement,{childList:true,subtree:true});
     window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now); } });
-    if (RX_ROUTE.test(location.href) || findSpot()) onEnter();
+    if (RX_ROUTE.test(location.href)) onEnter();
   })();
 })();
 
@@ -3056,6 +3056,7 @@ if (!document.__cvqfRowStatusCapture) {
     if (ROUTE_RE.test(location.href)) waitAndInject(0);
   })();
 })();
+
 
 
 
