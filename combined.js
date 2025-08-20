@@ -2395,3 +2395,117 @@ if (!document.__cvqfRowStatusCapture) {
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
 })();
+
+/* ==============================
+   CVX Listen Stub + Toast v1  (APPEND-ONLY, NO-CONFLICT)
+   ============================== */
+(function () {
+  if (window.__cvxListenInit_v1) return;
+  window.__cvxListenInit_v1 = true;
+
+  // ----- CVX constants (unique, prefixed) -----
+  const CVX_TOAST_STYLE_ID = 'cvx-toast-style';
+  const CVX_TOAST_ROOT_ID  = 'cvx-toast-root';
+  const CVX_WIRED_FLAG     = '__cvxListenWired_v1';
+
+  // Targets:
+  //  - Home iframe:    .listen-btn
+  //  - Agents panel:   #cv-agents-panel [data-tool="listen"] (and common fallbacks)
+  //  - Queues modal:   #cvq-modal .cvq-icon[title="Listen in"]
+  const CVX_SEL_HOME_LISTEN   = '.listen-btn';
+  const CVX_SEL_AGENT_LISTEN  =
+    '#cv-agents-panel .cv-tool[data-tool="listen"],' +
+    '#cv-agents-panel .cv-tool[aria-label="Listen in"],' +
+    '#cv-agents-panel .cv-tool[title="Listen in"]';
+  const CVX_SEL_MODAL_LISTEN  =
+    '#cvq-modal .cvq-icon[title="Listen in"],' +
+    '#cvq-modal .cvq-icon[aria-label="Listen in"]';
+
+  // ----- utilities -----
+  function cvxGetSameOriginDocs() {
+    const docs = [document];
+    const ifrs = document.querySelectorAll('iframe');
+    for (let i = 0; i < ifrs.length; i++) {
+      try {
+        const d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+        if (d) docs.push(d);
+      } catch (_) { /* cross-origin; ignore */ }
+    }
+    return docs;
+  }
+
+  function cvxEnsureToastHost(doc) {
+    // style (once per doc)
+    if (!doc.getElementById(CVX_TOAST_STYLE_ID)) {
+      const s = doc.createElement('style');
+      s.id = CVX_TOAST_STYLE_ID;
+      s.textContent =
+        '#' + CVX_TOAST_ROOT_ID + '{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);' +
+        'z-index:2147483646;display:flex;flex-direction:column;gap:8px;align-items:center;pointer-events:none}' +
+        '.cvx-toast{font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#fff;background:#111;' +
+        'border-radius:8px;padding:8px 12px;box-shadow:0 6px 18px rgba(0,0,0,.25);opacity:.98;' +
+        'transition:transform .18s ease, opacity .18s ease; will-change: transform, opacity}' +
+        '.cvx-toast.cvx-hide{opacity:0; transform:translate(-50%, 8px);}';
+      (doc.head || doc.documentElement).appendChild(s);
+    }
+    // root host (once per doc)
+    if (!doc.getElementById(CVX_TOAST_ROOT_ID)) {
+      const host = doc.createElement('div');
+      host.id = CVX_TOAST_ROOT_ID;
+      host.setAttribute('role', 'status');
+      host.setAttribute('aria-live', 'polite');
+      (doc.body || doc.documentElement).appendChild(host);
+    }
+  }
+
+  function cvxShowToast(doc, message) {
+    cvxEnsureToastHost(doc);
+    const host = doc.getElementById(CVX_TOAST_ROOT_ID);
+    if (!host) return;
+
+    // keep at most 3 live toasts
+    while (host.children.length > 2) host.removeChild(host.firstChild);
+
+    const t = doc.createElement('div');
+    t.className = 'cvx-toast';
+    t.textContent = message;
+    host.appendChild(t);
+
+    // gentle auto-hide
+    setTimeout(() => { t.classList.add('cvx-hide'); }, 1600);
+    setTimeout(() => { try { t.remove(); } catch (_) {} }, 2000);
+  }
+
+  // ----- wire clicks in a document (once per doc) -----
+  function cvxWireDoc(doc) {
+    if (!doc || doc[CVX_WIRED_FLAG]) return;
+    doc[CVX_WIRED_FLAG] = true;
+
+    doc.addEventListener('click', function (e) {
+      const el = e.target && e.target.closest
+        ? e.target.closest(
+            CVX_SEL_HOME_LISTEN + ',' +
+            CVX_SEL_AGENT_LISTEN + ',' +
+            CVX_SEL_MODAL_LISTEN
+          )
+        : null;
+
+      if (!el) return;
+      // No preventDefault: keep behavior purely additive/simulated.
+      cvxShowToast(doc, 'Starting live listen (simulated)');
+    }, false);
+  }
+
+  // ----- init: current doc + current same-origin iframes -----
+  (function cvxInitAll() {
+    const docs = cvxGetSameOriginDocs();
+    for (let i = 0; i < docs.length; i++) cvxWireDoc(docs[i]);
+  })();
+
+  // ----- observe for future iframes (wire as they appear) -----
+  new MutationObserver(function () {
+    const docs = cvxGetSameOriginDocs();
+    for (let i = 0; i < docs.length; i++) cvxWireDoc(docs[i]);
+  }).observe(document.documentElement, { childList: true, subtree: true });
+})();
+
