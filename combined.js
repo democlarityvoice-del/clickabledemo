@@ -2400,15 +2400,15 @@ if (!document.__cvqfRowStatusCapture) {
 // --- ATTEMPT NUMBER 9 JILLION TO GET THE DUMB REPORTS TO LOAD ---
 
 // --- Inject when the manager page is active ---
-if (document.getElementById(RX_ROOT_ID)) return; // Prevent duplicate injection
-
-function inject() {
-  var found = findPanelDoc();
-  if (!found) return;
-  drawInto(found.doc, found.panel);
-}
-
 (function watch() {
+  if (document.getElementById(RX_ROOT_ID)) return; // ✅ NOW inside a function = legal
+
+  function inject() {
+    var found = findPanelDoc();
+    if (!found) return;
+    drawInto(found.doc, found.panel);
+  }
+
   function route(prev, next) {
     var was = MANAGER_REGEX.test(prev), is = MANAGER_REGEX.test(next);
     if (!was && is) inject();
@@ -2445,6 +2445,7 @@ function inject() {
 
   if (MANAGER_REGEX.test(location.href)) inject();
 })();
+
 
 
 // ---- Inject when the queue stats page is active ----
@@ -2517,3 +2518,4 @@ if (/\/portal\/stats\/queuestats\/queue\//.test(location.href)) {
     if (contentArea) contentArea.appendChild(wrapper);
   }
 }
+
