@@ -2576,3 +2576,401 @@ if (!document.__cvqfRowStatusCapture) {
     else log('standby for reports route…');
   })();
 })();
+
+/* ==============================
+   CVR — Call Center Reports (FAKE DATA, REAL RENDER) v1
+   ============================== */
+(function () {
+  if (window.__cvrReportsFake_v1) return;
+  window.__cvrReportsFake_v1 = true;
+
+  // ---- unique, reports-only ----
+  const CVRF_ROUTE_RE   = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  const CVRF_BODY_SEL   = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
+  const CVRF_CONT_SEL   = '.reports-container, .report-container, .table-container, .graphs-panel, .panel, .card';
+
+  const CVRF_ROOT_ID    = 'cvrf-reports-root';
+  const CVRF_STYLE_ID   = 'cvrf-reports-style';
+  const CVRF_CHART_ID   = 'cvrf-reports-chart';
+  const CVRF_TABLE_ID   = 'cvrf-reports-table';
+  const CVRF_HIDDEN     = 'data-cvrf-hidden';
+
+  const CVRF_DEBUG = false;
+  function log(){ if (CVRF_DEBUG) try{ console.log('[CVRF]', ...arguments);}catch(_){} }
+
+  // ---- same-origin docs (main + iframes) ----
+  function docs(){
+    const out = [document];
+    document.querySelectorAll('iframe').forEach(ifr=>{
+      try{
+        const d = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
+        if (d) out.push(d);
+      }catch(_){}
+    });
+    return out;
+  }
+
+  function findReportsSpot(){
+    for (const doc of docs()){
+      const body = doc.querySelector(CVRF_BODY_SEL) || doc.body || doc.documentElement;
+      if (!body) continue;
+      const container = body.querySelector(CVRF_CONT_SEL);
+      const anchor = container || body.firstElementChild || body;
+      return { doc, body, container, anchor };
+    }
+    return null;
+  }
+
+  // ---- styles ----
+  function ensureStyles(doc){
+    if (doc.getElementById(CVRF_STYLE_ID)) return;
+    const s = doc.createElement('style');
+    s.id = CVRF_STYLE_ID;
+    s.textContent = `
+#${CVRF_ROOT_ID}{box-sizing:border-box;margin:6px 0 10px;padding:12px;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.09);font:600 13px/1.35 "Helvetica Neue", Arial, sans-serif;color:#222}
+#${CVRF_ROOT_ID} .cvrf-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:0 0 8px}
+#${CVRF_ROOT_ID} .cvrf-head h3{margin:0;font:700 14px/1.2 "Helvetica Neue", Arial}
+#${CVRF_ROOT_ID} .cvrf-ranges button{border:1px solid #d9d9d9;background:#fff;border-radius:6px;padding:6px 10px;font:600 12px/1 Arial;cursor:pointer}
+#${CVRF_ROOT_ID} .cvrf-ranges button:hover{background:#f7f7f7}
+#${CVRF_CHART_ID}{min-height:300px}
+#${CVRF_TABLE_ID}{margin-top:10px}
+#${CVRF_TABLE_ID} .table{width:100%;border-collapse:collapse;background:#fff}
+#${CVRF_TABLE_ID} thead th{padding:8px 12px;border-bottom:1px solid #e6e6e6;text-align:left;white-space:nowrap}
+#${CVRF_TABLE_ID} tbody td{padding:8px 12px;border-bottom:1px solid #f0f0f0}
+#${CVRF_TABLE_ID} tbody tr:hover{background:#fafafa}
+`;
+    (doc.head || doc.documentElement).appendChild(s);
+  }
+
+  // ---- fake datasets (stable) ----
+  const DATA = {
+    today : {
+      chart: { kind:'hourly', peaks:[
+        ['09:45',1],['10:15',1],['11:55',1],['13:10',1],
+        ['14:20',1],['15:00',2],['15:41',5],['15:44',6],
+        ['15:51',5],['15:56',4],['15:58',3],['16:00',2]
+      ]},
+      rows: [
+        {queue:'300', name:'Main Routing',       volume:18, handled:17, sl:'94%', talk:'02:34', wait:'00:46'},
+        {queue:'301', name:'New Sales',          volume:23, handled:22, sl:'96%', talk:'03:12', wait:'00:39'},
+        {queue:'302', name:'Existing Customer',  volume:12, handled:11, sl:'92%', talk:'04:05', wait:'01:02'},
+        {queue:'303', name:'Billing',            volume: 9, handled: 9, sl:'100%',talk:'02:59', wait:'00:31'}
+      ]
+    },
+    '7d'  : {
+      chart: { kind:'daily', values:[44,52,47,39,48,56,51] },
+      rows: [
+        {queue:'300', name:'Main Routing',       volume:126, handled:118, sl:'93%', talk:'02:41', wait:'00:49'},
+        {queue:'301', name:'New Sales',          volume:161, handled:154, sl:'95%', talk:'03:18', wait:'00:41'},
+        {queue:'302', name:'Existing Customer',  volume: 98, handled: 91, sl:'91%', talk:'04:07', wait:'01:05'},
+        {queue:'303', name:'Billing',            volume: 74, handled: 74, sl:'100%',talk:'03:02', wait:'00:34'}
+      ]
+    },
+    '30d' : {
+      chart: { kind:'daily', values:[42,45,48,51,39,56,47,44,52,46,49,41,58,53,45,50,38,55,57,43,52,46,49,40,61,54,47,45,50,44] },
+      rows: [
+        {queue:'300', name:'Main Routing',       volume:570, handled:540, sl:'95%', talk:'02:39', wait:'00:47'},
+        {queue:'301', name:'New Sales',          volume:690, handled:662, sl:'96%', talk:'03:16', wait:'00:40'},
+        {queue:'302', name:'Existing Customer',  volume:420, handled:395, sl:'91%', talk:'04:03', wait:'01:03'},
+        {queue:'303', name:'Billing',            volume:310, handled:309, sl:'100%',talk:'03:00', wait:'00:33'}
+      ]
+    }
+  };
+
+  // ---- chart: use Google Charts when present; otherwise a tiny SVG line ----
+  function whenGVizReady(cb){
+    function ready(){
+      try { return window.google && google.visualization && google.visualization.DataTable; }
+      catch(_) { return false; }
+    }
+    function onready(){ try{ cb(); }catch(_){} }
+    if (ready()) return onready();
+    if (window.google && google.charts && google.charts.load){
+      try { google.charts.load('current', { packages:['corechart'] }); } catch(_){}
+      try { google.charts.setOnLoadCallback(onready); } catch(_){}
+    }
+    let tries = 0;
+    (function wait(){ if (ready()) return onready(); if (tries++ > 120) return; setTimeout(wait,50); })();
+  }
+
+  function drawChartGViz(host, rangeKey){
+    const range = DATA[rangeKey] || DATA.today;
+    const now   = new Date();
+    const y=now.getFullYear(), m=now.getMonth(), d=now.getDate();
+
+    const dt = new google.visualization.DataTable();
+    let opts;
+
+    if (range.chart.kind === 'hourly'){
+      dt.addColumn('datetime','Time');
+      dt.addColumn('number','Call Volume');
+      // baseline zeros on the hour from 8→16
+      for (let hh=8; hh<=16; hh++) dt.addRow([new Date(y,m,d,hh,0,0,0), 0]);
+      // add spikes
+      range.chart.peaks.forEach(([hm,val])=>{
+        const hh = +hm.slice(0,2), mm = +hm.slice(3,5);
+        const mid = new Date(y,m,d,hh,mm,0,0);
+        dt.addRow([new Date(mid.getTime()-3*60*1000), 0]);
+        dt.addRow([mid, val]);
+        dt.addRow([new Date(mid.getTime()+3*60*1000), 0]);
+      });
+      // options
+      opts = {
+        legend:'none', lineWidth:2, focusTarget:'datum',
+        chartArea:{ left:60, right:20, top:20, bottom:16 },
+        hAxis:{ textPosition:'none', gridlines:{color:'transparent'}, minorGridlines:{color:'transparent',count:0}, baselineColor:'transparent' },
+        vAxis:{ viewWindow:{min:0,max:6}, ticks:[0,2,4,6], gridlines:{color:'#e9e9e9'}, baselineColor:'#bdbdbd' }
+      };
+    } else { // daily series
+      dt.addColumn('date','Date');
+      dt.addColumn('number','Call Volume');
+      const vals = range.chart.values.slice();
+      const start = new Date(y,m,d-(vals.length-1));
+      for (let i=0;i<vals.length;i++){
+        const day = new Date(start.getFullYear(), start.getMonth(), start.getDate()+i);
+        dt.addRow([day, vals[i]]);
+      }
+      const vmax = Math.max.apply(null, vals.concat(10));
+      const tick = Math.ceil(vmax/5);
+      opts = {
+        legend:'none', lineWidth:2, focusTarget:'category',
+        chartArea:{ left:60, right:20, top:20, bottom:28 },
+        hAxis:{ gridlines:{color:'#f0f0f0'} },
+        vAxis:{ viewWindow:{min:0}, ticks:[0, tick, 2*tick, 3*tick, 4*tick, 5*tick], gridlines:{color:'#e9e9e9'}, baselineColor:'#bdbdbd' }
+      };
+    }
+
+    const chart = new google.visualization.LineChart(host);
+    function redraw(){
+      const box = host.parentNode.getBoundingClientRect();
+      const w = Math.max(900, Math.floor(box.width || host.parentNode.clientWidth || 900));
+      const h = Math.max(320, Math.min(560, Math.floor(w*0.45)));
+      host.style.height = h + 'px';
+      chart.draw(dt, opts);
+    }
+    redraw();
+    requestAnimationFrame(()=>requestAnimationFrame(redraw));
+    const win = host.ownerDocument.defaultView || window;
+    win.addEventListener('resize', redraw);
+  }
+
+  function drawChartFallback(host, rangeKey){
+    // Minimal SVG line fallback so you still see something if GViz is missing
+    const range = DATA[rangeKey] || DATA.today;
+    const w = Math.max(900, host.clientWidth || 900), h = 340, pad = 28;
+    const vals = (range.chart.kind === 'daily')
+      ? range.chart.values.slice()
+      : [0,0,0,1,0,0, 1,0,0, 1,0,0, 0,0,0, 1,0,0, 2,0,0, 5,6,5,4,3,2,0]; // rough shape for "today"
+    const max = Math.max.apply(null, vals.concat(1));
+    const cw = w - pad*2, ch = h - pad*2;
+    const step = cw / (vals.length-1||1);
+    const pts = vals.map((v,i)=>{
+      const x = pad + i*step;
+      const y = pad + (ch - (v/max)*ch);
+      return (i===0?'M':'L')+x.toFixed(1)+' '+y.toFixed(1);
+    }).join(' ');
+    host.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="'+w+'" height="'+h+'">'
+      + '<rect x="0" y="0" width="'+w+'" height="'+h+'" fill="#fff"/>'
+      + '<g stroke="#e9e9e9">'+[0,0.25,0.5,0.75,1].map(f=>{
+          const y = pad + f*ch;
+          return '<line x1="'+pad+'" y1="'+y+'" x2="'+(w-pad)+'" y2="'+y+'"/>';
+        }).join('')+'</g>'
+      + '<path d="'+pts+'" fill="none" stroke="#2f66d0" stroke-width="2"/>'
+      + '</svg>';
+  }
+
+  function drawChart(doc, rangeKey){
+    const host = doc.getElementById(CVRF_CHART_ID);
+    if (!host) return;
+    whenGVizReady(function(){
+      try { drawChartGViz(host, rangeKey); }
+      catch(_){ drawChartFallback(host, rangeKey); }
+    });
+    // If GViz never comes up, give it a fallback after ~6.2s
+    setTimeout(function(){ if (!host.querySelector('svg')) drawChartFallback(host, rangeKey); }, 6200);
+  }
+
+  // ---- table ----
+  function renderTable(doc, rangeKey){
+    const rows = (DATA[rangeKey] || DATA.today).rows;
+    const wrap = doc.getElementById(CVRF_TABLE_ID); if (!wrap) return;
+    const tbody = rows.map(r=>`
+      <tr>
+        <td>${r.queue}</td>
+        <td>${r.name}</td>
+        <td class="text-center">${r.volume}</td>
+        <td class="text-center">${r.handled}</td>
+        <td class="text-center">${r.sl}</td>
+        <td class="text-center">${r.talk}</td>
+        <td class="text-center">${r.wait}</td>
+      </tr>
+    `).join('');
+    wrap.innerHTML = `
+      <div class="table-container scrollable-small">
+        <table class="table table-condensed table-hover">
+          <thead>
+            <tr>
+              <th style="width:60px;">Queue</th>
+              <th>Name</th>
+              <th class="text-center">Call Volume</th>
+              <th class="text-center">Calls Handled</th>
+              <th class="text-center">Service Level</th>
+              <th class="text-center">Avg. Talk Time</th>
+              <th class="text-center">Avg. Wait Time</th>
+            </tr>
+          </thead>
+          <tbody>${tbody}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ---- host + wiring ----
+  function buildRootHTML(rangeKey){
+    return `
+      <div id="${CVRF_ROOT_ID}">
+        <div class="cvrf-head">
+          <h3>Call Volume</h3>
+          <div class="cvrf-ranges" aria-label="Range (fallback)">
+            <button type="button" data-cvrf-range="today">Today</button>
+            <button type="button" data-cvrf-range="7d">7 days</button>
+            <button type="button" data-cvrf-range="30d">30 days</button>
+          </div>
+        </div>
+        <div id="${CVRF_CHART_ID}"></div>
+        <div id="${CVRF_TABLE_ID}"></div>
+      </div>`;
+  }
+
+  function hideNative(doc, container){
+    if (container && !container.hasAttribute(CVRF_HIDDEN)){
+      container.setAttribute(CVRF_HIDDEN, '1');
+      container.style.display = 'none';
+    }
+  }
+  function unhideNative(doc){
+    const nodes = doc.querySelectorAll('['+CVRF_HIDDEN+'="1"]');
+    nodes.forEach(n=>{ n.style.display=''; n.removeAttribute(CVRF_HIDDEN); });
+  }
+
+  function update(doc, rangeKey){
+    drawChart(doc, rangeKey);
+    renderTable(doc, rangeKey);
+  }
+
+  function wire(doc){
+    if (doc.__cvrfWired) return;
+    doc.__cvrfWired = true;
+
+    // A) our own fallback range buttons
+    doc.addEventListener('click', function(e){
+      const btn = e.target && e.target.closest && e.target.closest('#'+CVRF_ROOT_ID+' [data-cvrf-range]');
+      if (!btn) return;
+      e.preventDefault();
+      update(doc, btn.getAttribute('data-cvrf-range'));
+    }, true);
+
+    // B) listen to your existing toolbar (cvr-rep-toolbar) if it’s there
+    doc.addEventListener('click', function(e){
+      const btn = e.target && e.target.closest && e.target.closest('#cvr-rep-toolbar [data-cvr-range]');
+      if (!btn) return;
+      e.preventDefault();
+      update(doc, btn.getAttribute('data-cvr-range'));
+    }, true);
+  }
+
+  function inject(){
+    const found = findReportsSpot(); if (!found) return;
+    const { doc, anchor, container } = found;
+    if (doc.getElementById(CVRF_ROOT_ID)) return;
+
+    ensureStyles(doc);
+
+    const wrap = doc.createElement('div');
+    wrap.innerHTML = buildRootHTML('today');
+    const root = wrap.firstElementChild;
+
+    try { anchor.parentNode.insertBefore(root, anchor); }
+    catch(_){ (doc.body || doc.documentElement).appendChild(root); }
+
+    hideNative(doc, container);
+    wire(doc);
+    update(doc, 'today');
+    attachObserver(doc);
+  }
+
+  function removeAll(){
+    for (const doc of docs()){
+      const el = doc.getElementById(CVRF_ROOT_ID);
+      if (el) try{ el.remove(); }catch(_){}
+      unhideNative(doc);
+      detachObserver(doc);
+    }
+  }
+
+  // ---- observers / routing ----
+  function attachObserver(doc){
+    if (doc.__cvrfMO) return;
+    const MO = (doc.defaultView || window).MutationObserver;
+    if (!MO) return;
+    const mo = new MO(() => {
+      if (!CVRF_ROUTE_RE.test(location.href)) return;
+      const have = doc.getElementById(CVRF_ROOT_ID);
+      const spot = findReportsSpot();
+      if (!have && spot) inject();
+    });
+    mo.observe(doc.documentElement || doc, { childList:true, subtree:true });
+    doc.__cvrfMO = mo;
+  }
+  function detachObserver(doc){
+    const mo = doc.__cvrfMO;
+    if (mo && mo.disconnect) try{ mo.disconnect(); }catch(_){}
+    delete doc.__cvrfMO;
+  }
+
+  function schedule(fn){
+    let fired=false;
+    if ('requestAnimationFrame' in window){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{ fired=true; try{fn();}catch(_){}}));
+    }
+    setTimeout(()=>{ if(!fired) try{fn();}catch(_){}} ,3600);
+  }
+
+  function onEnter(){ schedule(()=>inject()); }
+
+  function route(prev, next){
+    const was = CVRF_ROUTE_RE.test(prev), is = CVRF_ROUTE_RE.test(next);
+    if (!was && is) onEnter();
+    if ( was && !is) removeAll();
+    if (is && !document.getElementById(CVRF_ROOT_ID) && findReportsSpot()) onEnter();
+  }
+
+  (function watch(){
+    let last = location.href;
+    const push = history.pushState, repl = history.replaceState;
+
+    history.pushState = function(){
+      const prev=last; const ret = push.apply(this, arguments);
+      const now = location.href; last=now; route(prev, now); return ret;
+    };
+    history.replaceState = function(){
+      const prev=last; const ret = repl.apply(this, arguments);
+      const now = location.href; last=now; route(prev, now); return ret;
+    };
+
+    new MutationObserver(()=> {
+      if (location.href !== last){
+        const prev = last, now = location.href; last = now; route(prev, now);
+      } else if (CVRF_ROUTE_RE.test(last) && !document.getElementById(CVRF_ROOT_ID) && findReportsSpot()){
+        onEnter();
+      }
+    }).observe(document.documentElement, { childList:true, subtree:true });
+
+    window.addEventListener('popstate', () => {
+      const prev = last, now = location.href;
+      if (now !== prev){ last = now; route(prev, now); }
+    });
+
+    if (CVRF_ROUTE_RE.test(location.href) || findReportsSpot()) onEnter();
+  })();
+})();
+
