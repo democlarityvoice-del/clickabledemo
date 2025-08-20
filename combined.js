@@ -2824,3 +2824,237 @@ if (!document.__cvqfRowStatusCapture) {
   })();
 })();
 
+
+/* ===== CVR Reports — Summary Table (exact columns, blue links, above graph) ===== */
+(function(){
+  if (window.__cvrRepSummary_v1) return;
+  window.__cvrRepSummary_v1 = true;
+
+  // ---- constants (unique) ----
+  var ROUTE_RE   = /\/portal\/reports\/callcenter(?:[\/?#]|$)/i;
+  var BODY_SEL   = '#callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
+  var ANCHOR_SEL = '.graphs-panel, .graphs-panel-home, .graphs, .report-container, .reports-container, .table-container, .panel, .card';
+  var TABLE_ID   = 'cvr-rep-summary';
+  var STYLE_ID   = 'cvr-rep-summary-style';
+  var MODAL_ID   = 'cvr-rep-summary-modal';
+
+  // ---- utils ----
+  function docs(){
+    var out=[document], ifrs=document.querySelectorAll('iframe');
+    for (var i=0;i<ifrs.length;i++){ try{
+      var d = ifrs[i].contentDocument || (ifrs[i].contentWindow && ifrs[i].contentWindow.document);
+      if (d) out.push(d);
+    }catch(_){}} return out;
+  }
+  function findAnchorDoc(){
+    var all = docs();
+    for (var i=0;i<all.length;i++){
+      var doc = all[i];
+      var body = doc.querySelector(BODY_SEL) || doc.body || doc.documentElement;
+      if (!body) continue;
+      var anchor = body.querySelector(ANCHOR_SEL) || body.firstElementChild || body;
+      if (anchor) return {doc:doc, body:body, anchor:anchor};
+    }
+    return null;
+  }
+  function ensureStyles(doc){
+    if (doc.getElementById(STYLE_ID)) return;
+    var s = doc.createElement('style'); s.id = STYLE_ID;
+    s.textContent = '' +
+      '#'+TABLE_ID+'{box-sizing:border-box;margin:6px 0 10px;padding:0;background:#fff;border-radius:6px;box-shadow:0 1px 3px rgba(0,0,0,.09);overflow:hidden}' +
+      '#'+TABLE_ID+' table{width:100%;border-collapse:collapse;table-layout:fixed;background:#fff}' +
+      '#'+TABLE_ID+' thead th{padding:9px 12px;border-bottom:1px solid #eee;font:600 13px/1.35 "Helvetica Neue",Arial;color:#222;text-align:left;white-space:nowrap}' +
+      '#'+TABLE_ID+' tbody td{padding:9px 12px;border-bottom:1px solid #f5f5f5;font:400 13px/1.35 "Helvetica Neue",Arial;color:#333;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+      '#'+TABLE_ID+' tbody tr:hover{background:#fafafa}' +
+      '#'+TABLE_ID+' .num{ text-align:center }' +
+      '#'+TABLE_ID+' .link{ color:#0b84ff; font-weight:700; text-decoration:none; cursor:pointer }' +
+      '#'+TABLE_ID+' .link:hover{ text-decoration:underline }' +
+      /* modal */
+      '#'+MODAL_ID+'{position:fixed;inset:0;display:none;z-index:2147483646}' +
+      '#'+MODAL_ID+'.open{display:block}' +
+      '#'+MODAL_ID+' .scrim{position:fixed;inset:0;background:rgba(0,0,0,.35)}' +
+      '#'+MODAL_ID+' .dlg{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#fff;border-radius:8px;box-shadow:0 12px 30px rgba(0,0,0,.18);width:min(980px,96vw);max-height:84vh;display:flex;flex-direction:column;overflow:hidden}' +
+      '#'+MODAL_ID+' header{padding:12px 14px;border-bottom:1px solid #eee;font:600 14px/1.2 "Helvetica Neue",Arial;color:#222}' +
+      '#'+MODAL_ID+' .body{padding:10px 14px;overflow:auto}' +
+      '#'+MODAL_ID+' .body table{table-layout:auto}' +
+      '#'+MODAL_ID+' footer{padding:10px 14px;border-top:1px solid #eee;display:flex;justify-content:flex-end}' +
+      '#'+MODAL_ID+' .btn{padding:7px 12px;border-radius:6px;border:1px solid #d9d9d9;background:#fff;font:600 13px/1 Arial;cursor:pointer}' +
+      '#'+MODAL_ID+' .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}';
+    (doc.head||doc.documentElement).appendChild(s);
+  }
+  function ensureModal(doc){
+    if (doc.getElementById(MODAL_ID)) return;
+    var host = doc.createElement('div'); host.id = MODAL_ID;
+    host.innerHTML =
+      '<div class="scrim" data-act="close"></div>'+
+      '<div class="dlg" role="dialog" aria-modal="true">'+
+        '<header id="'+MODAL_ID+'-title">Details</header>'+
+        '<div class="body"><div id="'+MODAL_ID+'-content"></div></div>'+
+        '<footer><button class="btn" data-act="close">Close</button></footer>'+
+      '</div>';
+    (doc.body||doc.documentElement).appendChild(host);
+    host.addEventListener('click', function(e){
+      var t=e.target; if (t && t.getAttribute && t.getAttribute('data-act')==='close') host.classList.remove('open');
+    });
+  }
+  function openModal(doc, title, html){
+    ensureModal(doc);
+    var root = doc.getElementById(MODAL_ID);
+    doc.getElementById(MODAL_ID+'-title').textContent = title||'';
+    doc.getElementById(MODAL_ID+'-content').innerHTML = html||'';
+    root.classList.add('open');
+  }
+  function pad2(n){ return ('0'+n).slice(-2); }
+  function mmss(s){ s=s|0; return pad2((s/60|0))+':'+pad2(s%60); }
+
+  // ---- canned demo data per range (kept tiny & editable) ----
+  var RANGE = 'today';
+  function dataFor(range){
+    // If you supplied specific numbers earlier, drop them here.
+    // These are just placeholders you can edit inline.
+    var sets = {
+      today: [
+        {queue:'300', name:'Main Routing',      vol:42, handled:39,  sla:'92%', talk:'2:14', wait:'0:41'},
+        {queue:'301', name:'New Sales',        vol:28, handled:26,  sla:'89%', talk:'2:03', wait:'0:52'},
+        {queue:'302', name:'Existing Customer', vol:31, handled:29,  sla:'94%', talk:'2:27', wait:'0:38'},
+        {queue:'303', name:'Billing',          vol:12, handled:11,  sla:'91%', talk:'1:56', wait:'0:45'}
+      ],
+      '7d': [
+        {queue:'300', name:'Main Routing',      vol:296, handled:279, sla:'91%', talk:'2:18', wait:'0:43'},
+        {queue:'301', name:'New Sales',        vol:205, handled:192, sla:'90%', talk:'2:08', wait:'0:49'},
+        {queue:'302', name:'Existing Customer', vol:224, handled:211, sla:'93%', talk:'2:25', wait:'0:40'},
+        {queue:'303', name:'Billing',          vol:86,  handled:81,  sla:'92%', talk:'2:01', wait:'0:46'}
+      ],
+      '30d': [
+        {queue:'300', name:'Main Routing',      vol:1204, handled:1130, sla:'92%', talk:'2:19', wait:'0:42'},
+        {queue:'301', name:'New Sales',        vol:874,  handled:816,  sla:'90%', talk:'2:10', wait:'0:51'},
+        {queue:'302', name:'Existing Customer', vol:939,  handled:888,  sla:'94%', talk:'2:24', wait:'0:39'},
+        {queue:'303', name:'Billing',          vol:355,  handled:334,  sla:'91%', talk:'2:00', wait:'0:47'}
+      ]
+    };
+    return sets[range] || sets.today;
+  }
+
+  function buildTableHTML(rows){
+    var thead =
+      '<thead><tr>' +
+        '<th style="width:90px">Queue</th>' +
+        '<th>Name</th>' +
+        '<th class="num" style="width:120px">Call Volume</th>' +
+        '<th class="num" style="width:130px">Calls Handled</th>' +
+        '<th class="num" style="width:120px">Service Level</th>' +
+        '<th class="num" style="width:130px">Avg. Talk Time</th>' +
+        '<th class="num" style="width:130px">Avg. Wait Time</th>' +
+      '</tr></thead>';
+
+    var tbody = '<tbody>' + rows.map(function(r){
+      return '<tr data-q="'+r.queue+'">' +
+        '<td>'+r.queue+'</td>' +
+        '<td>'+r.name+'</td>' +
+        '<td class="num"><a href="#" class="link" data-metric="volume">'+r.vol+'</a></td>' +
+        '<td class="num"><a href="#" class="link" data-metric="handled">'+r.handled+'</a></td>' +
+        '<td class="num">'+r.sla+'</td>' +
+        '<td class="num">'+r.talk+'</td>' +
+        '<td class="num">'+r.wait+'</td>' +
+      '</tr>';
+    }).join('') + '</tbody>';
+
+    return '<div id="'+TABLE_ID+'"><table>'+thead+tbody+'</table></div>';
+  }
+
+  function buildDetailsTable(title, count){
+    // small fake list up to 12 rows; safe NANPA-ish caller IDs
+    var ac = ['313','248','989','517','810'], i, rows=[];
+    var max = Math.max(1, Math.min(12, +count||0));
+    for (i=0;i<max;i++){
+      var from = ac[i%ac.length] + '-555-01' + pad2((Math.random()*100)|0);
+      var to   = '(248) 436-' + (3000 + ((i*37)%9000));
+      var agent= 'Ext. ' + (200 + ((i*5)%40));
+      var dur  = mmss(40 + ((i*13)%400));
+      rows.push('<tr><td>'+from+'</td><td>'+to+'</td><td class="num">'+agent+'</td><td class="num">'+dur+'</td></tr>');
+    }
+    return ''+
+      '<div style="font:600 13px/1.35 Helvetica,Arial;margin:0 0 8px">'+title+'</div>'+
+      '<table class="table table-condensed table-hover" style="width:100%">'+
+        '<thead><tr><th>From</th><th>To</th><th class="num">Agent</th><th class="num">Duration</th></tr></thead>'+
+        '<tbody>'+rows.join('')+'</tbody>'+
+      '</table>';
+  }
+
+  // ---- inject / render ----
+  function inject(){
+    var found = findAnchorDoc();
+    if (!found) return;
+    var doc = found.doc, anchor = found.anchor;
+    if (doc.getElementById(TABLE_ID)) return;
+    ensureStyles(doc);
+    ensureModal(doc);
+    var wrap = doc.createElement('div'); wrap.innerHTML = buildTableHTML(dataFor(RANGE));
+    var block = wrap.firstElementChild;
+    try { anchor.parentNode.insertBefore(block, anchor); }
+    catch(_){ (doc.body||doc.documentElement).appendChild(block); }
+
+    // delegated clicks for blue numbers -> modal
+    doc.addEventListener('click', function(e){
+      var a = e.target && e.target.closest ? e.target.closest('#'+TABLE_ID+' .link') : null;
+      if (!a) return;
+      e.preventDefault();
+      var tr = a.closest('tr'); if (!tr) return;
+      var q  = tr.getAttribute('data-q') || '';
+      var nm = tr.children[1] ? tr.children[1].textContent : '';
+      var metric = a.getAttribute('data-metric');
+      var count  = a.textContent || '0';
+      var ttl = (metric==='handled' ? 'Calls Handled' : 'Call Volume') + ' — ' + nm + ' ('+q+')';
+      openModal(doc, ttl, buildDetailsTable(ttl, count));
+    }, true);
+  }
+
+  function render(){
+    var found = findAnchorDoc(); if (!found) return;
+    var doc = found.doc;
+    var root = doc.getElementById(TABLE_ID); if (!root) return inject();
+    var tbl  = buildTableHTML(dataFor(RANGE));
+    // replace inner entirely to keep it simple & idempotent
+    var wrap = doc.createElement('div'); wrap.innerHTML = tbl;
+    root.parentNode.replaceChild(wrap.firstElementChild, root);
+  }
+
+  // ---- observe toolbar range buttons (Today / 7d / 30d) ----
+  document.addEventListener('click', function(e){
+    var btn = e.target && e.target.closest && e.target.closest('#cvr-rep-toolbar [data-cvr-range]');
+    if (!btn) return;
+    var r = (btn.getAttribute('data-cvr-range')||'').toLowerCase();
+    if (r === 'today' || r === '7d' || r === '30d'){ RANGE = r; try{ render(); }catch(_){ } }
+  }, true);
+
+  // ---- keep present across SPA swaps ----
+  function waitAndInject(tries){
+    tries = tries || 0;
+    if (!ROUTE_RE.test(location.href)) return;
+    var found = findAnchorDoc();
+    if (found){ inject(); return; }
+    if (tries >= 24) return;
+    setTimeout(function(){ waitAndInject(tries+1); }, 250);
+  }
+
+  (function watch(){
+    var last = location.href;
+    var p = history.pushState, r = history.replaceState;
+    function route(prev, next){
+      var was = ROUTE_RE.test(prev), is = ROUTE_RE.test(next);
+      if (!was && is) waitAndInject(0);
+    }
+    history.pushState = function(){ var prev=last; var ret=p.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+    history.replaceState = function(){ var prev=last; var ret=r.apply(this, arguments); var now=location.href; last=now; route(prev, now); return ret; };
+    new MutationObserver(function(){
+      if (location.href !== last){ var prev=last, now=location.href; last=now; route(prev, now); }
+      // if DOM swapped but URL unchanged, ensure it exists
+      if (ROUTE_RE.test(last) && !document.getElementById(TABLE_ID)) waitAndInject(0);
+    }).observe(document.documentElement, { childList:true, subtree:true });
+    window.addEventListener('popstate', function(){ var prev=last, now=location.href; if (now!==prev){ last=now; route(prev, now);} });
+
+    if (ROUTE_RE.test(location.href)) waitAndInject(0);
+  })();
+})();
+
+
