@@ -2405,6 +2405,62 @@ if (!document.__cvqfRowStatusCapture) {
   if (window.__cvrReportsFake_v3) return;
   window.__cvrReportsFake_v3 = true;
 
+    const RX_STATS_PAGE = /\/portal\/stats\/queuestats\/queue/;
+
+  function waitAndInjectReports(retry = 0) {
+    const container = document.querySelector('#modal-body-reports');
+    console.log('[CVR FAKE REPORTS] Retry', retry, 'Container:', !!container);
+  
+  if (!container) {
+    if (retry < 30) setTimeout(() => waitAndInjectReports(retry + 1), 500);
+    return;
+  }
+
+  if (document.getElementById('fake_reports_injected')) return;
+
+  container.innerHTML = '';
+  container.innerHTML = buildFakeQueueStatsHTML();
+}
+
+  if (RX_STATS_PAGE.test(location.href)) waitAndInjectReports(0);
+
+    function buildFakeQueueStatsHTML() {
+    return `
+      <div id="fake_reports_injected">
+        <h3 style="text-align:center;">Queue Stats (Simulated)</h3>
+        <svg width="980" height="300" style="background:#eef">
+          <line x1="50" y1="150" x2="930" y2="150" stroke="#338" stroke-width="2"/>
+          <circle cx="150" cy="120" r="5" fill="#33f"/>
+          <circle cx="300" cy="140" r="5" fill="#33f"/>
+          <circle cx="450" cy="100" r="5" fill="#33f"/>
+          <circle cx="600" cy="160" r="5" fill="#33f"/>
+          <circle cx="750" cy="130" r="5" fill="#33f"/>
+          <circle cx="900" cy="110" r="5" fill="#33f"/>
+        </svg>
+        <table style="width:100%; border-collapse: collapse; margin-top: 20px;" border="1">
+          <thead>
+            <tr>
+              <th>Queue</th>
+              <th>Name</th>
+              <th>Call Volume</th>
+              <th>Calls Handled</th>
+              <th>Service Level</th>
+              <th>Avg. Talk Time</th>
+              <th>Avg. Wait Time</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>300</td><td>Main Routing</td><td>83</td><td>76</td><td>92%</td><td>3:14</td><td>0:42</td></tr>
+            <tr><td>301</td><td>New Sales</td><td>64</td><td>64</td><td>100%</td><td>4:10</td><td>0:15</td></tr>
+            <tr><td>302</td><td>Existing Customer</td><td>98</td><td>97</td><td>99%</td><td>2:55</td><td>0:25</td></tr>
+            <tr><td>303</td><td>Billing</td><td>27</td><td>25</td><td>92%</td><td>3:30</td><td>1:12</td></tr>
+          </tbody>
+        </table>
+      </div>
+    `;
+  }
+
+
   // --- routes / selectors (reports only) ---
   const RX_ROUTE   = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/i;
   const RX_BODY = '#modal-body-reports, #callcenter-reports-body, #reports-body, .reports-body, #report-body, #home-reports-body, [id*="reports"][class*="body"]';
@@ -2864,6 +2920,7 @@ function route(prev, next){
         waitAndInject(0);
   });
 })();
+
 
 
 
