@@ -1251,11 +1251,11 @@ tr:hover .cvq-icon{ opacity:.85; }
   (function watchURL(){
     let last = location.href;
     const push = history.pushState, rep = history.replaceState;
-    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; route(prev,now); return ret; };
-    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; route(prev,now); return ret; };
-    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; route(prev,now); } })
+    history.pushState    = function(){ const prev=last; const ret=push.apply(this,arguments); const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    history.replaceState = function(){ const prev=last; const ret=rep.apply(this,arguments);  const now=location.href; last=now; handleRoute(prev,now); return ret; };
+    new MutationObserver(()=>{ if(location.href!==last){ const prev=last, now=location.href; last=now; handleRoute(prev,now); } })
       .observe(document.documentElement,{childList:true,subtree:true});
-    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; route(prev,now); } });
+    window.addEventListener('popstate',()=>{ const prev=last, now=location.href; if(now!==prev){ last=now; handleRoute(prev,now); } });
     if (QUEUES_REGEX.test(location.href)) onEnter();
   })();
 }
@@ -2376,16 +2376,11 @@ if (!document.__cvqfRowStatusCapture) {
 
   // ---- inject when the manager page is active ----
   function inject(){
-  if (document.getElementById(RX_ROOT_ID)) return;  // Prevent duplicate injection
+    var found = findPanelDoc(); if (!found) return;
+    drawInto(found.doc, found.panel);
+  }
 
-  var found = findPanelDoc();
-  if (!found) return;
-
-  drawInto(found.doc, found.panel);
-}
-
-
-   (function watch(){
+  (function watch(){
     function route(prev,next){
       var was=MANAGER_REGEX.test(prev), is=MANAGER_REGEX.test(next);
       if (!was && is) inject();
@@ -2399,16 +2394,4 @@ if (!document.__cvqfRowStatusCapture) {
 
     if (MANAGER_REGEX.test(location.href)) inject();
   })();
-
 })();
-
-/* ==============================
-
-
-
-
-
-
-
-
-
