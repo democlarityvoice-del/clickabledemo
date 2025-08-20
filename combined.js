@@ -2992,8 +2992,6 @@ function renderTable(doc){
 
 
 
-  })(); // ← closes inner function
-})();     // ← closes outer function
 
 
 
