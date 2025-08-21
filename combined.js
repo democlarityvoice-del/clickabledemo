@@ -2411,32 +2411,53 @@ if (!document.__cvqfRowStatusCapture) {
 // ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
-if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
-
 ;(function injectQueueStatsOverlay() {
   const RX_ROOT_ID = 'cv-queue-stats-wrapper';
   const ON_QUEUE_STATS = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/.test(location.href);
-
   if (!ON_QUEUE_STATS) return;
-  if (document.getElementById(RX_ROOT_ID)) return;
 
-  // Find native table container – DO NOT modify/clear it
+  // If our wrapper is already there from a previous run, remove it so we never append twice.
+  const prior = document.getElementById(RX_ROOT_ID);
+  if (prior) prior.remove();
+
+  // Find the native container that holds the header (date + button) and the table
   const container = document.querySelector('.table-container');
   if (!container) return;
 
-  // Our wrapper (no stacking/overlay tricks)
+  // Replace ONLY the native table (keep the header intact).
+  // Guard so we never target our own injected table on re-runs.
+  const nativeTable = container.querySelector('table:not(.cv-queue-table)');
+
+  // Our wrapper (no overlay tricks)
   const wrapper = document.createElement('div');
   wrapper.id = RX_ROOT_ID;
-  wrapper.style.marginTop = '0';        // don't push the header row
-  wrapper.style.position = 'static';    // ensure we never overlay the header
+  wrapper.style.marginTop = '0';
+  wrapper.style.position = 'static';
   wrapper.style.zIndex = 'auto';
 
-  // Append strictly AFTER the native container
-  container.parentNode.insertBefore(wrapper, container.nextSibling);
+  if (nativeTable) {
+    // ✅ Replace the table, preserving the header right above it
+    nativeTable.replaceWith(wrapper);
+  } else {
+    // Fallback: if there is no table yet, inject at the end of the container
+    container.appendChild(wrapper);
+  }
 
-  // Build our table only inside our wrapper
+  // Build our table strictly inside our wrapper
   buildQueueStatsChart(wrapper);
+
+  // Optional: robust click delegation if you want to intercept link clicks
+  wrapper.addEventListener('click', (evt) => {
+    const a = evt.target.closest('a.cv-link');
+    if (!a) return;
+    // Prevent any parent handlers from swallowing it
+    evt.preventDefault();
+    evt.stopPropagation();
+    // TODO: hook this up to whatever you want (e.g., filter modal or nav)
+    // console.debug('Clicked value:', a.textContent.trim());
+  });
 })();
+
 
 
 
@@ -2449,7 +2470,7 @@ function buildQueueStatsChart(wrapper) {
   const style = document.createElement('style');
   style.textContent = `
   /* keep the Table Settings dropdown above everything and able to overflow */
-  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; }
+  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; pointer-events: auto; }
   
 
 
@@ -2464,15 +2485,22 @@ function buildQueueStatsChart(wrapper) {
   ${rootSel} table.cv-queue-table td:first-child,
   ${rootSel} table.cv-queue-table th:first-child{width:36px;text-align:center;}
 
-  /* EXACT Clarity link blue on headers and values */
+ /* EXACT Clarity link blue on headers and values, plus explicit pointer + hover underline */
   ${rootSel} .cv-th-link,
   ${rootSel} .cv-th-link:visited,
   ${rootSel} a.cv-link,
-  ${rootSel} a.cv-link:visited{color:#1a64b8!important;text-decoration:none;cursor:pointer;font-weight:600;}
+  ${rootSel} a.cv-link:visited{
+    color:#1a64b8!important;
+    text-decoration:none;
+    cursor:pointer;
+    font-weight:600;
+    pointer-events:auto;
+  }
   ${rootSel} .cv-th-link:hover,
   ${rootSel} a.cv-link:hover{text-decoration:underline;}
-  ${rootSel} .cv-zero{color:#8a8a8a;}
 
+  ${rootSel} .cv-zero{color:#8a8a8a; pointer-events:none;}
+`;
   /* info dot & popover (wrap text, no overflow) */
   ${rootSel} .cv-info{display:inline-block;position:relative;margin-left:6px;}
   ${rootSel} .cv-i{
@@ -2628,6 +2656,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
