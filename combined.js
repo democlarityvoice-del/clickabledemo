@@ -2428,43 +2428,34 @@ if (!window.__cvQueueStatsInit)
 
     buildQueueStatsChart(wrapper);
 
-    // Unhide the real "Table Settings" toolbar row
-const lower = document.querySelector('.modal-header-settings-lower');
-if (lower) {
-  lower.classList.remove('hide');        // bootstrap "hide" -> display:none
-  lower.style.display = 'block';
-  lower.style.position = 'relative';
-  lower.style.zIndex = '10';
-}
-
-// Belt-and-suspenders: button visible/clickable
-const settingsBtn = document.querySelector('#table-column-selector-title');
-if (settingsBtn) settingsBtn.style.visibility = 'visible';
-
-    // Unhide toolbar row
-const lower = document.querySelector('.modal-header-settings-lower');
-if (lower) { lower.classList.remove('hide'); lower.style.display = 'block'; }
-
-// Ensure the button group is visible and above our overlay
-const btnGroup = document.querySelector('#table-column-queue-dropdown');
-if (btnGroup) { btnGroup.style.display = 'inline-block'; btnGroup.style.position = 'relative'; btnGroup.style.zIndex = '20'; }
-
-// Let the dropdown overflow and sit on top
-const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
-if (menu) menu.style.zIndex = '9999';
-
-// Avoid clipping from the table container
-const tc = document.querySelector('.table-container');
-if (tc) tc.style.overflow = 'visible';
-
-
-    // also unhide the button group if it was hidden separately
-const dd = document.querySelector('#table-column-queue-dropdown');
-if (dd) { dd.classList.remove('hide'); dd.style.display = 'inline-block'; }
-
-
+// Unhide / raise the real "Table Settings" toolbar row (single block)
+(() => {
+  const lowerRow = document.querySelector('.modal-header-settings-lower');
+  if (lowerRow) {
+    lowerRow.classList.remove('hide');
+    lowerRow.style.display  = 'block';
+    lowerRow.style.position = 'relative';
+    lowerRow.style.zIndex   = '10';
   }
+
+  const btnGroup = document.querySelector('#table-column-queue-dropdown');
+  if (btnGroup) {
+    btnGroup.classList.remove('hide');
+    btnGroup.style.display  = 'inline-block';
+    btnGroup.style.position = 'relative';
+    btnGroup.style.zIndex   = '20';
+  }
+
+  const settingsBtn = document.querySelector('#table-column-selector-title');
+  if (settingsBtn) settingsBtn.style.visibility = 'visible';
+
+  const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
+  if (menu) menu.style.zIndex = '9999';
+
+  const tc = document.querySelector('.table-container'); // avoid clipping
+  if (tc) tc.style.overflow = 'visible';
 })();
+
 
 
 
@@ -2662,6 +2653,7 @@ const lbl = table.querySelector('tfoot td.cv-right');
 if (lbl) lbl.textContent = '';
 
 }
+
 
 
 
