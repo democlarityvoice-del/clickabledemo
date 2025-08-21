@@ -2421,115 +2421,152 @@ if (!window.__cvCallHistoryInit) {
 
   // -------- BUILD SRCDOC -------- //
   function buildSrcdoc() {
-    return `
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Call History Overlay</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      font-family: Arial, sans-serif;
-    }
+  return `<!doctype html><html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<style>
+  :root {
+    --font-stack: "Helvetica Neue", Helvetica, Arial, sans-serif;
+    --text-color: #333;
+    --muted: #666;
+    --border: #ddd;
+  }
 
-    #circular-icons {
-      position: fixed;
-      right: 50px;
-      top: 50%;
-      transform: translateY(-50%);
-      pointer-events: none;
-      z-index: 1000;
-    }
+  * { box-sizing: border-box; }
+  html, body {
+    width: 100%;
+    margin: 0;
+    font: 13px/1.428 var(--font-stack);
+    color: var(--text-color);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background: #fff;
+  }
 
-    .circular-icon {
-      position: absolute;
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 2px solid #333;
-      transform: translate(-50%, -50%);
-      pointer-events: auto;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
+  .call-container {
+    background: #fff;
+    padding: 0 16px 18px;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+    width: 100%;
+    max-width: 100%;
+  }
 
-    #action-panel {
-      position: fixed;
-      bottom: 50px;
-      left: 50%;
-      transform: translateX(-50%);
-      display: flex;
-      gap: 10px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px;
-      border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.3s ease;
-      z-index: 1001;
-    }
+  table { width: 100%; border-collapse: collapse; table-layout: auto; }
+  thead th {
+    padding: 8px 12px;
+    font-weight: 600;
+    font-size: 13px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  td {
+    padding: 8px 12px;
+    font-weight: 400;
+    font-size: 13px;
+    border-bottom: 1px solid #eee;
+    white-space: nowrap;
+    text-align: left;
+  }
 
-    .action-button {
-      width: 40px;
-      height: 40px;
-      border: none;
-      border-radius: 50%;
-      background: #f8f9fa;
-      cursor: pointer;
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      transition: all 0.2s ease;
-    }
+  tr:hover { background: #f7f7f7; }
 
-    .action-button img {
-      width: 24px;
-      height: 24px;
-      pointer-events: none;
-    }
-
-    .tooltip {
-      position: absolute;
-      bottom: 120%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #333;
-      color: white;
-      padding: 4px 8px;
-      border-radius: 4px;
-      font-size: 12px;
-      white-space: nowrap;
-      opacity: 0;
-      visibility: hidden;
-      transition: all 0.2s ease;
-      pointer-events: none;
-      z-index: 1002;
-    }
-
-    .action-button:hover {
-      background: #e9ecef;
-      transform: scale(1.1);
-    }
-
-    .action-button:hover .tooltip {
-      opacity: 1;
-      visibility: visible;
-    }
-  </style>
+  .listen-btn {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 28px; height: 28px;
+    background: #f0f0f0;
+    border-radius: 50%; border: none; cursor: pointer;
+  }
+  .listen-btn img {
+    width: 18px; height: 18px;
+    display: block;
+    opacity: .38;
+    transition: opacity .2s;
+  }
+  tr:hover .listen-btn img { opacity: .60; }
+</style>
 </head>
 <body>
-  <div id="circular-icons"></div>
-  <div id="action-panel"></div>
-</body>
-</html>
-    `;
+  <div class="call-container">
+    <table>
+      <thead>
+        <tr>
+          <th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th>
+        </tr>
+      </thead>
+      <tbody id="callsTableBody"></tbody>
+    </table>
+  </div>
+
+<script>
+(function () {
+  const extensions = [200,201,202,203,204,205,206,207];
+  const extNameMap = {
+    200: "Mike Johnson", 201: "Cathy Thomas", 202: "Jake Lee", 203: "Bob Andersen",
+    204: "Brittany Lawrence", 205: "Alex Roberts", 206: "Mark Sanchez", 207: "John Smith"
+  };
+  const names = ["WIRELESS CALLER","Unavailable","BAYONNE NJ","Miguel Urbina","Support Main","Gabe Montez","CLARITY VOICE"];
+  const areaCodes = ["248", "313", "517", "810", "989", "929", "720", "602", "800"];
+  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
+
+  const randomPhone = () => {
+    const ac = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+    const prefix = 100 + Math.floor(Math.random() * 900);
+    const suffix = 1000 + Math.floor(Math.random() * 9000);
+    return \`(\${ac}) \${prefix}-\${suffix}\`;
+  };
+
+  const randomDuration = () => {
+    const min = Math.floor(Math.random() * 9);
+    const sec = Math.floor(Math.random() * 60);
+    return \`\${min}:\${sec.toString().padStart(2, "0")}\`;
+  };
+
+  const table = document.getElementById("callsTableBody");
+  let usedCombos = new Set();
+
+  for (let i = 0; i < 25; i++) {
+    const isOutbound = Math.random() < 0.3;
+    let from, cnam, dialed, to;
+
+    if (isOutbound) {
+      const ext = extensions[Math.floor(Math.random() * extensions.length)];
+      from = ext;
+      cnam = extNameMap[ext];
+      dialed = randomPhone();
+      to = "External";
+    } else {
+      from = randomPhone();
+      cnam = names[Math.floor(Math.random() * names.length)];
+      dialed = "(800) 676-3995";
+      // Random To routing
+      const toType = Math.random();
+      if (toType < 0.03) to = SPEAK;
+      else if (toType < 0.05) to = VMAIL;
+      else if (toType < 0.35) to = CALL_QUEUE;
+      else {
+        const ext = extensions[Math.floor(Math.random() * extensions.length)];
+        to = \`Ext. \${ext} (\${extNameMap[ext]})\`;
+      }
+    }
+
+    const duration = randomDuration();
+    const row = document.createElement("tr");
+    row.innerHTML = \`
+      <td>\${from}</td>
+      <td>\${cnam}</td>
+      <td>\${dialed}</td>
+      <td>\${to}</td>
+      <td>\${duration}</td>
+      <td><button class="listen-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/8/84/OOjs_UI_icon_speaker.svg"></button></td>
+    \`;
+    table.appendChild(row);
   }
+})();
+</script>
+</body></html>`;
+}
+
 
   // -------- REMOVE CALL HISTORY -------- //
   function removeCallHistory() {
@@ -2656,6 +2693,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
