@@ -2526,16 +2526,16 @@ function buildSrcdoc() {
       <td>${row.to}</td>
       <td>${row.duration}</td>
       <td class="icon-cell">
-        ${ICONS.map(icon => `<button class="icon-btn" title="${icon.title}"><img src="${icon.src}" alt="${icon.title}" /></button>`).join('')}
+          ${ICONS.map(icon => `<button class="icon-btn" title="${icon.title}"><img src="${icon.src}" alt="${icon.title}" /></button>`).join('')}
       </td>
     `;
+
     tbody.appendChild(tr);
   });
 })();
 </script>
 </body></html>`;
 }
-
 
 
   // -------- REMOVE CALL HISTORY -------- //
@@ -2663,6 +2663,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
