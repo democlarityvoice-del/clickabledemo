@@ -2475,6 +2475,11 @@ function buildQueueStatsChart(wrapper) {
 
 
   /* table & typography */
+style.textContent = `
+  /* keep the Table Settings dropdown above everything and able to overflow */
+  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; pointer-events: auto; }
+
+  /* table & typography */
   ${rootSel} .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}
   ${rootSel} table.cv-queue-table{width:100%;border-collapse:collapse;font-size:14px;}
   ${rootSel} table.cv-queue-table thead th{
@@ -2485,7 +2490,7 @@ function buildQueueStatsChart(wrapper) {
   ${rootSel} table.cv-queue-table td:first-child,
   ${rootSel} table.cv-queue-table th:first-child{width:36px;text-align:center;}
 
- /* EXACT Clarity link blue on headers and values, plus explicit pointer + hover underline */
+  /* EXACT Clarity link blue on headers and values, plus explicit pointer + hover underline */
   ${rootSel} .cv-th-link,
   ${rootSel} .cv-th-link:visited,
   ${rootSel} a.cv-link,
@@ -2500,7 +2505,7 @@ function buildQueueStatsChart(wrapper) {
   ${rootSel} a.cv-link:hover{text-decoration:underline;}
 
   ${rootSel} .cv-zero{color:#8a8a8a; pointer-events:none;}
-`;
+
   /* info dot & popover (wrap text, no overflow) */
   ${rootSel} .cv-info{display:inline-block;position:relative;margin-left:6px;}
   ${rootSel} .cv-i{
@@ -2529,7 +2534,8 @@ function buildQueueStatsChart(wrapper) {
   ${rootSel} tfoot td.cv-right{text-align:right;}
   ${rootSel} .cv-sort{font-size:10px;color:#888;margin-left:6px;}
   ${rootSel} .cv-topleft-icon{width:16px;height:16px;vertical-align:middle;opacity:.9;}
-  `;
+`;
+
   document.head.appendChild(style);
 
 
@@ -2656,6 +2662,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
