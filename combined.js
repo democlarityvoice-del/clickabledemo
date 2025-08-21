@@ -2423,7 +2423,9 @@ if (!window.__cvQueueStatsInit) {
       const wrapper = document.createElement('div');
       wrapper.id = RX_ROOT_ID;
       wrapper.style.marginTop = '20px';
-      container.appendChild(wrapper);
+      container.innerHTML = ''; // Clear original report contents
+      container.appendChild(wrapper); // Inject only our fake overlay
+
 
       buildQueueStatsChart(wrapper);
     }
@@ -2488,3 +2490,4 @@ if (!window.__cvQueueStatsInit) {
     wrapper.appendChild(table);
   }
 }
+
