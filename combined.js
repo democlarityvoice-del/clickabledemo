@@ -2433,63 +2433,60 @@ if (!window.__cvQueueStatsInit)
   })();
 
   function buildQueueStatsChart(wrapper) {
-    const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+  const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
-    const table = document.createElement('table');
-    table.className = 'cv-queue-table';
-    table.innerHTML = `
-      <thead>
-        <tr>
-          <th></th>
-          <th>Queue</th>
-          <th>Name</th>
-          <th>Calls Handled</th>
-          <th>Calls Offered</th>
-          <th>Avg. Talk Time</th>
-          <th>Avg. Hold Time</th>
-          <th>Abandon Rate</th>
-          <th>Avg. Handle Time</th>
-        </tr>
-      </thead>
-      <tbody>
-        ${[300, 301, 302, 303].map((q, i) => {
-          const colors = ['red', 'blue', 'green', 'purple'];
-          return `
-            <tr>
-              <td><input type="checkbox" style="accent-color: ${colors[i % colors.length]}"></td>
-              <td>${q}</td>
-              <td>Sample Queue ${i + 1}</td>
-              <td>${Math.floor(Math.random() * 40)}</td>
-              <td>${Math.floor(Math.random() * 45)}</td>
-              <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-              <td>${String(Math.floor(Math.random() * 2)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-              <td>${Math.random() > 0.5 ? Math.floor(Math.random() * 50) + '%' : '0%'}</td>
-              <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-            </tr>
-          `;
-        }).join('')}
-      </tbody>
-    `;
+  const table = document.createElement('table');
+  table.className = 'cv-queue-table';
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th></th>
+        <th>Queue</th>
+        <th>Name</th>
+        <th>Calls Handled</th>
+        <th>Calls Offered</th>
+        <th>Avg. Talk Time</th>
+        <th>Avg. Hold Time</th>
+        <th>Abandon Rate</th>
+        <th>Avg. Handle Time</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${[300, 301, 302, 303].map((q, i) => {
+        const colors = ['red', 'blue', 'green', 'purple'];
+        return `
+          <tr>
+            <td><input type="checkbox" style="accent-color: ${colors[i % colors.length]}"></td>
+            <td>${q}</td>
+            <td>Sample Queue ${i + 1}</td>
+            <td>${Math.floor(Math.random() * 40)}</td>
+            <td>${Math.floor(Math.random() * 45)}</td>
+            <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+            <td>${String(Math.floor(Math.random() * 2)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+            <td>${Math.random() > 0.5 ? Math.floor(Math.random() * 50) + '%' : '0%'}</td>
+            <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
+          </tr>
+        `;
+      }).join('')}
+    </tbody>
+  `;
 
-    const icon = document.createElement('img');
-    icon.src = iconUrl;
-    icon.alt = 'Queue icon';
-    icon.style.width = '20px';
-    icon.style.verticalAlign = 'middle';
-    icon.style.marginRight = '10px';
+  const icon = document.createElement('img');
+  icon.src = iconUrl;
+  icon.alt = 'Queue icon';
+  icon.style.width = '20px';
+  icon.style.verticalAlign = 'middle';
+  icon.style.marginRight = '10px';
 
-    const tableHeader = document.createElement('h3');
-    tableHeader.textContent = ' Live Queue Stats';
-    tableHeader.prepend(icon);
+  const tableHeader = document.createElement('h3');
+  tableHeader.textContent = ' Live Queue Stats';
+  tableHeader.prepend(icon);
 
-    const tableSettings = document.createElement('div');
-    tableSettings.style.float = 'right';
-    tableSettings.innerHTML = `<button id="table-settings-button">Table Settings &#9662;</button>`;
+  const tableSettings = document.createElement('div');
+  tableSettings.style.float = 'right';
+  tableSettings.innerHTML = `<button id="table-settings-button">Table Settings &#9662;</button>`;
 
-    wrapper.appendChild(tableSettings);
-    wrapper.appendChild(tableHeader);
-    wrapper.appendChild(table);
-  }
+  wrapper.appendChild(tableSettings);
+  wrapper.appendChild(tableHeader);
+  wrapper.appendChild(table);
 }
-
-
