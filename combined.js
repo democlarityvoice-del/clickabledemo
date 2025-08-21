@@ -2467,18 +2467,14 @@ function buildQueueStatsChart(wrapper) {
       border-radius:50%; background:#e5e5e5; color:#777; font-size:11px; font-weight:700;
     }
 
-    /* Popover that matches look/size from screenshots */
+    /* Popover look/size */
     ${rootSel} .cv-pop {
-      position:absolute; left:50%; transform:translateX(-50%); bottom:26px; /* sits above the dot */
+      position:absolute; left:50%; transform:translateX(-50%); bottom:26px;
       background:#fff; border:1px solid #d9d9d9; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.15);
       min-width:340px; max-width:520px; padding:0; display:none; z-index:9999;
     }
-    ${rootSel} .cv-pop-title {
-      padding:10px 14px; font-weight:700; color:#333; border-bottom:1px solid #eee;
-    }
-    ${rootSel} .cv-pop-body {
-      padding:10px 14px; color:#333; font-size:13px; line-height:1.35;
-    }
+    ${rootSel} .cv-pop-title { padding:10px 14px; font-weight:700; color:#333; border-bottom:1px solid #eee; }
+    ${rootSel} .cv-pop-body { padding:10px 14px; color:#333; font-size:13px; line-height:1.35; }
     ${rootSel} .cv-pop-arrow {
       position:absolute; left:50%; transform:translateX(-50%);
       bottom:-8px; width:0; height:0; border-left:8px solid transparent;
@@ -2495,7 +2491,7 @@ function buildQueueStatsChart(wrapper) {
     ${rootSel} a.cv-link:hover { text-decoration:underline; }
     ${rootSel} .cv-zero { color:#8a8a8a; }
 
-    /* Visual sort caret on Queue (cosmetic) */
+    /* Cosmetic sort caret on Queue */
     ${rootSel} .cv-sort { font-size:10px; color:#888; margin-left:6px; }
   `;
   wrapper.appendChild(style);
@@ -2504,16 +2500,16 @@ function buildQueueStatsChart(wrapper) {
   const header = document.createElement('div');
   header.className = 'cv-header';
 
-  const tableHeader = document.createElement('div');
-  tableHeader.className = 'cv-title';
+  const headTitle = document.createElement('div');
+  headTitle.className = 'cv-title';
   const icon = document.createElement('img');
   icon.src = iconUrl; icon.alt = '';
-  tableHeader.appendChild(icon);
-  tableHeader.appendChild(document.createTextNode('Live Queue Stats'));
-  header.appendChild(tableHeader);
+  headTitle.appendChild(icon);
+  headTitle.appendChild(document.createTextNode('Live Queue Stats'));
+  header.appendChild(headTitle);
   wrapper.appendChild(header);
 
-  // “Showing data up to …”
+  // Showing data up to ...
   function fmtDate(d){
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -2527,11 +2523,11 @@ function buildQueueStatsChart(wrapper) {
   upTo.textContent = `Showing data up to ${fmtDate(new Date())}`;
   wrapper.appendChild(upTo);
 
-  // helper to render a numeric/time cell: blue link if >0, gray if zero
+  // helper: values as blue links when > 0
   const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
     ? `<span class="cv-zero">${val}</span>` : `<a class="cv-link" href="javascript:void(0)">${val}</a>`;
 
-  // convenience to build a header cell with blue title + “i” popover
+  // header cell with blue title + popover
   const H = (shortLabel, popTitle, popBody, addSort=false) => `
     <span class="cv-th">
       <a class="cv-th-link" href="javascript:void(0)">${shortLabel}</a>
@@ -2623,19 +2619,5 @@ function buildQueueStatsChart(wrapper) {
     </tbody>
   `;
 
-  // title + table
-  const title = document.createElement('div');
-  title.className = 'cv-title';
-  const ticon = document.createElement('img'); ticon.src = iconUrl; ticon.alt = '';
-  title.appendChild(ticon);
-  title.appendChild(document.createTextNode('Live Queue Stats'));
-
-  wrapper.appendChild(title);
   wrapper.appendChild(table);
 }
-
-
-
-
-
-
