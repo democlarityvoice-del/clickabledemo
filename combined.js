@@ -2624,33 +2624,29 @@ function buildQueueStatsChart(wrapper) {
   `;
   wrapper.appendChild(table);
 
-// after wrapper.appendChild(table)
-table.querySelectorAll('tbody tr').forEach(tr => {
-  [3,4,5,6,7,8].forEach(i => {
-    const td = tr.children[i]; if (!td) return;
-    const v = td.textContent.trim();
-    const isZero = !v || v==='0' || v==='0%' || v==='00:00';
-    td.innerHTML = isZero ? `<span class="cv-zero">${v}</span>`
-      : `<a class="cv-link" href="javascript:void(0)">${v}</a>`;
+  wrapper.appendChild(table);
+
+  // Make numeric cells real links (non-zero values)
+  const cols = [3,4,5,6,7,8]; // handled..handle time (0-based)
+  table.querySelectorAll('tbody tr').forEach(tr => {
+    cols.forEach(i => {
+      const td = tr.children[i];
+      if (!td) return;
+      const v = (td.textContent || '').trim();
+      const isZero = v === '' || v === '0' || v === '0%' || v === '00:00';
+      td.innerHTML = isZero
+        ? `<span class="cv-zero">${v}</span>`
+        : `<a class="cv-link" href="javascript:void(0)">${v}</a>`;
+    });
   });
-});
 
-
-  // body rows
-  [...tbl.tBodies[0].rows].forEach(tr => toCols.forEach(i => tr.children[i] && paint(tr.children[i])));
-  // footer totals
-  if (tbl.tFoot && tbl.tFoot.rows[0]) toCols.forEach(i => tbl.tFoot.rows[0].children[i] && paint(tbl.tFoot.rows[0].children[i]));
-})(table);
-
-
-  // Force Clarity blue on headers & values (wins over any stylesheet)
+  // Force Clarity blue on headers & values
   table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
     a.style.color = '#1a64b8';
     a.style.textDecoration = 'none';
     a.style.fontWeight = '600';
   });
 }
-
 
 
 
