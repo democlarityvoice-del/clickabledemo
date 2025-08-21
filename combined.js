@@ -2405,50 +2405,35 @@ if (!document.__cvqfRowStatusCapture) {
 // ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
+// ==============================
+// Clarity Voice Queue Stats Inject
+// ==============================
 if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
 
-(function injectQueueStatsOverlay() {
+; (function injectQueueStatsOverlay() {   // leading semicolon prevents ASI collisions
   const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
   const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
   if (!QUEUE_STATS_REGEX.test(location.href)) return;
   if (document.getElementById(RX_ROOT_ID)) return;
 
-  // Target the modal-body-reports container
-  // Target the native container but DO NOT modify it or any header rows
-const container = document.querySelector('.table-container');
-if (!container) return;
+  // Find native container; DO NOT modify or clear it
+  const container = document.querySelector('.table-container');
+  if (!container) return;
 
-// Snapshot styles of native elements (for proof we didn't change them)
-const _guards = ['.modal-header-settings-lower', '#table-column-queue-dropdown', '#modal_stats_table_wrapper']
-  .map(sel => {
-    const el = document.querySelector(sel);
-    return el ? { sel, el, style: el.getAttribute('style') || '' } : { sel, el: null, style: null };
-  });
+  // Our wrapper (no margin fights with native headers)
+  const wrapper = document.createElement('div');
+  wrapper.id = RX_ROOT_ID;
+  wrapper.style.marginTop = '0';
 
-const wrapper = document.createElement('div');
-wrapper.id = RX_ROOT_ID;
-// top spacing is your call; set to 0 so we don't shove headers
-wrapper.style.marginTop = '0px';
+  // Append strictly AFTER the native container (no reparenting inside DT)
+  container.parentNode.insertBefore(wrapper, container.nextSibling);
 
-// Append our table **after** the native container (non-invasive)
-container.insertAdjacentElement('afterend', wrapper);
+  // Build our table only inside our wrapper
+  buildQueueStatsChart(wrapper);
+})();
 
-// Build our table inside our wrapper only
-buildQueueStatsChart(wrapper);
-
-// ---- Self-check: prove we didn't change native nodes ----
-const _results = _guards.map(g => {
-  const now = document.querySelector(g.sel);
-  return {
-    sel: g.sel,
-    sameNode: !!g.el && now === g.el,                // we didn't replace it
-    sameInlineStyle: !!g.el && (now.getAttribute('style') || '') === g.style // we didn't restyle it inline
-  };
-});
-console.info('[CV Overlay] Non-invasive check:', _results);
-
-  
+console.info('[CV Overlay] Non-invasive check:', _results);  
 })();
 
 // ---------- styles (visual only) ----------
@@ -2639,6 +2624,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
