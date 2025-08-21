@@ -2408,25 +2408,30 @@ if (!document.__cvqfRowStatusCapture) {
 // ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
+// ==============================
+// Clarity Voice Queue Stats Inject
+// ==============================
 if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
 
-; (function injectQueueStatsOverlay() {   // leading semicolon prevents ASI collisions
-  const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
+;(function injectQueueStatsOverlay() {
   const RX_ROOT_ID = 'cv-queue-stats-wrapper';
+  const ON_QUEUE_STATS = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/.test(location.href);
 
-  if (!QUEUE_STATS_REGEX.test(location.href)) return;
+  if (!ON_QUEUE_STATS) return;
   if (document.getElementById(RX_ROOT_ID)) return;
 
-  // Find native container; DO NOT modify or clear it
+  // Find native table container – DO NOT modify/clear it
   const container = document.querySelector('.table-container');
   if (!container) return;
 
-  // Our wrapper (no margin fights with native headers)
+  // Our wrapper (no stacking/overlay tricks)
   const wrapper = document.createElement('div');
   wrapper.id = RX_ROOT_ID;
-  wrapper.style.marginTop = '0';
+  wrapper.style.marginTop = '0';        // don't push the header row
+  wrapper.style.position = 'static';    // ensure we never overlay the header
+  wrapper.style.zIndex = 'auto';
 
-  // Append strictly AFTER the native container (no reparenting inside DT)
+  // Append strictly AFTER the native container
   container.parentNode.insertBefore(wrapper, container.nextSibling);
 
   // Build our table only inside our wrapper
@@ -2623,6 +2628,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
