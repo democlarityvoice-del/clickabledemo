@@ -2400,9 +2400,7 @@ if (!document.__cvqfRowStatusCapture) {
 // --- ATTEMPT NUMBER 9 JILLION TO GET THE DUMB REPORTS TO LOAD ---
 
 
-// ==============================
-// ==============================
-// ==============================
+
 // ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
@@ -2432,8 +2430,7 @@ if (!window.__cvQueueStatsInit)
   }
 })();
 
-function buildQueueStatsChart(wrapper) {
-  const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+
 
   // ---------- styles (visual only) ----------
 function buildQueueStatsChart(wrapper) {
@@ -2621,3 +2618,4 @@ function buildQueueStatsChart(wrapper) {
 
   wrapper.appendChild(table);
 }
+
