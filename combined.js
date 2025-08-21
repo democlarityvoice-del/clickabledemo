@@ -2624,7 +2624,7 @@ function buildQueueStatsChart(wrapper) {
   `;
   wrapper.appendChild(table);
 
-  wrapper.appendChild(table);
+
 
   // Make numeric cells real links (non-zero values)
   const cols = [3,4,5,6,7,8]; // handled..handle time (0-based)
@@ -2647,6 +2647,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
