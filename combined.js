@@ -2415,45 +2415,38 @@ if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
   if (document.getElementById(RX_ROOT_ID)) return;
 
   // Target the modal-body-reports container
-  const container = document.querySelector('.table-container');
-  if (!container) return;
+  // Target the native container but DO NOT modify it or any header rows
+const container = document.querySelector('.table-container');
+if (!container) return;
 
-  const wrapper = document.createElement('div');
-  wrapper.id = RX_ROOT_ID;
-  wrapper.style.marginTop = '20px';
+// Snapshot styles of native elements (for proof we didn't change them)
+const _guards = ['.modal-header-settings-lower', '#table-column-queue-dropdown', '#modal_stats_table_wrapper']
+  .map(sel => {
+    const el = document.querySelector(sel);
+    return el ? { sel, el, style: el.getAttribute('style') || '' } : { sel, el: null, style: null };
+  });
 
+const wrapper = document.createElement('div');
+wrapper.id = RX_ROOT_ID;
+// top spacing is your call; set to 0 so we don't shove headers
+wrapper.style.marginTop = '0px';
 
-// Keep native header rows intact. Just hide the native table and render ours after it.
-const dtWrap = document.querySelector('#modal_stats_table_wrapper');
-if (dtWrap) {
-  const nativeTable = dtWrap.querySelector('table');
-  if (nativeTable) nativeTable.style.display = 'none';
-  dtWrap.insertAdjacentElement('afterend', wrapper);  // our table goes BELOW the DT wrapper
-} else {
-  container.appendChild(wrapper);
-}
+// Append our table **after** the native container (non-invasive)
+container.insertAdjacentElement('afterend', wrapper);
+
+// Build our table inside our wrapper only
 buildQueueStatsChart(wrapper);
 
-  (() => {
-  // Show the header row (some pages add .hide until the table initializes)
-  const lowerRow = document.querySelector('.modal-header-settings-lower');
-  if (lowerRow) {
-    lowerRow.classList.remove('hide');
-    lowerRow.style.display  = 'block';
-    lowerRow.style.position = 'relative';
-    lowerRow.style.zIndex   = '10';
-  }
-  // Keep the Table Settings group visible and above our overlay
-  const btnGroup = document.querySelector('#table-column-queue-dropdown');
-  if (btnGroup) {
-    btnGroup.classList.remove('hide');
-    btnGroup.style.display  = 'inline-block';
-    btnGroup.style.position = 'relative';
-    btnGroup.style.zIndex   = '20';
-  }
-  const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
-  if (menu) menu.style.zIndex = '9999';
-})();
+// ---- Self-check: prove we didn't change native nodes ----
+const _results = _guards.map(g => {
+  const now = document.querySelector(g.sel);
+  return {
+    sel: g.sel,
+    sameNode: !!g.el && now === g.el,                // we didn't replace it
+    sameInlineStyle: !!g.el && (now.getAttribute('style') || '') === g.style // we didn't restyle it inline
+  };
+});
+console.info('[CV Overlay] Non-invasive check:', _results);
 
   
 })();
@@ -2646,6 +2639,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
