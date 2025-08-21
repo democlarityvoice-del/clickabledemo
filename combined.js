@@ -2440,38 +2440,40 @@ function buildQueueStatsChart(wrapper) {
   const rootSel = `#${wrapper.id}`;
   const style = document.createElement('style');
   style.textContent = `
-    ${rootSel} .cv-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
-    ${rootSel} .cv-title { font-weight:600; font-size:18px; color:#333; display:flex; align-items:center; }
-    ${rootSel} .cv-title img { width:16px; height:16px; margin-right:8px; vertical-align:middle; }
+    ${rootSel} :root { --cv-link-blue: #1a64b8; } /* closer to the real blue */
     ${rootSel} .cv-up-to { font-size:12px; color:#666; margin:6px 0 10px; }
 
     ${rootSel} table.cv-queue-table { width:100%; border-collapse:collapse; font-size:14px; }
     ${rootSel} table.cv-queue-table thead th {
-      background:#f9f9f9; color:#333; font-weight:600; border:1px solid #e5e5e5; padding:10px 12px; text-align:left;
-      position:relative; white-space:nowrap;
+      background:#f9f9f9; color:#333; font-weight:600; border:1px solid #e5e5e5;
+      padding:8px 10px; text-align:left; position:relative; white-space:nowrap;
     }
-    ${rootSel} table.cv-queue-table td { border:1px solid #e5e5e5; padding:10px 12px; vertical-align:middle; }
-    ${rootSel} table.cv-queue-table td:first-child { width:36px; text-align:center; }
+    ${rootSel} table.cv-queue-table td { border:1px solid #e5e5e5; padding:8px 10px; vertical-align:middle; }
+    ${rootSel} table.cv-queue-table td:first-child,
+    ${rootSel} table.cv-queue-table th:first-child { width:36px; text-align:center; }
 
-    /* Blue header titles (like the real table) */
-    ${rootSel} .cv-th-link { color:#1a64b8; text-decoration:none; cursor:pointer; font-weight:600; }
+    /* Blue header titles (smaller) */
+    ${rootSel} .cv-th-link { color:var(--cv-link-blue); text-decoration:none; cursor:pointer; font-weight:600; font-size:13px; }
     ${rootSel} .cv-th-link:hover { text-decoration:underline; }
 
-    /* Small gray info "i" dot next to headers */
+    /* Small gray info "i" dot */
     ${rootSel} .cv-info { display:inline-block; position:relative; margin-left:6px; }
     ${rootSel} .cv-i {
       display:inline-block; width:16px; height:16px; line-height:16px; text-align:center;
       border-radius:50%; background:#e5e5e5; color:#777; font-size:11px; font-weight:700;
     }
 
-    /* Popover look/size */
+    /* Popover look/size + proper wrapping */
     ${rootSel} .cv-pop {
       position:absolute; left:50%; transform:translateX(-50%); bottom:26px;
       background:#fff; border:1px solid #d9d9d9; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.15);
-      min-width:340px; max-width:520px; padding:0; display:none; z-index:9999;
+      min-width:340px; max-width:520px; padding:0; display:none; z-index:9999; box-sizing:border-box;
     }
     ${rootSel} .cv-pop-title { padding:10px 14px; font-weight:700; color:#333; border-bottom:1px solid #eee; }
-    ${rootSel} .cv-pop-body { padding:10px 14px; color:#333; font-size:13px; line-height:1.35; }
+    ${rootSel} .cv-pop-body {
+      padding:10px 14px; color:#333; font-size:13px; line-height:1.35;
+      white-space:normal; overflow-wrap:anywhere; word-break:normal;
+    }
     ${rootSel} .cv-pop-arrow {
       position:absolute; left:50%; transform:translateX(-50%);
       bottom:-8px; width:0; height:0; border-left:8px solid transparent;
@@ -2484,29 +2486,19 @@ function buildQueueStatsChart(wrapper) {
     ${rootSel} .cv-info:hover .cv-pop { display:block; }
 
     /* Blue values as links; 0s gray */
-    ${rootSel} a.cv-link { color:#1a64b8; text-decoration:none; cursor:pointer; }
+    ${rootSel} a.cv-link { color:var(--cv-link-blue); text-decoration:none; cursor:pointer; }
     ${rootSel} a.cv-link:hover { text-decoration:underline; }
     ${rootSel} .cv-zero { color:#8a8a8a; }
 
-    /* Cosmetic sort caret on Queue */
+    /* Footer (totals/averages) styling */
+    ${rootSel} tfoot td { background:#fafafa; color:#666; font-weight:600; }
+    ${rootSel} tfoot td.cv-right { text-align:right; }
     ${rootSel} .cv-sort { font-size:10px; color:#888; margin-left:6px; }
+    ${rootSel} .cv-topleft-icon { width:16px; height:16px; vertical-align:middle; opacity:.9; }
   `;
   wrapper.appendChild(style);
 
-  // ---------- header ----------
-  const header = document.createElement('div');
-  header.className = 'cv-header';
-
-  const headTitle = document.createElement('div');
-  headTitle.className = 'cv-title';
-  const icon = document.createElement('img');
-  icon.src = iconUrl; icon.alt = '';
-  headTitle.appendChild(icon);
-  headTitle.appendChild(document.createTextNode('Live Queue Stats'));
-  header.appendChild(headTitle);
-  wrapper.appendChild(header);
-
-  // Showing data up to ...
+  // “Showing data up to …”
   function fmtDate(d){
     const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
@@ -2540,13 +2532,45 @@ function buildQueueStatsChart(wrapper) {
     </span>
   `;
 
+  // ---------- data ----------
+  const rows = [
+    { q: '300', name: 'Main Routing', handled: 2,  offered: 2,  talk:'09:34', hold:'00:15', abandon:'0%',   handle:'09:49' },
+    { q: '301', name: 'New Sales',    handled: 30, offered: 36, talk:'08:35', hold:'00:04', abandon:'22%',  handle:'08:39' },
+    { q: '302', name: 'Existing Customer', handled: 19, offered: 23, talk:'04:04', hold:'00:30', abandon:'17.4%', handle:'04:33' },
+    { q: '303', name: 'Billing',      handled: 8,  offered: 20, talk:'14:22', hold:'00:00', abandon:'0%',   handle:'14:22' },
+  ];
+
+  const toSec = (mmss)=>{ const [m,s]=mmss.split(':').map(Number); return m*60+s; };
+  const secTo = (s)=>{ s=Math.round(s); const m=Math.floor(s/60); const r=s%60; return `${String(m).padStart(2,'0')}:${String(r).padStart(2,'0')}`; };
+
+  const totalHandled = rows.reduce((a,r)=>a+r.handled,0);
+  const totalOffered = rows.reduce((a,r)=>a+r.offered,0);
+  const wAvg = (keyTime, weightKey) => {
+    const totalW = rows.reduce((a,r)=>a+r[weightKey],0) || 1;
+    const sum = rows.reduce((a,r)=>a + toSec(r[keyTime]) * r[weightKey], 0);
+    return secTo(sum/totalW);
+  };
+  const wAbandonPct = (() => {
+    const abandoned = rows.reduce((a,r)=> a + (parseFloat(r.abandon) / 100) * r.offered, 0);
+    return `${(abandoned / (totalOffered || 1) * 100).toFixed(1)}%`;
+  })();
+
+  const totalRow = {
+    handled: String(totalHandled),
+    offered: String(totalOffered),
+    talk: wAvg('talk','handled'),
+    hold: wAvg('hold','handled'),
+    abandon: wAbandonPct,
+    handle: wAvg('handle','handled'),
+  };
+
   // ---------- table ----------
   const table = document.createElement('table');
   table.className = 'cv-queue-table';
   table.innerHTML = `
     <thead>
       <tr>
-        <th></th>
+        <th><img class="cv-topleft-icon" src="${iconUrl}" alt=""></th>
         <th>${H('Queue', 'Queue', 'Queue number.', true)}</th>
         <th>${H('Name', 'Name', 'Queue name.')}</th>
         <th>${H('Calls Handled', 'Calls Handled', 'Number of calls answered by agent originating through a Call Queue.')}</th>
@@ -2558,64 +2582,33 @@ function buildQueueStatsChart(wrapper) {
       </tr>
     </thead>
     <tbody>
-      <tr>
-        <td><input type="checkbox"></td>
-        <td>300</td>
-        <td>Main Routing</td>
-        <td>${L('2')}</td>
-        <td>${L('2')}</td>
-        <td>${L('09:34')}</td>
-        <td>${L('00:15')}</td>
-        <td>${L('0%')}</td>
-        <td>${L('09:49')}</td>
-      </tr>
-      <tr>
-        <td><input type="checkbox"></td>
-        <td>301</td>
-        <td>New Sales</td>
-        <td>${L('30')}</td>
-        <td>${L('36')}</td>
-        <td>${L('08:35')}</td>
-        <td>${L('00:04')}</td>
-        <td>${L('22%')}</td>
-        <td>${L('08:39')}</td>
-      </tr>
-      <tr>
-        <td><input type="checkbox"></td>
-        <td>302</td>
-        <td>Existing Customer</td>
-        <td>${L('19')}</td>
-        <td>${L('23')}</td>
-        <td>${L('04:04')}</td>
-        <td>${L('00:30')}</td>
-        <td>${L('17.4%')}</td>
-        <td>${L('04:33')}</td>
-      </tr>
-      <tr>
-        <td><input type="checkbox"></td>
-        <td>303</td>
-        <td>Billing</td>
-        <td>${L('8')}</td>
-        <td>${L('20')}</td>
-        <td>${L('14:22')}</td>
-        <td>${L('00:00')}</td>
-        <td>${L('0%')}</td>
-        <td>${L('14:22')}</td>
-      </tr>
-      <tr>
-        <td><input type="checkbox"></td>
-        <td></td>
-        <td></td>
-        <td>${L('0')}</td>
-        <td>${L('0')}</td>
-        <td>${L('00:00')}</td>
-        <td>${L('00:00')}</td>
-        <td>${L('0%')}</td>
-        <td>${L('00:00')}</td>
-      </tr>
+      ${rows.map(r=>`
+        <tr>
+          <td><input type="checkbox"></td>
+          <td>${r.q}</td>
+          <td>${r.name}</td>
+          <td>${L(String(r.handled))}</td>
+          <td>${L(String(r.offered))}</td>
+          <td>${L(r.talk)}</td>
+          <td>${L(r.hold)}</td>
+          <td>${L(r.abandon)}</td>
+          <td>${L(r.handle)}</td>
+        </tr>
+      `).join('')}
     </tbody>
+    <tfoot>
+      <tr>
+        <td></td>
+        <td></td>
+        <td class="cv-right">Totals / Averages</td>
+        <td>${totalRow.handled}</td>
+        <td>${totalRow.offered}</td>
+        <td>${totalRow.talk}</td>
+        <td>${totalRow.hold}</td>
+        <td>${totalRow.abandon}</td>
+        <td>${totalRow.handle}</td>
+      </tr>
+    </tfoot>
   `;
-
   wrapper.appendChild(table);
 }
-
