@@ -2436,32 +2436,66 @@ function buildQueueStatsChart(wrapper) {
   const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
   // ---------- styles (visual only) ----------
+function buildQueueStatsChart(wrapper) {
+  const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
+
+  // ---------- VISUALS ONLY ----------
   const rootSel = `#${wrapper.id}`;
   const style = document.createElement('style');
   style.textContent = `
-    ${rootSel} .cv-header {
-      display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;
-    }
-    ${rootSel} .cv-title {
-      font-weight:600; font-size:18px; color:#333; display:flex; align-items:center;
-    }
+    ${rootSel} .cv-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; }
+    ${rootSel} .cv-title { font-weight:600; font-size:18px; color:#333; display:flex; align-items:center; }
     ${rootSel} .cv-title img { width:16px; height:16px; margin-right:8px; vertical-align:middle; }
-    ${rootSel} .cv-up-to { font-size:12px; color:#666; margin: 6px 0 10px; }
+    ${rootSel} .cv-up-to { font-size:12px; color:#666; margin:6px 0 10px; }
+
     ${rootSel} table.cv-queue-table { width:100%; border-collapse:collapse; font-size:14px; }
     ${rootSel} table.cv-queue-table thead th {
       background:#f9f9f9; color:#333; font-weight:600; border:1px solid #e5e5e5; padding:10px 12px; text-align:left;
+      position:relative; white-space:nowrap;
     }
-    ${rootSel} table.cv-queue-table td {
-      border:1px solid #e5e5e5; padding:10px 12px; vertical-align:middle;
-    }
+    ${rootSel} table.cv-queue-table td { border:1px solid #e5e5e5; padding:10px 12px; vertical-align:middle; }
     ${rootSel} table.cv-queue-table td:first-child { width:36px; text-align:center; }
+
+    /* Blue header titles (like the real table) */
+    ${rootSel} .cv-th-link { color:#1a64b8; text-decoration:none; cursor:pointer; font-weight:600; }
+    ${rootSel} .cv-th-link:hover { text-decoration:underline; }
+
+    /* Small gray info "i" dot next to headers */
+    ${rootSel} .cv-info { display:inline-block; position:relative; margin-left:6px; }
+    ${rootSel} .cv-i {
+      display:inline-block; width:16px; height:16px; line-height:16px; text-align:center;
+      border-radius:50%; background:#e5e5e5; color:#777; font-size:11px; font-weight:700;
+    }
+
+    /* Popover that matches look/size from screenshots */
+    ${rootSel} .cv-pop {
+      position:absolute; left:50%; transform:translateX(-50%); bottom:26px; /* sits above the dot */
+      background:#fff; border:1px solid #d9d9d9; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.15);
+      min-width:340px; max-width:520px; padding:0; display:none; z-index:9999;
+    }
+    ${rootSel} .cv-pop-title {
+      padding:10px 14px; font-weight:700; color:#333; border-bottom:1px solid #eee;
+    }
+    ${rootSel} .cv-pop-body {
+      padding:10px 14px; color:#333; font-size:13px; line-height:1.35;
+    }
+    ${rootSel} .cv-pop-arrow {
+      position:absolute; left:50%; transform:translateX(-50%);
+      bottom:-8px; width:0; height:0; border-left:8px solid transparent;
+      border-right:8px solid transparent; border-top:8px solid #d9d9d9;
+    }
+    ${rootSel} .cv-pop-arrow::after{
+      content:''; position:absolute; left:-7px; top:-9px; width:0; height:0;
+      border-left:7px solid transparent; border-right:7px solid transparent; border-top:7px solid #fff;
+    }
+    ${rootSel} .cv-info:hover .cv-pop { display:block; }
+
+    /* Blue values as links; 0s gray */
     ${rootSel} a.cv-link { color:#1a64b8; text-decoration:none; cursor:pointer; }
     ${rootSel} a.cv-link:hover { text-decoration:underline; }
     ${rootSel} .cv-zero { color:#8a8a8a; }
-    ${rootSel} .cv-info-dot {
-      display:inline-block; width:14px; height:14px; line-height:14px; text-align:center;
-      border-radius:50%; background:#efefef; color:#777; font-size:10px; margin-left:6px;
-    }
+
+    /* Visual sort caret on Queue (cosmetic) */
     ${rootSel} .cv-sort { font-size:10px; color:#888; margin-left:6px; }
   `;
   wrapper.appendChild(style);
@@ -2473,22 +2507,18 @@ function buildQueueStatsChart(wrapper) {
   const tableHeader = document.createElement('div');
   tableHeader.className = 'cv-title';
   const icon = document.createElement('img');
-  icon.src = iconUrl;
-  icon.alt = '';
+  icon.src = iconUrl; icon.alt = '';
   tableHeader.appendChild(icon);
   tableHeader.appendChild(document.createTextNode('Live Queue Stats'));
-
   header.appendChild(tableHeader);
   wrapper.appendChild(header);
 
-  // “Showing data up to …” (matches the real UI line)
+  // “Showing data up to …”
   function fmtDate(d){
-    const mm = String(d.getMonth() + 1).padStart(2,'0');
+    const mm = String(d.getMonth()+1).padStart(2,'0');
     const dd = String(d.getDate()).padStart(2,'0');
     const yyyy = d.getFullYear();
-    let h = d.getHours();
-    const ampm = h >= 12 ? 'pm' : 'am';
-    h = h % 12; if (h === 0) h = 12;
+    let h = d.getHours(); const ampm = h>=12?'pm':'am'; h = h%12; if(h===0) h=12;
     const min = String(d.getMinutes()).padStart(2,'0');
     return `${mm}/${dd}/${yyyy} ${h}:${min} ${ampm}`;
   }
@@ -2497,32 +2527,41 @@ function buildQueueStatsChart(wrapper) {
   upTo.textContent = `Showing data up to ${fmtDate(new Date())}`;
   wrapper.appendChild(upTo);
 
-  // ---------- table ----------
-  const thInfo = (label) => `${label} <span class="cv-info-dot" title="${label} info">i</span>`;
-  const thQueue = `Queue <span class="cv-sort">▲</span>`; // visual caret only
-
   // helper to render a numeric/time cell: blue link if >0, gray if zero
-  const L = (val) => {
-    if (val === '00:00' || val === '0%' || val === '0' || val === 0) {
-      return `<span class="cv-zero">${val}</span>`;
-    }
-    return `<a href="javascript:void(0)" class="cv-link">${val}</a>`;
-  };
+  const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
+    ? `<span class="cv-zero">${val}</span>` : `<a class="cv-link" href="javascript:void(0)">${val}</a>`;
 
+  // convenience to build a header cell with blue title + “i” popover
+  const H = (shortLabel, popTitle, popBody, addSort=false) => `
+    <span class="cv-th">
+      <a class="cv-th-link" href="javascript:void(0)">${shortLabel}</a>
+      ${addSort ? '<span class="cv-sort">▲</span>' : ''}
+      <span class="cv-info" aria-hidden="true">
+        <span class="cv-i">i</span>
+        <div class="cv-pop" role="tooltip">
+          <div class="cv-pop-title">${popTitle}</div>
+          <div class="cv-pop-body">${popBody}</div>
+          <span class="cv-pop-arrow"></span>
+        </div>
+      </span>
+    </span>
+  `;
+
+  // ---------- table ----------
   const table = document.createElement('table');
   table.className = 'cv-queue-table';
   table.innerHTML = `
     <thead>
       <tr>
         <th></th>
-        <th>${thQueue}</th>
-        <th>${thInfo('Name')}</th>
-        <th>${thInfo('Calls Handled')}</th>
-        <th>${thInfo('Calls Offered')}</th>
-        <th>${thInfo('Avg. Talk Time')}</th>
-        <th>${thInfo('Avg. Hold Time')}</th>
-        <th>${thInfo('Abandon Rate')}</th>
-        <th>${thInfo('Avg. Handle Time')}</th>
+        <th>${H('Queue', 'Queue', 'Queue number.', true)}</th>
+        <th>${H('Name', 'Name', 'Queue name.')}</th>
+        <th>${H('Calls Handled', 'Calls Handled', 'Number of calls answered by agent originating through a Call Queue.')}</th>
+        <th>${H('Calls Offered', 'Calls Offered', 'Number of calls that reached the queue to be dispatched to agents. Includes abandoned calls. Excludes forwards and voicemail.')}</th>
+        <th>${H('Avg. Talk Time', 'Average Talk Time', 'Average number of minutes spent by agent talking per answered call on calls originating through a Call Queue.')}</th>
+        <th>${H('Avg. Hold Time', 'Average Hold Time', 'Average time a caller spends on hold with an agent. Excludes waiting time in the Call Queue.')}</th>
+        <th>${H('Abandon Rate', 'Abandon Rate', 'Percentage of calls offered that were abandoned. (Abandoned Calls) / (Calls Offered)')}</th>
+        <th>${H('Avg. Handle Time', 'Average Handling Time', 'Average time an agent spent on a call. Includes Talk Time (TT), Hold Time (AH), and Disposition Time (ACW)')}</th>
       </tr>
     </thead>
     <tbody>
@@ -2584,9 +2623,18 @@ function buildQueueStatsChart(wrapper) {
     </tbody>
   `;
 
-  // title row (icon + text), then table; no fake Table Settings button
+  // title + table
+  const title = document.createElement('div');
+  title.className = 'cv-title';
+  const ticon = document.createElement('img'); ticon.src = iconUrl; ticon.alt = '';
+  title.appendChild(ticon);
+  title.appendChild(document.createTextNode('Live Queue Stats'));
+
+  wrapper.appendChild(title);
   wrapper.appendChild(table);
 }
+
+
 
 
 
