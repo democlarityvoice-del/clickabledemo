@@ -2591,40 +2591,35 @@ function buildQueueStatsChart(wrapper) {
   // ---------- table ----------
   const table = document.createElement('table');
   table.className = 'cv-queue-table';
-  <thead>
-  <tr>
-    <th></th>
-    <th>Queue</th>
-    <th>Name</th>
-    <th>Calls Handled</th>
-    <th>Calls Offered</th>
-    <th>Avg. Talk Time</th>
-    <th>Avg. Hold Time</th>
-    <th>Abandon Rate</th>
-    <th>Avg. Handle Time</th>
-  </tr>
-</thead>
-<tbody>
-  ${[
-    { q: 300, name: 'Main Routing', handled: 2, offered: 2, talk: '09:34', hold: '00:15', abandon: '0%', handle: '09:49', color: 'red' },
-    { q: 301, name: 'New Sales', handled: 30, offered: 36, talk: '08:35', hold: '00:04', abandon: '22%', handle: '08:39', color: 'blue' },
-    { q: 302, name: 'Existing Customer', handled: 19, offered: 23, talk: '04:04', hold: '00:30', abandon: '17.4%', handle: '04:33', color: 'green' },
-    { q: 303, name: 'Billing', handled: 8, offered: 20, talk: '14:22', hold: '00:00', abandon: '0%', handle: '14:22', color: 'purple' }
-  ].map((row) => `
-    <tr>
-      <td><input type="checkbox" style="accent-color: ${row.color}"></td>
-      <td><span class="cv-blue">${row.q}</span></td>
-      <td>${row.name}</td>
-      <td><span class="cv-blue">${row.handled}</span></td>
-      <td><span class="cv-blue">${row.offered}</span></td>
-      <td><span class="cv-blue">${row.talk}</span></td>
-      <td><span class="cv-blue">${row.hold}</span></td>
-      <td><span class="${row.abandon === '0%' ? 'cv-gray' : 'cv-blue'}">${row.abandon}</span></td>
-      <td><span class="cv-blue">${row.handle}</span></td>
-    </tr>
-  `).join('')}
-</tbody>
-
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th><img class="cv-topleft-icon" src="${iconUrl}" alt=""></th>
+        <th>${H('Queue', 'Queue', 'Queue number.', true)}</th>
+        <th>${H('Name', 'Name', 'Queue name.')}</th>
+        <th>${H('Calls Handled', 'Calls Handled', 'Number of calls answered by agent originating through a Call Queue.')}</th>
+        <th>${H('Calls Offered', 'Calls Offered', 'Number of calls that reached the queue to be dispatched to agents. Includes abandoned calls. Excludes forwards and voicemail.')}</th>
+        <th>${H('Avg. Talk Time', 'Average Talk Time', 'Average number of minutes spent by agent talking per answered call on calls originating through a Call Queue.')}</th>
+        <th>${H('Avg. Hold Time', 'Average Hold Time', 'Average time a caller spends on hold with an agent. Excludes waiting time in the Call Queue.')}</th>
+        <th>${H('Abandon Rate', 'Abandon Rate', 'Percentage of calls offered that were abandoned. (Abandoned Calls) / (Calls Offered)')}</th>
+        <th>${H('Avg. Handle Time', 'Average Handling Time', 'Average time an agent spent on a call. Includes Talk Time (TT), Hold Time (AH), and Disposition Time (ACW)')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${rows.map(r=>`
+        <tr>
+          <td><input type="checkbox"></td>
+          <td>${r.q}</td>
+          <td>${r.name}</td>
+          <td>${L(String(r.handled))}</td>
+          <td>${L(String(r.offered))}</td>
+          <td>${L(r.talk)}</td>
+          <td>${L(r.hold)}</td>
+          <td>${L(r.abandon)}</td>
+          <td>${L(r.handle)}</td>
+        </tr>
+      `).join('')}
+    </tbody>
     <tfoot>
       <tr>
         <td></td>
@@ -2648,8 +2643,6 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
-
-
 
 
 
