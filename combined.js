@@ -2422,39 +2422,40 @@ if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
   wrapper.id = RX_ROOT_ID;
   wrapper.style.marginTop = '20px';
 
-  // Keep nuking the container per your original behavior
-  container.innerHTML = '';
+
+// Keep native header rows intact. Just hide the native table and render ours after it.
+const dtWrap = document.querySelector('#modal_stats_table_wrapper');
+if (dtWrap) {
+  const nativeTable = dtWrap.querySelector('table');
+  if (nativeTable) nativeTable.style.display = 'none';
+  dtWrap.insertAdjacentElement('afterend', wrapper);  // our table goes BELOW the DT wrapper
+} else {
   container.appendChild(wrapper);
+}
+buildQueueStatsChart(wrapper);
 
-  // Unhide / raise the real "Table Settings" toolbar row (single, de-duped block)
-  (function showToolbar() {
-    const lowerRow = document.querySelector('.modal-header-settings-lower');
-    if (lowerRow) {
-      lowerRow.classList.remove('hide');
-      lowerRow.style.display  = 'block';
-      lowerRow.style.position = 'relative';
-      lowerRow.style.zIndex   = '10';
-    }
+  (() => {
+  // Show the header row (some pages add .hide until the table initializes)
+  const lowerRow = document.querySelector('.modal-header-settings-lower');
+  if (lowerRow) {
+    lowerRow.classList.remove('hide');
+    lowerRow.style.display  = 'block';
+    lowerRow.style.position = 'relative';
+    lowerRow.style.zIndex   = '10';
+  }
+  // Keep the Table Settings group visible and above our overlay
+  const btnGroup = document.querySelector('#table-column-queue-dropdown');
+  if (btnGroup) {
+    btnGroup.classList.remove('hide');
+    btnGroup.style.display  = 'inline-block';
+    btnGroup.style.position = 'relative';
+    btnGroup.style.zIndex   = '20';
+  }
+  const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
+  if (menu) menu.style.zIndex = '9999';
+})();
 
-    const btnGroup = document.querySelector('#table-column-queue-dropdown');
-    if (btnGroup) {
-      btnGroup.classList.remove('hide');
-      btnGroup.style.display  = 'inline-block';
-      btnGroup.style.position = 'relative';
-      btnGroup.style.zIndex   = '20';
-    }
-
-    const settingsBtn = document.querySelector('#table-column-selector-title');
-    if (settingsBtn) settingsBtn.style.visibility = 'visible';
-
-    const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
-    if (menu) menu.style.zIndex = '9999';
-
-    const tc = document.querySelector('.table-container'); // Avoid clipping
-    if (tc) tc.style.overflow = 'visible';
-  })();
-
-  buildQueueStatsChart(wrapper);
+  
 })();
 
 // ---------- styles (visual only) ----------
@@ -2466,10 +2467,10 @@ function buildQueueStatsChart(wrapper) {
   const style = document.createElement('style');
   style.textContent = `
   /* keep the Table Settings dropdown above everything and able to overflow */
-  #table-column-queue-dropdown{overflow:visible!important;position:relative;z-index:20;}
-  #table-column-queue-dropdown .dropdown-menu{z-index:9999;}
-  #table-column-selector-title{position:relative;z-index:21;}
-  #cv-queue-stats-wrapper{position:relative;z-index:1;clear:both;}
+  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; }
+  #table-column-queue-dropdown { overflow: visible !important; }        /* let the menu spill over */
+  #table-column-queue-dropdown .dropdown-menu { z-index: 9999; }        /* menu on top */
+
 
   /* table & typography */
   ${rootSel} .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}
@@ -2623,16 +2624,17 @@ function buildQueueStatsChart(wrapper) {
   `;
   wrapper.appendChild(table);
 
-  // turn numeric cells into <a> links and force exact blue
-(function makeLinks(tbl){
-  const toCols = [3,4,5,6,7,8]; // 0-based indexes: handled..handle time
-  const paint = (td) => {
-    const v = (td.textContent || '').trim();
-    const isZero = !v || v === '0' || v === '0%' || v === '00:00';
-    td.innerHTML = isZero
-      ? `<span class="cv-zero">${v}</span>`
-      : `<a class="cv-link" href="javascript:void(0)" style="color:#1a64b8;font-weight:600;text-decoration:none;">${v}</a>`;
-  };
+// after wrapper.appendChild(table)
+table.querySelectorAll('tbody tr').forEach(tr => {
+  [3,4,5,6,7,8].forEach(i => {
+    const td = tr.children[i]; if (!td) return;
+    const v = td.textContent.trim();
+    const isZero = !v || v==='0' || v==='0%' || v==='00:00';
+    td.innerHTML = isZero ? `<span class="cv-zero">${v}</span>`
+      : `<a class="cv-link" href="javascript:void(0)">${v}</a>`;
+  });
+});
+
 
   // body rows
   [...tbl.tBodies[0].rows].forEach(tr => toCols.forEach(i => tr.children[i] && paint(tr.children[i])));
@@ -2648,6 +2650,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
