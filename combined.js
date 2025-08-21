@@ -2468,80 +2468,55 @@ function buildQueueStatsChart(wrapper) {
   // ---------- VISUALS ONLY ----------
   const rootSel = `#${wrapper.id}`;
   const style = document.createElement('style');
-  style.textContent = `
-  /* keep the Table Settings dropdown above everything and able to overflow */
-  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; pointer-events: auto; }
-  
 
+  // Backtick-proof CSS block (no template literals)
+  style.textContent = [
+    "/* keep the Table Settings dropdown above everything and able to overflow */",
+    "#cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; pointer-events: auto; }",
 
-  /* table & typography */
-style.textContent = `
-  /* keep the Table Settings dropdown above everything and able to overflow */
-  #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; pointer-events: auto; }
+    "",
+    "/* table & typography */",
+    rootSel + " .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}",
+    rootSel + " table.cv-queue-table{width:100%;border-collapse:collapse;font-size:14px;}",
+    rootSel + " table.cv-queue-table thead th{background:#f9f9f9;color:#333;font-weight:600;border:1px solid #e5e5e5;padding:8px 10px;text-align:left;position:relative;white-space:nowrap;}",
+    rootSel + " table.cv-queue-table td{border:1px solid #e5e5e5;padding:8px 10px;vertical-align:middle;}",
+    rootSel + " table.cv-queue-table td:first-child, " + rootSel + " table.cv-queue-table th:first-child{width:36px;text-align:center;}",
 
-  /* table & typography */
-  ${rootSel} .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}
-  ${rootSel} table.cv-queue-table{width:100%;border-collapse:collapse;font-size:14px;}
-  ${rootSel} table.cv-queue-table thead th{
-    background:#f9f9f9;color:#333;font-weight:600;border:1px solid #e5e5e5;
-    padding:8px 10px;text-align:left;position:relative;white-space:nowrap;
-  }
-  ${rootSel} table.cv-queue-table td{border:1px solid #e5e5e5;padding:8px 10px;vertical-align:middle;}
-  ${rootSel} table.cv-queue-table td:first-child,
-  ${rootSel} table.cv-queue-table th:first-child{width:36px;text-align:center;}
+    "",
+    "/* EXACT Clarity link blue on headers and values, plus explicit pointer + hover underline */",
+    rootSel + " .cv-th-link," +
+    rootSel + " .cv-th-link:visited," +
+    rootSel + " a.cv-link," +
+    rootSel + " a.cv-link:visited{color:#1a64b8!important;text-decoration:none;cursor:pointer;font-weight:600;pointer-events:auto;}",
+    rootSel + " .cv-th-link:hover," +
+    rootSel + " a.cv-link:hover{text-decoration:underline;}",
+    rootSel + " .cv-zero{color:#8a8a8a; pointer-events:none;}",
 
-  /* EXACT Clarity link blue on headers and values, plus explicit pointer + hover underline */
-  ${rootSel} .cv-th-link,
-  ${rootSel} .cv-th-link:visited,
-  ${rootSel} a.cv-link,
-  ${rootSel} a.cv-link:visited{
-    color:#1a64b8!important;
-    text-decoration:none;
-    cursor:pointer;
-    font-weight:600;
-    pointer-events:auto;
-  }
-  ${rootSel} .cv-th-link:hover,
-  ${rootSel} a.cv-link:hover{text-decoration:underline;}
+    "",
+    "/* info dot & popover (wrap text, no overflow) */",
+    rootSel + " .cv-info{display:inline-block;position:relative;margin-left:6px;}",
+    rootSel + " .cv-i{display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;border-radius:50%;background:#e5e5e5;color:#777;font-size:11px;font-weight:700;}",
+    rootSel + " .cv-pop{position:absolute;left:50%;transform:translateX(-50%);bottom:26px;background:#fff;border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.15);min-width:340px;max-width:520px;padding:0;display:none;z-index:9999;box-sizing:border-box;}",
+    rootSel + " .cv-pop-title{padding:10px 14px;font-weight:700;color:#333;border-bottom:1px solid #eee;}",
+    rootSel + " .cv-pop-body{padding:10px 14px;color:#333;font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;word-break:normal;}",
+    rootSel + " .cv-pop-arrow{position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;width:0;height:0;border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #d9d9d9;}",
+    rootSel + " .cv-pop-arrow::after{content:'';position:absolute;left:-7px;top:-9px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #fff;}",
+    rootSel + " .cv-info:hover .cv-pop{display:block;}",
 
-  ${rootSel} .cv-zero{color:#8a8a8a; pointer-events:none;}
-
-  /* info dot & popover (wrap text, no overflow) */
-  ${rootSel} .cv-info{display:inline-block;position:relative;margin-left:6px;}
-  ${rootSel} .cv-i{
-    display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;
-    border-radius:50%;background:#e5e5e5;color:#777;font-size:11px;font-weight:700;
-  }
-  ${rootSel} .cv-pop{
-    position:absolute;left:50%;transform:translateX(-50%);bottom:26px;background:#fff;
-    border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.15);
-    min-width:340px;max-width:520px;padding:0;display:none;z-index:9999;box-sizing:border-box;
-  }
-  ${rootSel} .cv-pop-title{padding:10px 14px;font-weight:700;color:#333;border-bottom:1px solid #eee;}
-  ${rootSel} .cv-pop-body{padding:10px 14px;color:#333;font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;word-break:normal;}
-  ${rootSel} .cv-pop-arrow{
-    position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;width:0;height:0;
-    border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #d9d9d9;
-  }
-  ${rootSel} .cv-pop-arrow::after{
-    content:'';position:absolute;left:-7px;top:-9px;width:0;height:0;
-    border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #fff;
-  }
-  ${rootSel} .cv-info:hover .cv-pop{display:block;}
-
-  /* footer (totals/averages) */
-  ${rootSel} tfoot td{background:#fafafa;color:#666;font-weight:600;}
-  ${rootSel} tfoot td.cv-right{text-align:right;}
-  ${rootSel} .cv-sort{font-size:10px;color:#888;margin-left:6px;}
-  ${rootSel} .cv-topleft-icon{width:16px;height:16px;vertical-align:middle;opacity:.9;}
-`;
+    "",
+    "/* footer (totals/averages) */",
+    rootSel + " tfoot td{background:#fafafa;color:#666;font-weight:600;}",
+    rootSel + " tfoot td.cv-right{text-align:right;}",
+    rootSel + " .cv-sort{font-size:10px;color:#888;margin-left:6px;}",
+    rootSel + " .cv-topleft-icon{width:16px;height:16px;vertical-align:middle;opacity:.9;}"
+  ].join("\n");
 
   document.head.appendChild(style);
 
-
   // helper: values as blue links when > 0
   const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
-    ? `<span class="cv-zero">${val}</span>` : `<a class="cv-link" href="javascript:void(0)">${val}</a>`;
+    ? '<span class="cv-zero">'+val+'</span>'
+    : '<a class="cv-link" href="javascript:void(0)">'+val+'</a>';
 
   // header cell with blue title + popover
   const H = (shortLabel, popTitle, popBody, addSort=false) => `
@@ -2639,8 +2614,6 @@ style.textContent = `
   `;
   wrapper.appendChild(table);
 
-
-
   // Make numeric cells real links (non-zero values)
   const cols = [3,4,5,6,7,8]; // handled..handle time (0-based)
   table.querySelectorAll('tbody tr').forEach(tr => {
@@ -2650,8 +2623,8 @@ style.textContent = `
       const v = (td.textContent || '').trim();
       const isZero = v === '' || v === '0' || v === '0%' || v === '00:00';
       td.innerHTML = isZero
-        ? `<span class="cv-zero">${v}</span>`
-        : `<a class="cv-link" href="javascript:void(0)">${v}</a>`;
+        ? '<span class="cv-zero">'+v+'</span>'
+        : '<a class="cv-link" href="javascript:void(0)">'+v+'</a>';
     });
   });
 
@@ -2662,6 +2635,7 @@ style.textContent = `
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
