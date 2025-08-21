@@ -2403,121 +2403,191 @@ if (!document.__cvqfRowStatusCapture) {
 // ==============================
 // ==============================
 // ==============================
+// ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
 if (!window.__cvQueueStatsInit) 
   window.__cvQueueStatsInit = true;
 
-  (function injectQueueStatsOverlay() {
-    const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
-    const RX_ROOT_ID = 'cv-queue-stats-wrapper';
+(function injectQueueStatsOverlay() {
+  const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
+  const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
+  if (QUEUE_STATS_REGEX.test(location.href)) {
+    // Prevent duplicate injection
+    if (document.getElementById(RX_ROOT_ID)) return;
 
-    if (QUEUE_STATS_REGEX.test(location.href)) {
-      // Prevent duplicate injection
-      if (document.getElementById(RX_ROOT_ID)) return;
+    // Target the modal-body-reports container
+    const container = document.querySelector('.table-container');
+    if (!container) return;
 
-      // Target the modal-body-reports container
-      const container = document.querySelector('.table-container');
-      if (!container) return;
+    const wrapper = document.createElement('div');
+    wrapper.id = RX_ROOT_ID;
+    wrapper.style.marginTop = '20px';
 
-      const wrapper = document.createElement('div');
-      wrapper.id = RX_ROOT_ID;
-      wrapper.style.marginTop = '20px';
-      container.innerHTML = ''; // Clear original report contents
-      container.appendChild(wrapper); // Inject only our fake overlay
+    container.innerHTML = '';              // Clear original report contents
+    container.appendChild(wrapper);        // Inject only our fake overlay
 
+    buildQueueStatsChart(wrapper);
+  }
+})();
 
-      buildQueueStatsChart(wrapper);
-    }
-  })();
-
-  function buildQueueStatsChart(wrapper) {
+function buildQueueStatsChart(wrapper) {
   const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
-const table = document.createElement('table');
-table.className = 'cv-queue-table';
-table.innerHTML = `
-  <thead>
-    <tr>
-      <th></th>
-      <th>Queue</th>
-      <th>Name</th>
-      <th>Calls Handled</th>
-      <th>Calls Offered</th>
-      <th>Avg. Talk Time</th>
-      <th>Avg. Hold Time</th>
-      <th>Abandon Rate</th>
-      <th>Avg. Handle Time</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td><input type="checkbox" style="accent-color: red;"></td>
-      <td>300</td>
-      <td>Main Routing</td>
-      <td>2</td>
-      <td>2</td>
-      <td>09:34</td>
-      <td>00:15</td>
-      <td>0%</td>
-      <td>09:49</td>
-    </tr>
-    <tr>
-      <td><input type="checkbox" style="accent-color: blue;"></td>
-      <td>301</td>
-      <td>New Sales</td>
-      <td>30</td>
-      <td>36</td>
-      <td>08:35</td>
-      <td>00:04</td>
-      <td>22%</td>
-      <td>08:39</td>
-    </tr>
-    <tr>
-      <td><input type="checkbox" style="accent-color: green;"></td>
-      <td>302</td>
-      <td>Existing Customer</td>
-      <td>19</td>
-      <td>23</td>
-      <td>04:04</td>
-      <td>00:30</td>
-      <td>17.4%</td>
-      <td>04:33</td>
-    </tr>
-    <tr>
-      <td><input type="checkbox" style="accent-color: purple;"></td>
-      <td>303</td>
-      <td>Billing</td>
-      <td>8</td>
-      <td>20</td>
-      <td>14:22</td>
-      <td>00:00</td>
-      <td>0%</td>
-      <td>14:22</td>
-    </tr>
-  </tbody>
-`;
+  // ---------- styles (visual only) ----------
+  const rootSel = `#${wrapper.id}`;
+  const style = document.createElement('style');
+  style.textContent = `
+    ${rootSel} .cv-header {
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;
+    }
+    ${rootSel} .cv-title {
+      font-weight:600; font-size:18px; color:#333; display:flex; align-items:center;
+    }
+    ${rootSel} .cv-title img { width:16px; height:16px; margin-right:8px; vertical-align:middle; }
+    ${rootSel} .cv-up-to { font-size:12px; color:#666; margin: 6px 0 10px; }
+    ${rootSel} table.cv-queue-table { width:100%; border-collapse:collapse; font-size:14px; }
+    ${rootSel} table.cv-queue-table thead th {
+      background:#f9f9f9; color:#333; font-weight:600; border:1px solid #e5e5e5; padding:10px 12px; text-align:left;
+    }
+    ${rootSel} table.cv-queue-table td {
+      border:1px solid #e5e5e5; padding:10px 12px; vertical-align:middle;
+    }
+    ${rootSel} table.cv-queue-table td:first-child { width:36px; text-align:center; }
+    ${rootSel} a.cv-link { color:#1a64b8; text-decoration:none; cursor:pointer; }
+    ${rootSel} a.cv-link:hover { text-decoration:underline; }
+    ${rootSel} .cv-zero { color:#8a8a8a; }
+    ${rootSel} .cv-info-dot {
+      display:inline-block; width:14px; height:14px; line-height:14px; text-align:center;
+      border-radius:50%; background:#efefef; color:#777; font-size:10px; margin-left:6px;
+    }
+    ${rootSel} .cv-sort { font-size:10px; color:#888; margin-left:6px; }
+  `;
+  wrapper.appendChild(style);
 
+  // ---------- header ----------
+  const header = document.createElement('div');
+  header.className = 'cv-header';
 
+  const tableHeader = document.createElement('div');
+  tableHeader.className = 'cv-title';
   const icon = document.createElement('img');
   icon.src = iconUrl;
-  icon.alt = 'Queue icon';
-  icon.style.width = '20px';
-  icon.style.verticalAlign = 'middle';
-  icon.style.marginRight = '10px';
+  icon.alt = '';
+  tableHeader.appendChild(icon);
+  tableHeader.appendChild(document.createTextNode('Live Queue Stats'));
 
-  const tableHeader = document.createElement('h3');
-  tableHeader.textContent = ' Live Queue Stats';
-  tableHeader.prepend(icon);
+  header.appendChild(tableHeader);
+  wrapper.appendChild(header);
 
-  const tableSettings = document.createElement('div');
-  tableSettings.style.float = 'right';
-  tableSettings.innerHTML = `<button id="table-settings-button">Table Settings &#9662;</button>`;
+  // “Showing data up to …” (matches the real UI line)
+  function fmtDate(d){
+    const mm = String(d.getMonth() + 1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const yyyy = d.getFullYear();
+    let h = d.getHours();
+    const ampm = h >= 12 ? 'pm' : 'am';
+    h = h % 12; if (h === 0) h = 12;
+    const min = String(d.getMinutes()).padStart(2,'0');
+    return `${mm}/${dd}/${yyyy} ${h}:${min} ${ampm}`;
+  }
+  const upTo = document.createElement('div');
+  upTo.className = 'cv-up-to';
+  upTo.textContent = `Showing data up to ${fmtDate(new Date())}`;
+  wrapper.appendChild(upTo);
 
-  wrapper.appendChild(tableSettings);
-  wrapper.appendChild(tableHeader);
+  // ---------- table ----------
+  const thInfo = (label) => `${label} <span class="cv-info-dot" title="${label} info">i</span>`;
+  const thQueue = `Queue <span class="cv-sort">▲</span>`; // visual caret only
+
+  // helper to render a numeric/time cell: blue link if >0, gray if zero
+  const L = (val) => {
+    if (val === '00:00' || val === '0%' || val === '0' || val === 0) {
+      return `<span class="cv-zero">${val}</span>`;
+    }
+    return `<a href="javascript:void(0)" class="cv-link">${val}</a>`;
+  };
+
+  const table = document.createElement('table');
+  table.className = 'cv-queue-table';
+  table.innerHTML = `
+    <thead>
+      <tr>
+        <th></th>
+        <th>${thQueue}</th>
+        <th>${thInfo('Name')}</th>
+        <th>${thInfo('Calls Handled')}</th>
+        <th>${thInfo('Calls Offered')}</th>
+        <th>${thInfo('Avg. Talk Time')}</th>
+        <th>${thInfo('Avg. Hold Time')}</th>
+        <th>${thInfo('Abandon Rate')}</th>
+        <th>${thInfo('Avg. Handle Time')}</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><input type="checkbox"></td>
+        <td>300</td>
+        <td>Main Routing</td>
+        <td>${L('2')}</td>
+        <td>${L('2')}</td>
+        <td>${L('09:34')}</td>
+        <td>${L('00:15')}</td>
+        <td>${L('0%')}</td>
+        <td>${L('09:49')}</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox"></td>
+        <td>301</td>
+        <td>New Sales</td>
+        <td>${L('30')}</td>
+        <td>${L('36')}</td>
+        <td>${L('08:35')}</td>
+        <td>${L('00:04')}</td>
+        <td>${L('22%')}</td>
+        <td>${L('08:39')}</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox"></td>
+        <td>302</td>
+        <td>Existing Customer</td>
+        <td>${L('19')}</td>
+        <td>${L('23')}</td>
+        <td>${L('04:04')}</td>
+        <td>${L('00:30')}</td>
+        <td>${L('17.4%')}</td>
+        <td>${L('04:33')}</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox"></td>
+        <td>303</td>
+        <td>Billing</td>
+        <td>${L('8')}</td>
+        <td>${L('20')}</td>
+        <td>${L('14:22')}</td>
+        <td>${L('00:00')}</td>
+        <td>${L('0%')}</td>
+        <td>${L('14:22')}</td>
+      </tr>
+      <tr>
+        <td><input type="checkbox"></td>
+        <td></td>
+        <td></td>
+        <td>${L('0')}</td>
+        <td>${L('0')}</td>
+        <td>${L('00:00')}</td>
+        <td>${L('00:00')}</td>
+        <td>${L('0%')}</td>
+        <td>${L('00:00')}</td>
+      </tr>
+    </tbody>
+  `;
+
+  // title row (icon + text), then table; no fake Table Settings button
   wrapper.appendChild(table);
 }
+
+
 
 
