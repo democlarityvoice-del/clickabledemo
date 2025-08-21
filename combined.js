@@ -2648,11 +2648,14 @@ table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
   a.style.fontWeight = '600';
 });
 
-  // Remove footer label text
+// Remove footer label text
 const lbl = table.querySelector('tfoot td.cv-right');
 if (lbl) lbl.textContent = '';
+// ✅ stop here — no more closing brace
 
-}
+
+
+
 
 
 
