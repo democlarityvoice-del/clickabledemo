@@ -2441,6 +2441,23 @@ if (lower) {
 const settingsBtn = document.querySelector('#table-column-selector-title');
 if (settingsBtn) settingsBtn.style.visibility = 'visible';
 
+    // Unhide toolbar row
+const lower = document.querySelector('.modal-header-settings-lower');
+if (lower) { lower.classList.remove('hide'); lower.style.display = 'block'; }
+
+// Ensure the button group is visible and above our overlay
+const btnGroup = document.querySelector('#table-column-queue-dropdown');
+if (btnGroup) { btnGroup.style.display = 'inline-block'; btnGroup.style.position = 'relative'; btnGroup.style.zIndex = '20'; }
+
+// Let the dropdown overflow and sit on top
+const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
+if (menu) menu.style.zIndex = '9999';
+
+// Avoid clipping from the table container
+const tc = document.querySelector('.table-container');
+if (tc) tc.style.overflow = 'visible';
+
+
     // also unhide the button group if it was hidden separately
 const dd = document.querySelector('#table-column-queue-dropdown');
 if (dd) { dd.classList.remove('hide'); dd.style.display = 'inline-block'; }
@@ -2633,11 +2650,19 @@ wrapper.appendChild(style);
   `;
   wrapper.appendChild(table);
 
+// Force Clarity blue on headers & values (wins over any stylesheet)
+table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
+  a.style.color = '#1a64b8';
+  a.style.textDecoration = 'none';
+  a.style.fontWeight = '600';
+});
+
   // Remove footer label text
 const lbl = table.querySelector('tfoot td.cv-right');
 if (lbl) lbl.textContent = '';
 
 }
+
 
 
 
