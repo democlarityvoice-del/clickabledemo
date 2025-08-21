@@ -125,5 +125,132 @@ buildSrcdoc() {
   `;
 }
 
+// -------- REMOVE CALL HISTORY -------- //
+function removeCallHistory() {
+  const ifr = document.getElementById(CALLHISTORY_IFRAME_ID);
+  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+
+  const slot = document.querySelector(CALLHISTORY_SLOT_SELECTOR);
+  if (slot) {
+    const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+    if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+      hidden.style.display = '';
+      hidden.removeAttribute('data-cv-demo-hidden');
+    }
+  }
+}
+
+
+// -------- INJECT CALL HISTORY -------- //
+function injectCallHistory() {
+  if (document.getElementById(CALLHISTORY_IFRAME_ID)) return;
+  const slot = document.querySelector(CALLHISTORY_SLOT_SELECTOR);
+  if (!slot) return;
+
+  function findAnchor(el) {
+    const preferred = el.querySelector('.table-container.scrollable-small');
+    if (preferred) return preferred;
+    if (el.firstElementChild) return el.firstElementChild;
+    let n = el.firstChild;
+    while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+    return n || null;
+  }
+
+  const anchor = findAnchor(slot);
+
+  if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+    anchor.style.display = 'none';
+    anchor.setAttribute('data-cv-demo-hidden', '1');
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = CALLHISTORY_IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+  iframe.setAttribute('scrolling', 'yes');
+  iframe.srcdoc = buildSrcdoc();
+
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+  else slot.appendChild(iframe);
+}
+
+
+// -------- WAIT CALL HISTORY AND INJECT -------- //
+function waitForCallHistorySlotAndInject(tries = 0) {
+  const slot = document.querySelector(CALLHISTORY_SLOT_SELECTOR);
+  if (slot && slot.isConnected) {
+    requestAnimationFrame(() => requestAnimationFrame(() => injectCallHistory()));
+    return;
+  }
+  if (tries >= 12) return;
+  setTimeout(() => waitForCallHistorySlotAndInject(tries + 1), 250);
+}
+
+
+// -------- CALL HISTORY ROUTING -------- //
+function onCallHistoryEnter() {
+  setTimeout(() => waitForCallHistorySlotAndInject(), 600);
+}
+
+function handleCallHistoryRouteChange(prevHref, nextHref) {
+  const wasCallHistory = CALLHISTORY_REGEX.test(prevHref);
+  const isCallHistory  = CALLHISTORY_REGEX.test(nextHref);
+  if (!wasCallHistory && isCallHistory) onCallHistoryEnter();
+  if ( wasCallHistory && !isCallHistory) removeCallHistory();
+}
+
+(function watchCallHistoryURLChanges() {
+  let last = location.href;
+  const origPush = history.pushState;
+  const origReplace = history.replaceState;
+
+  history.pushState = function () {
+    const prev = last;
+    const ret  = origPush.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleCallHistoryRouteChange(prev, now);
+    return ret;
+  };
+
+  history.replaceState = function () {
+    const prev = last;
+    const ret  = origReplace.apply(this, arguments);
+    const now  = location.href;
+    last = now;
+    handleCallHistoryRouteChange(prev, now);
+    return ret;
+  };
+
+  // SPA fallback
+  const mo = new MutationObserver(() => {
+    if (location.href !== last) {
+      const prev = last;
+      const now  = location.href;
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+    }
+  });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  // Back/forward support
+  window.addEventListener('popstate', () => {
+    const prev = last;
+    const now  = location.href;
+    if (now !== prev) {
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+    }
+  });
+
+  // Nav click support
+  document.addEventListener('click', (e) => {
+    const el = e.target instanceof Element ? e.target : null;
+    if (el && el.closest(CALLHISTORY_SELECTOR)) setTimeout(onCallHistoryEnter, 0);
+  });
+
+  // Initial check
+  if (CALLHISTORY_REGEX.test(location.href)) onCallHistoryEnter();
+})();
+
 
     
