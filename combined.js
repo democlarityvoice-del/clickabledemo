@@ -2468,8 +2468,7 @@ function buildQueueStatsChart(wrapper) {
   style.textContent = `
   /* keep the Table Settings dropdown above everything and able to overflow */
   #cv-queue-stats-wrapper { clear: both; position: relative; z-index: 1; margin-top: 0; }
-  #table-column-queue-dropdown { overflow: visible !important; }        /* let the menu spill over */
-  #table-column-queue-dropdown .dropdown-menu { z-index: 9999; }        /* menu on top */
+  
 
 
   /* table & typography */
@@ -2647,6 +2646,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
