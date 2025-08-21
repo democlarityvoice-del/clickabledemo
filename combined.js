@@ -2400,7 +2400,262 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 
+  // ==============================
+// CALL HISTORY
+// ==============================
 
+if (!window.__cvCallHistoryInit) {
+  window.__cvCallHistoryInit = true;
+
+  // -------- DECLARE CALL HISTORY CONSTANTS -------- //
+  const CALLHISTORY_REGEX       = /\/portal\/callhistory(?:[\/?#]|$)/;
+  const CALLHISTORY_SELECTOR    = '#nav-callhistory a, #nav-call-history';
+  const CALLHISTORY_SLOT        = 'div.callhistory-panel-main';
+  const CALLHISTORY_IFRAME_ID   = 'cv-callhistory-iframe';
+
+  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+
+  // -------- BUILD SRCDOC -------- //
+  function buildSrcdoc() {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Call History Overlay</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      background: transparent;
+      font-family: Arial, sans-serif;
+    }
+
+    #circular-icons {
+      position: fixed;
+      right: 50px;
+      top: 50%;
+      transform: translateY(-50%);
+      pointer-events: none;
+      z-index: 1000;
+    }
+
+    .circular-icon {
+      position: absolute;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid #333;
+      transform: translate(-50%, -50%);
+      pointer-events: auto;
+      cursor: pointer;
+      transition: all 0.3s ease;
+    }
+
+    #action-panel {
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1001;
+    }
+
+    .action-button {
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: #f8f9fa;
+      cursor: pointer;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      transition: all 0.2s ease;
+    }
+
+    .action-button img {
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 1002;
+    }
+
+    .action-button:hover {
+      background: #e9ecef;
+      transform: scale(1.1);
+    }
+
+    .action-button:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+  </style>
+</head>
+<body>
+  <div id="circular-icons"></div>
+  <div id="action-panel"></div>
+</body>
+</html>
+    `;
+  }
+
+  // -------- REMOVE CALL HISTORY -------- //
+  function removeCallHistory() {
+    const ifr = document.getElementById(CALLHISTORY_IFRAME_ID);
+    if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (slot) {
+      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+      if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+        hidden.style.display = '';
+        hidden.removeAttribute('data-cv-demo-hidden');
+      }
+    }
+  }
+
+  // -------- INJECT CALL HISTORY -------- //
+  function injectCallHistory() {
+    if (document.getElementById(CALLHISTORY_IFRAME_ID)) return;
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (!slot) return;
+
+    function findAnchor(el) {
+      const preferred = el.querySelector('.table-container.scrollable-small');
+      if (preferred) return preferred;
+      if (el.firstElementChild) return el.firstElementChild;
+      let n = el.firstChild;
+      while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+      return n || null;
+    }
+
+    const anchor = findAnchor(slot);
+
+    if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+      anchor.style.display = 'none';
+      anchor.setAttribute('data-cv-demo-hidden', '1');
+    }
+
+    const iframe = document.createElement('iframe');
+    iframe.id = CALLHISTORY_IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+    iframe.setAttribute('scrolling', 'yes');
+    iframe.srcdoc = buildSrcdoc();
+
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+    else slot.appendChild(iframe);
+  }
+
+  // -------- WAIT CALL HISTORY AND INJECT -------- //
+  function waitForCallHistorySlotAndInject(tries = 0) {
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (slot && slot.isConnected) {
+      requestAnimationFrame(() => requestAnimationFrame(() => injectCallHistory()));
+      return;
+    }
+    if (tries >= 12) return;
+    setTimeout(() => waitForCallHistorySlotAndInject(tries + 1), 250);
+  }
+
+  // -------- CALL HISTORY ROUTING -------- //
+  function onCallHistoryEnter() {
+    setTimeout(() => waitForCallHistorySlotAndInject(), 600);
+  }
+
+  function handleCallHistoryRouteChange(prevHref, nextHref) {
+    const wasCallHistory = CALLHISTORY_REGEX.test(prevHref);
+    const isCallHistory  = CALLHISTORY_REGEX.test(nextHref);
+    if (!wasCallHistory && isCallHistory) onCallHistoryEnter();
+    if ( wasCallHistory && !isCallHistory) removeCallHistory();
+  }
+
+  (function watchCallHistoryURLChanges() {
+    let last = location.href;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
+
+    history.pushState = function () {
+      const prev = last;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href;
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+      return ret;
+    };
+
+    history.replaceState = function () {
+      const prev = last;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href;
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+      return ret;
+    };
+
+    // SPA fallback
+    const mo = new MutationObserver(() => {
+      if (location.href !== last) {
+        const prev = last;
+        const now  = location.href;
+        last = now;
+        handleCallHistoryRouteChange(prev, now);
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+
+    // Back/forward support
+    window.addEventListener('popstate', () => {
+      const prev = last;
+      const now  = location.href;
+      if (now !== prev) {
+        last = now;
+        handleCallHistoryRouteChange(prev, now);
+      }
+    });
+
+    // Nav click support
+    document.addEventListener('click', (e) => {
+      const el = e.target instanceof Element ? e.target : null;
+      if (el && el.closest(CALLHISTORY_SELECTOR)) setTimeout(onCallHistoryEnter, 0);
+    });
+
+    // Initial check
+    if (CALLHISTORY_REGEX.test(location.href)) onCallHistoryEnter();
+  })();
+
+} // -------- ✅ Closes window.__cvCallHistoryInit -------- //
 
 
 
