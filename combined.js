@@ -2455,21 +2455,41 @@ if (!window.__cvQueueStatsInit)
       ${[300, 301, 302, 303].map((q, i) => {
         const colors = ['red', 'blue', 'green', 'purple'];
         return `
-          <tr>
-            <td><input type="checkbox" style="accent-color: ${colors[i % colors.length]}"></td>
-            <td>${q}</td>
-            <td>Sample Queue ${i + 1}</td>
-            <td>${Math.floor(Math.random() * 40)}</td>
-            <td>${Math.floor(Math.random() * 45)}</td>
-            <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-            <td>${String(Math.floor(Math.random() * 2)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-            <td>${Math.random() > 0.5 ? Math.floor(Math.random() * 50) + '%' : '0%'}</td>
-            <td>${String(Math.floor(Math.random() * 15)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}</td>
-          </tr>
-        `;
-      }).join('')}
-    </tbody>
-  `;
+    <tr>
+      <td><input type="checkbox" style="accent-color: blue"></td>
+      <td>301</td>
+      <td>New Sales</td>
+      <td>30</td>
+      <td>36</td>
+      <td>08:35</td>
+      <td>00:04</td>
+      <td>22%</td>
+      <td>08:39</td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" style="accent-color: green"></td>
+      <td>302</td>
+      <td>Existing Customer</td>
+      <td>19</td>
+      <td>23</td>
+      <td>04:04</td>
+      <td>00:30</td>
+      <td>17.4%</td>
+      <td>04:33</td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" style="accent-color: purple"></td>
+      <td>303</td>
+      <td>Billing</td>
+      <td>8</td>
+      <td>20</td>
+      <td>14:22</td>
+      <td>00:00</td>
+      <td>0%</td>
+      <td>14:22</td>
+    </tr>
+  </tbody>
+`;
 
   const icon = document.createElement('img');
   icon.src = iconUrl;
@@ -2490,3 +2510,4 @@ if (!window.__cvQueueStatsInit)
   wrapper.appendChild(tableHeader);
   wrapper.appendChild(table);
 }
+
