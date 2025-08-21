@@ -2522,19 +2522,6 @@ function buildQueueStatsChart(wrapper) {
   `;
   document.head.appendChild(style);
 
-  // “Showing data up to …”
-  function fmtDate(d){
-    const mm = String(d.getMonth()+1).padStart(2,'0');
-    const dd = String(d.getDate()).padStart(2,'0');
-    const yyyy = d.getFullYear();
-    let h = d.getHours(); const ampm = h>=12?'pm':'am'; h = h%12; if(h===0) h=12;
-    const min = String(d.getMinutes()).padStart(2,'0');
-    return `${mm}/${dd}/${yyyy} ${h}:${min} ${ampm}`;
-  }
-  const upTo = document.createElement('div');
-  upTo.className = 'cv-up-to';
-  upTo.textContent = `Showing data up to ${fmtDate(new Date())}`;
-  wrapper.appendChild(upTo);
 
   // helper: values as blue links when > 0
   const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
@@ -2643,6 +2630,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
