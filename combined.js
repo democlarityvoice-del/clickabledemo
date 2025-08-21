@@ -2420,73 +2420,74 @@ if (!window.__cvCallHistoryInit) {
   const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
   // -------- BUILD SRCDOC -------- //
-  function buildSrcdoc() {
+  
+function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
-  :root {
+  :root{
     --font-stack: "Helvetica Neue", Helvetica, Arial, sans-serif;
-    --text-color: #333;
-    --muted: #666;
-    --border: #ddd;
+    --text-color:#333;
+    --muted:#666;
+    --border:#ddd;
   }
-
-  * { box-sizing: border-box; }
-  html, body {
-    width: 100%;
-    margin: 0;
+  *{ box-sizing:border-box; }
+  html, body{
+    width:100%;
+    margin:0;
+    overflow-x:hidden;
     font: 13px/1.428 var(--font-stack);
     color: var(--text-color);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
-    background: #fff;
   }
-
-  .call-container {
-    background: #fff;
-    padding: 0 16px 18px;
-    border-radius: 6px;
-    box-shadow: 0 1px 3px rgba(0,0,0,.08);
-    width: 100%;
-    max-width: 100%;
+  .call-container{
+    background:#fff;
+    padding:0 16px 18px;
+    border-radius:6px;
+    box-shadow:0 1px 3px rgba(0,0,0,.08);
+    width:100%;
+    max-width:100%;
   }
-
-  table { width: 100%; border-collapse: collapse; table-layout: auto; }
-  thead th {
-    padding: 8px 12px;
-    font-weight: 600;
-    font-size: 13px;
-    text-align: left;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
+  table{ width:100%; border-collapse:collapse; background:#fff; table-layout:auto; }
+  thead th{
+    padding:8px 12px;
+    font-weight:600;
+    font-size:13px;
+    text-align:left;
+    border-bottom:1px solid var(--border);
+    white-space:nowrap;
   }
-  td {
-    padding: 8px 12px;
-    font-weight: 400;
-    font-size: 13px;
-    border-bottom: 1px solid #eee;
-    white-space: nowrap;
-    text-align: left;
+  td{
+    padding:8px 12px;
+    font-weight:400;
+    font-size:13px;
+    border-bottom:1px solid #eee;
+    white-space:nowrap;
+    text-align:left;
   }
-
-  tr:hover { background: #f7f7f7; }
-
-  .listen-btn {
-    display: inline-flex; align-items: center; justify-content: center;
-    width: 28px; height: 28px;
-    background: #f0f0f0;
-    border-radius: 50%; border: none; cursor: pointer;
+  tr:hover{ background:#f7f7f7; }
+  .icon-cell {
+    display: flex;
+    gap: 6px;
   }
-  .listen-btn img {
+  .icon-btn {
+    width: 24px; height: 24px;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+  }
+  .icon-btn img {
     width: 18px; height: 18px;
-    display: block;
-    opacity: .38;
-    transition: opacity .2s;
+    opacity: 0.25;
+    transition: opacity 0.2s;
   }
-  tr:hover .listen-btn img { opacity: .60; }
+  .icon-btn:hover img {
+    opacity: 1;
+  }
 </style>
-</head>
-<body>
+</head><body>
   <div class="call-container">
     <table>
       <thead>
@@ -2497,75 +2498,44 @@ if (!window.__cvCallHistoryInit) {
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
-
 <script>
 (function () {
-  const extensions = [200,201,202,203,204,205,206,207];
-  const extNameMap = {
-    200: "Mike Johnson", 201: "Cathy Thomas", 202: "Jake Lee", 203: "Bob Andersen",
-    204: "Brittany Lawrence", 205: "Alex Roberts", 206: "Mark Sanchez", 207: "John Smith"
-  };
-  const names = ["WIRELESS CALLER","Unavailable","BAYONNE NJ","Miguel Urbina","Support Main","Gabe Montez","CLARITY VOICE"];
-  const areaCodes = ["248", "313", "517", "810", "989", "929", "720", "602", "800"];
-  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
-
-  const randomPhone = () => {
-    const ac = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-    const prefix = 100 + Math.floor(Math.random() * 900);
-    const suffix = 1000 + Math.floor(Math.random() * 9000);
-    return \`(\${ac}) \${prefix}-\${suffix}\`;
-  };
-
-  const randomDuration = () => {
-    const min = Math.floor(Math.random() * 9);
-    const sec = Math.floor(Math.random() * 60);
-    return \`\${min}:\${sec.toString().padStart(2, "0")}\`;
-  };
-
-  const table = document.getElementById("callsTableBody");
-  let usedCombos = new Set();
-
-  for (let i = 0; i < 25; i++) {
-    const isOutbound = Math.random() < 0.3;
-    let from, cnam, dialed, to;
-
-    if (isOutbound) {
-      const ext = extensions[Math.floor(Math.random() * extensions.length)];
-      from = ext;
-      cnam = extNameMap[ext];
-      dialed = randomPhone();
-      to = "External";
-    } else {
-      from = randomPhone();
-      cnam = names[Math.floor(Math.random() * names.length)];
-      dialed = "(800) 676-3995";
-      // Random To routing
-      const toType = Math.random();
-      if (toType < 0.03) to = SPEAK;
-      else if (toType < 0.05) to = VMAIL;
-      else if (toType < 0.35) to = CALL_QUEUE;
-      else {
-        const ext = extensions[Math.floor(Math.random() * extensions.length)];
-        to = \`Ext. \${ext} (\${extNameMap[ext]})\`;
-      }
-    }
-
-    const duration = randomDuration();
-    const row = document.createElement("tr");
-    row.innerHTML = \`
-      <td>\${from}</td>
-      <td>\${cnam}</td>
-      <td>\${dialed}</td>
-      <td>\${to}</td>
-      <td>\${duration}</td>
-      <td><button class="listen-btn"><img src="https://upload.wikimedia.org/wikipedia/commons/8/84/OOjs_UI_icon_speaker.svg"></button></td>
-    \`;
-    table.appendChild(row);
-  }
+  const ICONS = [
+    { src: '${ICON_DOWNLOAD}', title: 'Download' },
+    { src: '${ICON_LISTEN}', title: 'Listen' },
+    { src: '${ICON_CRADLE}', title: 'Cradle' },
+    { src: '${ICON_NOTES}', title: 'Notes' },
+    { src: '${ICON_TRANSCRIPT}', title: 'Transcript' }
+  ];
+  const sampleData = [
+    { from: '(810) 488-9107', cnam: 'WIRELESS CALLER', dialed: '(800) 676-3995', to: 'Ext. 200 (Mike Johnson)', duration: '5:58' },
+    { from: '(517) 405-6618', cnam: 'CLARITY VOICE', dialed: '(800) 676-3995', to: 'Ext. 205 (Alex Roberts)', duration: '8:43' },
+    { from: '202', cnam: 'Jake Lee', dialed: '(989) 698-9106', to: 'External', duration: '1:29' },
+    { from: '(810) 665-7135', cnam: 'CLARITY VOICE', dialed: '(800) 676-3995', to: 'CallQueue', duration: '2:25' },
+    { from: '204', cnam: 'Brittany Lawrence', dialed: '(517) 374-8449', to: 'External', duration: '0:56' },
+    { from: '(248) 807-7040', cnam: 'BAYONNE NJ', dialed: '(800) 676-3995', to: 'Ext. 201 (Cathy Thomas)', duration: '4:12' },
+    { from: '202', cnam: 'Jake Lee', dialed: '(720) 980-6687', to: 'External', duration: '8:17' }
+  ];
+  const tbody = document.getElementById('callsTableBody');
+  sampleData.forEach(row => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${row.from}</td>
+      <td>${row.cnam}</td>
+      <td>${row.dialed}</td>
+      <td>${row.to}</td>
+      <td>${row.duration}</td>
+      <td class="icon-cell">
+        ${ICONS.map(icon => `<button class="icon-btn" title="${icon.title}"><img src="${icon.src}" alt="${icon.title}" /></button>`).join('')}
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
 })();
 </script>
 </body></html>`;
 }
+
 
 
   // -------- REMOVE CALL HISTORY -------- //
@@ -2693,6 +2663,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
