@@ -2623,6 +2623,24 @@ function buildQueueStatsChart(wrapper) {
   `;
   wrapper.appendChild(table);
 
+  // turn numeric cells into <a> links and force exact blue
+(function makeLinks(tbl){
+  const toCols = [3,4,5,6,7,8]; // 0-based indexes: handled..handle time
+  const paint = (td) => {
+    const v = (td.textContent || '').trim();
+    const isZero = !v || v === '0' || v === '0%' || v === '00:00';
+    td.innerHTML = isZero
+      ? `<span class="cv-zero">${v}</span>`
+      : `<a class="cv-link" href="javascript:void(0)" style="color:#1a64b8;font-weight:600;text-decoration:none;">${v}</a>`;
+  };
+
+  // body rows
+  [...tbl.tBodies[0].rows].forEach(tr => toCols.forEach(i => tr.children[i] && paint(tr.children[i])));
+  // footer totals
+  if (tbl.tFoot && tbl.tFoot.rows[0]) toCols.forEach(i => tbl.tFoot.rows[0].children[i] && paint(tbl.tFoot.rows[0].children[i]));
+})(table);
+
+
   // Force Clarity blue on headers & values (wins over any stylesheet)
   table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
     a.style.color = '#1a64b8';
@@ -2630,6 +2648,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
