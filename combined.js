@@ -2427,6 +2427,25 @@ if (!window.__cvQueueStatsInit)
     container.appendChild(wrapper);        // Inject only our fake overlay
 
     buildQueueStatsChart(wrapper);
+
+    // Unhide the real "Table Settings" toolbar row
+const lower = document.querySelector('.modal-header-settings-lower');
+if (lower) {
+  lower.classList.remove('hide');        // bootstrap "hide" -> display:none
+  lower.style.display = 'block';
+  lower.style.position = 'relative';
+  lower.style.zIndex = '10';
+}
+
+// Belt-and-suspenders: button visible/clickable
+const settingsBtn = document.querySelector('#table-column-selector-title');
+if (settingsBtn) settingsBtn.style.visibility = 'visible';
+
+    // also unhide the button group if it was hidden separately
+const dd = document.querySelector('#table-column-queue-dropdown');
+if (dd) { dd.classList.remove('hide'); dd.style.display = 'inline-block'; }
+
+
   }
 })();
 
@@ -2439,8 +2458,13 @@ function buildQueueStatsChart(wrapper) {
   // ---------- VISUALS ONLY ----------
   const rootSel = `#${wrapper.id}`;
   const style = document.createElement('style');
+  /* keep the Table Settings dropdown above everything and able to overflow */
+#table-column-queue-dropdown { overflow: visible !important; position: relative; z-index: 20; }
+#table-column-queue-dropdown .dropdown-menu { z-index: 9999; }
+#cv-queue-stats-wrapper { position: relative; z-index: 1; clear: both; }
+
   style.textContent = `
-    ${rootSel} :root { --cv-link-blue: #1a64b8; } /* closer to the real blue */
+      ${rootSel} :root { --cv-link-blue: #1a64b8; } /* closer to the real blue */
     ${rootSel} .cv-up-to { font-size:12px; color:#666; margin:6px 0 10px; }
 
     ${rootSel} table.cv-queue-table { width:100%; border-collapse:collapse; font-size:14px; }
@@ -2499,7 +2523,6 @@ function buildQueueStatsChart(wrapper) {
 }
 
 
-
     /* Footer (totals/averages) styling */
     ${rootSel} tfoot td { background:#fafafa; color:#666; font-weight:600; }
     ${rootSel} tfoot td.cv-right { text-align:right; }
@@ -2525,6 +2548,7 @@ function buildQueueStatsChart(wrapper) {
   // helper: values as blue links when > 0
   const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
     ? `<span class="cv-zero">${val}</span>` : `<a class="cv-link" href="javascript:void(0)">${val}</a>`;
+
 
   // header cell with blue title + popover
   const H = (shortLabel, popTitle, popBody, addSort=false) => `
@@ -2627,4 +2651,5 @@ const lbl = table.querySelector('tfoot td.cv-right');
 if (lbl) lbl.textContent = '';
 
 }
+
 
