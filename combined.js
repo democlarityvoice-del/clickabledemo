@@ -2402,129 +2402,125 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 // ==============================
+// ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
-if (!window.__cvQueueStatsInit) 
-  window.__cvQueueStatsInit = true;
+if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
 
 (function injectQueueStatsOverlay() {
   const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
   const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
-  if (QUEUE_STATS_REGEX.test(location.href)) {
-    // Prevent duplicate injection
-    if (document.getElementById(RX_ROOT_ID)) return;
+  if (!QUEUE_STATS_REGEX.test(location.href)) return;
+  if (document.getElementById(RX_ROOT_ID)) return;
 
-    // Target the modal-body-reports container
-    const container = document.querySelector('.table-container');
-    if (!container) return;
+  // Target the modal-body-reports container
+  const container = document.querySelector('.table-container');
+  if (!container) return;
 
-    const wrapper = document.createElement('div');
-    wrapper.id = RX_ROOT_ID;
-    wrapper.style.marginTop = '20px';
+  const wrapper = document.createElement('div');
+  wrapper.id = RX_ROOT_ID;
+  wrapper.style.marginTop = '20px';
 
-    container.innerHTML = '';              // Clear original report contents
-    container.appendChild(wrapper);        // Inject only our fake overlay
+  // Keep nuking the container per your original behavior
+  container.innerHTML = '';
+  container.appendChild(wrapper);
 
-    buildQueueStatsChart(wrapper);
+  // Unhide / raise the real "Table Settings" toolbar row (single, de-duped block)
+  (function showToolbar() {
+    const lowerRow = document.querySelector('.modal-header-settings-lower');
+    if (lowerRow) {
+      lowerRow.classList.remove('hide');
+      lowerRow.style.display  = 'block';
+      lowerRow.style.position = 'relative';
+      lowerRow.style.zIndex   = '10';
+    }
 
-// Unhide / raise the real "Table Settings" toolbar row (single block)
-(() => {
-  const lowerRow = document.querySelector('.modal-header-settings-lower');
-  if (lowerRow) {
-    lowerRow.classList.remove('hide');
-    lowerRow.style.display  = 'block';
-    lowerRow.style.position = 'relative';
-    lowerRow.style.zIndex   = '10';
-  }
+    const btnGroup = document.querySelector('#table-column-queue-dropdown');
+    if (btnGroup) {
+      btnGroup.classList.remove('hide');
+      btnGroup.style.display  = 'inline-block';
+      btnGroup.style.position = 'relative';
+      btnGroup.style.zIndex   = '20';
+    }
 
-  const btnGroup = document.querySelector('#table-column-queue-dropdown');
-  if (btnGroup) {
-    btnGroup.classList.remove('hide');
-    btnGroup.style.display  = 'inline-block';
-    btnGroup.style.position = 'relative';
-    btnGroup.style.zIndex   = '20';
-  }
+    const settingsBtn = document.querySelector('#table-column-selector-title');
+    if (settingsBtn) settingsBtn.style.visibility = 'visible';
 
-  const settingsBtn = document.querySelector('#table-column-selector-title');
-  if (settingsBtn) settingsBtn.style.visibility = 'visible';
+    const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
+    if (menu) menu.style.zIndex = '9999';
 
-  const menu = document.querySelector('#table-column-queue-dropdown .dropdown-menu');
-  if (menu) menu.style.zIndex = '9999';
+    const tc = document.querySelector('.table-container'); // Avoid clipping
+    if (tc) tc.style.overflow = 'visible';
+  })();
 
-  const tc = document.querySelector('.table-container'); // avoid clipping
-  if (tc) tc.style.overflow = 'visible';
+  buildQueueStatsChart(wrapper);
 })();
 
-
-
-
-  // ---------- styles (visual only) ----------
+// ---------- styles (visual only) ----------
 function buildQueueStatsChart(wrapper) {
   const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
   // ---------- VISUALS ONLY ----------
- // ---------- VISUALS ONLY ----------
-const rootSel = `#${wrapper.id}`;
-const style = document.createElement('style');
-style.textContent = `
-/* keep the Table Settings dropdown above everything and able to overflow */
-#table-column-queue-dropdown{overflow:visible!important;position:relative;z-index:20;}
-#table-column-queue-dropdown .dropdown-menu{z-index:9999;}
-#table-column-selector-title{position:relative;z-index:21;}
-#cv-queue-stats-wrapper{position:relative;z-index:1;clear:both;}
+  const rootSel = `#${wrapper.id}`;
+  const style = document.createElement('style');
+  style.textContent = `
+  /* keep the Table Settings dropdown above everything and able to overflow */
+  #table-column-queue-dropdown{overflow:visible!important;position:relative;z-index:20;}
+  #table-column-queue-dropdown .dropdown-menu{z-index:9999;}
+  #table-column-selector-title{position:relative;z-index:21;}
+  #cv-queue-stats-wrapper{position:relative;z-index:1;clear:both;}
 
-/* table & typography */
-${rootSel} .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}
-${rootSel} table.cv-queue-table{width:100%;border-collapse:collapse;font-size:14px;}
-${rootSel} table.cv-queue-table thead th{
-  background:#f9f9f9;color:#333;font-weight:600;border:1px solid #e5e5e5;
-  padding:8px 10px;text-align:left;position:relative;white-space:nowrap;
-}
-${rootSel} table.cv-queue-table td{border:1px solid #e5e5e5;padding:8px 10px;vertical-align:middle;}
-${rootSel} table.cv-queue-table td:first-child,
-${rootSel} table.cv-queue-table th:first-child{width:36px;text-align:center;}
+  /* table & typography */
+  ${rootSel} .cv-up-to{font-size:12px;color:#666;margin:6px 0 10px;}
+  ${rootSel} table.cv-queue-table{width:100%;border-collapse:collapse;font-size:14px;}
+  ${rootSel} table.cv-queue-table thead th{
+    background:#f9f9f9;color:#333;font-weight:600;border:1px solid #e5e5e5;
+    padding:8px 10px;text-align:left;position:relative;white-space:nowrap;
+  }
+  ${rootSel} table.cv-queue-table td{border:1px solid #e5e5e5;padding:8px 10px;vertical-align:middle;}
+  ${rootSel} table.cv-queue-table td:first-child,
+  ${rootSel} table.cv-queue-table th:first-child{width:36px;text-align:center;}
 
-/* EXACT Clarity link blue on headers and values */
-${rootSel} .cv-th-link,
-${rootSel} .cv-th-link:visited,
-${rootSel} a.cv-link,
-${rootSel} a.cv-link:visited{color:#1a64b8!important;text-decoration:none;cursor:pointer;font-weight:600;}
-${rootSel} .cv-th-link:hover,
-${rootSel} a.cv-link:hover{text-decoration:underline;}
-${rootSel} .cv-zero{color:#8a8a8a;}
+  /* EXACT Clarity link blue on headers and values */
+  ${rootSel} .cv-th-link,
+  ${rootSel} .cv-th-link:visited,
+  ${rootSel} a.cv-link,
+  ${rootSel} a.cv-link:visited{color:#1a64b8!important;text-decoration:none;cursor:pointer;font-weight:600;}
+  ${rootSel} .cv-th-link:hover,
+  ${rootSel} a.cv-link:hover{text-decoration:underline;}
+  ${rootSel} .cv-zero{color:#8a8a8a;}
 
-/* info dot & popover (wrap text, no overflow) */
-${rootSel} .cv-info{display:inline-block;position:relative;margin-left:6px;}
-${rootSel} .cv-i{
-  display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;
-  border-radius:50%;background:#e5e5e5;color:#777;font-size:11px;font-weight:700;
-}
-${rootSel} .cv-pop{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:26px;background:#fff;
-  border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.15);
-  min-width:340px;max-width:520px;padding:0;display:none;z-index:9999;box-sizing:border-box;
-}
-${rootSel} .cv-pop-title{padding:10px 14px;font-weight:700;color:#333;border-bottom:1px solid #eee;}
-${rootSel} .cv-pop-body{padding:10px 14px;color:#333;font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;word-break:normal;}
-${rootSel} .cv-pop-arrow{
-  position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;width:0;height:0;
-  border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #d9d9d9;
-}
-${rootSel} .cv-pop-arrow::after{
-  content:'';position:absolute;left:-7px;top:-9px;width:0;height:0;
-  border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #fff;
-}
-${rootSel} .cv-info:hover .cv-pop{display:block;}
+  /* info dot & popover (wrap text, no overflow) */
+  ${rootSel} .cv-info{display:inline-block;position:relative;margin-left:6px;}
+  ${rootSel} .cv-i{
+    display:inline-block;width:16px;height:16px;line-height:16px;text-align:center;
+    border-radius:50%;background:#e5e5e5;color:#777;font-size:11px;font-weight:700;
+  }
+  ${rootSel} .cv-pop{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:26px;background:#fff;
+    border:1px solid #d9d9d9;border-radius:6px;box-shadow:0 2px 10px rgba(0,0,0,.15);
+    min-width:340px;max-width:520px;padding:0;display:none;z-index:9999;box-sizing:border-box;
+  }
+  ${rootSel} .cv-pop-title{padding:10px 14px;font-weight:700;color:#333;border-bottom:1px solid #eee;}
+  ${rootSel} .cv-pop-body{padding:10px 14px;color:#333;font-size:13px;line-height:1.35;white-space:normal;overflow-wrap:anywhere;word-break:normal;}
+  ${rootSel} .cv-pop-arrow{
+    position:absolute;left:50%;transform:translateX(-50%);bottom:-8px;width:0;height:0;
+    border-left:8px solid transparent;border-right:8px solid transparent;border-top:8px solid #d9d9d9;
+  }
+  ${rootSel} .cv-pop-arrow::after{
+    content:'';position:absolute;left:-7px;top:-9px;width:0;height:0;
+    border-left:7px solid transparent;border-right:7px solid transparent;border-top:7px solid #fff;
+  }
+  ${rootSel} .cv-info:hover .cv-pop{display:block;}
 
-/* footer (totals/averages) */
-${rootSel} tfoot td{background:#fafafa;color:#666;font-weight:600;}
-${rootSel} tfoot td.cv-right{text-align:right;}
-${rootSel} .cv-sort{font-size:10px;color:#888;margin-left:6px;}
-${rootSel} .cv-topleft-icon{width:16px;height:16px;vertical-align:middle;opacity:.9;}
-`;
-wrapper.appendChild(style);
-
+  /* footer (totals/averages) */
+  ${rootSel} tfoot td{background:#fafafa;color:#666;font-weight:600;}
+  ${rootSel} tfoot td.cv-right{text-align:right;}
+  ${rootSel} .cv-sort{font-size:10px;color:#888;margin-left:6px;}
+  ${rootSel} .cv-topleft-icon{width:16px;height:16px;vertical-align:middle;opacity:.9;}
+  `;
+  document.head.appendChild(style);
 
   // “Showing data up to …”
   function fmtDate(d){
@@ -2544,7 +2540,6 @@ wrapper.appendChild(style);
   const L = (val) => (val==='00:00'||val==='0%'||val==='0'||val===0)
     ? `<span class="cv-zero">${val}</span>` : `<a class="cv-link" href="javascript:void(0)">${val}</a>`;
 
-
   // header cell with blue title + popover
   const H = (shortLabel, popTitle, popBody, addSort=false) => `
     <span class="cv-th">
@@ -2563,10 +2558,10 @@ wrapper.appendChild(style);
 
   // ---------- data ----------
   const rows = [
-    { q: '300', name: 'Main Routing', handled: 2,  offered: 2,  talk:'09:34', hold:'00:15', abandon:'0%',   handle:'09:49' },
-    { q: '301', name: 'New Sales',    handled: 30, offered: 36, talk:'08:35', hold:'00:04', abandon:'22%',  handle:'08:39' },
-    { q: '302', name: 'Existing Customer', handled: 19, offered: 23, talk:'04:04', hold:'00:30', abandon:'17.4%', handle:'04:33' },
-    { q: '303', name: 'Billing',      handled: 8,  offered: 20, talk:'14:22', hold:'00:00', abandon:'0%',   handle:'14:22' },
+    { q: '300', name: 'Main Routing',         handled: 2,  offered: 2,  talk:'09:34', hold:'00:15', abandon:'0%',    handle:'09:49' },
+    { q: '301', name: 'New Sales',            handled: 30, offered: 36, talk:'08:35', hold:'00:04', abandon:'22%',   handle:'08:39' },
+    { q: '302', name: 'Existing Customer',    handled: 19, offered: 23, talk:'04:04', hold:'00:30', abandon:'17.4%', handle:'04:33' },
+    { q: '303', name: 'Billing',              handled: 8,  offered: 20, talk:'14:22', hold:'00:00', abandon:'0%',    handle:'14:22' },
   ];
 
   const toSec = (mmss)=>{ const [m,s]=mmss.split(':').map(Number); return m*60+s; };
@@ -2629,7 +2624,7 @@ wrapper.appendChild(style);
       <tr>
         <td></td>
         <td></td>
-        <td class="cv-right">Totals / Averages</td>
+        <td class="cv-right"></td>
         <td>${totalRow.handled}</td>
         <td>${totalRow.offered}</td>
         <td>${totalRow.talk}</td>
@@ -2641,17 +2636,14 @@ wrapper.appendChild(style);
   `;
   wrapper.appendChild(table);
 
-// Force Clarity blue on headers & values (wins over any stylesheet)
-table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
-  a.style.color = '#1a64b8';
-  a.style.textDecoration = 'none';
-  a.style.fontWeight = '600';
-});
+  // Force Clarity blue on headers & values (wins over any stylesheet)
+  table.querySelectorAll('a.cv-link, .cv-th-link').forEach(a => {
+    a.style.color = '#1a64b8';
+    a.style.textDecoration = 'none';
+    a.style.fontWeight = '600';
+  });
+}
 
-// Remove footer label text
-const lbl = table.querySelector('tfoot td.cv-right');
-if (lbl) lbl.textContent = '';
-// ✅ stop here — no more closing brace
 
 
 
