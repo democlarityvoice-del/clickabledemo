@@ -1,0 +1,566 @@
+
+// Call Center Demo Simulation - Call History Page
+class CallCenterDemo {
+  constructor() {
+    this.calls = [];
+    this.selectedCallIndex = -1;
+    this.iconContainer = null;
+    this.icons = [];
+    this.iconCount = 25;
+    this.circleRadius = 100;
+    
+    // Data pools from your existing math
+    this.names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
+    this.extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
+    this.areaCodes = ["989","517","248","810","313"];
+    this.firstNames = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
+    this.alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    this.OUTBOUND_RATE = 0.30;
+    
+    // Call outcomes for history
+    this.callOutcomes = [
+      "Connected", "No Answer", "Busy", "Transferred", "Voicemail", 
+      "Hung Up", "Call Complete", "System Error", "Timeout"
+    ];
+  }
+
+  // Utility functions from your math
+  pad2(n) {
+    return String(n).padStart(2, "0");
+  }
+
+  randomName() {
+    return this.names[Math.floor(Math.random() * this.names.length)];
+  }
+
+  randomAgentName() {
+    const fn = this.firstNames[Math.floor(Math.random() * this.firstNames.length)];
+    const init = this.alphabet[Math.floor(Math.random() * this.alphabet.length)];
+    return fn + " " + init + ".";
+  }
+
+  randomPhone() {
+    const ac = this.areaCodes[Math.floor(Math.random() * this.areaCodes.length)];
+    const last2 = this.pad2(Math.floor(Math.random() * 100));
+    let num = ac + "-555-01" + last2;
+    while (/666/.test(num)) {
+      const last2 = this.pad2(Math.floor(Math.random() * 100));
+      num = ac + "-555-01" + last2;
+    }
+    return num;
+  }
+
+  randomDialed() {
+    let num;
+    do {
+      num = "800-" + (100 + Math.floor(Math.random() * 900)) + "-" + (1000 + Math.floor(Math.random() * 9000));
+    } while (/666/.test(num));
+    return num;
+  }
+
+  randomExtension() {
+    return this.extensions[Math.floor(Math.random() * this.extensions.length)];
+  }
+
+  // Generate historical call duration (completed calls)
+  generateHistoricalDuration() {
+    const minutes = Math.floor(Math.random() * 15); // 0-15 minutes
+    const seconds = Math.floor(Math.random() * 60);
+    return minutes + ":" + this.pad2(seconds);
+  }
+
+  // Generate timestamp for historical calls (within last few hours)
+  generateHistoricalTime(index) {
+    const now = new Date();
+    const hoursAgo = Math.floor(index / 5); // Spread calls over time
+    const minutesAgo = (index % 5) * 10 + Math.floor(Math.random() * 10);
+    
+    const callTime = new Date(now - (hoursAgo * 60 + minutesAgo) * 60 * 1000);
+    const timeStr = callTime.toLocaleTimeString('en-US', { 
+      hour: 'numeric', 
+      minute: '2-digit', 
+      hour12: true 
+    });
+    
+    return `Today, ${timeStr}`;
+  }
+
+  // Create historical calls using your existing math
+  createMockCalls() {
+    this.calls = [];
+    const usedNames = new Set();
+    const usedExtensions = new Set();
+    const usedPhones = new Set();
+
+    for (let i = 0; i < 25; i++) {
+      const outbound = Math.random() < this.OUTBOUND_RATE;
+      
+      // Get unique extension
+      let ext = this.randomExtension();
+      while (usedExtensions.has(ext) && usedExtensions.size < this.extensions.length) {
+        ext = this.randomExtension();
+      }
+      usedExtensions.add(ext);
+
+      let call;
+      
+      if (outbound) {
+        // Outbound historical call
+        const agentName = this.randomAgentName();
+        let customerPhone = this.randomPhone();
+        while (usedPhones.has(customerPhone)) {
+          customerPhone = this.randomPhone();
+        }
+        usedPhones.add(customerPhone);
+
+        call = {
+          id: i,
+          name: agentName,
+          extension: `Ext. ${ext}`,
+          number: customerPhone,
+          time: this.generateHistoricalTime(i),
+          duration: this.generateHistoricalDuration(),
+          status: this.callOutcomes[Math.floor(Math.random() * this.callOutcomes.length)],
+          outbound: true,
+          highlighted: false,
+          from: `Ext. ${ext}`,
+          to: customerPhone,
+          dialed: customerPhone
+        };
+      } else {
+        // Inbound historical call
+        let customerName = this.randomName();
+        while (usedNames.has(customerName) && usedNames.size < this.names.length) {
+          customerName = this.randomName();
+        }
+        usedNames.add(customerName);
+
+        let customerPhone = this.randomPhone();
+        while (usedPhones.has(customerPhone)) {
+          customerPhone = this.randomPhone();
+        }
+        usedPhones.add(customerPhone);
+
+        call = {
+          id: i,
+          name: customerName,
+          extension: ext.toString(),
+          number: customerPhone,
+          time: this.generateHistoricalTime(i),
+          duration: this.generateHistoricalDuration(),
+          status: this.callOutcomes[Math.floor(Math.random() * this.callOutcomes.length)],
+          outbound: false,
+          highlighted: false,
+          from: customerPhone,
+          to: `Ext. ${ext}`,
+          dialed: this.randomDialed()
+        };
+      }
+      
+      this.calls.push(call);
+    }
+  }
+
+  // Initialize the demo
+  init() {
+    this.createMockCalls();
+    this.createIconContainer();
+    this.createCircularIcons();
+    this.createActionPanel();
+    this.bindEvents();
+  }
+
+  // Create the container for circular icons
+  createIconContainer() {
+    this.iconContainer = document.createElement('div');
+    this.iconContainer.id = 'circular-icons';
+    this.iconContainer.style.cssText = `
+      position: fixed;
+      right: 50px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: ${this.circleRadius * 2 + 40}px;
+      height: ${this.circleRadius * 2 + 40}px;
+      pointer-events: none;
+      z-index: 1000;
+    `;
+    document.body.appendChild(this.iconContainer);
+  }
+
+  // Create action button panel for call controls
+  createActionPanel() {
+    this.actionPanel = document.createElement('div');
+    this.actionPanel.id = 'action-panel';
+    this.actionPanel.style.cssText = `
+      position: fixed;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.9);
+      padding: 10px;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      z-index: 1001;
+    `;
+    
+    // Create Download button
+    const downloadBtn = this.createActionButton(
+      'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg',
+      'Download',
+      () => this.handleDownload()
+    );
+    
+    // Create Listen button
+    const listenBtn = this.createActionButton(
+      'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg',
+      'Listen',
+      () => this.handleListen()
+    );
+    
+    // Create Cradle to Grave button
+    const cradleToGraveBtn = this.createActionButton(
+      'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg',
+      'Cradle To Grave',
+      () => this.handleCradleToGrave()
+    );
+    
+    // Create Add Notes button
+    const addNotesBtn = this.createActionButton(
+      'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg',
+      'Add Notes',
+      () => this.handleAddNotes()
+    );
+    
+    // Create AI Transcript and Summary button
+    const aiTranscriptBtn = this.createActionButton(
+      'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg',
+      'AI Transcript and Summary',
+      () => this.handleAITranscript()
+    );
+    
+    this.actionPanel.appendChild(downloadBtn);
+    this.actionPanel.appendChild(listenBtn);
+    this.actionPanel.appendChild(cradleToGraveBtn);
+    this.actionPanel.appendChild(addNotesBtn);
+    this.actionPanel.appendChild(aiTranscriptBtn);
+    document.body.appendChild(this.actionPanel);
+  }
+
+  // Create individual action button with icon and tooltip
+  createActionButton(iconUrl, tooltipText, clickHandler) {
+    const button = document.createElement('button');
+    button.className = 'action-button';
+    button.style.cssText = `
+      width: 40px;
+      height: 40px;
+      border: none;
+      border-radius: 50%;
+      background: #f8f9fa;
+      cursor: pointer;
+      position: relative;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    `;
+    
+    // Create icon image
+    const icon = document.createElement('img');
+    icon.src = iconUrl;
+    icon.style.cssText = `
+      width: 24px;
+      height: 24px;
+      pointer-events: none;
+    `;
+    
+    // Create tooltip
+    const tooltip = document.createElement('div');
+    tooltip.className = 'tooltip';
+    tooltip.textContent = tooltipText;
+    tooltip.style.cssText = `
+      position: absolute;
+      bottom: 120%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #333;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      pointer-events: none;
+      z-index: 1002;
+    `;
+    
+    // Add hover effects
+    button.addEventListener('mouseenter', () => {
+      button.style.background = '#e9ecef';
+      button.style.transform = 'scale(1.1)';
+      tooltip.style.opacity = '1';
+      tooltip.style.visibility = 'visible';
+    });
+    
+    button.addEventListener('mouseleave', () => {
+      button.style.background = '#f8f9fa';
+      button.style.transform = 'scale(1)';
+      tooltip.style.opacity = '0';
+      tooltip.style.visibility = 'hidden';
+    });
+    
+    // Add click handler
+    button.addEventListener('click', clickHandler);
+    
+    button.appendChild(icon);
+    button.appendChild(tooltip);
+    
+    return button;
+  }
+
+  // Handle download action
+  handleDownload() {
+    if (this.selectedCallIndex >= 0) {
+      const call = this.calls[this.selectedCallIndex];
+      console.log(`Downloading call record for: ${call.name} (${call.number})`);
+      
+      // Simulate download - you can replace this with actual download logic
+      alert(`Downloading call record for: ${call.name}\nDuration: ${call.duration}\nStatus: ${call.status}`);
+    }
+  }
+
+  // Handle listen action
+  handleListen() {
+    if (this.selectedCallIndex >= 0) {
+      const call = this.calls[this.selectedCallIndex];
+      console.log(`Playing back call recording for: ${call.name} (${call.number})`);
+      
+      // Simulate audio playback - you can replace this with actual audio logic
+      alert(`Playing back call recording:\n${call.name} - ${call.number}\nDuration: ${call.duration}\nStatus: ${call.status}`);
+    }
+  }
+
+  // Handle cradle to grave action
+  handleCradleToGrave() {
+    if (this.selectedCallIndex >= 0) {
+      const call = this.calls[this.selectedCallIndex];
+      console.log(`Generating cradle to grave report for: ${call.name} (${call.number})`);
+      
+      // Simulate cradle to grave report generation - you can replace this with actual logic
+      alert(`Generating Cradle to Grave Report:\n${call.name} - ${call.number}\nFrom: ${call.from}\nTo: ${call.to}\nTime: ${call.time}\nDuration: ${call.duration}\nStatus: ${call.status}\nType: ${call.outbound ? 'Outbound' : 'Inbound'}`);
+    }
+  }
+
+  // Handle add notes action
+  handleAddNotes() {
+    if (this.selectedCallIndex >= 0) {
+      const call = this.calls[this.selectedCallIndex];
+      console.log(`Adding notes for: ${call.name} (${call.number})`);
+      
+      // Simulate notes interface - you can replace this with actual notes dialog
+      const note = prompt(`Add a note for this call:\n${call.name} - ${call.number}\nTime: ${call.time}\nDuration: ${call.duration}\n\nEnter your note:`);
+      
+      if (note && note.trim()) {
+        // Store the note (in a real application, this would save to database)
+        if (!call.notes) call.notes = [];
+        call.notes.push({
+          text: note.trim(),
+          timestamp: new Date().toLocaleString(),
+          author: 'Current User' // In real app, this would be the logged-in user
+        });
+        
+        alert(`Note added successfully for ${call.name}`);
+        console.log(`Note added:`, call.notes[call.notes.length - 1]);
+      }
+    }
+  }
+
+  // Handle AI transcript and summary action
+  handleAITranscript() {
+    if (this.selectedCallIndex >= 0) {
+      const call = this.calls[this.selectedCallIndex];
+      console.log(`Generating AI transcript and summary for: ${call.name} (${call.number})`);
+      
+      // Simulate AI processing - you can replace this with actual AI transcript generation
+      const transcript = `AI-Generated Transcript for ${call.name}:\n\n[00:05] Agent: Hello, thank you for calling. How can I help you today?\n[00:12] Customer: Hi, I'm having an issue with my account.\n[00:18] Agent: I'd be happy to help with that. Can you provide your account number?\n[00:25] Customer: Sure, it's 123456789.\n[00:30] Agent: Thank you. I see your account here. What specific issue are you experiencing?\n[00:38] Customer: I can't access my online portal.\n[00:42] Agent: Let me check that for you right away...\n\nAI Summary:\nCustomer called regarding login issues with online portal. Agent verified account and provided troubleshooting steps. Issue resolved successfully. Customer satisfaction: High.`;
+      
+      // Store the transcript (in a real application, this would be generated by AI and saved to database)
+      if (!call.transcript) {
+        call.transcript = {
+          text: transcript,
+          generated: new Date().toLocaleString(),
+          confidence: '95%',
+          processed_by: 'AI Transcript Engine v2.1'
+        };
+        
+        alert(`AI Transcript and Summary generated for ${call.name}\n\nDuration: ${call.duration}\nConfidence: ${call.transcript.confidence}\n\nTranscript preview:\n${transcript.substring(0, 200)}...`);
+        console.log(`AI Transcript generated:`, call.transcript);
+      } else {
+        alert(`AI Transcript already exists for ${call.name}\n\nGenerated: ${call.transcript.generated}\nConfidence: ${call.transcript.confidence}`);
+      }
+    }
+  }
+
+  // Create icons positioned in a circle
+  createCircularIcons() {
+    for (let i = 0; i < this.iconCount; i++) {
+      const icon = document.createElement('div');
+      icon.className = 'circular-icon';
+      icon.dataset.callId = i;
+      
+      // Calculate position on circle
+      const angle = (i / this.iconCount) * 2 * Math.PI;
+      const x = Math.cos(angle) * this.circleRadius + this.circleRadius + 20;
+      const y = Math.sin(angle) * this.circleRadius + this.circleRadius + 20;
+      
+      // Different colors for inbound vs outbound
+      const call = this.calls[i];
+      const baseColor = call && call.outbound ? '#4a90e2' : '#666';
+      
+      icon.style.cssText = `
+        position: absolute;
+        left: ${x}px;
+        top: ${y}px;
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        background-color: ${baseColor};
+        border: 2px solid #333;
+        transition: all 0.3s ease;
+        transform: translate(-50%, -50%);
+        pointer-events: auto;
+        cursor: pointer;
+      `;
+      
+      this.iconContainer.appendChild(icon);
+      this.icons.push(icon);
+    }
+  }
+
+  // Highlight a specific call and its corresponding icon
+  highlightCall(callIndex) {
+    // Remove previous highlights
+    this.calls.forEach(call => call.highlighted = false);
+    this.icons.forEach((icon, index) => {
+      const call = this.calls[index];
+      const baseColor = call && call.outbound ? '#4a90e2' : '#666';
+      icon.style.backgroundColor = baseColor;
+      icon.style.boxShadow = 'none';
+      icon.style.border = '2px solid #333';
+    });
+
+    if (callIndex >= 0 && callIndex < this.calls.length) {
+      // Highlight the call
+      this.calls[callIndex].highlighted = true;
+      this.selectedCallIndex = callIndex;
+      
+      // Light up the corresponding icon
+      const icon = this.icons[callIndex];
+      const call = this.calls[callIndex];
+      
+      icon.style.backgroundColor = '#00ff00';
+      icon.style.boxShadow = '0 0 10px #00ff00';
+      icon.style.border = '2px solid #00ff00';
+      
+      // Show action panel
+      this.showActionPanel();
+      
+      // Log call details
+      const direction = call.outbound ? 'Outbound' : 'Inbound';
+      console.log(`${direction} Call ${callIndex + 1}: ${call.name} (${call.number}) - ${call.duration} - ${call.status}`);
+    } else {
+      // Hide action panel if no call selected
+      this.hideActionPanel();
+    }
+  }
+
+  // Show action panel with animation
+  showActionPanel() {
+    if (this.actionPanel) {
+      this.actionPanel.style.opacity = '1';
+      this.actionPanel.style.visibility = 'visible';
+      this.actionPanel.style.transform = 'translateX(-50%) translateY(-10px)';
+    }
+  }
+
+  // Hide action panel with animation
+  hideActionPanel() {
+    if (this.actionPanel) {
+      this.actionPanel.style.opacity = '0';
+      this.actionPanel.style.visibility = 'hidden';
+      this.actionPanel.style.transform = 'translateX(-50%) translateY(0px)';
+    }
+  }
+
+  // Bind click events for icons
+  bindEvents() {
+    this.icons.forEach((icon, index) => {
+      icon.addEventListener('click', () => {
+        this.highlightCall(index);
+      });
+    });
+  }
+
+  // Get call data (useful for external integration)
+  getCallData(index) {
+    return this.calls[index] || null;
+  }
+
+  // Get all historical calls
+  getAllCalls() {
+    return this.calls;
+  }
+
+  // Update circle radius (for responsive design)
+  updateCircleRadius(newRadius) {
+    this.circleRadius = newRadius;
+    this.iconContainer.style.width = `${newRadius * 2 + 40}px`;
+    this.iconContainer.style.height = `${newRadius * 2 + 40}px`;
+    
+    this.icons.forEach((icon, index) => {
+      const angle = (index / this.iconCount) * 2 * Math.PI;
+      const x = Math.cos(angle) * newRadius + newRadius + 20;
+      const y = Math.sin(angle) * newRadius + newRadius + 20;
+      
+      icon.style.left = `${x}px`;
+      icon.style.top = `${y}px`;
+    });
+  }
+
+  // Integration method for your animation system
+  integrateWithAnimationMath(animationData) {
+    if (animationData && animationData.selectedIndex !== undefined) {
+      this.highlightCall(animationData.selectedIndex);
+    }
+  }
+}
+
+// Initialize the demo when the DOM is ready
+let callCenterDemo;
+
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    callCenterDemo = new CallCenterDemo();
+    callCenterDemo.init();
+    
+    // No automatic cycling - this is a static call history page
+    // Users manually click icons to view historical call records
+  });
+}
+
+// Export for use in other scripts
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = CallCenterDemo;
+}
+
+// Make available globally for injection
+if (typeof window !== 'undefined') {
+  window.CallCenterDemo = CallCenterDemo;
+}
