@@ -2435,28 +2435,36 @@ if (!window.__cvQueueStatsInit)
   function buildQueueStatsChart(wrapper) {
   const iconUrl = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/signal-solid-full.svg';
 
-  const table = document.createElement('table');
-  table.className = 'cv-queue-table';
-  table.innerHTML = `
-    <thead>
-      <tr>
-        <th></th>
-        <th>Queue</th>
-        <th>Name</th>
-        <th>Calls Handled</th>
-        <th>Calls Offered</th>
-        <th>Avg. Talk Time</th>
-        <th>Avg. Hold Time</th>
-        <th>Abandon Rate</th>
-        <th>Avg. Handle Time</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${[300, 301, 302, 303].map((q, i) => {
-        const colors = ['red', 'blue', 'green', 'purple'];
-        return `
+const table = document.createElement('table');
+table.className = 'cv-queue-table';
+table.innerHTML = `
+  <thead>
     <tr>
-      <td><input type="checkbox" style="accent-color: blue"></td>
+      <th></th>
+      <th>Queue</th>
+      <th>Name</th>
+      <th>Calls Handled</th>
+      <th>Calls Offered</th>
+      <th>Avg. Talk Time</th>
+      <th>Avg. Hold Time</th>
+      <th>Abandon Rate</th>
+      <th>Avg. Handle Time</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><input type="checkbox" style="accent-color: red;"></td>
+      <td>300</td>
+      <td>Main Routing</td>
+      <td>2</td>
+      <td>2</td>
+      <td>09:34</td>
+      <td>00:15</td>
+      <td>0%</td>
+      <td>09:49</td>
+    </tr>
+    <tr>
+      <td><input type="checkbox" style="accent-color: blue;"></td>
       <td>301</td>
       <td>New Sales</td>
       <td>30</td>
@@ -2467,7 +2475,7 @@ if (!window.__cvQueueStatsInit)
       <td>08:39</td>
     </tr>
     <tr>
-      <td><input type="checkbox" style="accent-color: green"></td>
+      <td><input type="checkbox" style="accent-color: green;"></td>
       <td>302</td>
       <td>Existing Customer</td>
       <td>19</td>
@@ -2478,7 +2486,7 @@ if (!window.__cvQueueStatsInit)
       <td>04:33</td>
     </tr>
     <tr>
-      <td><input type="checkbox" style="accent-color: purple"></td>
+      <td><input type="checkbox" style="accent-color: purple;"></td>
       <td>303</td>
       <td>Billing</td>
       <td>8</td>
@@ -2490,6 +2498,7 @@ if (!window.__cvQueueStatsInit)
     </tr>
   </tbody>
 `;
+
 
   const icon = document.createElement('img');
   icon.src = iconUrl;
@@ -2510,4 +2519,5 @@ if (!window.__cvQueueStatsInit)
   wrapper.appendChild(tableHeader);
   wrapper.appendChild(table);
 }
+
 
