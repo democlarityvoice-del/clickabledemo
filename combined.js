@@ -2433,8 +2433,7 @@ if (!window.__cvQueueStatsInit) window.__cvQueueStatsInit = true;
   buildQueueStatsChart(wrapper);
 })();
 
-console.info('[CV Overlay] Non-invasive check:', _results);  
-})();
+
 
 // ---------- styles (visual only) ----------
 function buildQueueStatsChart(wrapper) {
@@ -2624,6 +2623,7 @@ function buildQueueStatsChart(wrapper) {
     a.style.fontWeight = '600';
   });
 }
+
 
 
 
