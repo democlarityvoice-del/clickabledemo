@@ -2405,19 +2405,20 @@ if (!document.__cvqfRowStatusCapture) {
 // ==============================
 // Clarity Voice Queue Stats Inject
 // ==============================
-if (!window.__cvQueueStatsInit) {
+if (!window.__cvQueueStatsInit) 
   window.__cvQueueStatsInit = true;
 
   (function injectQueueStatsOverlay() {
     const QUEUE_STATS_REGEX = /\/portal\/stats\/queuestats\/queue(?:[\/?#]|$)/;
     const RX_ROOT_ID = 'cv-queue-stats-wrapper';
 
+
     if (QUEUE_STATS_REGEX.test(location.href)) {
       // Prevent duplicate injection
       if (document.getElementById(RX_ROOT_ID)) return;
 
       // Target the modal-body-reports container
-      const container = document.querySelector('#modal-body-reports');
+      const container = document.querySelector('.table-container');
       if (!container) return;
 
       const wrapper = document.createElement('div');
@@ -2490,4 +2491,5 @@ if (!window.__cvQueueStatsInit) {
     wrapper.appendChild(table);
   }
 }
+
 
