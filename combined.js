@@ -2490,6 +2490,16 @@ function buildQueueStatsChart(wrapper) {
     ${rootSel} a.cv-link:hover { text-decoration:underline; }
     ${rootSel} .cv-zero { color:#8a8a8a; }
 
+   /* Force Clarity link blue on headers and values */
+    ${rootSel} .cv-th-link,
+    ${rootSel} .cv-th-link:visited,
+    ${rootSel} a.cv-link,
+    ${rootSel} a.cv-link:visited {
+      color: #1a64b8 !important;
+}
+
+
+
     /* Footer (totals/averages) styling */
     ${rootSel} tfoot td { background:#fafafa; color:#666; font-weight:600; }
     ${rootSel} tfoot td.cv-right { text-align:right; }
@@ -2611,4 +2621,10 @@ function buildQueueStatsChart(wrapper) {
     </tfoot>
   `;
   wrapper.appendChild(table);
+
+  // Remove footer label text
+const lbl = table.querySelector('tfoot td.cv-right');
+if (lbl) lbl.textContent = '';
+
 }
+
