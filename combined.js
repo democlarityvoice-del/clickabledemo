@@ -2386,7 +2386,8 @@ if (!window.__cvCallHistoryInit) {
 
   // -------- BUILD SRCDOC -------- //
   
-function buildSrcdoc() {
+// -------- BUILD CALL HISTORY SRCDOC -------- //
+function buildCallHistorySrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -2414,15 +2415,6 @@ function buildSrcdoc() {
     width:100%;
     max-width:100%;
   }
-  .call-container a,
-  .call-container a:visited,
-  .call-container a:active {
-    color: #1a73e8;
-    text-decoration: none;
-  }
-.call-container a:hover {
-  text-decoration: underline;
-}
   table{ width:100%; border-collapse:collapse; background:#fff; table-layout:auto; }
   thead th{
     padding:8px 12px;
@@ -2441,32 +2433,41 @@ function buildSrcdoc() {
     text-align:left;
   }
   tr:hover{ background:#f7f7f7; }
-  .icon-cell {
-    display: flex;
-    gap: 6px;
+
+  /* QoS tag */
+  .qos-tag{
+    display:inline-block;
+    padding:0 6px;
+    line-height:18px;
+    min-width:28px;
+    text-align:center;
+    font-weight:600;
+    font-size:12px;
+    border-radius:3px;
+    background:#2e7d32;
+    color:#fff;
   }
-  .icon-btn {
-    width: 24px; height: 24px;
-    background: none;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-  }
-  .icon-btn img {
-    width: 18px; height: 18px;
-    opacity: 0.25;
-    transition: opacity 0.2s;
-  }
-  .icon-btn:hover img {
-    opacity: 1;
-  }
+
+  /* Action icons */
+  .icon-cell { display:flex; gap:6px; }
+  .icon-btn { width:24px; height:24px; background:none; border:none; padding:0; cursor:pointer; }
+  .icon-btn img { width:18px; height:18px; opacity:.25; transition:opacity .2s; }
+  .icon-btn:hover img { opacity:1; }
+
+  /* Keep phone links blue (not purple) */
+  .call-container a,
+  .call-container a:visited,
+  .call-container a:active { color:#1a73e8; text-decoration:none; }
+  .call-container a:hover { text-decoration:underline; }
 </style>
 </head><body>
   <div class="call-container">
     <table>
       <thead>
         <tr>
-          <th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th>
+          <th>From Name</th><th>From</th><th>QOS</th>
+          <th>Dialed</th><th>To Name</th><th>To</th><th>QOS</th>
+          <th>Date</th><th>Duration</th><th>Disposition</th><th>Release Reason</th><th></th>
         </tr>
       </thead>
       <tbody id="callsTableBody"></tbody>
@@ -2475,101 +2476,71 @@ function buildSrcdoc() {
 <script>
 (function () {
   const ICONS = [
-    { src: '${ICON_DOWNLOAD}', title: 'Download' },
-    { src: '${ICON_LISTEN}', title: 'Listen' },
-    { src: '${ICON_CRADLE}', title: 'Cradle' },
-    { src: '${ICON_NOTES}', title: 'Notes' },
-    { src: '${ICON_TRANSCRIPT}', title: 'Transcript' }
+    { src: '${ICON_DOWNLOAD}' },
+    { src: '${ICON_LISTEN}' },
+    { src: '${ICON_CRADLE}' },
+    { src: '${ICON_NOTES}' },
+    { src: '${ICON_TRANSCRIPT}' }
   ];
-  // --- RANDOM CALL HISTORY (25 static rows; numbers clickable if full) ---
-(function () {
-  // Extension → agent name map (200–207 only)
-  var extNameMap = {
-    200: 'Mike Johnson',
-    201: 'Cathy Thomas',
-    202: 'Jake Lee',
-    203: 'Emily Tran',
-    204: 'Brittany Lawrence',
-    205: 'Alex Roberts',
-    206: 'Grace Smith',
-    207: 'Jason Tran'
-  };
-  var extensions = [200,201,202,203,204,205,206,207];
-  var names = ['Carlos Rivera','Ava Chen','Sarah Patel','Liam Nguyen','Monica Alvarez','Raj Patel','Chloe Bennett','Zoe Miller','Ruby Foster','Leo Knight','Maya Brooks'];
-  var areaCodes = ['989','517','248','810','313'];
-  var OUTBOUND_RATE = 0.30;
 
-  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-  function pad2(n){ return String(n).padStart(2,'0'); }
-
-  // NANPA-safe inbound numbers like "(313) 555-01xx"
-  function mkPhone(){
-    var ac = rand(areaCodes);
-    var last2 = pad2(Math.floor(Math.random()*100));
-    return '(' + ac + ') 555-01' + last2;
-  }
-  // Dialed numbers like "(800) nnn-nnnn", avoid 666
-  function mk800(){
-    var n, p1, p2;
-    do {
-      p1 = 200 + Math.floor(Math.random()*700);
-      p2 = 1000 + Math.floor(Math.random()*9000);
-      n = '(800) ' + p1 + '-' + p2;
-    } while (/666/.test(n));
-    return n;
-  }
-  function mkDuration(){
-    var s = Math.floor(Math.random() * (33*60)); // up to 32:59
-    return Math.floor(s/60) + ':' + pad2(s%60);
-  }
-
+  // Full phone pattern (double-escaped so it survives outer template)
   var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
   function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
 
-  // Build 25 rows once
-  var rows = [];
-  for (var i=0;i<25;i++){
-    var outbound = Math.random() < OUTBOUND_RATE;
-    if (outbound){
-      var ext = rand(extensions);
-      var agent = extNameMap[ext];
-      var dial = mkPhone();
-      rows.push({ from: String(ext), cnam: agent, dialed: dial, to: 'External', duration: mkDuration() });
-    } else {
-      var from = mkPhone();
-      var cnam = rand(names);
-      var dialed = mk800();
-      var to;
-      if (Math.random() < 0.5) {
-        to = 'CallQueue';
-      } else {
-        var ext2 = rand(extensions);
-        to = 'Ext. ' + ext2 + ' (' + extNameMap[ext2] + ')';
-      }
-      rows.push({ from: from, cnam: cnam, dialed: dialed, to: to, duration: mkDuration() });
-    }
-  }
+  // ---- STATIC SNAPSHOT (25 rows) ----
+  const rows = [
+    { cnam: "Ruby Foster", from: "(248) 555-0102", q1: "4.5", dialed: "(800) 690-1406", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.5", date: "Today, 10:02 pm", duration: "32:06", disposition: "", release: "Orig: Bye" },
+    { cnam: "Jason Tran", from: "207", q1: "4.4", dialed: "(517) 555-0162", toName: "", to: "External", q2: "4.3", date: "Today, 9:59 pm", duration: "22:17", disposition: "", release: "Term: Bye" },
+    { cnam: "Leo Knight", from: "(313) 555-0106", q1: "4.3", dialed: "(800) 223-1220", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.4", date: "Today, 9:57 pm", duration: "1:53", disposition: "", release: "Orig: Bye" },
+    { cnam: "Ava Chen", from: "(313) 555-0151", q1: "4.4", dialed: "(800) 814-3898", toName: "", to: "Ext. 205 (Alex Roberts)", q2: "4.3", date: "Today, 9:55 pm", duration: "0:56", disposition: "", release: "Term: Bye" },
+    { cnam: "Alex Roberts", from: "205", q1: "4.5", dialed: "(248) 555-0110", toName: "", to: "External", q2: "4.4", date: "Today, 9:53 pm", duration: "20:13", disposition: "", release: "Orig: Bye" },
+    { cnam: "Zoe Miller", from: "(248) 555-0165", q1: "4.2", dialed: "(800) 545-7595", toName: "", to: "CallQueue", q2: "4.3", date: "Today, 9:51 pm", duration: "22:39", disposition: "", release: "Orig: Bye" },
+    { cnam: "Raj Patel", from: "(810) 555-0187", q1: "4.3", dialed: "(800) 874-3952", toName: "", to: "CallQueue", q2: "4.2", date: "Today, 9:49 pm", duration: "4:49", disposition: "", release: "Term: Bye" },
+    { cnam: "Zoe Miller", from: "(810) 555-0184", q1: "4.4", dialed: "(800) 793-4896", toName: "", to: "CallQueue", q2: "4.4", date: "Today, 9:47 pm", duration: "13:01", disposition: "", release: "Orig: Bye" },
+    { cnam: "Raj Patel", from: "(989) 555-0128", q1: "4.5", dialed: "(800) 606-2189", toName: "", to: "CallQueue", q2: "4.4", date: "Today, 9:45 pm", duration: "1:24", disposition: "", release: "Orig: Bye" },
+    { cnam: "Liam Nguyen", from: "(810) 555-0100", q1: "4.2", dialed: "(800) 853-1748", toName: "", to: "CallQueue", q2: "4.3", date: "Today, 9:43 pm", duration: "1:28", disposition: "", release: "Term: Bye" },
+    { cnam: "Ava Chen", from: "(313) 555-0108", q1: "4.3", dialed: "(800) 420-2929", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.5", date: "Today, 9:41 pm", duration: "15:51", disposition: "", release: "Orig: Bye" },
+    { cnam: "Maya Brooks", from: "(517) 555-0126", q1: "4.4", dialed: "(800) 715-5185", toName: "", to: "Ext. 201 (Cathy Thomas)", q2: "4.2", date: "Today, 9:39 pm", duration: "14:27", disposition: "", release: "Term: Bye" },
+    { cnam: "Liam Nguyen", from: "(517) 555-0148", q1: "4.3", dialed: "(800) 232-3586", toName: "", to: "CallQueue", q2: "4.3", date: "Today, 9:37 pm", duration: "14:28", disposition: "", release: "Orig: Bye" },
+    { cnam: "Zoe Miller", from: "(248) 555-0168", q1: "4.4", dialed: "(800) 659-1556", toName: "", to: "Ext. 205 (Alex Roberts)", q2: "4.4", date: "Today, 9:34 pm", duration: "20:45", disposition: "", release: "Term: Bye" },
+    { cnam: "Sarah Patel", from: "(248) 555-0196", q1: "4.2", dialed: "(800) 875-6126", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.5", date: "Today, 9:32 pm", duration: "12:05", disposition: "", release: "Orig: Bye" },
+    { cnam: "Jake Lee", from: "202", q1: "4.5", dialed: "(248) 555-0191", toName: "", to: "External", q2: "4.4", date: "Today, 9:30 pm", duration: "27:22", disposition: "", release: "Orig: Bye" },
+    { cnam: "Chloe Bennett", from: "(313) 555-0120", q1: "4.3", dialed: "(800) 701-8844", toName: "", to: "CallQueue", q2: "4.2", date: "Today, 9:28 pm", duration: "3:02", disposition: "", release: "Term: Bye" },
+    { cnam: "Mike Johnson", from: "200", q1: "4.4", dialed: "(810) 555-0112", toName: "", to: "External", q2: "4.3", date: "Today, 9:26 pm", duration: "9:58", disposition: "", release: "Orig: Bye" },
+    { cnam: "Carlos Rivera", from: "(517) 555-0177", q1: "4.5", dialed: "(800) 612-9044", toName: "", to: "Ext. 201 (Cathy Thomas)", q2: "4.4", date: "Today, 9:24 pm", duration: "7:41", disposition: "", release: "Term: Bye" },
+    { cnam: "Monica Alvarez", from: "(989) 555-0113", q1: "4.2", dialed: "(800) 934-2082", toName: "", to: "CallQueue", q2: "4.2", date: "Today, 9:21 pm", duration: "2:36", disposition: "", release: "Orig: Bye" },
+    { cnam: "Emily Tran", from: "203", q1: "4.4", dialed: "(313) 555-0179", toName: "", to: "External", q2: "4.3", date: "Today, 9:19 pm", duration: "5:12", disposition: "", release: "Term: Bye" },
+    { cnam: "Ruby Foster", from: "(810) 555-0175", q1: "4.3", dialed: "(800) 901-2272", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.5", date: "Today, 9:17 pm", duration: "10:44", disposition: "", release: "Orig: Bye" },
+    { cnam: "Grace Smith", from: "206", q1: "4.5", dialed: "(989) 555-0140", toName: "", to: "External", q2: "4.4", date: "Today, 9:15 pm", duration: "6:05", disposition: "", release: "Term: Bye" },
+    { cnam: "Zoe Miller", from: "(248) 555-0144", q1: "4.2", dialed: "(800) 732-5459", toName: "", to: "CallQueue", q2: "4.3", date: "Today, 9:12 pm", duration: "0:39", disposition: "", release: "Orig: Bye" },
+    { cnam: "Cathy Thomas", from: "201", q1: "4.4", dialed: "(517) 555-0170", toName: "", to: "External", q2: "4.5", date: "Today, 9:10 pm", duration: "11:33", disposition: "", release: "Orig: Bye" }
+  ];
 
   var tbody = document.getElementById('callsTableBody');
   rows.forEach(function(row){
     var tr = document.createElement('tr');
     tr.innerHTML = \`
-      <td>\${wrapPhone(row.from)}</td>
       <td>\${row.cnam}</td>
+      <td>\${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">\${row.q1}</span></td>
       <td>\${wrapPhone(row.dialed)}</td>
+      <td></td>
       <td>\${wrapPhone(row.to)}</td>
+      <td><span class="qos-tag">\${row.q2}</span></td>
+      <td>\${row.date}</td>
       <td>\${row.duration}</td>
+      <td>\${row.disposition || ''}</td>
+      <td>\${row.release}</td>
       <td class="icon-cell">
-        \${ICONS.map(function(icon){ return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt="'+icon.title+'" /></button>'; }).join('')}
+        \${ICONS.map(function(icon){ return '<button class="icon-btn"><img src="'+icon.src+'" alt=""/></button>'; }).join('')}
       </td>\`;
     tbody.appendChild(tr);
   });
 })();
-
-})();
-</script>
+<\/script>
 </body></html>`;
 }
+
 
 
   // -------- REMOVE CALL HISTORY -------- //
@@ -2613,7 +2584,7 @@ function buildSrcdoc() {
     iframe.id = CALLHISTORY_IFRAME_ID;
     iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
     iframe.setAttribute('scrolling', 'yes');
-    iframe.srcdoc = buildSrcdoc();
+    iframe.srcdoc = buildCallHistorySrcdoc();
 
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
     else slot.appendChild(iframe);
@@ -2697,6 +2668,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
