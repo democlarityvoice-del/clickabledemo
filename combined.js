@@ -2549,7 +2549,7 @@ function buildSrcdoc() {
     return Math.floor(s/60) + ':' + pad2(s%60);
   }
 
-  var PHONE = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
+  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
   function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
 
   // Build 25 rows once
@@ -2723,6 +2723,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
