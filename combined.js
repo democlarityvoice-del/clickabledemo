@@ -2520,15 +2520,16 @@ function buildSrcdoc() {
   sampleData.forEach(row => {
   const tr = document.createElement('tr');
   tr.innerHTML = \`
-    <td>${row.from}</td>
-    <td>${row.cnam}</td>
-    <td>${row.dialed}</td>
-    <td>${row.to}</td>
-    <td>${row.duration}</td>
-    <td class="icon-cell">
-      ${ICONS.map(icon => `<button class="icon-btn" title="${icon.title}"><img src="${icon.src}" alt="${icon.title}" /></button>`).join('')}
-    </td>
-  \`;
+  <td>\${row.from}</td>
+  <td>\${row.cnam}</td>
+  <td>\${row.dialed}</td>
+  <td>\${row.to}</td>
+  <td>\${row.duration}</td>
+  <td class="icon-cell">
+    \${ICONS.map(icon => \`<button class="icon-btn" title="\${icon.title}"><img src="\${icon.src}" alt="\${icon.title}" /></button>\`).join('')}
+  </td>
+\`;
+
   tbody.appendChild(tr);
 });
 
@@ -2663,6 +2664,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
