@@ -2521,6 +2521,17 @@ function buildCallHistorySrcdoc() {
   var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
   function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
 
+  // Minute gaps taken from your original snapshot: 10:02, 9:59 (-3), 9:57 (-2), …
+const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
+
+function fmtToday(ts){
+  var d = new Date(ts), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
+  var ampm = h >= 12 ? 'pm' : 'am';
+  h = (h % 12) || 12;
+  return 'Today, ' + h + ':' + m + ' ' + ampm;
+}
+
+
   // ---- STATIC SNAPSHOT (25 rows) ----
   const rows = [
     { cnam: "Ruby Foster", from: "(248) 555-0102", q1: "4.5", dialed: "(800) 690-1406", toName: "", to: "Ext. 206 (Grace Smith)", q2: "4.5", date: "Today, 10:02 pm", duration: "32:06", disposition: "", release: "Orig: Bye" },
@@ -2550,26 +2561,35 @@ function buildCallHistorySrcdoc() {
     { cnam: "Cathy Thomas", from: "201", q1: "4.4", dialed: "(517) 555-0170", toName: "", to: "External", q2: "4.5", date: "Today, 9:10 pm", duration: "11:33", disposition: "", release: "Orig: Bye" }
   ];
 
-  var tbody = document.getElementById('cvCallHistoryTableBody');
-  rows.forEach(function(row){
-    var tr = document.createElement('tr');
-    tr.innerHTML = \`
-      <td>\${row.cnam}</td>
-      <td>\${wrapPhone(row.from)}</td>
-      <td><span class="qos-tag">\${row.q1}</span></td>
-      <td>\${wrapPhone(row.dialed)}</td>
-      <td></td>
-      <td>\${wrapPhone(row.to)}</td>
-      <td><span class="qos-tag">\${row.q2}</span></td>
-      <td>\${row.date}</td>
-      <td>\${row.duration}</td>
-      <td>\${row.disposition || ''}</td>
-      <td>\${row.release}</td>
-      <td class="icon-cell">
-        \${ICONS.map(function(icon){ return '<button class="icon-btn"><img src="'+icon.src+'" alt=""/></button>'; }).join('')}
-      </td>\`;
-    tbody.appendChild(tr);
-  });
+
+var tbody = document.getElementById('cvCallHistoryTableBody'); // ← use your unique ID
+var now = Date.now();
+var cursor = now;
+
+rows.forEach(function(row, idx){
+  var tr = document.createElement('tr');
+  var dateStr = fmtToday(cursor);
+
+  tr.innerHTML = \`
+    <td>\${row.cnam}</td>
+    <td>\${wrapPhone(row.from)}</td>
+    <td><span class="qos-tag">\${row.q1}</span></td>
+    <td>\${wrapPhone(row.dialed)}</td>
+    <td></td>
+    <td>\${wrapPhone(row.to)}</td>
+    <td><span class="qos-tag">\${row.q2}</span></td>
+    <td>\${dateStr}</td>
+    <td>\${row.duration}</td>
+    <td>\${row.disposition || ''}</td>
+    <td>\${row.release}</td>
+    <td class="icon-cell">
+      \${ICONS.map(function(icon){ return '<button class="icon-btn"><img src="'+icon.src+'" alt=""/></button>'; }).join('')}
+    </td>\`;
+
+  tbody.appendChild(tr);
+  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
+});
+
 })();
 <\/script>
 </body></html>`;
@@ -2702,6 +2722,7 @@ function buildCallHistorySrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
