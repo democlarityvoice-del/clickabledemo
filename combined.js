@@ -2592,9 +2592,6 @@ function buildSrcdoc() {
   });
 })();
 
-  tbody.appendChild(tr);
-});
-
 })();
 </script>
 </body></html>`;
@@ -2726,6 +2723,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
