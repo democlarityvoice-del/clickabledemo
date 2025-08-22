@@ -2449,6 +2449,15 @@ function buildSrcdoc() {
     width:100%;
     max-width:100%;
   }
+  .call-container a,
+  .call-container a:visited,
+  .call-container a:active {
+    color: #1a73e8;
+    text-decoration: none;
+  }
+.call-container a:hover {
+  text-decoration: underline;
+}
   table{ width:100%; border-collapse:collapse; background:#fff; table-layout:auto; }
   thead th{
     padding:8px 12px;
@@ -2723,6 +2732,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
