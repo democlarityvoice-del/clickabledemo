@@ -12,8 +12,7 @@ if (!window.__cvDemoInit) {
   const HOME_ICON_SPEAKER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 
   // -------- BUILD HOME SOURCE -------- //
-   // -------- BUILD HOME SOURCE -------- //
-  function buildSrcdoc() {
+function buildSrcdoc() {
   return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
@@ -230,29 +229,6 @@ if (!window.__cvDemoInit) {
     tb.appendChild(tr);
   });
 }
-
-  // Seed + loop
-  (function seed(){ calls.push(generateCall()); render(); })();
-  setInterval(() => { updateCalls(); render(); }, 1500);
-
-  // Single-active toggle for "Listen in"
-  document.addEventListener("click", (e) => {
-    const el = e.target instanceof Element ? e.target : null;
-    const btn = el && el.closest(".listen-btn");
-    if (!btn) return;
-    document.querySelectorAll('.listen-btn[aria-pressed="true"]').forEach(b => {
-      b.classList.remove("is-active");
-      b.setAttribute("aria-pressed","false");
-    });
-    btn.classList.add("is-active");
-    btn.setAttribute("aria-pressed","true");
-  });
-})();
-<\/script>
-</body></html>`;
-}
-
-
 
   // Seed + loop
   (function seed(){ calls.push(generateCall()); render(); })();
@@ -2726,6 +2702,7 @@ function buildCallHistorySrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
