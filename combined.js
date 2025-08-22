@@ -2507,28 +2507,90 @@ function buildSrcdoc() {
     { src: '${ICON_NOTES}', title: 'Notes' },
     { src: '${ICON_TRANSCRIPT}', title: 'Transcript' }
   ];
-  const sampleData = [
-    { from: '(810) 488-9107', cnam: 'WIRELESS CALLER', dialed: '(800) 676-3995', to: 'Ext. 200 (Mike Johnson)', duration: '5:58' },
-    { from: '(517) 405-6618', cnam: 'CLARITY VOICE', dialed: '(800) 676-3995', to: 'Ext. 205 (Alex Roberts)', duration: '8:43' },
-    { from: '202', cnam: 'Jake Lee', dialed: '(989) 698-9106', to: 'External', duration: '1:29' },
-    { from: '(810) 665-7135', cnam: 'CLARITY VOICE', dialed: '(800) 676-3995', to: 'CallQueue', duration: '2:25' },
-    { from: '204', cnam: 'Brittany Lawrence', dialed: '(517) 374-8449', to: 'External', duration: '0:56' },
-    { from: '(248) 807-7040', cnam: 'BAYONNE NJ', dialed: '(800) 676-3995', to: 'Ext. 201 (Cathy Thomas)', duration: '4:12' },
-    { from: '202', cnam: 'Jake Lee', dialed: '(720) 980-6687', to: 'External', duration: '8:17' }
-  ];
-  const tbody = document.getElementById('callsTableBody');
-  sampleData.forEach(row => {
-  const tr = document.createElement('tr');
-  tr.innerHTML = \`
-  <td>\${row.from}</td>
-  <td>\${row.cnam}</td>
-  <td>\${row.dialed}</td>
-  <td>\${row.to}</td>
-  <td>\${row.duration}</td>
-  <td class="icon-cell">
-    \${ICONS.map(icon => \`<button class="icon-btn" title="\${icon.title}"><img src="\${icon.src}" alt="\${icon.title}" /></button>\`).join('')}
-  </td>
-\`;
+  // --- RANDOM CALL HISTORY (25 static rows; numbers clickable if full) ---
+(function () {
+  // Extension → agent name map (200–207 only)
+  var extNameMap = {
+    200: 'Mike Johnson',
+    201: 'Cathy Thomas',
+    202: 'Jake Lee',
+    203: 'Emily Tran',
+    204: 'Brittany Lawrence',
+    205: 'Alex Roberts',
+    206: 'Grace Smith',
+    207: 'Jason Tran'
+  };
+  var extensions = [200,201,202,203,204,205,206,207];
+  var names = ['Carlos Rivera','Ava Chen','Sarah Patel','Liam Nguyen','Monica Alvarez','Raj Patel','Chloe Bennett','Zoe Miller','Ruby Foster','Leo Knight','Maya Brooks'];
+  var areaCodes = ['989','517','248','810','313'];
+  var OUTBOUND_RATE = 0.30;
+
+  function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function pad2(n){ return String(n).padStart(2,'0'); }
+
+  // NANPA-safe inbound numbers like "(313) 555-01xx"
+  function mkPhone(){
+    var ac = rand(areaCodes);
+    var last2 = pad2(Math.floor(Math.random()*100));
+    return '(' + ac + ') 555-01' + last2;
+  }
+  // Dialed numbers like "(800) nnn-nnnn", avoid 666
+  function mk800(){
+    var n, p1, p2;
+    do {
+      p1 = 200 + Math.floor(Math.random()*700);
+      p2 = 1000 + Math.floor(Math.random()*9000);
+      n = '(800) ' + p1 + '-' + p2;
+    } while (/666/.test(n));
+    return n;
+  }
+  function mkDuration(){
+    var s = Math.floor(Math.random() * (33*60)); // up to 32:59
+    return Math.floor(s/60) + ':' + pad2(s%60);
+  }
+
+  var PHONE = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
+  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
+
+  // Build 25 rows once
+  var rows = [];
+  for (var i=0;i<25;i++){
+    var outbound = Math.random() < OUTBOUND_RATE;
+    if (outbound){
+      var ext = rand(extensions);
+      var agent = extNameMap[ext];
+      var dial = mkPhone();
+      rows.push({ from: String(ext), cnam: agent, dialed: dial, to: 'External', duration: mkDuration() });
+    } else {
+      var from = mkPhone();
+      var cnam = rand(names);
+      var dialed = mk800();
+      var to;
+      if (Math.random() < 0.5) {
+        to = 'CallQueue';
+      } else {
+        var ext2 = rand(extensions);
+        to = 'Ext. ' + ext2 + ' (' + extNameMap[ext2] + ')';
+      }
+      rows.push({ from: from, cnam: cnam, dialed: dialed, to: to, duration: mkDuration() });
+    }
+  }
+
+  var tbody = document.getElementById('callsTableBody');
+  rows.forEach(function(row){
+    var tr = document.createElement('tr');
+    tr.innerHTML = \`
+      <td>\${wrapPhone(row.from)}</td>
+      <td>\${row.cnam}</td>
+      <td>\${wrapPhone(row.dialed)}</td>
+      <td>\${wrapPhone(row.to)}</td>
+      <td>\${row.duration}</td>
+      <td class="icon-cell">
+        \${ICONS.map(function(icon){ return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt="'+icon.title+'" /></button>'; }).join('')}
+      </td>\`;
+    tbody.appendChild(tr);
+  });
+})();
 
   tbody.appendChild(tr);
 });
@@ -2664,6 +2726,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
