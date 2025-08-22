@@ -2470,7 +2470,7 @@ function buildCallHistorySrcdoc() {
           <th>Date</th><th>Duration</th><th>Disposition</th><th>Release Reason</th><th></th>
         </tr>
       </thead>
-      <tbody id="callsTableBody"></tbody>
+      <tbody id="cvCallHistoryTableBody"></tbody>
     </table>
   </div>
 <script>
@@ -2516,7 +2516,7 @@ function buildCallHistorySrcdoc() {
     { cnam: "Cathy Thomas", from: "201", q1: "4.4", dialed: "(517) 555-0170", toName: "", to: "External", q2: "4.5", date: "Today, 9:10 pm", duration: "11:33", disposition: "", release: "Orig: Bye" }
   ];
 
-  var tbody = document.getElementById('callsTableBody');
+  var tbody = document.getElementById('cvCallHistoryTableBody');
   rows.forEach(function(row){
     var tr = document.createElement('tr');
     tr.innerHTML = \`
@@ -2668,6 +2668,7 @@ function buildCallHistorySrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
