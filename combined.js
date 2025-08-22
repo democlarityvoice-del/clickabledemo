@@ -2519,7 +2519,7 @@ function buildSrcdoc() {
   const tbody = document.getElementById('callsTableBody');
   sampleData.forEach(row => {
   const tr = document.createElement('tr');
-  tr.innerHTML = `
+  tr.innerHTML = \`
     <td>${row.from}</td>
     <td>${row.cnam}</td>
     <td>${row.dialed}</td>
@@ -2528,7 +2528,7 @@ function buildSrcdoc() {
     <td class="icon-cell">
       ${ICONS.map(icon => `<button class="icon-btn" title="${icon.title}"><img src="${icon.src}" alt="${icon.title}" /></button>`).join('')}
     </td>
-  `;
+  \`;
   tbody.appendChild(tr);
 });
 
@@ -2663,6 +2663,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
