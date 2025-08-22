@@ -2365,7 +2365,6 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 
-
   // ==============================
 // CALL HISTORY
 // ==============================
@@ -2698,11 +2697,6 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
 
 
 
