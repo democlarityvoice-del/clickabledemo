@@ -64,6 +64,20 @@ if (!window.__cvDemoInit) {
 
   tr:hover{ background:#f7f7f7; }
 
+  .qos-tag{
+  display:inline-block;
+  padding:0 6px;
+  line-height:18px;
+  min-width:28px;
+  text-align:center;
+  font-weight:600;
+  font-size:12px;
+  border-radius:3px;
+  background:#2e7d32; /* dark green tag */
+  color:#fff;
+}
+
+
   /* “listen in” button (unchanged, just inherits the new font now) */
   .listen-btn{
     display:inline-flex; align-items:center; justify-content:center;
@@ -82,7 +96,9 @@ if (!window.__cvDemoInit) {
     <table>
       <thead>
         <tr>
-          <th>From</th><th>CNAM</th><th>Dialed</th><th>To</th><th>Duration</th><th></th>
+          <th>From Name</th><th>From</th><th>QOS</th>
+          <th>Dialed</th><th>To Name</th><th>To</th><th>QOS</th>
+          <th>Date</th><th>Duration</th><th>Disposition</th><th>Release Reason</th><th></th>
         </tr>
       </thead>
       <tbody id="callsTableBody"></tbody>
@@ -91,144 +107,94 @@ if (!window.__cvDemoInit) {
 
 <script>
 (function () {
-  // Pools
-  const names = ["Carlos Rivera","Emily Tran","Mike Johnson","Ava Chen","Sarah Patel","Liam Nguyen","Monica Alvarez","Raj Patel","Chloe Bennett","Grace Smith","Jason Tran","Zoe Miller","Ruby Foster","Leo Knight"];
-  const extensions = [201,203,204,207,211,215,218,219,222,227,231,235];
-  const areaCodes = ["989","517","248","810","313"]; // real ACs; 555-01xx keeps full number fictional
-  const CALL_QUEUE = "CallQueue", VMAIL = "VMail", SPEAK = "SpeakAccount";
+  // NANPA-safe phone detector (double-escaped for outer template)
+var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
+function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
+function mkQos(){ return (4.2 + Math.random()*0.3).toFixed(1); } // 4.2–4.5
+function fmtToday(ts){
+  var d = new Date(ts), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
+  var ampm = h >= 12 ? 'pm' : 'am';
+  h = (h % 12) || 12;
+  return 'Today, ' + h + ':' + m + ' ' + ampm;
+}
 
-  // Outbound agent display names
-  const firstNames = ["Nick","Sarah","Mike","Lisa","Tom","Jenny","Alex","Maria","John","Kate","David","Emma","Chris","Anna","Steve","Beth","Paul","Amy","Mark","Jess"];
-  const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  const OUTBOUND_RATE = 0.30; // ~30% outbound, 70% inbound
+// Build 25 rows once (dates descend from "now" with small random gaps; duplicates allowed)
+var rows = [];
+var tCursor = Date.now();
+for (var i=0;i<25;i++){
+  var outbound = Math.random() < OUTBOUND_RATE;
+  var q1 = mkQos(), q2 = mkQos();
+  var release = Math.random() < 0.5 ? 'Orig: Bye' : 'Term: Bye';
+  var dateStr = fmtToday(tCursor);
 
-  // State
-  const calls = [];
-  const pad2 = n => String(n).padStart(2,"0");
-
-  // Helpers
-  function randomName() {
-    let name, guard = 0;
-    do { name = names[Math.floor(Math.random()*names.length)]; guard++; }
-    while (calls.some(c => c.cnam === name) && guard < 50);
-    return name;
-  }
-  function randomAgentName() {
-    const fn = firstNames[Math.floor(Math.random()*firstNames.length)];
-    const init = alphabet[Math.floor(Math.random()*alphabet.length)];
-    return fn + " " + init + ".";
-  }
-  function randomPhone() {
-    // e.g. 313-555-01xx (NANPA-safe)
-    let num;
-    do {
-      const ac = areaCodes[Math.floor(Math.random()*areaCodes.length)];
-      const last2 = pad2(Math.floor(Math.random()*100));
-      num = ac + "-555-01" + last2;
-    } while (calls.some(c => c.from === num) || /666/.test(num));
-    return num;
-  }
-  function randomDialed() {
-    // 800-xxx-xxxx, avoid 666
-    let num;
-    do {
-      num = "800-" + (100+Math.floor(Math.random()*900)) + "-" + (1000+Math.floor(Math.random()*9000));
-    } while (/666/.test(num));
-    return num;
-  }
-  function randomExtension() {
-    let ext, guard = 0;
-    do { ext = extensions[Math.floor(Math.random()*extensions.length)]; guard++; }
-    while (calls.some(c => c.ext === ext) && guard < 50);
-    return ext;
-  }
-
-  // New call (inbound or outbound)
-  function generateCall() {
-    const outbound = Math.random() < OUTBOUND_RATE;
-    const ext = randomExtension();
-    const start = Date.now();
-
-    if (outbound) {
-      // Agent dialing a customer
-      const dial = randomPhone(); // external number
-      return {
-        from: "Ext. " + ext,
-        cnam: randomAgentName(),   // agent display
-        dialed: dial,
-        to: dial,                  // outbound: To = dialed
-        ext,
-        outbound: true,
-        start,
-        t: () => {
-          const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
-          const s = Math.floor(elapsed/1000);
-          return String(Math.floor(s/60)) + ":" + pad2(s%60);
-        }
-      };
+  if (outbound){
+    var ext = rand(extensions);
+    var agent = extNameMap[ext];
+    var dial = mkPhone();
+    rows.push({
+      cnam: agent,
+      from: String(ext),          // extension (not link)
+      q1: q1,
+      dialed: dial,               // link
+      toName: '',                 // blank for now
+      to: 'External',             // not a link
+      q2: q2,
+      date: dateStr,
+      duration: mkDuration(),
+      disposition: '',
+      release: release
+    });
+  } else {
+    var from = mkPhone();         // link
+    var cnam = rand(names);
+    var dialed = mk800();         // link
+    var to;
+    if (Math.random() < 0.5) {
+      to = 'CallQueue';
+    } else {
+      var ext2 = rand(extensions);
+      to = 'Ext. ' + ext2 + ' (' + extNameMap[ext2] + ')';
     }
-
-    // Inbound customer call
-    const from = randomPhone();
-    const cnam = randomName();
-    const dialed = randomDialed();
-    const to = Math.random() < 0.05
-      ? (Math.random() < 0.03 ? SPEAK : VMAIL)
-      : CALL_QUEUE;
-
-    return {
-      from, cnam, dialed, to, ext,
-      outbound: false,
-      start,
-      t: () => {
-        const elapsed = Math.min(Date.now()-start, (4*60+32)*1000);
-        const s = Math.floor(elapsed/1000);
-        return String(Math.floor(s/60)) + ":" + pad2(s%60);
-      }
-    };
-  }
-
-  // Lifecycle
-  function updateCalls() {
-    // Occasionally remove one
-    if (calls.length > 5 || Math.random() < 0.3) {
-      if (calls.length) calls.splice(Math.floor(Math.random()*calls.length), 1);
-    }
-    // Keep up to 5
-    if (calls.length < 5) calls.push(generateCall());
-
-    // State transitions for inbound only
-    const now = Date.now();
-    calls.forEach(c => {
-      if (!c.outbound && c.to === CALL_QUEUE && now - c.start > 5000) {
-        c.to = "Ext. " + c.ext;  // no agent name here
-      }
-      if (!c.outbound && c.to === SPEAK && now - c.start > 2000) {
-        c.to = VMAIL;
-      }
+    rows.push({
+      cnam: cnam,
+      from: from,
+      q1: q1,
+      dialed: dialed,
+      toName: '',                 // blank for now
+      to: to,
+      q2: q2,
+      date: dateStr,
+      duration: mkDuration(),
+      disposition: '',
+      release: release
     });
   }
 
-  function render() {
-  const tb = document.getElementById("callsTableBody");
-  if (!tb) return;
-  tb.innerHTML = "";
-  calls.forEach(c => {
-    const tr = document.createElement("tr");
-    tr.innerHTML = \`
-      <td>\${c.from}</td>
-      <td>\${c.cnam}</td>
-      <td>\${c.dialed}</td>
-      <td>\${c.to}</td>
-      <td>\${c.t()}</td>
-      <td>
-        <button class="listen-btn" aria-pressed="false" title="Listen in">
-          <img src="${HOME_ICON_SPEAKER}" alt="">
-        </button>
-      </td>\`;
-    tb.appendChild(tr);
-  });
+  // subtract 0–5 minutes for the next row (allows duplicates)
+  tCursor -= (Math.floor(Math.random()*6)) * 60 * 1000;
 }
+
+var tbody = document.getElementById('callsTableBody');
+rows.forEach(function(row){
+  var tr = document.createElement('tr');
+  tr.innerHTML = \`
+    <td>\${row.cnam}</td>
+    <td>\${wrapPhone(row.from)}</td>
+    <td><span class="qos-tag">\${row.q1}</span></td>
+    <td>\${wrapPhone(row.dialed)}</td>
+    <td></td>
+    <td>\${wrapPhone(row.to)}</td>
+    <td><span class="qos-tag">\${row.q2}</span></td>
+    <td>\${row.date}</td>
+    <td>\${row.duration}</td>
+    <td></td>
+    <td>\${row.release}</td>
+    <td class="icon-cell">
+      \${ICONS.map(function(icon){ return '<button class="icon-btn"><img src="'+icon.src+'" alt=""/></button>'; }).join('')}
+    </td>\`;
+  tbody.appendChild(tr);
+});
+
 
   // Seed + loop
   (function seed(){ calls.push(generateCall()); render(); })();
@@ -2732,6 +2698,7 @@ function buildSrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
