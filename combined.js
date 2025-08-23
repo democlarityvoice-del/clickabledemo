@@ -2660,71 +2660,59 @@ if (!window.__cvCallHistoryInit) {
 
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-  // Toggle Cradle To Grave modal
+ 
+// Toggle a Cradle-to-Grave modal when clicking Cradle
 document.addEventListener('click', function(e){
-  const btn = e.target.closest('button[data-action="cradle"]');
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
   e.preventDefault();
 
-  const tr = btn.closest('tr');
-  if (!tr) return;
-
-  // Get the "From" number and Date shown in this row
-  const from = tr.children[1]?.innerText || '';
-  const date = tr.children[7]?.innerText || 'Today';
-
-  // Build a fake flow (simple template for inbound)
-  const steps = [
-    { time: date, label: `Call from ${from} to STIR`, icon: '📞' },
-    { label: 'The currently active time frame is Daytime', icon: '🕒' },
-    { label: 'Connected to Auto Attendant 700 Daytime', icon: '📟' },
-    { label: 'Selected 2', icon: '🔢' },
-    { label: 'Connected to Call Queue 302', icon: '👥' },
-    { label: 'Agent John Smith (302) is ringing', icon: '📱' },
-    { label: 'Call answered by John Smith (302)', icon: '✅' }
-  ];
-
-  // Remove old modal if open
-  const existing = document.getElementById('cv-cradle-modal');
+  // Remove any existing modal
+  var existing = document.getElementById('cv-cradle-modal');
   if (existing) existing.remove();
 
-  // Modal wrapper
-  const modal = document.createElement('div');
-  modal.id = 'cv-cradle-modal';
-  modal.style.cssText = `
-    position:fixed; top:0; left:0; right:0; bottom:0;
-    background:rgba(0,0,0,0.5); display:flex;
-    align-items:center; justify-content:center;
-    z-index:99999;
-  `;
+  // Grab row info
+  var tr = btn.closest('tr');
+  var from = tr ? tr.querySelector('td:nth-child(2)')?.innerText : '';
+  var date = tr ? tr.querySelector('td:nth-child(8)')?.innerText : 'Today';
 
-  // Modal content
-  const inner = document.createElement('div');
-  inner.style.cssText = `
-    background:#fff; border-radius:6px; padding:20px; width:600px;
-    max-height:80vh; overflow-y:auto; box-shadow:0 2px 10px rgba(0,0,0,.3);
-  `;
-  inner.innerHTML = `
-    <h2 style="margin-top:0;">Cradle To Grave</h2>
-    <div class="ctg-steps">
-      ${steps.map(s => `
-        <div style="margin:8px 0; display:flex; align-items:center; gap:8px;">
-          <span style="font-size:14px;">${s.icon}</span>
-          <span>${s.label}</span>
-        </div>
-      `).join('')}
+  // Build modal HTML
+  var modal = document.createElement('div');
+  modal.id = 'cv-cradle-modal';
+  modal.innerHTML = `
+    <div class="cv-modal-backdrop"></div>
+    <div class="cv-modal">
+      <div class="cv-modal-header">
+        <h3>Cradle To Grave</h3>
+        <button class="cv-modal-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="cv-modal-body">
+        <ul class="cv-ctg-list">
+          <li><span>${date}</span> — Call from ${from} to STIR</li>
+          <li>+2ms — The currently active time frame is Daytime</li>
+          <li>+15ms — Connected to Auto Attendant 700 Daytime</li>
+          <li>+20s — Selected 2</li>
+          <li>+25s — Connected to Call Queue 301 (New Sales)</li>
+          <li>+30s — Agent 3011 (Alice Carter) is ringing</li>
+          <li>+31s — Agent 3012 (Ben Smith) is ringing</li>
+          <li>+32s — Agent 3013 (Chris Lee) is ringing</li>
+          <li>+36s — Call answered by Ben Smith (3012)</li>
+        </ul>
+      </div>
+      <div class="cv-modal-footer">
+        <button class="cv-modal-close">Close</button>
+      </div>
     </div>
-    <div style="text-align:right; margin-top:20px;">
-      <button id="cv-cradle-close" style="padding:6px 12px;">Close</button>
-    </div>
   `;
-  modal.appendChild(inner);
 
   document.body.appendChild(modal);
 
-  // Close handler
-  modal.querySelector('#cv-cradle-close').addEventListener('click', () => modal.remove());
+  // Close behavior
+  modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop').forEach(el => {
+    el.addEventListener('click', () => modal.remove());
+  });
 });
+
 
 
     // build drop-down player row
@@ -2881,6 +2869,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
