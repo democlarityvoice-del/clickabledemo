@@ -2516,17 +2516,38 @@ if (!window.__cvCallHistoryInit) {
   .cv-audio-right{ display:flex; align-items:center; gap:12px; }
   .cv-audio-icon{ width:20px; height:20px; opacity:.6; }
 
-  /* Modal overlay */
-  #cv-cradle-modal { position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; }
-  .cv-modal-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); }
-  .cv-modal { position:relative; background:#fff; width:600px; max-width:90%; margin:40px auto; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.3); padding:0; }
-  .cv-modal-header, .cv-modal-footer { padding:10px 16px; border-bottom:1px solid #ddd; }
-  .cv-modal-header { display:flex; justify-content:space-between; align-items:center; }
-  .cv-modal-body { padding:16px; max-height:400px; overflow-y:auto; }
-  .cv-modal-footer { border-top:1px solid #ddd; border-bottom:0; text-align:right; }
-  .cv-modal-close { background:none; border:none; font-size:18px; cursor:pointer; }
-  .cv-ctg-list { list-style:none; padding:0; margin:0; font-size:13px; }
-  .cv-ctg-list li { margin:6px 0; }
+  /* --- Cradle-to-Grave modal (Call History only) --- */
+#cvctg-backdrop, #cvctg-modal { display:none; }
+#cvctg-backdrop.is-open, #cvctg-modal.is-open { display:block; }
+
+#cvctg-backdrop{
+  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998;
+}
+#cvctg-modal{
+  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+  width:720px; max-width:95%; max-height:80vh; overflow:auto;
+  background:#fff; border-radius:6px; box-shadow:0 10px 28px rgba(0,0,0,.35);
+  z-index:9999;
+}
+.cvctg-header,.cvctg-footer{
+  padding:10px 16px; border-bottom:1px solid #ddd; display:flex; align-items:center;
+}
+.cvctg-footer{ border-top:1px solid #ddd; border-bottom:0; justify-content:flex-end; }
+.cvctg-title{ margin:0; font-weight:600; }
+.cvctg-close{ margin-left:auto; border:0; background:transparent; font-size:20px; cursor:pointer; }
+
+.cvctg-body{ padding:12px 16px; font-size:13px; line-height:1.45; }
+
+/* simple timeline look */
+.cvctg-steps{ position:relative; padding-left:140px; }
+.cvctg-steps:before{
+  content:""; position:absolute; left:120px; top:0; bottom:0; width:2px; background:#e5e5e5;
+}
+.cvctg-step{ display:flex; gap:14px; margin:8px 0; align-items:flex-start; }
+.cvctg-time{ width:120px; color:#888; text-align:right; padding-right:8px; font-variant-numeric:tabular-nums; }
+.cvctg-dot{ width:12px; height:12px; border-radius:50%; background:#cfcfcf; margin-top:4px; }
+.cvctg-text{ color:#333; }
+
 
 </style>
 </head><body>
@@ -2675,7 +2696,162 @@ if (!window.__cvCallHistoryInit) {
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
  
 
+<!-- Cradle-to-Grave modal shell (hidden until opened) -->
+<div id="cvctg-backdrop"></div>
+<div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
+  <div class="cvctg-header">
+    <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
+    <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
+  </div>
+  <div id="cvctg-content" class="cvctg-body"></div>
+  <div class="cvctg-footer">
+    <button id="cvctg-close" class="cvctg-close">Close</button>
+  </div>
+</div>
 
+/* ---------- Cradle-to-Grave (canonical modal pattern) ---------- */
+
+// open/close like your Call Center modal
+function openCradleModal(title, innerHTML){
+  const bd = document.getElementById('cvctg-backdrop');
+  const md = document.getElementById('cvctg-modal');
+  const tt = document.getElementById('cvctg-title');
+  const ct = document.getElementById('cvctg-content');
+  if (tt) tt.textContent = title || 'Cradle To Grave';
+  if (ct) ct.innerHTML = innerHTML || '';
+  if (bd) bd.classList.add('is-open');
+  if (md) md.classList.add('is-open');
+}
+function closeCradleModal(){
+  const bd = document.getElementById('cvctg-backdrop');
+  const md = document.getElementById('cvctg-modal');
+  if (bd) bd.classList.remove('is-open');
+  if (md) md.classList.remove('is-open');
+}
+// close wires (one-time)
+(function(){
+  const doc = document;
+  doc.addEventListener('click', function(ev){
+    const t = ev.target;
+    if (t && (t.id === 'cvctg-x' || t.id === 'cvctg-close' || t.id === 'cvctg-backdrop')) {
+      closeCradleModal();
+    }
+  });
+})();
+
+// helpers
+function parseStartTimeFromCell(dateStr){
+  // expects "Today, 8:16 pm" — use today’s date, derive h/m/ampm
+  const m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(dateStr||'');
+  const d = new Date();
+  if (m){
+    let h = +m[1]; const min = +m[2]; const ap = m[3].toLowerCase();
+    if (ap === 'pm' && h !== 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    d.setHours(h, min, 0, 0);
+  }
+  return d;
+}
+function fmtClock(d){
+  // "4:16:19 PM"
+  let h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  const ap = h >= 12 ? 'PM' : 'AM';
+  h = (h % 12) || 12;
+  const pad = n => String(n).padStart(2,'0');
+  return `${h}:${pad(m)}:${pad(s)} ${ap}`;
+}
+function addMillis(d, ms){ return new Date(d.getTime() + ms); }
+
+const PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
+
+// deterministic split: even last digit → 301, odd → 302
+function pickDept(fromNum){
+  const digits = (fromNum||'').replace(/\D/g,'');
+  const last = digits ? +digits[digits.length-1] : 0;
+  return (last % 2 === 0) ? 301 : 302;
+}
+
+const AGENTS = {
+  301: [
+    {ext:3011, name:'Alice Carter'},
+    {ext:3012, name:'Ben Smith'},
+    {ext:3013, name:'Chris Lee'},
+    {ext:3014, name:'Dana Park'}
+  ],
+  302: [
+    {ext:3021, name:'Evan Reed'},
+    {ext:3022, name:'Fiona Gray'},
+    {ext:3023, name:'Gina Lopez'},
+    {ext:3024, name:'Henry Kim'}
+  ]
+};
+
+// build one inbound timeline’s HTML (using the row’s From/Date)
+function buildInboundCradleHTML(from, dateCellText){
+  const start = parseStartTimeFromCell(dateCellText);
+  const dept  = pickDept(from);
+  const agents = AGENTS[dept];
+  const answered = agents[1]; // 2nd agent answers
+
+  // timestamps
+  const t0 = fmtClock(start);
+  const t1 = fmtClock(addMillis(start,   2));  // +2ms
+  const t2 = fmtClock(addMillis(start,  15));  // +15ms
+  const t3 = fmtClock(addMillis(start,20000)); // +20s
+  const t4 = fmtClock(addMillis(start,25000)); // +25s
+  const tR = fmtClock(addMillis(start,30000)); // ringing starts
+  const tA = fmtClock(addMillis(start,36000)); // answered
+
+  // steps (left time & +delta like the portal)
+  const row = (time, delta, text) =>
+    `<div class="cvctg-step">
+       <div class="cvctg-time">${time}<div style="color:#aaa; font-size:11px;">${delta}</div></div>
+       <div class="cvctg-dot"></div>
+       <div class="cvctg-text">${text}</div>
+     </div>`;
+
+  const ringRows = agents.map(a => row(tR, '+30s', `Agent ${a.ext} (${a.name}) is ringing`)).join('');
+
+  return `
+    <div class="cvctg-steps">
+      ${row(t0, '',    `Call from ${from} to STIR`)}
+      ${row(t1, '+2ms',  'The currently active time frame is Daytime')}
+      ${row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')}
+      ${row(t3, '+20s',  'Selected 2')}
+      ${row(t4, '+25s',  `Connected to Call Queue ${dept} (${dept === 301 ? 'New Sales' : 'Existing Customer'})`)}
+      ${ringRows}
+      ${row(tA, '+36s',  `Call answered by ${answered.name} (${answered.ext})`)}
+    </div>`;
+}
+
+// click wire: open modal for Cradle; for now only for inbound rows
+document.addEventListener('click', function(e){
+  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
+
+  const tr   = btn.closest('tr');
+  const tds  = tr ? tr.querySelectorAll('td') : null;
+  const from = tds && tds[1] ? tds[1].innerText.trim() : '';
+  const date = tds && tds[7] ? tds[7].innerText.trim() : '';
+
+  // Only open the inbound template when "From" is a full phone number
+  if (PHONE_RX.test(from)) {
+    const html = buildInboundCradleHTML(from, date);
+    openCradleModal('Cradle To Grave', html);
+  } else {
+    // (Optional) simple outbound placeholder; comment out if not needed yet
+    const start = parseStartTimeFromCell(date);
+    const t0 = fmtClock(start);
+    const html = `
+      <div class="cvctg-steps">
+        <div class="cvctg-step">
+          <div class="cvctg-time">${t0}</div><div class="cvctg-dot"></div>
+          <div class="cvctg-text">Outbound call placed from ${from}</div>
+        </div>
+      </div>`;
+    openCradleModal('Cradle To Grave', html);
+  }
+});
 
 
     // build drop-down player row
@@ -2832,6 +3008,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
