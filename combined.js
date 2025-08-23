@@ -2515,6 +2515,19 @@ if (!window.__cvCallHistoryInit) {
   .cv-audio-bar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
   .cv-audio-right{ display:flex; align-items:center; gap:12px; }
   .cv-audio-icon{ width:20px; height:20px; opacity:.6; }
+
+  /* Modal overlay */
+  #cv-cradle-modal { position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; }
+  .cv-modal-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); }
+  .cv-modal { position:relative; background:#fff; width:600px; max-width:90%; margin:40px auto; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.3); padding:0; }
+  .cv-modal-header, .cv-modal-footer { padding:10px 16px; border-bottom:1px solid #ddd; }
+  .cv-modal-header { display:flex; justify-content:space-between; align-items:center; }
+  .cv-modal-body { padding:16px; max-height:400px; overflow-y:auto; }
+  .cv-modal-footer { border-top:1px solid #ddd; border-bottom:0; text-align:right; }
+  .cv-modal-close { background:none; border:none; font-size:18px; cursor:pointer; }
+  .cv-ctg-list { list-style:none; padding:0; margin:0; font-size:13px; }
+  .cv-ctg-list li { margin:6px 0; }
+
 </style>
 </head><body>
   <div class="call-container">
@@ -2869,6 +2882,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
