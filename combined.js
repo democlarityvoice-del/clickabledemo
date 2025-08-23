@@ -2680,6 +2680,10 @@ document.addEventListener('click', function(e){
   if (!btn) return;
   e.preventDefault();
 
+  // find the row this button belongs to
+  const tr = btn.closest('tr');
+  const cells = tr.querySelectorAll('td');
+
   // Remove any existing modal
   var existing = document.getElementById('cv-cradle-modal');
   if (existing) existing.remove();
@@ -2882,6 +2886,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
