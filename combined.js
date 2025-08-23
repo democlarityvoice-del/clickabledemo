@@ -2756,16 +2756,16 @@ function parseStartTimeFromCell(dateStr){
   return d;
 }
 function fmtClock(d){
-  // "4:16:19 PM"
-  let h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-  const ap = h >= 12 ? 'PM' : 'AM';
+  // "4:16:19 PM" (no template literals)
+  var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  var ap = h >= 12 ? 'PM' : 'AM';
   h = (h % 12) || 12;
-  const pad = n => String(n).padStart(2,'0');
-  return `${h}:${pad(m)}:${pad(s)} ${ap}`;
+  var pad = function(n){ return String(n).padStart(2,'0'); };
+  return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
 }
 function addMillis(d, ms){ return new Date(d.getTime() + ms); }
 
-const PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
+var PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
 
 // deterministic split: even last digit → 301, odd → 302
 function pickDept(fromNum){
@@ -2789,70 +2789,75 @@ const AGENTS = {
   ]
 };
 
-// build one inbound timeline’s HTML (using the row’s From/Date)
+// build one inbound timeline’s HTML (uses concatenation only)
 function buildInboundCradleHTML(from, dateCellText){
-  const start = parseStartTimeFromCell(dateCellText);
-  const dept  = pickDept(from);
-  const agents = AGENTS[dept];
-  const answered = agents[1]; // 2nd agent answers
+  var start = parseStartTimeFromCell(dateCellText);
+  var dept  = pickDept(from);
+  var agents = AGENTS[dept];
+  var answered = agents[1]; // 2nd agent answers
 
   // timestamps
-  const t0 = fmtClock(start);
-  const t1 = fmtClock(addMillis(start,   2));  // +2ms
-  const t2 = fmtClock(addMillis(start,  15));  // +15ms
-  const t3 = fmtClock(addMillis(start,20000)); // +20s
-  const t4 = fmtClock(addMillis(start,25000)); // +25s
-  const tR = fmtClock(addMillis(start,30000)); // ringing starts
-  const tA = fmtClock(addMillis(start,36000)); // answered
+  var t0 = fmtClock(start);
+  var t1 = fmtClock(addMillis(start,    2));   // +2ms
+  var t2 = fmtClock(addMillis(start,   15));   // +15ms
+  var t3 = fmtClock(addMillis(start,20000));   // +20s
+  var t4 = fmtClock(addMillis(start,25000));   // +25s
+  var tR = fmtClock(addMillis(start,30000));   // ringing starts
+  var tA = fmtClock(addMillis(start,36000));   // answered
 
-  // steps (left time & +delta like the portal)
-  const row = (time, delta, text) =>
-    `<div class="cvctg-step">
-       <div class="cvctg-time">${time}<div style="color:#aaa; font-size:11px;">${delta}</div></div>
-       <div class="cvctg-dot"></div>
-       <div class="cvctg-text">${text}</div>
-     </div>`;
+ function row(time, delta, text){
+    return ''
+      + '<div class="cvctg-step">'
+      +   '<div class="cvctg-time">' + time + '<div style="color:#aaa; font-size:11px;">' + (delta||'') + '</div></div>'
+      +   '<div class="cvctg-dot"></div>'
+      +   '<div class="cvctg-text">' + text + '</div>'
+      + '</div>';
+  }
 
-  const ringRows = agents.map(a => row(tR, '+30s', `Agent ${a.ext} (${a.name}) is ringing`)).join('');
+  var ringRows = '';
+  for (var i=0;i<agents.length;i++){
+    ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
+  }
 
-  return `
-    <div class="cvctg-steps">
-      ${row(t0, '',    `Call from ${from} to STIR`)}
-      ${row(t1, '+2ms',  'The currently active time frame is Daytime')}
-      ${row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')}
-      ${row(t3, '+20s',  'Selected 2')}
-      ${row(t4, '+25s',  `Connected to Call Queue ${dept} (${dept === 301 ? 'New Sales' : 'Existing Customer'})`)}
-      ${ringRows}
-      ${row(tA, '+36s',  `Call answered by ${answered.name} (${answered.ext})`)}
-    </div>`;
-}
+  var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
+  
+  return ''
+    + '<div class="cvctg-steps">'
+    +   row(t0, '',      'Call from ' + from + ' to STIR')
+    +   row(t1, '+2ms',  'The currently active time frame is Daytime')
+    +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
+    +   row(t3, '+20s',  'Selected 2')
+    +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
+    +   ringRows
+    +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
+    + '</div>';
+  }
 
-// click wire: open modal for Cradle; for now only for inbound rows
+// click wire: open modal for Cradle; only inbound rows get the full flow for now
 document.addEventListener('click', function(e){
-  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
 
-  const tr   = btn.closest('tr');
-  const tds  = tr ? tr.querySelectorAll('td') : null;
-  const from = tds && tds[1] ? tds[1].innerText.trim() : '';
-  const date = tds && tds[7] ? tds[7].innerText.trim() : '';
+  var tr   = btn.closest('tr');
+  var tds  = tr ? tr.querySelectorAll('td') : null;
+  var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
+  var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
 
-  // Only open the inbound template when "From" is a full phone number
   if (PHONE_RX.test(from)) {
-    const html = buildInboundCradleHTML(from, date);
-    openCradleModal('Cradle To Grave', html);
+    var htmlIn = buildInboundCradleHTML(from, date);
+    openCradleModal('Cradle To Grave', htmlIn);
   } else {
-    // (Optional) simple outbound placeholder; comment out if not needed yet
-    const start = parseStartTimeFromCell(date);
-    const t0 = fmtClock(start);
-    const html = `
-      <div class="cvctg-steps">
-        <div class="cvctg-step">
-          <div class="cvctg-time">${t0}</div><div class="cvctg-dot"></div>
-          <div class="cvctg-text">Outbound call placed from ${from}</div>
-        </div>
-      </div>`;
-    openCradleModal('Cradle To Grave', html);
+    // simple outbound placeholder; safe concatenation
+    var start = parseStartTimeFromCell(date);
+    var t0 = fmtClock(start);
+    var htmlOut = ''
+      + '<div class="cvctg-steps">'
+      +   '<div class="cvctg-step">'
+      +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
+      +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
+      +   '</div>'
+      + '</div>';
+    openCradleModal('Cradle To Grave', htmlOut);
   }
 });
 
@@ -3011,6 +3016,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
