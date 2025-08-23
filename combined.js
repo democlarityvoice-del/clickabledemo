@@ -2520,6 +2520,33 @@ function buildCallHistorySrcdoc() {
   .icon-btn:hover img {
     opacity: .85;
   }
+
+ /* --- Icon opacity & row-hover behavior --- */
+.icon-btn img{
+  opacity: .60;                 /* higher default */
+  transition: opacity .15s;
+}
+/* When hovering a row, ALL icons in that row go fully dark */
+tr:hover .icon-btn img{
+  opacity: 1;
+}
+
+/* --- Circle buttons: add outline + darken on hover/row-hover --- */
+.icon-btn{
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #f5f5f5;
+  border: 1px solid #cfcfcf;    /* outline */
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer; padding: 0;  /* keep from earlier */
+}
+/* Darken circle on button hover AND row hover */
+.icon-btn:hover,
+tr:hover .icon-btn{
+  background: #e9e9e9;
+  border-color: #bdbdbd;
+}
+
 </style>
 
 
@@ -2767,6 +2794,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
