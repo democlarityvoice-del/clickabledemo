@@ -2626,6 +2626,34 @@ function normalizeTo(row){
   return to; // if your static snapshot has non-extension values, update those rows as needed
 }
 
+// From = "205" etc. means outbound
+var EXT_ONLY = /^\\d{3}$/;
+// strip non-digits
+var DIGITS = /\\D/g;
+
+// Stable mapping from a phone number to one of your extensions
+function pickExtFromPhone(phone){
+  var exts = [200,201,202,203,204,205,206,207];
+  var d = String(phone || '').replace(DIGITS, '');
+  var last2 = d.slice(-2) || '0';
+  var idx = parseInt(last2, 10) % exts.length;
+  return 'Ext. ' + exts[idx];
+}
+
+// Normalize "To" per your rules
+function normalizeTo(row){
+  // Outbound: To always equals Dialed
+  if (EXT_ONLY.test(row.from)) return row.dialed;
+
+  // Inbound: ensure final destination is an extension
+  var to = row.to || '';
+  var m = /^Ext\\.\\s*(\\d{3})/.exec(to); // keep only "Ext. ###"
+  if (m) return 'Ext. ' + m[1];
+
+  // If snapshot had "CallQueue" or anything else, map to an extension
+  return pickExtFromPhone(row.from);
+}
+
  tr.innerHTML = \`
   <td>\${row.cnam}</td>
   <td>\${wrapPhone(row.from)}</td>
@@ -2789,6 +2817,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
