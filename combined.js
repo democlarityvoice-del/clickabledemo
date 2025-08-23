@@ -3012,8 +3012,8 @@ function normalizeTo(row){
   <td>\${row.duration}</td>
   <td>\${row.disposition || ''}</td>
   <td>\${row.release}</td>
-  td class="icon-cell">
-    \${ICONS.map(function(icon){
+  <td class="icon-cell">
+  ${ICONS.map(function(icon){
     var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
     return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
   }).join('')}
@@ -3209,6 +3209,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
