@@ -2550,7 +2550,8 @@ if (!window.__cvCallHistoryInit) {
 
 
 </style>
-</head><body>
+</head>
+<body>
   <div class="call-container">
     <table>
       <thead>
@@ -2563,18 +2564,20 @@ if (!window.__cvCallHistoryInit) {
       <tbody id="cvCallHistoryTableBody"></tbody>
     </table>
   </div>
-<!-- Cradle-to-Grave modal shell (hidden until opened) -->
-<div id="cvctg-backdrop"></div>
-<div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
-  <div class="cvctg-header">
-    <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
-    <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
+
+  <!-- Cradle-to-Grave modal shell (hidden until opened) -->
+  <div id="cvctg-backdrop"></div>
+  <div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
+    <div class="cvctg-header">
+      <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
+      <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
+    </div>
+    <div id="cvctg-content" class="cvctg-body"></div>
+    <div class="cvctg-footer">
+      <button id="cvctg-close" class="cvctg-close">Close</button>
+    </div>
   </div>
-  <div id="cvctg-content" class="cvctg-body"></div>
-  <div class="cvctg-footer">
-    <button id="cvctg-close" class="cvctg-close">Close</button>
-  </div>
-</div>
+
 
 
 <script>
@@ -3032,6 +3035,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
