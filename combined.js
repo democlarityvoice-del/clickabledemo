@@ -2563,6 +2563,20 @@ if (!window.__cvCallHistoryInit) {
       <tbody id="cvCallHistoryTableBody"></tbody>
     </table>
   </div>
+<!-- Cradle-to-Grave modal shell (hidden until opened) -->
+<div id="cvctg-backdrop"></div>
+<div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
+  <div class="cvctg-header">
+    <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
+    <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
+  </div>
+  <div id="cvctg-content" class="cvctg-body"></div>
+  <div class="cvctg-footer">
+    <button id="cvctg-close" class="cvctg-close">Close</button>
+  </div>
+</div>
+
+
 <script>
 (function () {
   // Icons (Listen is plain, others circles)
@@ -2696,18 +2710,7 @@ if (!window.__cvCallHistoryInit) {
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
  
 
-<!-- Cradle-to-Grave modal shell (hidden until opened) -->
-<div id="cvctg-backdrop"></div>
-<div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
-  <div class="cvctg-header">
-    <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
-    <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
-  </div>
-  <div id="cvctg-content" class="cvctg-body"></div>
-  <div class="cvctg-footer">
-    <button id="cvctg-close" class="cvctg-close">Close</button>
-  </div>
-</div>
+
 
 /* ---------- Cradle-to-Grave (canonical modal pattern) ---------- */
 
@@ -3008,6 +3011,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
