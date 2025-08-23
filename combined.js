@@ -2883,8 +2883,9 @@ document.addEventListener('click', function(e){
     openCradleModal('Cradle To Grave', htmlOut);
   }
 });
-
+} // <--- this closes buildCallHistorySrcdoc()
 })();  // <-- closes the IIFE that began at the top of buildCallHistorySrcdoc
+
 
 
 
