@@ -2399,7 +2399,7 @@ if (!document.__cvqfRowStatusCapture) {
 
 
 
-  // ==============================
+ // ==============================
 // CALL HISTORY
 // ==============================
 
@@ -2418,11 +2418,9 @@ if (!window.__cvCallHistoryInit) {
   const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
   const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
-  // -------- BUILD SRCDOC -------- //
-  
-// -------- BUILD CALL HISTORY SRCDOC -------- //
-function buildCallHistorySrcdoc() {
-  return `<!doctype html><html><head><meta charset="utf-8">
+  // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) -------- //
+  function buildCallHistorySrcdoc() {
+    return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   :root{
@@ -2482,80 +2480,42 @@ function buildCallHistorySrcdoc() {
     color:#fff;
   }
 
-  /* Action icons */
-  .icon-cell { display:flex; gap:6px; }
-  .icon-btn { width:24px; height:24px; background:none; border:none; padding:0; cursor:pointer; }
-  .icon-btn img { width:18px; height:18px; opacity:.25; transition:opacity .2s; }
-  .icon-btn:hover img { opacity:1; }
-
   /* Keep phone links blue (not purple) */
   .call-container a,
   .call-container a:visited,
   .call-container a:active { color:#1a73e8; text-decoration:none; }
   .call-container a:hover { text-decoration:underline; }
 
-<style>
-/* -- Smaller circle buttons with subtle default, full-dark on hover/row-hover -- */
-.icon-cell { display: flex; gap: 6px; }
+  /* --- Icon sizing + visibility (circles by default) --- */
+  .icon-cell{ display:flex; gap:6px; }
+  .icon-btn{
+    width:26px; height:26px; border-radius:50%;
+    background:#f5f5f5; border:1px solid #cfcfcf;
+    display:inline-flex; align-items:center; justify-content:center;
+    padding:0; cursor:pointer;
+  }
+  .icon-btn img{ width:16px; height:16px; opacity:.35; transition:opacity .12s; }
+  .icon-btn:hover img, tr:hover .icon-btn img{ opacity:1; }
+  .icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#bdbdbd; }
 
-.icon-btn{
-  width: 26px; height: 26px;           /* smaller circle */
-  border-radius: 50%;
-  background: #f5f5f5;
-  border: 1px solid #cfcfcf;            /* outline */
-  display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; padding: 0;
-}
+  /* Listen = plain (no circle) */
+  .icon-btn--plain{ background:transparent; border:0; width:24px; height:24px; }
+  .icon-btn--plain:hover, tr:hover .icon-btn--plain{ background:transparent; border:0; }
+  .icon-btn--plain img{ opacity:.55; }
+  .icon-btn--plain:hover img, tr:hover .icon-btn--plain img{ opacity:1; }
 
-.icon-btn img{
-  width: 16px; height: 16px;            /* smaller icon glyph */
-  opacity: .35;                          /* lighter by default */
-  transition: opacity .12s;
-}
-
-/* darken on icon hover AND when hovering the entire row */
-.icon-btn:hover img,
-tr:hover .icon-btn img{ opacity: 1; }
-
-.icon-btn:hover,
-tr:hover .icon-btn{
-  background: #e9e9e9;
-  border-color: #bdbdbd;
-}
-/* circle icon sizing + visibility */
-.icon-cell{ display:flex; gap:6px; }
-.icon-btn{
-  width:26px; height:26px; border-radius:50%;
-  background:#f5f5f5; border:1px solid #cfcfcf;
-  display:inline-flex; align-items:center; justify-content:center;
-  padding:0; cursor:pointer;
-}
-.icon-btn img{ width:16px; height:16px; opacity:.35; transition:opacity .12s; }
-.icon-btn:hover img, tr:hover .icon-btn img{ opacity:1; }
-.icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#bdbdbd; }
-
-/* listen = plain (no circle) */
-.icon-btn--plain{ background:transparent; border:0; width:24px; height:24px; }
-.icon-btn--plain:hover, tr:hover .icon-btn--plain{ background:transparent; border:0; }
-.icon-btn--plain img{ opacity:.55; }
-.icon-btn--plain:hover img, tr:hover .icon-btn--plain img{ opacity:1; }
-
-/* dropped audio row (visual only) */
-.cv-audio-row td{ background:#f3f6f8; padding:10px 12px; border-top:0; }
-.cv-audio-player{ display:flex; align-items:center; gap:12px; }
-.cv-audio-play{ width:24px; height:24px; background:transparent; border:0; cursor:pointer; }
-.cv-audio-play:before{ content:''; display:block; width:0; height:0;
-  border-left:10px solid #333; border-top:6px solid transparent; border-bottom:6px solid transparent; }
-.cv-audio-time{ font-weight:600; color:#333; }
-.cv-audio-bar{ flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
-.cv-audio-bar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
-.cv-audio-right{ display:flex; align-items:center; gap:12px; }
-.cv-audio-icon{ width:20px; height:20px; opacity:.6; }
-
-
+  /* Dropped audio row (visual only) */
+  .cv-audio-row td{ background:#f3f6f8; padding:10px 12px; border-top:0; }
+  .cv-audio-player{ display:flex; align-items:center; gap:12px; }
+  .cv-audio-play{ width:24px; height:24px; background:transparent; border:0; cursor:pointer; }
+  .cv-audio-play:before{ content:''; display:block; width:0; height:0;
+    border-left:10px solid #333; border-top:6px solid transparent; border-bottom:6px solid transparent; }
+  .cv-audio-time{ font-weight:600; color:#333; }
+  .cv-audio-bar{ flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
+  .cv-audio-bar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
+  .cv-audio-right{ display:flex; align-items:center; gap:12px; }
+  .cv-audio-icon{ width:20px; height:20px; opacity:.6; }
 </style>
-
-
 </head><body>
   <div class="call-container">
     <table>
@@ -2571,502 +2531,164 @@ tr:hover .icon-btn{
   </div>
 <script>
 (function () {
+  // Icons (Listen is plain, others circles)
   const ICONS = [
-  { src: '${ICON_DOWNLOAD}',  title: 'Download'  },
-  { src: '${ICON_LISTEN}',    title: 'Listen'    },
-  { src: '${ICON_CRADLE}',    title: 'Cradle'    },
-  { src: '${ICON_NOTES}',     title: 'Notes'     },
-  { src: '${ICON_TRANSCRIPT}',title: 'Transcript'}
- ];
+    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
+    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
+    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
+    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
+  ];
 
-  
+  // Phone links
+  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
+  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v; }
 
- 
-  // Full phone pattern (keep double backslashes)
-var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
-function wrapPhone(v){
-  return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v;
-}
+  // Relative dates
+  const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
+  function fmtToday(ts){
+    var d = new Date(ts), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
+    var ampm = h >= 12 ? 'pm' : 'am';
+    h = (h % 12) || 12;
+    return 'Today, ' + h + ':' + m + ' ' + ampm;
+  }
 
-
-  // Minute gaps taken from your original snapshot: 10:02, 9:59 (-3), 9:57 (-2), …
-const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
-
-function fmtToday(ts){
-  var d = new Date(ts), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
-  var ampm = h >= 12 ? 'pm' : 'am';
-  h = (h % 12) || 12;
-  return 'Today, ' + h + ':' + m + ' ' + ampm;
-}
-
+  // Normalize "To" column per rules
+  var EXT_ONLY = /^\\d{3}$/;
+  var DIGITS = /\\D/g;
+  function pickExtFromPhone(phone){
+    var exts = [200,201,202,203,204,205,206,207];
+    var d = String(phone || '').replace(DIGITS, '');
+    var last2 = d.slice(-2) || '0';
+    var idx = parseInt(last2, 10) % exts.length;
+    return 'Ext. ' + exts[idx];
+  }
+  function normalizeTo(row){
+    // Outbound (from = extension): To = Dialed
+    if (EXT_ONLY.test(row.from)) return row.dialed;
+    // Inbound: ensure final destination is an extension; strip appended name
+    var to = row.to || '';
+    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
+    if (m) return 'Ext. ' + m[1];
+    return pickExtFromPhone(row.from);
+  }
 
   // ---- STATIC SNAPSHOT (25 rows) ----
   const rows = [
-  {
-    cnam: "Ruby Foster",
-    from: "(248) 555-0102",
-    q1: "4.5",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "Ext. 206 (Grace Smith)",
-    q2: "4.5",
-    date: "Today, 10:02 pm",
-    duration: "32:06",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "John Smith",
-    from: "207",
-    q1: "4.4",
-    dialed: "(517) 555-0162",
-    toName: "",
-    to: "External",
-    q2: "4.3",
-    date: "Today, 9:59 pm",
-    duration: "22:17",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Leo Knight",
-    from: "(313) 555-0106",
-    q1: "4.3",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "Ext. 206 (Grace Smith)",
-    q2: "4.4",
-    date: "Today, 9:57 pm",
-    duration: "1:53",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Ava Chen",
-    from: "(313) 555-0151",
-    q1: "4.4",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "Ext. 205 (Alex Roberts)",
-    q2: "4.3",
-    date: "Today, 9:55 pm",
-    duration: "0:56",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Alex Roberts",
-    from: "205",
-    q1: "4.5",
-    dialed: "(248) 555-0110",
-    toName: "",
-    to: "External",
-    q2: "4.4",
-    date: "Today, 9:53 pm",
-    duration: "20:13",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Zoe Miller",
-    from: "(248) 555-0165",
-    q1: "4.2",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.3",
-    date: "Today, 9:51 pm",
-    duration: "22:39",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Raj Patel",
-    from: "(810) 555-0187",
-    q1: "4.3",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.2",
-    date: "Today, 9:49 pm",
-    duration: "4:49",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Zoe Miller",
-    from: "(810) 555-0184",
-    q1: "4.4",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.4",
-    date: "Today, 9:47 pm",
-    duration: "13:01",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Tucker Jones",
-    from: "(989) 555-0128",
-    q1: "4.5",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.4",
-    date: "Today, 9:45 pm",
-    duration: "1:24",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Liam Nguyen",
-    from: "(810) 555-0100",
-    q1: "4.2",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.3",
-    date: "Today, 9:43 pm",
-    duration: "1:28",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Ava Chen",
-    from: "(313) 555-0108",
-    q1: "4.3",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "Ext. 206 (Grace Smith)",
-    q2: "4.5",
-    date: "Today, 9:41 pm",
-    duration: "15:51",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Maya Brooks",
-    from: "(517) 555-0126",
-    q1: "4.4",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "Ext. 201 (Cathy Thomas)",
-    q2: "4.2",
-    date: "Today, 9:39 pm",
-    duration: "14:27",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Jack Burton",
-    from: "(517) 555-0148",
-    q1: "4.3",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.3",
-    date: "Today, 9:37 pm",
-    duration: "14:28",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Zoe Miller",
-    from: "(248) 555-0168",
-    q1: "4.4",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "Ext. 205 (Alex Roberts)",
-    q2: "4.4",
-    date: "Today, 9:34 pm",
-    duration: "20:45",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Sarah Patel",
-    from: "(248) 555-0196",
-    q1: "4.2",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "Ext. 206 (Grace Smith)",
-    q2: "4.5",
-    date: "Today, 9:32 pm",
-    duration: "12:05",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Jake Lee",
-    from: "202",
-    q1: "4.5",
-    dialed: "(248) 555-0191",
-    toName: "",
-    to: "External",
-    q2: "4.4",
-    date: "Today, 9:30 pm",
-    duration: "27:22",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Chloe Bennett",
-    from: "(313) 555-0120",
-    q1: "4.3",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.2",
-    date: "Today, 9:28 pm",
-    duration: "3:02",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Mike Johnson",
-    from: "200",
-    q1: "4.4",
-    dialed: "(810) 555-0112",
-    toName: "",
-    to: "External",
-    q2: "4.3",
-    date: "Today, 9:26 pm",
-    duration: "9:58",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Carlos Rivera",
-    from: "(517) 555-0177",
-    q1: "4.5",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "Ext. 201 (Cathy Thomas)",
-    q2: "4.4",
-    date: "Today, 9:24 pm",
-    duration: "7:41",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Monica Alvarez",
-    from: "(989) 555-0113",
-    q1: "4.2",
-    dialed: "248-436-3443",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.2",
-    date: "Today, 9:21 pm",
-    duration: "2:36",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Bob Andersen",
-    from: "203",
-    q1: "4.4",
-    dialed: "(313) 555-0179",
-    toName: "",
-    to: "External",
-    q2: "4.3",
-    date: "Today, 9:19 pm",
-    duration: "5:12",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Ruby Foster",
-    from: "(810) 555-0175",
-    q1: "4.3",
-    dialed: "313-995-9080",
-    toName: "",
-    to: "Ext. 206 (Grace Smith)",
-    q2: "4.5",
-    date: "Today, 9:17 pm",
-    duration: "10:44",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Mark Sanchez",
-    from: "206",
-    q1: "4.5",
-    dialed: "(989) 555-0140",
-    toName: "",
-    to: "External",
-    q2: "4.4",
-    date: "Today, 9:15 pm",
-    duration: "6:05",
-    disposition: "",
-    release: "Term: Bye"
-  },
-  {
-    cnam: "Zoe Miller",
-    from: "(248) 555-0144",
-    q1: "4.2",
-    dialed: "248-436-3449",
-    toName: "",
-    to: "CallQueue",
-    q2: "4.3",
-    date: "Today, 9:12 pm",
-    duration: "0:39",
-    disposition: "",
-    release: "Orig: Bye"
-  },
-  {
-    cnam: "Cathy Thomas",
-    from: "201",
-    q1: "4.4",
-    dialed: "(517) 555-0170",
-    toName: "",
-    to: "External",
-    q2: "4.5",
-    date: "Today, 9:10 pm",
-    duration: "11:33",
-    disposition: "",
-    release: "Orig: Bye"
-  }
-];
+    { cnam:"Ruby Foster",  from:"(248) 555-0102", q1:"4.5", dialed:"248-436-3443", toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 10:02 pm", duration:"32:06", disposition:"", release:"Orig: Bye" },
+    { cnam:"John Smith",   from:"207",            q1:"4.4", dialed:"(517) 555-0162", toName:"", to:"External", q2:"4.3", date:"Today, 9:59 pm", duration:"22:17", disposition:"", release:"Term: Bye" },
+    { cnam:"Leo Knight",   from:"(313) 555-0106", q1:"4.3", dialed:"313-995-9080",   toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.4", date:"Today, 9:57 pm", duration:"1:53", disposition:"", release:"Orig: Bye" },
+    { cnam:"Ava Chen",     from:"(313) 555-0151", q1:"4.4", dialed:"248-436-3449",   toName:"", to:"Ext. 205 (Alex Roberts)", q2:"4.3", date:"Today, 9:55 pm", duration:"0:56", disposition:"", release:"Term: Bye" },
+    { cnam:"Alex Roberts", from:"205",            q1:"4.5", dialed:"(248) 555-0110", toName:"", to:"External", q2:"4.4", date:"Today, 9:53 pm", duration:"20:13", disposition:"", release:"Orig: Bye" },
+    { cnam:"Zoe Miller",   from:"(248) 555-0165", q1:"4.2", dialed:"248-436-3443",   toName:"", to:"CallQueue", q2:"4.3", date:"Today, 9:51 pm", duration:"22:39", disposition:"", release:"Orig: Bye" },
+    { cnam:"Raj Patel",    from:"(810) 555-0187", q1:"4.3", dialed:"313-995-9080",   toName:"", to:"CallQueue", q2:"4.2", date:"Today, 9:49 pm", duration:"4:49", disposition:"", release:"Term: Bye" },
+    { cnam:"Zoe Miller",   from:"(810) 555-0184", q1:"4.4", dialed:"248-436-3449",   toName:"", to:"CallQueue", q2:"4.4", date:"Today, 9:47 pm", duration:"13:01", disposition:"", release:"Orig: Bye" },
+    { cnam:"Tucker Jones", from:"(989) 555-0128", q1:"4.5", dialed:"248-436-3443",   toName:"", to:"CallQueue", q2:"4.4", date:"Today, 9:45 pm", duration:"1:24", disposition:"", release:"Orig: Bye" },
+    { cnam:"Liam Nguyen",  from:"(810) 555-0100", q1:"4.2", dialed:"313-995-9080",   toName:"", to:"CallQueue", q2:"4.3", date:"Today, 9:43 pm", duration:"1:28", disposition:"", release:"Term: Bye" },
+    { cnam:"Ava Chen",     from:"(313) 555-0108", q1:"4.3", dialed:"248-436-3449",   toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 9:41 pm", duration:"15:51", disposition:"", release:"Orig: Bye" },
+    { cnam:"Maya Brooks",  from:"(517) 555-0126", q1:"4.4", dialed:"248-436-3443",   toName:"", to:"Ext. 201 (Cathy Thomas)", q2:"4.2", date:"Today, 9:39 pm", duration:"14:27", disposition:"", release:"Term: Bye" },
+    { cnam:"Jack Burton",  from:"(517) 555-0148", q1:"4.3", dialed:"313-995-9080",   toName:"", to:"CallQueue", q2:"4.3", date:"Today, 9:37 pm", duration:"14:28", disposition:"", release:"Orig: Bye" },
+    { cnam:"Zoe Miller",   from:"(248) 555-0168", q1:"4.4", dialed:"248-436-3449",   toName:"", to:"Ext. 205 (Alex Roberts)", q2:"4.4", date:"Today, 9:34 pm", duration:"20:45", disposition:"", release:"Term: Bye" },
+    { cnam:"Sarah Patel",  from:"(248) 555-0196", q1:"4.2", dialed:"248-436-3443",   toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 9:32 pm", duration:"12:05", disposition:"", release:"Orig: Bye" },
+    { cnam:"Jake Lee",     from:"202",            q1:"4.5", dialed:"(248) 555-0191", toName:"", to:"External", q2:"4.4", date:"Today, 9:30 pm", duration:"27:22", disposition:"", release:"Orig: Bye" },
+    { cnam:"Chloe Bennett",from:"(313) 555-0120", q1:"4.3", dialed:"313-995-9080",   toName:"", to:"CallQueue", q2:"4.2", date:"Today, 9:28 pm", duration:"3:02", disposition:"", release:"Term: Bye" },
+    { cnam:"Mike Johnson", from:"200",            q1:"4.4", dialed:"(810) 555-0112", toName:"", to:"External", q2:"4.3", date:"Today, 9:26 pm", duration:"9:58", disposition:"", release:"Orig: Bye" },
+    { cnam:"Carlos Rivera",from:"(517) 555-0177", q1:"4.5", dialed:"248-436-3449",   toName:"", to:"Ext. 201 (Cathy Thomas)", q2:"4.4", date:"Today, 9:24 pm", duration:"7:41", disposition:"", release:"Term: Bye" },
+    { cnam:"Monica Alvarez",from:"(989) 555-0113",q1:"4.2", dialed:"248-436-3443",   toName:"", to:"CallQueue", q2:"4.2", date:"Today, 9:21 pm", duration:"2:36", disposition:"", release:"Orig: Bye" },
+    { cnam:"Bob Andersen", from:"203",            q1:"4.4", dialed:"(313) 555-0179", toName:"", to:"External", q2:"4.3", date:"Today, 9:19 pm", duration:"5:12", disposition:"", release:"Term: Bye" },
+    { cnam:"Ruby Foster",  from:"(810) 555-0175", q1:"4.3", dialed:"313-995-9080",   toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 9:17 pm", duration:"10:44", disposition:"", release:"Orig: Bye" },
+    { cnam:"Mark Sanchez", from:"206",            q1:"4.5", dialed:"(989) 555-0140", toName:"", to:"External", q2:"4.4", date:"Today, 9:15 pm", duration:"6:05", disposition:"", release:"Term: Bye" },
+    { cnam:"Zoe Miller",   from:"(248) 555-0144", q1:"4.2", dialed:"248-436-3449",   toName:"", to:"CallQueue", q2:"4.3", date:"Today, 9:12 pm", duration:"0:39", disposition:"", release:"Orig: Bye" },
+    { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
+  ];
 
+  // Render
+  var tbody = document.getElementById('cvCallHistoryTableBody');
+  var now = Date.now();
+  var cursor = now;
 
-var tbody = document.getElementById('cvCallHistoryTableBody'); // ← use your unique ID
-var now = Date.now();
-var cursor = now;
+  rows.forEach(function(row, idx){
+    var tr = document.createElement('tr');
+    var dateStr = fmtToday(cursor);
 
-rows.forEach(function(row, idx){
-  var tr = document.createElement('tr');
-  var dateStr = fmtToday(cursor);
+    var iconsHTML = ICONS.map(function(icon){
+      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('');
 
-// Detect extension-only "From" (outbound), e.g., "205"
-var EXT_ONLY = /^\\d{3}$/;
+    tr.innerHTML = \`
+      <td>\${row.cnam}</td>
+      <td>\${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">\${row.q1}</span></td>
+      <td>\${wrapPhone(row.dialed)}</td>
+      <td></td>
+      <td>\${wrapPhone(normalizeTo(row))}</td>
+      <td><span class="qos-tag">\${row.q2}</span></td>
+      <td>\${dateStr}</td>
+      <td>\${row.duration}</td>
+      <td>\${row.disposition || ''}</td>
+      <td>\${row.release}</td>
+      <td class="icon-cell">\${iconsHTML}</td>\`;
+    tbody.appendChild(tr);
 
-// Normalize the "To" cell per rules:
-// - Outbound (From is extension): To = Dialed
-// - Inbound (From is phone): To must be an extension; strip any appended name
-function normalizeTo(row){
-  if (EXT_ONLY.test(row.from)) {
-    return row.dialed; // outbound: To matches Dialed
-  }
-  var to = row.to || '';
-  // keep only "Ext. 123" (drop " (Name)" if present)
-  var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
-  if (m) return 'Ext. ' + m[1];
-  return to; // if your static snapshot has non-extension values, update those rows as needed
-}
+    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+  });
 
-// From = "205" etc. means outbound
-var EXT_ONLY = /^\\d{3}$/;
-// strip non-digits
-var DIGITS = /\\D/g;
+  // Resize host iframe to fit content
+  requestAnimationFrame(function () {
+    try {
+      var h = document.documentElement.scrollHeight;
+      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+    } catch (e) {}
+  });
 
-// Stable mapping from a phone number to one of your extensions
-function pickExtFromPhone(phone){
-  var exts = [200,201,202,203,204,205,206,207];
-  var d = String(phone || '').replace(DIGITS, '');
-  var last2 = d.slice(-2) || '0';
-  var idx = parseInt(last2, 10) % exts.length;
-  return 'Ext. ' + exts[idx];
-}
+  // Listen: drop a visual-only player row beneath the clicked row
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+    if (!btn) return;
+    e.preventDefault();
 
-// Normalize "To" per your rules
-function normalizeTo(row){
-  // Outbound: To always equals Dialed
-  if (EXT_ONLY.test(row.from)) return row.dialed;
+    var tr = btn.closest('tr');
+    var next = tr && tr.nextElementSibling;
 
-  // Inbound: ensure final destination is an extension
-  var to = row.to || '';
-  var m = /^Ext\\.\\s*(\\d{3})/.exec(to); // keep only "Ext. ###"
-  if (m) return 'Ext. ' + m[1];
+    // collapse if already open
+    if (next && next.classList && next.classList.contains('cv-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded','false');
+      return;
+    }
 
-  // If snapshot had "CallQueue" or anything else, map to an extension
-  return pickExtFromPhone(row.from);
-}
+    // close others
+    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
 
-var iconsHTML = ICONS.map(function(icon){
-  var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-  return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-}).join('');
+    // build drop-down player row
+    var audioTr = document.createElement('tr');
+    audioTr.className = 'cv-audio-row';
 
- tr.innerHTML = \`
-  <td>\${row.cnam}</td>
-  <td>\${wrapPhone(row.from)}</td>
-  <td><span class="qos-tag">\${row.q1}</span></td>
-  <td>\${wrapPhone(row.dialed)}</td>
-  <td></td>
-  <td>\${wrapPhone(normalizeTo(row))}</td>
-  <td><span class="qos-tag">\${row.q2}</span></td>
-  <td>\${dateStr}</td>
-  <td>\${row.duration}</td>
-  <td>\${row.disposition || ''}</td>
-  <td>\${row.release}</td>
-  <td class="icon-cell">\${iconsHTML}</td>\`;
-tbody.appendChild(tr);
+    var colCount = tr.children.length;
+    var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
 
-  </td>\`;
-
-
-
-  tbody.appendChild(tr);
-  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
-});
-
-// Resize the host iframe to fit content (no inner scrollbar)
-requestAnimationFrame(function () {
-  try {
-    var h = document.documentElement.scrollHeight;
-    if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-  } catch (e) {}
-});
-// Toggle a visual-only audio row when clicking Listen
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-  if (!btn) return;
-  e.preventDefault();
-
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
-
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cv-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
-  }
-
-  // close others
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-
-  // build drop-down player row
-  var audioTr = document.createElement('tr');
-  audioTr.className = 'cv-audio-row';
-
-  var colCount = tr.children.length;
-  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
-
-  var html =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cv-audio-player">' +
-        '<button class="cv-audio-play" aria-label="Play"></button>' +
-        '<span class="cv-audio-time">0:00 / 0:00</span>' +
-        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cv-audio-right">' +
-          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+    var html =
+      '<td colspan="'+colCount+'">' +
+        '<div class="cv-audio-player">' +
+          '<button class="cv-audio-play" aria-label="Play"></button>' +
+          '<span class="cv-audio-time">0:00 / 0:00</span>' +
+          '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+          '<div class="cv-audio-right">' +
+            '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+          '</div>' +
         '</div>' +
-      '</div>' +
-    '</td>';
+      '</td>';
 
-  audioTr.innerHTML = html;
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded','true');
-});
+    audioTr.innerHTML = html;
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded','true');
+  });
 
 })();
 <\/script>
 </body></html>`;
-}
-
-
+  }
 
   // -------- REMOVE CALL HISTORY -------- //
   function removeCallHistory() {
@@ -3193,15 +2815,6 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
-
 
 
 
