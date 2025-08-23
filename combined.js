@@ -2784,7 +2784,8 @@ function fmtClock(d){
 }
 function addMillis(d, ms){ return new Date(d.getTime() + ms); }
 
-var PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
+var PHONE_RX = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
+
 
 // deterministic split: even last digit → 301, odd → 302
 function pickDept(fromNum){
@@ -3035,6 +3036,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
