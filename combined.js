@@ -2866,7 +2866,7 @@ document.addEventListener('click', function(e){
   var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
   var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
 
-  if (PHONE_RX.test(from)) {
+   if (PHONE_RX.test(from)) {
     var htmlIn = buildInboundCradleHTML(from, date);
     openCradleModal('Cradle To Grave', htmlIn);
   } else {
@@ -2882,9 +2882,16 @@ document.addEventListener('click', function(e){
       + '</div>';
     openCradleModal('Cradle To Grave', htmlOut);
   }
-});
-} // <--- this closes buildCallHistorySrcdoc()
-})();  // <-- closes the IIFE that began at the top of buildCallHistorySrcdoc
+});  // closes the cradle click handler
+
+})();  // <-- CLOSES the (function(){ ... }) IIFE inside the srcdoc
+
+<\/script>
+</body></html>`;
+  } // <-- closes buildCallHistorySrcdoc()
+} // <-- closes if (!window.__cvCallHistoryInit)
+
+
 
 
 
