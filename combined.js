@@ -2582,7 +2582,7 @@ if (!window.__cvCallHistoryInit) {
   // Icons (Listen is plain, others circles)
   const ICONS = [
     { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: true },
     { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
     { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
     { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
@@ -2709,6 +2709,22 @@ if (!window.__cvCallHistoryInit) {
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
  
+// add a simple dropped row so it behaves
+var audioTr = document.createElement('tr');
+audioTr.className = 'cv-audio-row';
+audioTr.innerHTML =
+  '<td colspan="12">' +
+    '<div class="cv-audio-player">' +
+      '<button class="cv-audio-play" aria-label="Play"></button>' +
+      '<span class="cv-audio-time">0:00 / 0:00</span>' +
+      '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+      '<div class="cv-audio-right"></div>' +
+    '</div>' +
+  '</td>';
+tr.parentNode.insertBefore(audioTr, tr.nextElementSibling);
+btn.setAttribute('aria-expanded','true');
+}); // <-- closes the “listen” document.addEventListener
+
 
 
 
@@ -3016,6 +3032,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
