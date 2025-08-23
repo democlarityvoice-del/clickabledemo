@@ -2588,15 +2588,15 @@ tr:hover .icon-btn--plain img{ opacity: 1; }
 <script>
 (function () {
   const ICONS = [
-  { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-  { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
-  { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
-  { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
-  { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
-];
+    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
+    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
+    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
+    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
+  ];
 
 
-  
+
 
  
   // Full phone pattern (keep double backslashes)
@@ -3000,32 +3000,31 @@ function normalizeTo(row){
   return pickExtFromPhone(row.from);
 }
 
- tr.innerHTML = \`
-  <td>\${row.cnam}</td>
-  <td>\${wrapPhone(row.from)}</td>
-  <td><span class="qos-tag">\${row.q1}</span></td>
-  <td>\${wrapPhone(row.dialed)}</td>
+tr.innerHTML = `
+  <td>${row.cnam}</td>
+  <td>${wrapPhone(row.from)}</td>
+  <td><span class="qos-tag">${row.q1}</span></td>
+  <td>${wrapPhone(row.dialed)}</td>
   <td></td>
-  <td>\${wrapPhone(normalizeTo(row))}</td>   <!-- ← updated -->
-  <td><span class="qos-tag">\${row.q2}</span></td>
-  <td>\${dateStr}</td>
-  <td>\${row.duration}</td>
-  <td>\${row.disposition || ''}</td>
-  <td>\${row.release}</td>
+  <td>${wrapPhone(normalizeTo(row))}</td>
+  <td><span class="qos-tag">${row.q2}</span></td>
+  <td>${row.date}</td>
+  <td>${row.duration}</td>
+  <td>${row.disposition || ''}</td>
+  <td>${row.release}</td>
   <td class="icon-cell">
-  ${ICONS.map(function(icon){
-    var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-    return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-  }).join('')}
-</td>\`;
-
-
+    ${ICONS.map(function(icon){
+      const cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('')}
+  </td>`;
 
 
 
   tbody.appendChild(tr);
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
 });
+
 // Toggle a visual-only audio player under the row when clicking Listen
 document.addEventListener('click', function(e){
   var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
@@ -3209,6 +3208,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
