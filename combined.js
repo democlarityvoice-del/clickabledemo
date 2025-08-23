@@ -3018,10 +3018,8 @@ tr.innerHTML = `
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('')}
   </td>`;
+tbody.appendChild(tr);
 
-
-
-  tbody.appendChild(tr);
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
 });
 
@@ -3208,6 +3206,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
