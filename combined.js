@@ -2494,6 +2494,17 @@ function buildCallHistorySrcdoc() {
   .call-container a:active { color:#1a73e8; text-decoration:none; }
   .call-container a:hover { text-decoration:underline; }
 </style>
+.icon-cell { display: flex; gap: 6px; }
+.icon-btn{
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  background: #f0f0f0;
+  border: none; padding: 0; cursor: pointer;
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.icon-btn img{ width: 18px; height: 18px; opacity: .38; transition: opacity .2s; }
+.icon-btn:hover img{ opacity: .85; }
+
 </head><body>
   <div class="call-container">
     <table>
@@ -2510,16 +2521,22 @@ function buildCallHistorySrcdoc() {
 <script>
 (function () {
   const ICONS = [
-    { src: '${ICON_DOWNLOAD}' },
-    { src: '${ICON_LISTEN}' },
-    { src: '${ICON_CRADLE}' },
-    { src: '${ICON_NOTES}' },
-    { src: '${ICON_TRANSCRIPT}' }
-  ];
+  { src: '${ICON_DOWNLOAD}',  title: 'Download'  },
+  { src: '${ICON_LISTEN}',    title: 'Listen'    },
+  { src: '${ICON_CRADLE}',    title: 'Cradle'    },
+  { src: '${ICON_NOTES}',     title: 'Notes'     },
+  { src: '${ICON_TRANSCRIPT}',title: 'Transcript'}
+ ];
 
-  // Full phone pattern (double-escaped so it survives outer template)
-  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
-  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#">' + v + '</a>' : v; }
+  
+
+ 
+  // Full phone pattern (keep double backslashes)
+var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
+function wrapPhone(v){
+  return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v;
+}
+
 
   // Minute gaps taken from your original snapshot: 10:02, 9:59 (-3), 9:57 (-2), …
 const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
@@ -2571,23 +2588,33 @@ rows.forEach(function(row, idx){
   var dateStr = fmtToday(cursor);
 
   tr.innerHTML = \`
-    <td>\${row.cnam}</td>
-    <td>\${wrapPhone(row.from)}</td>
-    <td><span class="qos-tag">\${row.q1}</span></td>
-    <td>\${wrapPhone(row.dialed)}</td>
-    <td></td>
-    <td>\${wrapPhone(row.to)}</td>
-    <td><span class="qos-tag">\${row.q2}</span></td>
-    <td>\${dateStr}</td>
-    <td>\${row.duration}</td>
-    <td>\${row.disposition || ''}</td>
-    <td>\${row.release}</td>
-    <td class="icon-cell">
-      \${ICONS.map(function(icon){ return '<button class="icon-btn"><img src="'+icon.src+'" alt=""/></button>'; }).join('')}
-    </td>\`;
+  <td>\${row.cnam}</td>
+  <td>\${wrapPhone(row.from)}</td>
+  <td><span class="qos-tag">\${row.q1}</span></td>
+  <td>\${wrapPhone(row.dialed)}</td>
+  <td></td>
+  <td>\${wrapPhone(row.to)}</td>
+  <td><span class="qos-tag">\${row.q2}</span></td>
+  <td>\${dateStr}</td>
+  <td>\${row.duration}</td>
+  <td>\${row.disposition || ''}</td>
+  <td>\${row.release}</td>
+  <td class="icon-cell">
+    \${ICONS.map(function(icon){
+      return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('')}
+  </td>\`;
+
 
   tbody.appendChild(tr);
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
+});
+// Resize the host iframe to fit content (no inner scrollbar)
+requestAnimationFrame(function () {
+  try {
+    var h = document.documentElement.scrollHeight;
+    if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+  } catch (e) {}
 });
 
 })();
@@ -2637,7 +2664,7 @@ rows.forEach(function(row, idx){
     const iframe = document.createElement('iframe');
     iframe.id = CALLHISTORY_IFRAME_ID;
     iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling', 'yes');
+    iframe.setAttribute('scrolling', 'no');
     iframe.srcdoc = buildCallHistorySrcdoc();
 
     if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
@@ -2722,6 +2749,7 @@ rows.forEach(function(row, idx){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
