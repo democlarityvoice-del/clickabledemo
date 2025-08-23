@@ -2522,6 +2522,35 @@ tr:hover .icon-btn{
   background: #e9e9e9;
   border-color: #bdbdbd;
 }
+/* circle icon sizing + visibility */
+.icon-cell{ display:flex; gap:6px; }
+.icon-btn{
+  width:26px; height:26px; border-radius:50%;
+  background:#f5f5f5; border:1px solid #cfcfcf;
+  display:inline-flex; align-items:center; justify-content:center;
+  padding:0; cursor:pointer;
+}
+.icon-btn img{ width:16px; height:16px; opacity:.35; transition:opacity .12s; }
+.icon-btn:hover img, tr:hover .icon-btn img{ opacity:1; }
+.icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#bdbdbd; }
+
+/* listen = plain (no circle) */
+.icon-btn--plain{ background:transparent; border:0; width:24px; height:24px; }
+.icon-btn--plain:hover, tr:hover .icon-btn--plain{ background:transparent; border:0; }
+.icon-btn--plain img{ opacity:.55; }
+.icon-btn--plain:hover img, tr:hover .icon-btn--plain img{ opacity:1; }
+
+/* dropped audio row (visual only) */
+.cv-audio-row td{ background:#f3f6f8; padding:10px 12px; border-top:0; }
+.cv-audio-player{ display:flex; align-items:center; gap:12px; }
+.cv-audio-play{ width:24px; height:24px; background:transparent; border:0; cursor:pointer; }
+.cv-audio-play:before{ content:''; display:block; width:0; height:0;
+  border-left:10px solid #333; border-top:6px solid transparent; border-bottom:6px solid transparent; }
+.cv-audio-time{ font-weight:600; color:#333; }
+.cv-audio-bar{ flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
+.cv-audio-bar-fill{ position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
+.cv-audio-right{ display:flex; align-items:center; gap:12px; }
+.cv-audio-icon{ width:20px; height:20px; opacity:.6; }
 
 
 </style>
@@ -2954,22 +2983,26 @@ function normalizeTo(row){
   return pickExtFromPhone(row.from);
 }
 
+var iconsHTML = ICONS.map(function(icon){
+  var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+  return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+}).join('');
+
  tr.innerHTML = \`
   <td>\${row.cnam}</td>
   <td>\${wrapPhone(row.from)}</td>
   <td><span class="qos-tag">\${row.q1}</span></td>
   <td>\${wrapPhone(row.dialed)}</td>
   <td></td>
-  <td>\${wrapPhone(normalizeTo(row))}</td>   <!-- ← updated -->
+  <td>\${wrapPhone(normalizeTo(row))}</td>
   <td><span class="qos-tag">\${row.q2}</span></td>
   <td>\${dateStr}</td>
   <td>\${row.duration}</td>
   <td>\${row.disposition || ''}</td>
   <td>\${row.release}</td>
-  <td class="icon-cell">
-    \${ICONS.map(function(icon){
-      return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-    }).join('')}
+  <td class="icon-cell">\${iconsHTML}</td>\`;
+tbody.appendChild(tr);
+
   </td>\`;
 
 
@@ -2977,12 +3010,55 @@ function normalizeTo(row){
   tbody.appendChild(tr);
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
 });
+
 // Resize the host iframe to fit content (no inner scrollbar)
 requestAnimationFrame(function () {
   try {
     var h = document.documentElement.scrollHeight;
     if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
   } catch (e) {}
+});
+// Toggle a visual-only audio row when clicking Listen
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+  if (!btn) return;
+  e.preventDefault();
+
+  var tr = btn.closest('tr');
+  var next = tr && tr.nextElementSibling;
+
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cv-audio-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded','false');
+    return;
+  }
+
+  // close others
+  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+
+  // build drop-down player row
+  var audioTr = document.createElement('tr');
+  audioTr.className = 'cv-audio-row';
+
+  var colCount = tr.children.length;
+  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
+
+  var html =
+    '<td colspan="'+colCount+'">' +
+      '<div class="cv-audio-player">' +
+        '<button class="cv-audio-play" aria-label="Play"></button>' +
+        '<span class="cv-audio-time">0:00 / 0:00</span>' +
+        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+        '<div class="cv-audio-right">' +
+          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+
+  audioTr.innerHTML = html;
+  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+  btn.setAttribute('aria-expanded','true');
 });
 
 })();
@@ -3117,6 +3193,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
