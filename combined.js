@@ -2674,61 +2674,7 @@ if (!window.__cvCallHistoryInit) {
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
  
-// Toggle a Cradle-to-Grave modal when clicking Cradle
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
-  e.preventDefault();
 
-  // find the row this button belongs to
-  const tr = btn.closest('tr');
-  const cells = tr.querySelectorAll('td');
-
-  // Remove any existing modal
-  var existing = document.getElementById('cv-cradle-modal');
-  if (existing) existing.remove();
-
-  // Grab row info
-  var tr = btn.closest('tr');
-  var from = tr ? tr.querySelector('td:nth-child(2)')?.innerText : '';
-  var date = tr ? tr.querySelector('td:nth-child(8)')?.innerText : 'Today';
-
-  // Build modal HTML
-  var modal = document.createElement('div');
-  modal.id = 'cv-cradle-modal';
-  modal.innerHTML = `
-    <div class="cv-modal-backdrop"></div>
-    <div class="cv-modal">
-      <div class="cv-modal-header">
-        <h3>Cradle To Grave</h3>
-        <button class="cv-modal-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="cv-modal-body">
-        <ul class="cv-ctg-list">
-          <li><span>${date}</span> — Call from ${from} to STIR</li>
-          <li>+2ms — The currently active time frame is Daytime</li>
-          <li>+15ms — Connected to Auto Attendant 700 Daytime</li>
-          <li>+20s — Selected 2</li>
-          <li>+25s — Connected to Call Queue 301 (New Sales)</li>
-          <li>+30s — Agent 3011 (Alice Carter) is ringing</li>
-          <li>+31s — Agent 3012 (Ben Smith) is ringing</li>
-          <li>+32s — Agent 3013 (Chris Lee) is ringing</li>
-          <li>+36s — Call answered by Ben Smith (3012)</li>
-        </ul>
-      </div>
-      <div class="cv-modal-footer">
-        <button class="cv-modal-close">Close</button>
-      </div>
-    </div>
-  `;
-
-  document.body.appendChild(modal);
-
-  // Close behavior
-  modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop').forEach(el => {
-    el.addEventListener('click', () => modal.remove());
-  });
-});
 
 
 
@@ -2886,6 +2832,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
