@@ -2495,57 +2495,34 @@ function buildCallHistorySrcdoc() {
   .call-container a:hover { text-decoration:underline; }
 
 <style>
-  .icon-cell {
-    display: flex;
-    gap: 6px;
-  }
-  .icon-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 50%;
-    background: #f0f0f0;
-    border: none;
-    padding: 0;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-  .icon-btn img {
-    width: 18px;
-    height: 18px;
-    opacity: .38;
-    transition: opacity .2s;
-  }
-  .icon-btn:hover img {
-    opacity: .85;
-  }
+/* -- Smaller circle buttons with subtle default, full-dark on hover/row-hover -- */
+.icon-cell { display: flex; gap: 6px; }
 
- /* --- Icon opacity & row-hover behavior --- */
-.icon-btn img{
-  opacity: .60;                 /* higher default */
-  transition: opacity .15s;
-}
-/* When hovering a row, ALL icons in that row go fully dark */
-tr:hover .icon-btn img{
-  opacity: 1;
-}
-
-/* --- Circle buttons: add outline + darken on hover/row-hover --- */
 .icon-btn{
-  width: 28px; height: 28px;
+  width: 26px; height: 26px;           /* smaller circle */
   border-radius: 50%;
   background: #f5f5f5;
-  border: 1px solid #cfcfcf;    /* outline */
+  border: 1px solid #cfcfcf;            /* outline */
   display: inline-flex; align-items: center; justify-content: center;
-  cursor: pointer; padding: 0;  /* keep from earlier */
+  cursor: pointer; padding: 0;
 }
-/* Darken circle on button hover AND row hover */
+
+.icon-btn img{
+  width: 16px; height: 16px;            /* smaller icon glyph */
+  opacity: .35;                          /* lighter by default */
+  transition: opacity .12s;
+}
+
+/* darken on icon hover AND when hovering the entire row */
+.icon-btn:hover img,
+tr:hover .icon-btn img{ opacity: 1; }
+
 .icon-btn:hover,
 tr:hover .icon-btn{
   background: #e9e9e9;
   border-color: #bdbdbd;
 }
+
 
 </style>
 
@@ -2632,13 +2609,30 @@ rows.forEach(function(row, idx){
   var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
 
-  tr.innerHTML = \`
+// Detect extension-only "From" (outbound), e.g., "205"
+var EXT_ONLY = /^\\d{3}$/;
+
+// Normalize the "To" cell per rules:
+// - Outbound (From is extension): To = Dialed
+// - Inbound (From is phone): To must be an extension; strip any appended name
+function normalizeTo(row){
+  if (EXT_ONLY.test(row.from)) {
+    return row.dialed; // outbound: To matches Dialed
+  }
+  var to = row.to || '';
+  // keep only "Ext. 123" (drop " (Name)" if present)
+  var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
+  if (m) return 'Ext. ' + m[1];
+  return to; // if your static snapshot has non-extension values, update those rows as needed
+}
+
+ tr.innerHTML = \`
   <td>\${row.cnam}</td>
   <td>\${wrapPhone(row.from)}</td>
   <td><span class="qos-tag">\${row.q1}</span></td>
   <td>\${wrapPhone(row.dialed)}</td>
   <td></td>
-  <td>\${wrapPhone(row.to)}</td>
+  <td>\${wrapPhone(normalizeTo(row))}</td>   <!-- ← updated -->
   <td><span class="qos-tag">\${row.q2}</span></td>
   <td>\${dateStr}</td>
   <td>\${row.duration}</td>
@@ -2649,6 +2643,7 @@ rows.forEach(function(row, idx){
       return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('')}
   </td>\`;
+
 
 
   tbody.appendChild(tr);
