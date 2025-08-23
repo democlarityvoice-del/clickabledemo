@@ -2210,6 +2210,8 @@ if (!document.__cvqfRowStatusCapture) {
   var CHART_ID      = 'cv-fake-active-graph';
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
+  
+
   // ---- styles (hide native, give our host full width) ----
   function ensureStyles(doc){
     var s = doc.getElementById(STYLE_ID);
@@ -2412,9 +2414,13 @@ if (!window.__cvCallHistoryInit) {
   const CALLHISTORY_SLOT        = 'div.callhistory-panel-main';
   const CALLHISTORY_IFRAME_ID   = 'cv-callhistory-iframe';
 
+  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
-
-  // -------- BUILD SRCDOC -------- //
+  
   
 // -------- BUILD CALL HISTORY SRCDOC -------- //
 function buildCallHistorySrcdoc() {
@@ -3203,6 +3209,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
