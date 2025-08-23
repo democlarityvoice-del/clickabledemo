@@ -2889,7 +2889,43 @@ document.addEventListener('click', function(e){
 <\/script>
 </body></html>`;
   } // <-- closes buildCallHistorySrcdoc()
+  // ---- CALL HISTORY: mount iframe (idempotent) ----
+(function mountCvCallHistory(){
+  function tryInject(){
+    // already injected?
+    if (document.getElementById(CALLHISTORY_IFRAME_ID)) return true;
+
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (!slot) return false;
+
+    const iframe = document.createElement('iframe');
+    iframe.id = CALLHISTORY_IFRAME_ID;
+    iframe.setAttribute('scrolling', 'no');
+    iframe.style.cssText = 'border:0;display:block;width:100%;';
+    iframe.srcdoc = buildCallHistorySrcdoc();
+    // put it at the top of the slot (safe if empty)
+    slot.insertBefore(iframe, slot.firstChild);
+    return true;
+  }
+
+  // Try now…
+  if (tryInject()) return;
+
+  // …or wait for the slot to appear (SPA / async render)
+  const mo = new MutationObserver(() => {
+    if (tryInject()) mo.disconnect();
+  });
+  mo.observe(document.documentElement, { childList: true, subtree: true });
+
+  // Also re-attempt after clicking the Call History nav
+  document.addEventListener('click', function(ev){
+    const el = ev.target instanceof Element ? ev.target.closest(CALLHISTORY_SELECTOR) : null;
+    if (el) setTimeout(tryInject, 0);
+  });
+})();
+
 } // <-- closes if (!window.__cvCallHistoryInit)
+
 
 
 
