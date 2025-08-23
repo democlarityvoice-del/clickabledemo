@@ -2660,6 +2660,56 @@ if (!window.__cvCallHistoryInit) {
 
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+  
+// Toggle a visual-only Cradle to Grave row when clicking Cradle
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
+  e.preventDefault();
+
+  var tr = btn.closest('tr');
+  var next = tr && tr.nextElementSibling;
+
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cv-cradle-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded','false');
+    return;
+  }
+
+  // close others
+  Array.prototype.forEach.call(document.querySelectorAll('.cv-cradle-row'), function(r){ r.remove(); });
+
+  // build drop-down Cradle to Grave flow
+  var cradleTr = document.createElement('tr');
+  cradleTr.className = 'cv-cradle-row';
+
+  var colCount = tr.children.length;
+  var fromNum = tr.querySelector('td:nth-child(2)').innerText; // "From" phone #
+  var startTime = tr.querySelector('td:nth-child(8)').innerText; // "Date" col
+
+  var html =
+    '<td colspan="'+colCount+'">' +
+      '<div class="cv-cradle">' +
+        '<h4 style="margin:6px 0;font-weight:600;">Cradle To Grave</h4>' +
+        '<ul class="cv-cradle-list" style="list-style:none;padding-left:0;margin:0;">' +
+          '<li>'+startTime+' — Call from '+fromNum+' to STIR</li>' +
+          '<li>+2ms — The currently active time frame is Daytime</li>' +
+          '<li>+15ms — Connected to Auto Attendant 700 Daytime</li>' +
+          '<li>+20s — Selected 2</li>' +
+          '<li>+25s — Connected to Call Queue 301 (New Sales)</li>' +
+          '<li>+30s — Agent 3011 (Alice Carter) is ringing</li>' +
+          '<li>+31s — Agent 3012 (Ben Smith) is ringing</li>' +
+          '<li>+32s — Agent 3013 (Chris Lee) is ringing</li>' +
+          '<li>+36s — Call answered by Ben Smith (3012)</li>' +
+        '</ul>' +
+      '</div>' +
+    '</td>';
+
+  cradleTr.innerHTML = html;
+  tr.parentNode.insertBefore(cradleTr, tr.nextSibling);
+  btn.setAttribute('aria-expanded','true');
+});
 
     // build drop-down player row
     var audioTr = document.createElement('tr');
@@ -2815,6 +2865,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
