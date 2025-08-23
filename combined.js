@@ -2693,68 +2693,73 @@ if (!window.__cvCallHistoryInit) {
     } catch (e) {}
   });
 
-  // Listen: drop a visual-only player row beneath the clicked row
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-    if (!btn) return;
-    e.preventDefault();
+  
+// Listen: drop a visual-only player row beneath the clicked row
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+  if (!btn) return;
+  e.preventDefault();
 
-    var tr = btn.closest('tr');
-    var next = tr && tr.nextElementSibling;
+  var tr = btn.closest('tr');
+  var next = tr && tr.nextElementSibling;
 
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cv-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded','false');
-      return;
-    }
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cv-audio-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded','false');
+    return;
+  }
 
-    // close others
-    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
- 
-// add a simple dropped row so it behaves
-var audioTr = document.createElement('tr');
-audioTr.className = 'cv-audio-row';
-audioTr.innerHTML =
-  '<td colspan="12">' +
-    '<div class="cv-audio-player">' +
-      '<button class="cv-audio-play" aria-label="Play"></button>' +
-      '<span class="cv-audio-time">0:00 / 0:00</span>' +
-      '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-      '<div class="cv-audio-right"></div>' +
-    '</div>' +
-  '</td>';
-tr.parentNode.insertBefore(audioTr, tr.nextElementSibling);
-btn.setAttribute('aria-expanded','true');
-}); // <-- closes the “listen” document.addEventListener
+  // close others
+  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
 
+  // build drop-down player row
+  var audioTr = document.createElement('tr');
+  audioTr.className = 'cv-audio-row';
 
+  var colCount = tr.children.length;
+  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
 
+  audioTr.innerHTML =
+    '<td colspan="'+colCount+'">' +
+      '<div class="cv-audio-player">' +
+        '<button class="cv-audio-play" aria-label="Play"></button>' +
+        '<span class="cv-audio-time">0:00 / 0:00</span>' +
+        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+        '<div class="cv-audio-right">' +
+          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+
+  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+  btn.setAttribute('aria-expanded','true');
+}); // <-- closes ONLY the Listen handler
 
 /* ---------- Cradle-to-Grave (canonical modal pattern) ---------- */
 
 // open/close like your Call Center modal
 function openCradleModal(title, innerHTML){
-  const bd = document.getElementById('cvctg-backdrop');
-  const md = document.getElementById('cvctg-modal');
-  const tt = document.getElementById('cvctg-title');
-  const ct = document.getElementById('cvctg-content');
+  var bd = document.getElementById('cvctg-backdrop');
+  var md = document.getElementById('cvctg-modal');
+  var tt = document.getElementById('cvctg-title');
+  var ct = document.getElementById('cvctg-content');
   if (tt) tt.textContent = title || 'Cradle To Grave';
   if (ct) ct.innerHTML = innerHTML || '';
   if (bd) bd.classList.add('is-open');
   if (md) md.classList.add('is-open');
 }
 function closeCradleModal(){
-  const bd = document.getElementById('cvctg-backdrop');
-  const md = document.getElementById('cvctg-modal');
+  var bd = document.getElementById('cvctg-backdrop');
+  var md = document.getElementById('cvctg-modal');
   if (bd) bd.classList.remove('is-open');
   if (md) md.classList.remove('is-open');
 }
 // close wires (one-time)
 (function(){
-  const doc = document;
+  var doc = document;
   doc.addEventListener('click', function(ev){
-    const t = ev.target;
+    var t = ev.target;
     if (t && (t.id === 'cvctg-x' || t.id === 'cvctg-close' || t.id === 'cvctg-backdrop')) {
       closeCradleModal();
     }
@@ -2763,11 +2768,11 @@ function closeCradleModal(){
 
 // helpers
 function parseStartTimeFromCell(dateStr){
-  // expects "Today, 8:16 pm" — use today’s date, derive h/m/ampm
-  const m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(dateStr||'');
-  const d = new Date();
+  // expects "Today, 8:16 pm"
+  var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(dateStr||'');
+  var d = new Date();
   if (m){
-    let h = +m[1]; const min = +m[2]; const ap = m[3].toLowerCase();
+    var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
     if (ap === 'pm' && h !== 12) h += 12;
     if (ap === 'am' && h === 12) h = 0;
     d.setHours(h, min, 0, 0);
@@ -2775,7 +2780,7 @@ function parseStartTimeFromCell(dateStr){
   return d;
 }
 function fmtClock(d){
-  // "4:16:19 PM" (no template literals)
+  // "4:16:19 PM"
   var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
   var ap = h >= 12 ? 'PM' : 'AM';
   h = (h % 12) || 12;
@@ -2784,17 +2789,16 @@ function fmtClock(d){
 }
 function addMillis(d, ms){ return new Date(d.getTime() + ms); }
 
-var PHONE_RX = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
-
+var PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
 
 // deterministic split: even last digit → 301, odd → 302
 function pickDept(fromNum){
-  const digits = (fromNum||'').replace(/\D/g,'');
-  const last = digits ? +digits[digits.length-1] : 0;
+  var digits = (fromNum||'').replace(/\D/g,'');
+  var last = digits ? +digits[digits.length-1] : 0;
   return (last % 2 === 0) ? 301 : 302;
 }
 
-const AGENTS = {
+var AGENTS = {
   301: [
     {ext:3011, name:'Alice Carter'},
     {ext:3012, name:'Ben Smith'},
@@ -2809,14 +2813,13 @@ const AGENTS = {
   ]
 };
 
-// build one inbound timeline’s HTML (uses concatenation only)
+// build one inbound timeline’s HTML
 function buildInboundCradleHTML(from, dateCellText){
   var start = parseStartTimeFromCell(dateCellText);
   var dept  = pickDept(from);
   var agents = AGENTS[dept];
   var answered = agents[1]; // 2nd agent answers
 
-  // timestamps
   var t0 = fmtClock(start);
   var t1 = fmtClock(addMillis(start,    2));   // +2ms
   var t2 = fmtClock(addMillis(start,   15));   // +15ms
@@ -2825,7 +2828,7 @@ function buildInboundCradleHTML(from, dateCellText){
   var tR = fmtClock(addMillis(start,30000));   // ringing starts
   var tA = fmtClock(addMillis(start,36000));   // answered
 
- function row(time, delta, text){
+  function row(time, delta, text){
     return ''
       + '<div class="cvctg-step">'
       +   '<div class="cvctg-time">' + time + '<div style="color:#aaa; font-size:11px;">' + (delta||'') + '</div></div>'
@@ -2840,7 +2843,7 @@ function buildInboundCradleHTML(from, dateCellText){
   }
 
   var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
-  
+
   return ''
     + '<div class="cvctg-steps">'
     +   row(t0, '',      'Call from ' + from + ' to STIR')
@@ -2851,7 +2854,7 @@ function buildInboundCradleHTML(from, dateCellText){
     +   ringRows
     +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
     + '</div>';
-  }
+}
 
 // click wire: open modal for Cradle; only inbound rows get the full flow for now
 document.addEventListener('click', function(e){
@@ -2867,7 +2870,7 @@ document.addEventListener('click', function(e){
     var htmlIn = buildInboundCradleHTML(from, date);
     openCradleModal('Cradle To Grave', htmlIn);
   } else {
-    // simple outbound placeholder; safe concatenation
+    // simple outbound placeholder
     var start = parseStartTimeFromCell(date);
     var t0 = fmtClock(start);
     var htmlOut = ''
@@ -2881,169 +2884,7 @@ document.addEventListener('click', function(e){
   }
 });
 
-
-    // build drop-down player row
-    var audioTr = document.createElement('tr');
-    audioTr.className = 'cv-audio-row';
-
-    var colCount = tr.children.length;
-    var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
-
-    var html =
-      '<td colspan="'+colCount+'">' +
-        '<div class="cv-audio-player">' +
-          '<button class="cv-audio-play" aria-label="Play"></button>' +
-          '<span class="cv-audio-time">0:00 / 0:00</span>' +
-          '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-          '<div class="cv-audio-right">' +
-            '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
-          '</div>' +
-        '</div>' +
-      '</td>';
-
-    audioTr.innerHTML = html;
-    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-    btn.setAttribute('aria-expanded','true');
-  });
-
-})();
-<\/script>
-</body></html>`;
-  }
-
-  // -------- REMOVE CALL HISTORY -------- //
-  function removeCallHistory() {
-    const ifr = document.getElementById(CALLHISTORY_IFRAME_ID);
-    if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
-
-    const slot = document.querySelector(CALLHISTORY_SLOT);
-    if (slot) {
-      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
-      if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-        hidden.style.display = '';
-        hidden.removeAttribute('data-cv-demo-hidden');
-      }
-    }
-  }
-
-  // -------- INJECT CALL HISTORY -------- //
-  function injectCallHistory() {
-    if (document.getElementById(CALLHISTORY_IFRAME_ID)) return;
-    const slot = document.querySelector(CALLHISTORY_SLOT);
-    if (!slot) return;
-
-    function findAnchor(el) {
-      const preferred = el.querySelector('.table-container.scrollable-small');
-      if (preferred) return preferred;
-      if (el.firstElementChild) return el.firstElementChild;
-      let n = el.firstChild;
-      while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-      return n || null;
-    }
-
-    const anchor = findAnchor(slot);
-
-    if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
-      anchor.style.display = 'none';
-      anchor.setAttribute('data-cv-demo-hidden', '1');
-    }
-
-    const iframe = document.createElement('iframe');
-    iframe.id = CALLHISTORY_IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling', 'no');
-    iframe.srcdoc = buildCallHistorySrcdoc();
-
-    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
-    else slot.appendChild(iframe);
-  }
-
-  // -------- WAIT CALL HISTORY AND INJECT -------- //
-  function waitForCallHistorySlotAndInject(tries = 0) {
-    const slot = document.querySelector(CALLHISTORY_SLOT);
-    if (slot && slot.isConnected) {
-      requestAnimationFrame(() => requestAnimationFrame(() => injectCallHistory()));
-      return;
-    }
-    if (tries >= 12) return;
-    setTimeout(() => waitForCallHistorySlotAndInject(tries + 1), 250);
-  }
-
-  // -------- CALL HISTORY ROUTING -------- //
-  function onCallHistoryEnter() {
-    setTimeout(() => waitForCallHistorySlotAndInject(), 600);
-  }
-
-  function handleCallHistoryRouteChange(prevHref, nextHref) {
-    const wasCallHistory = CALLHISTORY_REGEX.test(prevHref);
-    const isCallHistory  = CALLHISTORY_REGEX.test(nextHref);
-    if (!wasCallHistory && isCallHistory) onCallHistoryEnter();
-    if ( wasCallHistory && !isCallHistory) removeCallHistory();
-  }
-
-  (function watchCallHistoryURLChanges() {
-    let last = location.href;
-    const origPush = history.pushState;
-    const origReplace = history.replaceState;
-
-    history.pushState = function () {
-      const prev = last;
-      const ret  = origPush.apply(this, arguments);
-      const now  = location.href;
-      last = now;
-      handleCallHistoryRouteChange(prev, now);
-      return ret;
-    };
-
-    history.replaceState = function () {
-      const prev = last;
-      const ret  = origReplace.apply(this, arguments);
-      const now  = location.href;
-      last = now;
-      handleCallHistoryRouteChange(prev, now);
-      return ret;
-    };
-
-    // SPA fallback
-    const mo = new MutationObserver(() => {
-      if (location.href !== last) {
-        const prev = last;
-        const now  = location.href;
-        last = now;
-        handleCallHistoryRouteChange(prev, now);
-      }
-    });
-    mo.observe(document.documentElement, { childList: true, subtree: true });
-
-    // Back/forward support
-    window.addEventListener('popstate', () => {
-      const prev = last;
-      const now  = location.href;
-      if (now !== prev) {
-        last = now;
-        handleCallHistoryRouteChange(prev, now);
-      }
-    });
-
-    // Nav click support
-    document.addEventListener('click', (e) => {
-      const el = e.target instanceof Element ? e.target : null;
-      if (el && el.closest(CALLHISTORY_SELECTOR)) setTimeout(onCallHistoryEnter, 0);
-    });
-
-    // Initial check
-    if (CALLHISTORY_REGEX.test(location.href)) onCallHistoryEnter();
-  })();
-
-} // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
+})();  // <-- closes the IIFE that began at the top of buildCallHistorySrcdoc
 
 
 
