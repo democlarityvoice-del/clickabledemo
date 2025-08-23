@@ -2210,8 +2210,6 @@ if (!document.__cvqfRowStatusCapture) {
   var CHART_ID      = 'cv-fake-active-graph';
   var STYLE_ID      = 'cv-fake-active-graph-style';
 
-  
-
   // ---- styles (hide native, give our host full width) ----
   function ensureStyles(doc){
     var s = doc.getElementById(STYLE_ID);
@@ -2420,7 +2418,7 @@ if (!window.__cvCallHistoryInit) {
   const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
   const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
-  
+  // -------- BUILD SRCDOC -------- //
   
 // -------- BUILD CALL HISTORY SRCDOC -------- //
 function buildCallHistorySrcdoc() {
@@ -2525,49 +2523,6 @@ tr:hover .icon-btn{
   border-color: #bdbdbd;
 }
 
-/* --- Listen button should be plain, not in a circle --- */
-.icon-btn--plain{ background: transparent; border: 0; width: 24px; height: 24px; }
-.icon-btn--plain:hover,
-tr:hover .icon-btn--plain{ background: transparent; border: 0; }
-.icon-btn--plain img{ opacity: .55; }
-.icon-btn--plain:hover img,
-tr:hover .icon-btn--plain img{ opacity: 1; }
-
-/* --- Dropped-down audio row styling (visual only) --- */
-.cv-audio-row td{
-  background:#f3f6f8;
-  padding:10px 12px;
-  border-top:0;
-}
-.cv-audio-player{
-  display:flex; align-items:center; gap:12px;
-}
-
-/* plain play glyph (no circle) */
-.cv-audio-play{
-  width:24px; height:24px; background:transparent; border:0; cursor:pointer;
-}
-.cv-audio-play:before{
-  content:'';
-  display:block;
-  width:0; height:0;
-  border-left:10px solid #333;
-  border-top:6px solid transparent;
-  border-bottom:6px solid transparent;
-}
-
-.cv-audio-time{ font-weight:600; color:#333; }
-
-.cv-audio-bar{
-  flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative;
-}
-.cv-audio-bar-fill{
-  position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px;
-}
-
-.cv-audio-right{ display:flex; align-items:center; gap:12px; }
-.cv-audio-icon{ width:20px; height:20px; opacity:.6; }
-
 
 </style>
 
@@ -2588,15 +2543,14 @@ tr:hover .icon-btn--plain img{ opacity: 1; }
 <script>
 (function () {
   const ICONS = [
-    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
-    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
-    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
-    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
-  ];
+  { src: '${ICON_DOWNLOAD}',  title: 'Download'  },
+  { src: '${ICON_LISTEN}',    title: 'Listen'    },
+  { src: '${ICON_CRADLE}',    title: 'Cradle'    },
+  { src: '${ICON_NOTES}',     title: 'Notes'     },
+  { src: '${ICON_TRANSCRIPT}',title: 'Transcript'}
+ ];
 
-
-
+  
 
  
   // Full phone pattern (keep double backslashes)
@@ -3000,72 +2954,29 @@ function normalizeTo(row){
   return pickExtFromPhone(row.from);
 }
 
-tr.innerHTML = `
-  <td>${row.cnam}</td>
-  <td>${wrapPhone(row.from)}</td>
-  <td><span class="qos-tag">${row.q1}</span></td>
-  <td>${wrapPhone(row.dialed)}</td>
+ tr.innerHTML = \`
+  <td>\${row.cnam}</td>
+  <td>\${wrapPhone(row.from)}</td>
+  <td><span class="qos-tag">\${row.q1}</span></td>
+  <td>\${wrapPhone(row.dialed)}</td>
   <td></td>
-  <td>${wrapPhone(normalizeTo(row))}</td>
-  <td><span class="qos-tag">${row.q2}</span></td>
-  <td>${row.date}</td>
-  <td>${row.duration}</td>
-  <td>${row.disposition || ''}</td>
-  <td>${row.release}</td>
+  <td>\${wrapPhone(normalizeTo(row))}</td>   <!-- ← updated -->
+  <td><span class="qos-tag">\${row.q2}</span></td>
+  <td>\${dateStr}</td>
+  <td>\${row.duration}</td>
+  <td>\${row.disposition || ''}</td>
+  <td>\${row.release}</td>
   <td class="icon-cell">
-    ${ICONS.map(function(icon){
-      const cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    \${ICONS.map(function(icon){
+      return '<button class="icon-btn" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('')}
-  </td>`;
-tbody.appendChild(tr);
+  </td>\`;
 
+
+
+  tbody.appendChild(tr);
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000); // step backward per row
 });
-
-// Toggle a visual-only audio player under the row when clicking Listen
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-  if (!btn) return;
-  e.preventDefault();
-
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
-
-  // Close if already open
-  if (next && next.classList && next.classList.contains('cv-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
-  }
-
-  // Close any other open players
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-
-  // Build the dropped-down row
-  var audioTr = document.createElement('tr');
-  audioTr.className = 'cv-audio-row';
-
-  var colCount = tr.children.length; // span full width
-  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
-
-  var html =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cv-audio-player">' +
-        '<button class="cv-audio-play" aria-label="Play"></button>' +
-        '<span class="cv-audio-time">0:00 / 0:00</span>' +
-        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cv-audio-right">' +
-          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
-        '</div>' +
-      '</div>' +
-    '</td>';
-
-  audioTr.innerHTML = html;
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded','true');
-});
-
 // Resize the host iframe to fit content (no inner scrollbar)
 requestAnimationFrame(function () {
   try {
@@ -3206,13 +3117,6 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
 
 
 
