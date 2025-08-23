@@ -2660,56 +2660,72 @@ if (!window.__cvCallHistoryInit) {
 
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-  
-// Toggle a visual-only Cradle to Grave row when clicking Cradle
+  // Toggle Cradle To Grave modal
 document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  const btn = e.target.closest('button[data-action="cradle"]');
   if (!btn) return;
   e.preventDefault();
 
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
+  const tr = btn.closest('tr');
+  if (!tr) return;
 
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cv-cradle-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
-  }
+  // Get the "From" number and Date shown in this row
+  const from = tr.children[1]?.innerText || '';
+  const date = tr.children[7]?.innerText || 'Today';
 
-  // close others
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-cradle-row'), function(r){ r.remove(); });
+  // Build a fake flow (simple template for inbound)
+  const steps = [
+    { time: date, label: `Call from ${from} to STIR`, icon: '📞' },
+    { label: 'The currently active time frame is Daytime', icon: '🕒' },
+    { label: 'Connected to Auto Attendant 700 Daytime', icon: '📟' },
+    { label: 'Selected 2', icon: '🔢' },
+    { label: 'Connected to Call Queue 302', icon: '👥' },
+    { label: 'Agent John Smith (302) is ringing', icon: '📱' },
+    { label: 'Call answered by John Smith (302)', icon: '✅' }
+  ];
 
-  // build drop-down Cradle to Grave flow
-  var cradleTr = document.createElement('tr');
-  cradleTr.className = 'cv-cradle-row';
+  // Remove old modal if open
+  const existing = document.getElementById('cv-cradle-modal');
+  if (existing) existing.remove();
 
-  var colCount = tr.children.length;
-  var fromNum = tr.querySelector('td:nth-child(2)').innerText; // "From" phone #
-  var startTime = tr.querySelector('td:nth-child(8)').innerText; // "Date" col
+  // Modal wrapper
+  const modal = document.createElement('div');
+  modal.id = 'cv-cradle-modal';
+  modal.style.cssText = `
+    position:fixed; top:0; left:0; right:0; bottom:0;
+    background:rgba(0,0,0,0.5); display:flex;
+    align-items:center; justify-content:center;
+    z-index:99999;
+  `;
 
-  var html =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cv-cradle">' +
-        '<h4 style="margin:6px 0;font-weight:600;">Cradle To Grave</h4>' +
-        '<ul class="cv-cradle-list" style="list-style:none;padding-left:0;margin:0;">' +
-          '<li>'+startTime+' — Call from '+fromNum+' to STIR</li>' +
-          '<li>+2ms — The currently active time frame is Daytime</li>' +
-          '<li>+15ms — Connected to Auto Attendant 700 Daytime</li>' +
-          '<li>+20s — Selected 2</li>' +
-          '<li>+25s — Connected to Call Queue 301 (New Sales)</li>' +
-          '<li>+30s — Agent 3011 (Alice Carter) is ringing</li>' +
-          '<li>+31s — Agent 3012 (Ben Smith) is ringing</li>' +
-          '<li>+32s — Agent 3013 (Chris Lee) is ringing</li>' +
-          '<li>+36s — Call answered by Ben Smith (3012)</li>' +
-        '</ul>' +
-      '</div>' +
-    '</td>';
+  // Modal content
+  const inner = document.createElement('div');
+  inner.style.cssText = `
+    background:#fff; border-radius:6px; padding:20px; width:600px;
+    max-height:80vh; overflow-y:auto; box-shadow:0 2px 10px rgba(0,0,0,.3);
+  `;
+  inner.innerHTML = `
+    <h2 style="margin-top:0;">Cradle To Grave</h2>
+    <div class="ctg-steps">
+      ${steps.map(s => `
+        <div style="margin:8px 0; display:flex; align-items:center; gap:8px;">
+          <span style="font-size:14px;">${s.icon}</span>
+          <span>${s.label}</span>
+        </div>
+      `).join('')}
+    </div>
+    <div style="text-align:right; margin-top:20px;">
+      <button id="cv-cradle-close" style="padding:6px 12px;">Close</button>
+    </div>
+  `;
+  modal.appendChild(inner);
 
-  cradleTr.innerHTML = html;
-  tr.parentNode.insertBefore(cradleTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded','true');
+  document.body.appendChild(modal);
+
+  // Close handler
+  modal.querySelector('#cv-cradle-close').addEventListener('click', () => modal.remove());
 });
+
 
     // build drop-down player row
     var audioTr = document.createElement('tr');
@@ -2865,6 +2881,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
