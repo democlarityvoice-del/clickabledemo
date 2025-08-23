@@ -2493,17 +2493,35 @@ function buildCallHistorySrcdoc() {
   .call-container a:visited,
   .call-container a:active { color:#1a73e8; text-decoration:none; }
   .call-container a:hover { text-decoration:underline; }
+
+<style>
+  .icon-cell {
+    display: flex;
+    gap: 6px;
+  }
+  .icon-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #f0f0f0;
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .icon-btn img {
+    width: 18px;
+    height: 18px;
+    opacity: .38;
+    transition: opacity .2s;
+  }
+  .icon-btn:hover img {
+    opacity: .85;
+  }
 </style>
-.icon-cell { display: flex; gap: 6px; }
-.icon-btn{
-  width: 28px; height: 28px;
-  border-radius: 50%;
-  background: #f0f0f0;
-  border: none; padding: 0; cursor: pointer;
-  display: inline-flex; align-items: center; justify-content: center;
-}
-.icon-btn img{ width: 18px; height: 18px; opacity: .38; transition: opacity .2s; }
-.icon-btn:hover img{ opacity: .85; }
+
 
 </head><body>
   <div class="call-container">
@@ -2749,6 +2767,7 @@ requestAnimationFrame(function () {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
