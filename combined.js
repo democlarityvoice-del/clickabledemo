@@ -2667,10 +2667,11 @@ if (!window.__cvCallHistoryInit) {
   }
   renderRows();
 
-  // ---- CTG wiring (delegated; no globals) ----
+// ---- CTG wiring (delegated; fills modal timeline) ----
 (function wireCradle(){
   if (document._cvCradleWired) return; document._cvCradleWired = true;
 
+  // --- modal plumbing ---
   function ensureModal() {
     var modal = document.getElementById('cv-cradle-modal');
     if (modal) return modal;
@@ -2690,50 +2691,135 @@ if (!window.__cvCallHistoryInit) {
       '</div>';
     document.body.appendChild(modal);
     var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
-    for (var i = 0; i < closes.length; i++) {
-      closes[i].addEventListener('click', function(){ modal.remove(); });
-    }
+    for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
     return modal;
   }
-
   function openCTG(html) {
     var modal = ensureModal();
     var body = document.getElementById('cv-ctg-body');
-    if (body) body.innerHTML = html || '<div>Test</div>';
+    if (body) body.innerHTML = html || '<div>Empty</div>';
   }
 
+  // --- helpers just for CTG rendering ---
+  function parseStart(dateText){
+    var d = new Date();
+    var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
+    if (m){
+      var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+      if (ap === 'pm' && h !== 12) h += 12;
+      if (ap === 'am' && h === 12) h = 0;
+      d.setHours(h, min, 0, 0);
+    }
+    return d;
+  }
+  function addMs(d, ms){ return new Date(d.getTime() + ms); }
+  function fmtClock(d){
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = (h % 12) || 12;
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
+  }
+  function parseDurSecs(txt){
+    var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
+    return m ? (+m[1]*60 + +m[2]) : NaN;
+  }
+  function pickDept(fromNum){
+    var digits = String(fromNum||'').replace(/\D/g,'');
+    var last = digits ? +digits[digits.length-1] : 0;
+    return (last % 2 === 0) ? 301 : 302;
+  }
+  var AGENTS = {
+    301: [
+      {ext:3011, name:'Alice Carter'},
+      {ext:3012, name:'Ben Smith'},
+      {ext:3013, name:'Chris Lee'},
+      {ext:3014, name:'Dana Park'}
+    ],
+    302: [
+      {ext:3021, name:'Evan Reed'},
+      {ext:3022, name:'Fiona Gray'},
+      {ext:3023, name:'Gina Lopez'},
+      {ext:3024, name:'Henry Kim'}
+    ]
+  };
+  function row(time, delta, text){
+    return ''
+      + '<div class="cvctg-step">'
+      +   '<div class="cvctg-time">' + time + '<div style="color:#aaa;font-size:11px;">' + (delta||'') + '</div></div>'
+      +   '<div class="cvctg-dot"></div>'
+      +   '<div class="cvctg-text">' + text + '</div>'
+      + '</div>';
+  }
+  function buildInboundHTML(from, dateText){
+    var start = parseStart(dateText);
+    var dept  = pickDept(from);
+    var agents = AGENTS[dept] || [];
+    var answered = agents[1] || {ext:'-', name:'Agent'};
+    var t0 = fmtClock(start);
+    var t1 = fmtClock(addMs(start,     2));
+    var t2 = fmtClock(addMs(start,    15));
+    var t3 = fmtClock(addMs(start, 20000));
+    var t4 = fmtClock(addMs(start, 25000));
+    var tR = fmtClock(addMs(start, 30000));
+    var tA = fmtClock(addMs(start, 36000));
+    var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
+
+    var ringRows = '';
+    for (var i=0;i<agents.length;i++){
+      ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
+    }
+
+    return ''
+      + '<div class="cvctg-steps">'
+      +   row(t0, '',      'Inbound call from ' + from + ' to STIR')
+      +   row(t1, '+2ms',  'The currently active time frame is Daytime')
+      +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
+      +   row(t3, '+20s',  'Selected 2')
+      +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
+      +   ringRows
+      +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
+      + '</div>';
+  }
+  function buildOutboundHTML(from, dateText, dialed, durText){
+    var start = parseStart(dateText);
+    var t0 = fmtClock(start);
+    var tC = fmtClock(addMs(start, 5000));
+    var secs = parseDurSecs(durText);
+    var end = isNaN(secs) ? addMs(start, 45000) : addMs(start, secs*1000);
+    var tE = fmtClock(end);
+    return ''
+      + '<div class="cvctg-steps">'
+      +   row(t0, '',     'Outbound call placed from ' + from + (dialed ? ' to ' + dialed : ''))
+      +   row(tC, '+5s',  'Connected')
+      +   row(tE, isNaN(secs)? '+45s' : '+' + secs + 's', 'Call ended (duration ' + (durText||'') + ')')
+      + '</div>';
+  }
+
+  // --- delegate click on Cradle buttons ---
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
     if (!btn) return;
     e.preventDefault();
 
-    var tr  = btn.closest('tr');
-    var tds = tr ? tr.querySelectorAll('td') : null;
+    var tr   = btn.closest('tr');
+    var tds  = tr ? tr.querySelectorAll('td') : null;
     var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
     var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
+    var dial = (tds && tds[3]) ? tds[3].innerText.trim() : '';
+    var dur  = (tds && tds[8]) ? tds[8].innerText.trim() : '';
 
-    // Outbound if 'From' is a bare 3-digit ext or 'Ext. 123'
+    // Outbound if 'From' is 3-digit ext or 'Ext. 123'
     var isOutbound = /^\d{3}$/.test(from) || /^Ext\.\s*\d{3}$/.test(from);
 
     var html = isOutbound
-      ? '<div class="cvctg-steps">' +
-          '<div class="cvctg-step">' +
-            '<div class="cvctg-time">' + date + '</div>' +
-            '<div class="cvctg-dot"></div>' +
-            '<div class="cvctg-text">Outbound call placed from ' + from + '</div>' +
-          '</div>' +
-        '</div>'
-      : '<div class="cvctg-steps">' +
-          '<div class="cvctg-step">' +
-            '<div class="cvctg-time">' + date + '</div>' +
-            '<div class="cvctg-dot"></div>' +
-            '<div class="cvctg-text">Inbound call from ' + from + ' to STIR</div>' +
-          '</div>' +
-        '</div>';
+      ? buildOutboundHTML(from, date, dial, dur)
+      : buildInboundHTML(from, date);
 
     openCTG(html);
   }, true);
 })();
+
 
 
   /* ----- Listen dropdown (single handler) ----- */
@@ -2909,6 +2995,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
