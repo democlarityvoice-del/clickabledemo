@@ -2577,12 +2577,13 @@ if (!window.__cvCallHistoryInit) {
 (function () {
   // Icons (Listen is plain)
   const ICONS = [
-    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
-    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
-    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
-    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
-  ];
+  { key: 'download',   src: ICON_DOWNLOAD,   title: 'Download',   circle: true  },
+  { key: 'listen',     src: ICON_LISTEN,     title: 'Listen',     circle: false },
+  { key: 'cradle',     src: ICON_CRADLE,     title: 'Cradle',     circle: true  },
+  { key: 'notes',      src: ICON_NOTES,      title: 'Notes',      circle: true  },
+  { key: 'transcript', src: ICON_TRANSCRIPT, title: 'Transcript', circle: true  }
+];
+
 
   // Phone links (constructor form = safe in srcdoc)
   var PHONE = new RegExp("^\\\\(?\\\\d{3}\\\\)?[ -]\\\\d{3}-\\\\d{4}$");
@@ -2990,6 +2991,7 @@ rows.forEach(function(row, idx) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
