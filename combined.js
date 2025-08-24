@@ -223,7 +223,7 @@ function buildSrcdoc() {
       <td>\${c.t()}</td>
       <td>
         <button class="listen-btn" aria-pressed="false" title="Listen in">
-          <img src="${ICON_SPEAKER}" alt="">
+          <img src="${HOME_ICON_SPEAKER}" alt="">
         </button>
       </td>\`;
     tb.appendChild(tr);
@@ -2402,9 +2402,6 @@ if (!document.__cvqfRowStatusCapture) {
  // ==============================
 // CALL HISTORY
 // ==============================
-// ==============================
-// CALL HISTORY
-// ==============================
 
 if (!window.__cvCallHistoryInit) {
   window.__cvCallHistoryInit = true;
@@ -2415,11 +2412,11 @@ if (!window.__cvCallHistoryInit) {
   const CALLHISTORY_SLOT        = 'div.callhistory-panel-main';
   const CALLHISTORY_IFRAME_ID   = 'cv-callhistory-iframe';
 
-  const HISTORY_ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const HISTORY_ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const HISTORY_ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
-  const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
   // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) -------- //
   function buildCallHistorySrcdoc() {
@@ -2489,7 +2486,7 @@ if (!window.__cvCallHistoryInit) {
   .call-container a:active { color:#1a73e8; text-decoration:none; }
   .call-container a:hover { text-decoration:underline; }
 
-  /* Icon sizing + visibility */
+  /* --- Icon sizing + visibility (circles by default) --- */
   .icon-cell{ display:flex; gap:6px; }
   .icon-btn{
     width:26px; height:26px; border-radius:50%;
@@ -2519,34 +2516,20 @@ if (!window.__cvCallHistoryInit) {
   .cv-audio-right{ display:flex; align-items:center; gap:12px; }
   .cv-audio-icon{ width:20px; height:20px; opacity:.6; }
 
-  /* --- Cradle-to-Grave modal --- */
-  #cvctg-backdrop, #cvctg-modal { display:none; }
-  #cvctg-backdrop.is-open, #cvctg-modal.is-open { display:block; }
-  #cvctg-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998; }
-  #cvctg-modal{
-    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-    width:720px; max-width:95%; max-height:80vh; overflow:auto;
-    background:#fff; border-radius:6px; box-shadow:0 10px 28px rgba(0,0,0,.35);
-    z-index:9999;
-  }
-  .cvctg-header,.cvctg-footer{
-    padding:10px 16px; border-bottom:1px solid #ddd; display:flex; align-items:center;
-  }
-  .cvctg-footer{ border-top:1px solid #ddd; border-bottom:0; justify-content:flex-end; }
-  .cvctg-title{ margin:0; font-weight:600; }
-  .cvctg-close{ margin-left:auto; border:0; background:transparent; font-size:20px; cursor:pointer; }
-  .cvctg-body{ padding:12px 16px; font-size:13px; line-height:1.45; }
+  /* Modal overlay */
+  #cv-cradle-modal { position:fixed; top:0; left:0; width:100%; height:100%; z-index:9999; }
+  .cv-modal-backdrop { position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,.5); }
+  .cv-modal { position:relative; background:#fff; width:600px; max-width:90%; margin:40px auto; border-radius:6px; box-shadow:0 2px 10px rgba(0,0,0,.3); padding:0; }
+  .cv-modal-header, .cv-modal-footer { padding:10px 16px; border-bottom:1px solid #ddd; }
+  .cv-modal-header { display:flex; justify-content:space-between; align-items:center; }
+  .cv-modal-body { padding:16px; max-height:400px; overflow-y:auto; }
+  .cv-modal-footer { border-top:1px solid #ddd; border-bottom:0; text-align:right; }
+  .cv-modal-close { background:none; border:none; font-size:18px; cursor:pointer; }
+  .cv-ctg-list { list-style:none; padding:0; margin:0; font-size:13px; }
+  .cv-ctg-list li { margin:6px 0; }
 
-  /* timeline */
-  .cvctg-steps{ position:relative; padding-left:140px; }
-  .cvctg-steps:before{ content:""; position:absolute; left:120px; top:0; bottom:0; width:2px; background:#e5e5e5; }
-  .cvctg-step{ display:flex; gap:14px; margin:8px 0; align-items:flex-start; }
-  .cvctg-time{ width:120px; color:#888; text-align:right; padding-right:8px; font-variant-numeric:tabular-nums; }
-  .cvctg-dot{ width:12px; height:12px; border-radius:50%; background:#cfcfcf; margin-top:4px; }
-  .cvctg-text{ color:#333; }
 </style>
-</head>
-<body>
+</head><body>
   <div class="call-container">
     <table>
       <thead>
@@ -2559,32 +2542,19 @@ if (!window.__cvCallHistoryInit) {
       <tbody id="cvCallHistoryTableBody"></tbody>
     </table>
   </div>
-
-  <!-- Cradle-to-Grave modal shell -->
-  <div id="cvctg-backdrop"></div>
-  <div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
-    <div class="cvctg-header">
-      <h3 id="cvctg-title" class="cvctg-title">Cradle To Grave</h3>
-      <button id="cvctg-x" class="cvctg-close" aria-label="Close">×</button>
-    </div>
-    <div id="cvctg-content" class="cvctg-body"></div>
-    <div class="cvctg-footer">
-      <button id="cvctg-close" class="cvctg-close">Close</button>
-    </div>
-  </div>
-
 <script>
 (function () {
-  // Icons (Listen is plain)
-  const HISTORY_ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const HISTORY_ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const HISTORY_ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
-  const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  // Icons (Listen is plain, others circles)
+  const ICONS = [
+    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
+    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
+    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
+    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
+  ];
 
-
-  // Phone links (constructor form = safe in srcdoc)
-  var PHONE = new RegExp("^\\\\(?\\\\d{3}\\\\)?[ -]\\\\d{3}-\\\\d{4}$");
+  // Phone links
+  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
   function wrapPhone(v){ return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v; }
 
   // Relative dates
@@ -2596,9 +2566,9 @@ if (!window.__cvCallHistoryInit) {
     return 'Today, ' + h + ':' + m + ' ' + ampm;
   }
 
-  // Normalize "To" per rules
+  // Normalize "To" column per rules
   var EXT_ONLY = /^\\d{3}$/;
-  var DIGITS   = /\\D/g;
+  var DIGITS = /\\D/g;
   function pickExtFromPhone(phone){
     var exts = [200,201,202,203,204,205,206,207];
     var d = String(phone || '').replace(DIGITS, '');
@@ -2607,9 +2577,11 @@ if (!window.__cvCallHistoryInit) {
     return 'Ext. ' + exts[idx];
   }
   function normalizeTo(row){
-    if (EXT_ONLY.test(row.from)) return row.dialed;        // outbound
+    // Outbound (from = extension): To = Dialed
+    if (EXT_ONLY.test(row.from)) return row.dialed;
+    // Inbound: ensure final destination is an extension; strip appended name
     var to = row.to || '';
-    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);                 // inbound
+    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
     if (m) return 'Ext. ' + m[1];
     return pickExtFromPhone(row.from);
   }
@@ -2643,48 +2615,37 @@ if (!window.__cvCallHistoryInit) {
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
+  // Render
+  var tbody = document.getElementById('cvCallHistoryTableBody');
+  var now = Date.now();
+  var cursor = now;
 
-// ---- Render rows ----
-var tbody  = document.getElementById('cvCallHistoryTableBody');
-var now    = Date.now();
-var cursor = now;
+  rows.forEach(function(row, idx){
+    var tr = document.createElement('tr');
+    var dateStr = fmtToday(cursor);
 
-for (var i = 0; i < rows.length; i++) {
-  var d = rows[i];
-  var tr = document.createElement('tr');
-  var dateStr = fmtToday(cursor);
+    var iconsHTML = ICONS.map(function(icon){
+      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('');
 
-  // icon cell
-  var iconsHTML =
-    '<td class="icon-cell">' +
-      '<button data-action="listen" title="Listen"><img src="' + HISTORY_ICON_LISTEN + '" alt="Listen"></button>' +
-      '<button data-action="download" title="Download"><img src="' + HISTORY_ICON_DOWNLOAD + '" alt="Download"></button>' +
-      '<button data-action="cradle" title="Cradle to Grave"><img src="' + HISTORY_ICON_CRADLE + '" alt="Cradle"></button>' +
-      '<button data-action="notes" title="Notes"><img src="' + HISTORY_ICON_NOTES + '" alt="Notes"></button>' +
-      '<button data-action="transcript" title="Transcript"><img src="' + HISTORY_ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
-    '</td>';
+    tr.innerHTML = \`
+      <td>\${row.cnam}</td>
+      <td>\${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">\${row.q1}</span></td>
+      <td>\${wrapPhone(row.dialed)}</td>
+      <td></td>
+      <td>\${wrapPhone(normalizeTo(row))}</td>
+      <td><span class="qos-tag">\${row.q2}</span></td>
+      <td>\${dateStr}</td>
+      <td>\${row.duration}</td>
+      <td>\${row.disposition || ''}</td>
+      <td>\${row.release}</td>
+      <td class="icon-cell">\${iconsHTML}</td>\`;
+    tbody.appendChild(tr);
 
-  // match the header:
-  // From Name | From | QOS | Dialed | To Name | To | QOS | Date | Duration | Disposition | Release Reason | (icons)
-  tr.innerHTML =
-      '<td>' + d.cnam + '</td>' +
-      '<td>' + wrapPhone(d.from) + '</td>' +
-      '<td><span class="qos-tag">' + d.q1 + '</span></td>' +
-      '<td>' + wrapPhone(d.dialed) + '</td>' +
-      '<td></td>' +
-      '<td>' + wrapPhone(normalizeTo(d)) + '</td>' +
-      '<td><span class="qos-tag">' + d.q2 + '</span></td>' +
-      '<td>' + dateStr + '</td>' +
-      '<td>' + d.duration + '</td>' +
-      '<td>' + (d.disposition || '') + '</td>' +
-      '<td>' + d.release + '</td>' +
-      iconsHTML;
-
-  tbody.appendChild(tr);
-  cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
-}
-
-
+    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+  });
 
   // Resize host iframe to fit content
   requestAnimationFrame(function () {
@@ -2694,7 +2655,7 @@ for (var i = 0; i < rows.length; i++) {
     } catch (e) {}
   });
 
-  /* ----- Listen dropdown (visual only) ----- */
+  // Listen: drop a visual-only player row beneath the clicked row
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
     if (!btn) return;
@@ -2703,21 +2664,28 @@ for (var i = 0; i < rows.length; i++) {
     var tr = btn.closest('tr');
     var next = tr && tr.nextElementSibling;
 
+    // collapse if already open
     if (next && next.classList && next.classList.contains('cv-audio-row')) {
       next.remove();
       btn.setAttribute('aria-expanded','false');
       return;
     }
 
+    // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+ 
 
+
+
+
+    // build drop-down player row
     var audioTr = document.createElement('tr');
     audioTr.className = 'cv-audio-row';
 
     var colCount = tr.children.length;
     var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
 
-    audioTr.innerHTML =
+    var html =
       '<td colspan="'+colCount+'">' +
         '<div class="cv-audio-player">' +
           '<button class="cv-audio-play" aria-label="Play"></button>' +
@@ -2729,154 +2697,15 @@ for (var i = 0; i < rows.length; i++) {
         '</div>' +
       '</td>';
 
+    audioTr.innerHTML = html;
     tr.parentNode.insertBefore(audioTr, tr.nextSibling);
     btn.setAttribute('aria-expanded','true');
   });
 
-  /* ---------- Cradle-to-Grave modal ---------- */
-  function openCradleModal(title, innerHTML){
-    var bd = document.getElementById('cvctg-backdrop');
-    var md = document.getElementById('cvctg-modal');
-    var tt = document.getElementById('cvctg-title');
-    var ct = document.getElementById('cvctg-content');
-    if (tt) tt.textContent = title || 'Cradle To Grave';
-    if (ct) ct.innerHTML = innerHTML || '';
-    if (bd) bd.classList.add('is-open');
-    if (md) md.classList.add('is-open');
-  }
-  function closeCradleModal(){
-    var bd = document.getElementById('cvctg-backdrop');
-    var md = document.getElementById('cvctg-modal');
-    if (bd) bd.classList.remove('is-open');
-    if (md) md.classList.remove('is-open');
-  }
-  (function(){
-    document.addEventListener('click', function(ev){
-      var t = ev.target;
-      if (t && (t.id === 'cvctg-x' || t.id === 'cvctg-close' || t.id === 'cvctg-backdrop')) {
-        closeCradleModal();
-      }
-    });
-  })();
-
-  // helpers
-  function parseStartTimeFromCell(dateStr){
-    var m = /Today,\\s*(\\d{1,2}):(\\d{2})\\s*(am|pm)/i.exec(dateStr||'');
-    var d = new Date();
-    if (m){
-      var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-      if (ap === 'pm' && h !== 12) h += 12;
-      if (ap === 'am' && h === 12) h = 0;
-      d.setHours(h, min, 0, 0);
-    }
-    return d;
-  }
-  function fmtClock(d){
-    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-    var ap = h >= 12 ? 'PM' : 'AM';
-    h = (h % 12) || 12;
-    var pad = function(n){ return String(n).padStart(2,'0'); };
-    return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
-  }
-  function addMillis(d, ms){ return new Date(d.getTime() + ms); }
-
-  // SAFE regex (constructor; not literal)
-  var PHONE_RX = new RegExp("^\\\\(?\\\\d{3}\\\\)?[ -]\\\\d{3}-\\\\d{4}$");
-
-  function pickDept(fromNum){
-    var digits = (fromNum||'').replace(/\\D/g,'');
-    var last = digits ? +digits[digits.length-1] : 0;
-    return (last % 2 === 0) ? 301 : 302;
-  }
-
-  var AGENTS = {
-    301: [
-      {ext:3011, name:'Alice Carter'},
-      {ext:3012, name:'Ben Smith'},
-      {ext:3013, name:'Chris Lee'},
-      {ext:3014, name:'Dana Park'}
-    ],
-    302: [
-      {ext:3021, name:'Evan Reed'},
-      {ext:3022, name:'Fiona Gray'},
-      {ext:3023, name:'Gina Lopez'},
-      {ext:3024, name:'Henry Kim'}
-    ]
-  };
-
-  function buildInboundCradleHTML(from, dateCellText){
-    var start = parseStartTimeFromCell(dateCellText);
-    var dept  = pickDept(from);
-    var agents = AGENTS[dept];
-    var answered = agents[1];
-
-    var t0 = fmtClock(start);
-    var t1 = fmtClock(addMillis(start,    2));
-    var t2 = fmtClock(addMillis(start,   15));
-    var t3 = fmtClock(addMillis(start,20000));
-    var t4 = fmtClock(addMillis(start,25000));
-    var tR = fmtClock(addMillis(start,30000));
-    var tA = fmtClock(addMillis(start,36000));
-
-    function row(time, delta, text){
-      return ''
-        + '<div class="cvctg-step">'
-        +   '<div class="cvctg-time">' + time + '<div style="color:#aaa; font-size:11px;">' + (delta||'') + '</div></div>'
-        +   '<div class="cvctg-dot"></div>'
-        +   '<div class="cvctg-text">' + text + '</div>'
-        + '</div>';
-    }
-
-    var ringRows = '';
-    for (var i=0;i<agents.length;i++){
-      ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
-    }
-
-    var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
-
-    return ''
-      + '<div class="cvctg-steps">'
-      +   row(t0, '',      'Call from ' + from + ' to STIR')
-      +   row(t1, '+2ms',  'The currently active time frame is Daytime')
-      +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
-      +   row(t3, '+20s',  'Selected 2')
-      +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
-      +   ringRows
-      +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
-      + '</div>';
-  }
-
-  // open CTG on click
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-    if (!btn) return;
-
-    var tr   = btn.closest('tr');
-    var tds  = tr ? tr.querySelectorAll('td') : null;
-    var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-    var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
-
-    if (PHONE_RX.test(from)) {
-      var htmlIn = buildInboundCradleHTML(from, date);
-      openCradleModal('Cradle To Grave', htmlIn);
-    } else {
-      var start = parseStartTimeFromCell(date);
-      var t0 = fmtClock(start);
-      var htmlOut = ''
-        + '<div class="cvctg-steps">'
-        +   '<div class="cvctg-step">'
-        +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
-        +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
-        +   '</div>'
-        + '</div>';
-      openCradleModal('Cradle To Grave', htmlOut);
-    }
-  });
-
-})(); 
+})();
 <\/script>
 </body></html>`;
-  } // <-- closes buildCallHistorySrcdoc()
+  }
 
   // -------- REMOVE CALL HISTORY -------- //
   function removeCallHistory() {
@@ -2971,6 +2800,7 @@ for (var i = 0; i < rows.length; i++) {
       return ret;
     };
 
+    // SPA fallback
     const mo = new MutationObserver(() => {
       if (location.href !== last) {
         const prev = last;
@@ -2981,6 +2811,7 @@ for (var i = 0; i < rows.length; i++) {
     });
     mo.observe(document.documentElement, { childList: true, subtree: true });
 
+    // Back/forward support
     window.addEventListener('popstate', () => {
       const prev = last;
       const now  = location.href;
@@ -2990,38 +2821,17 @@ for (var i = 0; i < rows.length; i++) {
       }
     });
 
+    // Nav click support
     document.addEventListener('click', (e) => {
       const el = e.target instanceof Element ? e.target : null;
       if (el && el.closest(CALLHISTORY_SELECTOR)) setTimeout(onCallHistoryEnter, 0);
     });
 
+    // Initial check
     if (CALLHISTORY_REGEX.test(location.href)) onCallHistoryEnter();
   })();
 
-} // -------- end CALL HISTORY guard --------
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+} // -------- ✅ Closes window.__cvCallHistoryInit -------- //
 
 
 
