@@ -2645,12 +2645,15 @@ const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
   ];
 
 // ---- Render rows ----
-var tbody = document.getElementById('cvCallHistoryTableBody');
-var now = Date.now();
-var cursor = now;
-
 rows.forEach(function(row, idx){
+  var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
+  ...
+  tr.innerHTML = /* full set of <td> cells, including icons */;
+  tbody.appendChild(tr);
+  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+});
+
 
   
 // Build icons HTML inside srcdoc safely
@@ -2987,6 +2990,7 @@ var iconsHTML =
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
