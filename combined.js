@@ -2629,26 +2629,26 @@ if (!window.__cvCallHistoryInit) {
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('');
 
-    tr.innerHTML = \`
-      <td>\${row.cnam}</td>
-      <td>\${wrapPhone(row.from)}</td>
-      <td><span class="qos-tag">\${row.q1}</span></td>
-      <td>\${wrapPhone(row.dialed)}</td>
+    tr.innerHTML = `
+      <td>${row.cnam}</td>
+      <td>${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">${row.q1}</span></td>
+      <td>${wrapPhone(row.dialed)}</td>
       <td></td>
-      <td>\${wrapPhone(normalizeTo(row))}</td>
-      <td><span class="qos-tag">\${row.q2}</span></td>
-      <td>\${dateStr}</td>
-      <td>\${row.duration}</td>
-      <td>\${row.disposition || ''}</td>
-      <td>\${row.release}</td>
-      <td class="icon-cell">\${iconsHTML}</td>\`;
+      <td>${wrapPhone(normalizeTo(row))}</td>
+      <td><span class="qos-tag">${row.q2}</span></td>
+      <td>${dateStr}</td>
+      <td>${row.duration}</td>
+      <td>${row.disposition || ''}</td>
+      <td>${row.release}</td>
+      <td class="icon-cell">${iconsHTML}</td>`;
 
- // ✅ Wire tester modal ONLY for cradle button
-var cradleBtn = tr.querySelector('button[data-action="cradle"]');
+// ✅ Wire tester modal ONLY for cradle button
+const cradleBtn = tr.querySelector('button[data-action="cradle"]');
 if (cradleBtn) {
   cradleBtn.addEventListener('click', function (e) {
     e.preventDefault();
-    var loadModal = getLoadModal(document);
+    const loadModal = getLoadModal(document);
     if (loadModal) {
       loadModal('<div style="padding:20px;font-size:16px;">Tester</div>');
     } else {
@@ -2657,12 +2657,8 @@ if (cradleBtn) {
   });
 }
 
-    tbody.appendChild(tr);
-
-    
-
-    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-  });
+tbody.appendChild(tr);
+cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
 
 
 
@@ -2820,6 +2816,7 @@ if (cradleBtn) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
