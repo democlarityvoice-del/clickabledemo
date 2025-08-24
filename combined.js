@@ -2402,6 +2402,9 @@ if (!document.__cvqfRowStatusCapture) {
  // ==============================
 // CALL HISTORY
 // ==============================
+// ==============================
+// CALL HISTORY
+// ==============================
 
 if (!window.__cvCallHistoryInit) {
   window.__cvCallHistoryInit = true;
@@ -2486,7 +2489,7 @@ if (!window.__cvCallHistoryInit) {
   .call-container a:active { color:#1a73e8; text-decoration:none; }
   .call-container a:hover { text-decoration:underline; }
 
-  /* --- Icon sizing + visibility (circles by default) --- */
+  /* Icon sizing + visibility */
   .icon-cell{ display:flex; gap:6px; }
   .icon-btn{
     width:26px; height:26px; border-radius:50%;
@@ -2516,39 +2519,31 @@ if (!window.__cvCallHistoryInit) {
   .cv-audio-right{ display:flex; align-items:center; gap:12px; }
   .cv-audio-icon{ width:20px; height:20px; opacity:.6; }
 
-  /* --- Cradle-to-Grave modal (Call History only) --- */
-#cvctg-backdrop, #cvctg-modal { display:none; }
-#cvctg-backdrop.is-open, #cvctg-modal.is-open { display:block; }
+  /* --- Cradle-to-Grave modal --- */
+  #cvctg-backdrop, #cvctg-modal { display:none; }
+  #cvctg-backdrop.is-open, #cvctg-modal.is-open { display:block; }
+  #cvctg-backdrop{ position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998; }
+  #cvctg-modal{
+    position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:720px; max-width:95%; max-height:80vh; overflow:auto;
+    background:#fff; border-radius:6px; box-shadow:0 10px 28px rgba(0,0,0,.35);
+    z-index:9999;
+  }
+  .cvctg-header,.cvctg-footer{
+    padding:10px 16px; border-bottom:1px solid #ddd; display:flex; align-items:center;
+  }
+  .cvctg-footer{ border-top:1px solid #ddd; border-bottom:0; justify-content:flex-end; }
+  .cvctg-title{ margin:0; font-weight:600; }
+  .cvctg-close{ margin-left:auto; border:0; background:transparent; font-size:20px; cursor:pointer; }
+  .cvctg-body{ padding:12px 16px; font-size:13px; line-height:1.45; }
 
-#cvctg-backdrop{
-  position:fixed; inset:0; background:rgba(0,0,0,.45); z-index:9998;
-}
-#cvctg-modal{
-  position:fixed; top:50%; left:50%; transform:translate(-50%,-50%);
-  width:720px; max-width:95%; max-height:80vh; overflow:auto;
-  background:#fff; border-radius:6px; box-shadow:0 10px 28px rgba(0,0,0,.35);
-  z-index:9999;
-}
-.cvctg-header,.cvctg-footer{
-  padding:10px 16px; border-bottom:1px solid #ddd; display:flex; align-items:center;
-}
-.cvctg-footer{ border-top:1px solid #ddd; border-bottom:0; justify-content:flex-end; }
-.cvctg-title{ margin:0; font-weight:600; }
-.cvctg-close{ margin-left:auto; border:0; background:transparent; font-size:20px; cursor:pointer; }
-
-.cvctg-body{ padding:12px 16px; font-size:13px; line-height:1.45; }
-
-/* simple timeline look */
-.cvctg-steps{ position:relative; padding-left:140px; }
-.cvctg-steps:before{
-  content:""; position:absolute; left:120px; top:0; bottom:0; width:2px; background:#e5e5e5;
-}
-.cvctg-step{ display:flex; gap:14px; margin:8px 0; align-items:flex-start; }
-.cvctg-time{ width:120px; color:#888; text-align:right; padding-right:8px; font-variant-numeric:tabular-nums; }
-.cvctg-dot{ width:12px; height:12px; border-radius:50%; background:#cfcfcf; margin-top:4px; }
-.cvctg-text{ color:#333; }
-
-
+  /* timeline */
+  .cvctg-steps{ position:relative; padding-left:140px; }
+  .cvctg-steps:before{ content:""; position:absolute; left:120px; top:0; bottom:0; width:2px; background:#e5e5e5; }
+  .cvctg-step{ display:flex; gap:14px; margin:8px 0; align-items:flex-start; }
+  .cvctg-time{ width:120px; color:#888; text-align:right; padding-right:8px; font-variant-numeric:tabular-nums; }
+  .cvctg-dot{ width:12px; height:12px; border-radius:50%; background:#cfcfcf; margin-top:4px; }
+  .cvctg-text{ color:#333; }
 </style>
 </head>
 <body>
@@ -2565,7 +2560,7 @@ if (!window.__cvCallHistoryInit) {
     </table>
   </div>
 
-  <!-- Cradle-to-Grave modal shell (hidden until opened) -->
+  <!-- Cradle-to-Grave modal shell -->
   <div id="cvctg-backdrop"></div>
   <div id="cvctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvctg-title">
     <div class="cvctg-header">
@@ -2578,32 +2573,20 @@ if (!window.__cvCallHistoryInit) {
     </div>
   </div>
 
-
-
 <script>
 (function () {
-  // Icons (Listen is plain, others circles)
+  // Icons (Listen is plain)
   const ICONS = [
     { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: true },
+    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
     { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
     { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
     { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
-
- // ✅ safer phone wrapper (no backslash-heavy regex literal)
-function wrapPhone(v){
-  var s = String(v || '');
-  // strip non-digits without backslash-heavy regex literals
-  var digits = s.replace(/[^0-9]/g, '');   // <- no escapes like \d or \( so it won't break
-  // treat anything that *looks* like NANPA with a hyphen as clickable
-  var looksFormatted = s.indexOf('-') > 0;
-  return (looksFormatted && digits.length === 10)
-    ? '<a href="#" title="Click to Call">' + s + '</a>'
-    : s;
-}
-
+  // Phone links (constructor form = safe in srcdoc)
+  var PHONE = new RegExp("^\\\\(?\\\\d{3}\\\\)?[ -]\\\\d{3}-\\\\d{4}$");
+  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v; }
 
   // Relative dates
   const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
@@ -2614,9 +2597,9 @@ function wrapPhone(v){
     return 'Today, ' + h + ':' + m + ' ' + ampm;
   }
 
-  // Normalize "To" column per rules
+  // Normalize "To" per rules
   var EXT_ONLY = /^\\d{3}$/;
-  var DIGITS = /\\D/g;
+  var DIGITS   = /\\D/g;
   function pickExtFromPhone(phone){
     var exts = [200,201,202,203,204,205,206,207];
     var d = String(phone || '').replace(DIGITS, '');
@@ -2625,11 +2608,9 @@ function wrapPhone(v){
     return 'Ext. ' + exts[idx];
   }
   function normalizeTo(row){
-    // Outbound (from = extension): To = Dialed
-    if (EXT_ONLY.test(row.from)) return row.dialed;
-    // Inbound: ensure final destination is an extension; strip appended name
+    if (EXT_ONLY.test(row.from)) return row.dialed;        // outbound
     var to = row.to || '';
-    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
+    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);                 // inbound
     if (m) return 'Ext. ' + m[1];
     return pickExtFromPhone(row.from);
   }
@@ -2663,10 +2644,9 @@ function wrapPhone(v){
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
-  // Render
+  // Render rows
   var tbody = document.getElementById('cvCallHistoryTableBody');
-  var now = Date.now();
-  var cursor = now;
+  var now = Date.now(), cursor = now;
 
   rows.forEach(function(row, idx){
     var tr = document.createElement('tr');
@@ -2677,19 +2657,19 @@ function wrapPhone(v){
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('');
 
-    tr.innerHTML = \`
-      <td>\${row.cnam}</td>
-      <td>\${wrapPhone(row.from)}</td>
-      <td><span class="qos-tag">\${row.q1}</span></td>
-      <td>\${wrapPhone(row.dialed)}</td>
+    tr.innerHTML = `
+      <td>${row.cnam}</td>
+      <td>${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">${row.q1}</span></td>
+      <td>${wrapPhone(row.dialed)}</td>
       <td></td>
-      <td>\${wrapPhone(normalizeTo(row))}</td>
-      <td><span class="qos-tag">\${row.q2}</span></td>
-      <td>\${dateStr}</td>
-      <td>\${row.duration}</td>
-      <td>\${row.disposition || ''}</td>
-      <td>\${row.release}</td>
-      <td class="icon-cell">\${iconsHTML}</td>\`;
+      <td>${wrapPhone(normalizeTo(row))}</td>
+      <td><span class="qos-tag">${row.q2}</span></td>
+      <td>${dateStr}</td>
+      <td>${row.duration}</td>
+      <td>${row.disposition || ''}</td>
+      <td>${row.release}</td>
+      <td class="icon-cell">${iconsHTML}</td>`;
     tbody.appendChild(tr);
 
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
@@ -2703,238 +2683,313 @@ function wrapPhone(v){
     } catch (e) {}
   });
 
-  
-// Listen: drop a visual-only player row beneath the clicked row
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-  if (!btn) return;
-  e.preventDefault();
+  /* ----- Listen dropdown (visual only) ----- */
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+    if (!btn) return;
+    e.preventDefault();
 
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
+    var tr = btn.closest('tr');
+    var next = tr && tr.nextElementSibling;
 
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cv-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
+    if (next && next.classList && next.classList.contains('cv-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded','false');
+      return;
+    }
+
+    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+
+    var audioTr = document.createElement('tr');
+    audioTr.className = 'cv-audio-row';
+
+    var colCount = tr.children.length;
+    var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
+
+    audioTr.innerHTML =
+      '<td colspan="'+colCount+'">' +
+        '<div class="cv-audio-player">' +
+          '<button class="cv-audio-play" aria-label="Play"></button>' +
+          '<span class="cv-audio-time">0:00 / 0:00</span>' +
+          '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+          '<div class="cv-audio-right">' +
+            '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+          '</div>' +
+        '</div>' +
+      '</td>';
+
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded','true');
+  });
+
+  /* ---------- Cradle-to-Grave modal ---------- */
+  function openCradleModal(title, innerHTML){
+    var bd = document.getElementById('cvctg-backdrop');
+    var md = document.getElementById('cvctg-modal');
+    var tt = document.getElementById('cvctg-title');
+    var ct = document.getElementById('cvctg-content');
+    if (tt) tt.textContent = title || 'Cradle To Grave';
+    if (ct) ct.innerHTML = innerHTML || '';
+    if (bd) bd.classList.add('is-open');
+    if (md) md.classList.add('is-open');
+  }
+  function closeCradleModal(){
+    var bd = document.getElementById('cvctg-backdrop');
+    var md = document.getElementById('cvctg-modal');
+    if (bd) bd.classList.remove('is-open');
+    if (md) md.classList.remove('is-open');
+  }
+  (function(){
+    document.addEventListener('click', function(ev){
+      var t = ev.target;
+      if (t && (t.id === 'cvctg-x' || t.id === 'cvctg-close' || t.id === 'cvctg-backdrop')) {
+        closeCradleModal();
+      }
+    });
+  })();
+
+  // helpers
+  function parseStartTimeFromCell(dateStr){
+    var m = /Today,\\s*(\\d{1,2}):(\\d{2})\\s*(am|pm)/i.exec(dateStr||'');
+    var d = new Date();
+    if (m){
+      var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+      if (ap === 'pm' && h !== 12) h += 12;
+      if (ap === 'am' && h === 12) h = 0;
+      d.setHours(h, min, 0, 0);
+    }
+    return d;
+  }
+  function fmtClock(d){
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = (h % 12) || 12;
+    var pad = function(n){ return String(n).padStart(2,'0'); };
+    return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
+  }
+  function addMillis(d, ms){ return new Date(d.getTime() + ms); }
+
+  // SAFE regex (constructor; not literal)
+  var PHONE_RX = new RegExp("^\\\\(?\\\\d{3}\\\\)?[ -]\\\\d{3}-\\\\d{4}$");
+
+  function pickDept(fromNum){
+    var digits = (fromNum||'').replace(/\\D/g,'');
+    var last = digits ? +digits[digits.length-1] : 0;
+    return (last % 2 === 0) ? 301 : 302;
   }
 
-  // close others
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+  var AGENTS = {
+    301: [
+      {ext:3011, name:'Alice Carter'},
+      {ext:3012, name:'Ben Smith'},
+      {ext:3013, name:'Chris Lee'},
+      {ext:3014, name:'Dana Park'}
+    ],
+    302: [
+      {ext:3021, name:'Evan Reed'},
+      {ext:3022, name:'Fiona Gray'},
+      {ext:3023, name:'Gina Lopez'},
+      {ext:3024, name:'Henry Kim'}
+    ]
+  };
 
-  // build drop-down player row
-  var audioTr = document.createElement('tr');
-  audioTr.className = 'cv-audio-row';
+  function buildInboundCradleHTML(from, dateCellText){
+    var start = parseStartTimeFromCell(dateCellText);
+    var dept  = pickDept(from);
+    var agents = AGENTS[dept];
+    var answered = agents[1];
 
-  var colCount = tr.children.length;
-  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
+    var t0 = fmtClock(start);
+    var t1 = fmtClock(addMillis(start,    2));
+    var t2 = fmtClock(addMillis(start,   15));
+    var t3 = fmtClock(addMillis(start,20000));
+    var t4 = fmtClock(addMillis(start,25000));
+    var tR = fmtClock(addMillis(start,30000));
+    var tA = fmtClock(addMillis(start,36000));
 
-  audioTr.innerHTML =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cv-audio-player">' +
-        '<button class="cv-audio-play" aria-label="Play"></button>' +
-        '<span class="cv-audio-time">0:00 / 0:00</span>' +
-        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cv-audio-right">' +
-          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
-        '</div>' +
-      '</div>' +
-    '</td>';
+    function row(time, delta, text){
+      return ''
+        + '<div class="cvctg-step">'
+        +   '<div class="cvctg-time">' + time + '<div style="color:#aaa; font-size:11px;">' + (delta||'') + '</div></div>'
+        +   '<div class="cvctg-dot"></div>'
+        +   '<div class="cvctg-text">' + text + '</div>'
+        + '</div>';
+    }
 
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded','true');
-}); // <-- closes ONLY the Listen handler
+    var ringRows = '';
+    for (var i=0;i<agents.length;i++){
+      ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
+    }
 
-/* ---------- Cradle-to-Grave (canonical modal pattern) ---------- */
+    var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
 
-// open/close like your Call Center modal
-function openCradleModal(title, innerHTML){
-  var bd = document.getElementById('cvctg-backdrop');
-  var md = document.getElementById('cvctg-modal');
-  var tt = document.getElementById('cvctg-title');
-  var ct = document.getElementById('cvctg-content');
-  if (tt) tt.textContent = title || 'Cradle To Grave';
-  if (ct) ct.innerHTML = innerHTML || '';
-  if (bd) bd.classList.add('is-open');
-  if (md) md.classList.add('is-open');
-}
-function closeCradleModal(){
-  var bd = document.getElementById('cvctg-backdrop');
-  var md = document.getElementById('cvctg-modal');
-  if (bd) bd.classList.remove('is-open');
-  if (md) md.classList.remove('is-open');
-}
-// close wires (one-time)
-(function(){
-  var doc = document;
-  doc.addEventListener('click', function(ev){
-    var t = ev.target;
-    if (t && (t.id === 'cvctg-x' || t.id === 'cvctg-close' || t.id === 'cvctg-backdrop')) {
-      closeCradleModal();
+    return ''
+      + '<div class="cvctg-steps">'
+      +   row(t0, '',      'Call from ' + from + ' to STIR')
+      +   row(t1, '+2ms',  'The currently active time frame is Daytime')
+      +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
+      +   row(t3, '+20s',  'Selected 2')
+      +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
+      +   ringRows
+      +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
+      + '</div>';
+  }
+
+  // open CTG on click
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+    if (!btn) return;
+
+    var tr   = btn.closest('tr');
+    var tds  = tr ? tr.querySelectorAll('td') : null;
+    var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
+    var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
+
+    if (PHONE_RX.test(from)) {
+      var htmlIn = buildInboundCradleHTML(from, date);
+      openCradleModal('Cradle To Grave', htmlIn);
+    } else {
+      var start = parseStartTimeFromCell(date);
+      var t0 = fmtClock(start);
+      var htmlOut = ''
+        + '<div class="cvctg-steps">'
+        +   '<div class="cvctg-step">'
+        +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
+        +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
+        +   '</div>'
+        + '</div>';
+      openCradleModal('Cradle To Grave', htmlOut);
     }
   });
-})();
 
-// helpers
-function parseStartTimeFromCell(dateStr){
-  // expects "Today, 8:16 pm"
-  var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(dateStr||'');
-  var d = new Date();
-  if (m){
-    var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-    if (ap === 'pm' && h !== 12) h += 12;
-    if (ap === 'am' && h === 12) h = 0;
-    d.setHours(h, min, 0, 0);
-  }
-  return d;
-}
-function fmtClock(d){
-  // "4:16:19 PM"
-  var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-  var ap = h >= 12 ? 'PM' : 'AM';
-  h = (h % 12) || 12;
-  var pad = function(n){ return String(n).padStart(2,'0'); };
-  return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
-}
-function addMillis(d, ms){ return new Date(d.getTime() + ms); }
-
-var PHONE_RX = /^\(?\d{3}\)?[ -]\d{3}-\d{4}$/;
-
-// deterministic split: even last digit → 301, odd → 302
-function pickDept(fromNum){
-  var digits = (fromNum||'').replace(/\D/g,'');
-  var last = digits ? +digits[digits.length-1] : 0;
-  return (last % 2 === 0) ? 301 : 302;
-}
-
-var AGENTS = {
-  301: [
-    {ext:3011, name:'Alice Carter'},
-    {ext:3012, name:'Ben Smith'},
-    {ext:3013, name:'Chris Lee'},
-    {ext:3014, name:'Dana Park'}
-  ],
-  302: [
-    {ext:3021, name:'Evan Reed'},
-    {ext:3022, name:'Fiona Gray'},
-    {ext:3023, name:'Gina Lopez'},
-    {ext:3024, name:'Henry Kim'}
-  ]
-};
-
-// build one inbound timeline’s HTML
-function buildInboundCradleHTML(from, dateCellText){
-  var start = parseStartTimeFromCell(dateCellText);
-  var dept  = pickDept(from);
-  var agents = AGENTS[dept];
-  var answered = agents[1]; // 2nd agent answers
-
-  var t0 = fmtClock(start);
-  var t1 = fmtClock(addMillis(start,    2));   // +2ms
-  var t2 = fmtClock(addMillis(start,   15));   // +15ms
-  var t3 = fmtClock(addMillis(start,20000));   // +20s
-  var t4 = fmtClock(addMillis(start,25000));   // +25s
-  var tR = fmtClock(addMillis(start,30000));   // ringing starts
-  var tA = fmtClock(addMillis(start,36000));   // answered
-
-  function row(time, delta, text){
-    return ''
-      + '<div class="cvctg-step">'
-      +   '<div class="cvctg-time">' + time + '<div style="color:#aaa; font-size:11px;">' + (delta||'') + '</div></div>'
-      +   '<div class="cvctg-dot"></div>'
-      +   '<div class="cvctg-text">' + text + '</div>'
-      + '</div>';
-  }
-
-  var ringRows = '';
-  for (var i=0;i<agents.length;i++){
-    ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
-  }
-
-  var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
-
-  return ''
-    + '<div class="cvctg-steps">'
-    +   row(t0, '',      'Call from ' + from + ' to STIR')
-    +   row(t1, '+2ms',  'The currently active time frame is Daytime')
-    +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
-    +   row(t3, '+20s',  'Selected 2')
-    +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
-    +   ringRows
-    +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
-    + '</div>';
-}
-
-// click wire: open modal for Cradle; only inbound rows get the full flow for now
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
-
-  var tr   = btn.closest('tr');
-  var tds  = tr ? tr.querySelectorAll('td') : null;
-  var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-  var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
-
-   if (PHONE_RX.test(from)) {
-    var htmlIn = buildInboundCradleHTML(from, date);
-    openCradleModal('Cradle To Grave', htmlIn);
-  } else {
-    // simple outbound placeholder
-    var start = parseStartTimeFromCell(date);
-    var t0 = fmtClock(start);
-    var htmlOut = ''
-      + '<div class="cvctg-steps">'
-      +   '<div class="cvctg-step">'
-      +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
-      +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
-      +   '</div>'
-      + '</div>';
-    openCradleModal('Cradle To Grave', htmlOut);
-  }
-});  // closes the cradle click handler
-
-})();  // <-- CLOSES the (function(){ ... }) IIFE inside the srcdoc
-
+})(); 
 <\/script>
 </body></html>`;
   } // <-- closes buildCallHistorySrcdoc()
-  // ---- CALL HISTORY: mount iframe (idempotent) ----
-(function mountCvCallHistory(){
-  function tryInject(){
-    // already injected?
-    if (document.getElementById(CALLHISTORY_IFRAME_ID)) return true;
+
+  // -------- REMOVE CALL HISTORY -------- //
+  function removeCallHistory() {
+    const ifr = document.getElementById(CALLHISTORY_IFRAME_ID);
+    if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
     const slot = document.querySelector(CALLHISTORY_SLOT);
-    if (!slot) return false;
+    if (slot) {
+      const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+      if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+        hidden.style.display = '';
+        hidden.removeAttribute('data-cv-demo-hidden');
+      }
+    }
+  }
+
+  // -------- INJECT CALL HISTORY -------- //
+  function injectCallHistory() {
+    if (document.getElementById(CALLHISTORY_IFRAME_ID)) return;
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (!slot) return;
+
+    function findAnchor(el) {
+      const preferred = el.querySelector('.table-container.scrollable-small');
+      if (preferred) return preferred;
+      if (el.firstElementChild) return el.firstElementChild;
+      let n = el.firstChild;
+      while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+      return n || null;
+    }
+
+    const anchor = findAnchor(slot);
+
+    if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+      anchor.style.display = 'none';
+      anchor.setAttribute('data-cv-demo-hidden', '1');
+    }
 
     const iframe = document.createElement('iframe');
     iframe.id = CALLHISTORY_IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
     iframe.setAttribute('scrolling', 'no');
-    iframe.style.cssText = 'border:0;display:block;width:100%;';
     iframe.srcdoc = buildCallHistorySrcdoc();
-    // put it at the top of the slot (safe if empty)
-    slot.insertBefore(iframe, slot.firstChild);
-    return true;
+
+    if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+    else slot.appendChild(iframe);
   }
 
-  // Try now…
-  if (tryInject()) return;
+  // -------- WAIT CALL HISTORY AND INJECT -------- //
+  function waitForCallHistorySlotAndInject(tries = 0) {
+    const slot = document.querySelector(CALLHISTORY_SLOT);
+    if (slot && slot.isConnected) {
+      requestAnimationFrame(() => requestAnimationFrame(() => injectCallHistory()));
+      return;
+    }
+    if (tries >= 12) return;
+    setTimeout(() => waitForCallHistorySlotAndInject(tries + 1), 250);
+  }
 
-  // …or wait for the slot to appear (SPA / async render)
-  const mo = new MutationObserver(() => {
-    if (tryInject()) mo.disconnect();
-  });
-  mo.observe(document.documentElement, { childList: true, subtree: true });
+  // -------- CALL HISTORY ROUTING -------- //
+  function onCallHistoryEnter() {
+    setTimeout(() => waitForCallHistorySlotAndInject(), 600);
+  }
 
-  // Also re-attempt after clicking the Call History nav
-  document.addEventListener('click', function(ev){
-    const el = ev.target instanceof Element ? ev.target.closest(CALLHISTORY_SELECTOR) : null;
-    if (el) setTimeout(tryInject, 0);
-  });
-})();
+  function handleCallHistoryRouteChange(prevHref, nextHref) {
+    const wasCallHistory = CALLHISTORY_REGEX.test(prevHref);
+    const isCallHistory  = CALLHISTORY_REGEX.test(nextHref);
+    if (!wasCallHistory && isCallHistory) onCallHistoryEnter();
+    if ( wasCallHistory && !isCallHistory) removeCallHistory();
+  }
 
-} // <-- closes if (!window.__cvCallHistoryInit)
+  (function watchCallHistoryURLChanges() {
+    let last = location.href;
+    const origPush = history.pushState;
+    const origReplace = history.replaceState;
+
+    history.pushState = function () {
+      const prev = last;
+      const ret  = origPush.apply(this, arguments);
+      const now  = location.href;
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+      return ret;
+    };
+
+    history.replaceState = function () {
+      const prev = last;
+      const ret  = origReplace.apply(this, arguments);
+      const now  = location.href;
+      last = now;
+      handleCallHistoryRouteChange(prev, now);
+      return ret;
+    };
+
+    const mo = new MutationObserver(() => {
+      if (location.href !== last) {
+        const prev = last;
+        const now  = location.href;
+        last = now;
+        handleCallHistoryRouteChange(prev, now);
+      }
+    });
+    mo.observe(document.documentElement, { childList: true, subtree: true });
+
+    window.addEventListener('popstate', () => {
+      const prev = last;
+      const now  = location.href;
+      if (now !== prev) {
+        last = now;
+        handleCallHistoryRouteChange(prev, now);
+      }
+    });
+
+    document.addEventListener('click', (e) => {
+      const el = e.target instanceof Element ? e.target : null;
+      if (el && el.closest(CALLHISTORY_SELECTOR)) setTimeout(onCallHistoryEnter, 0);
+    });
+
+    if (CALLHISTORY_REGEX.test(location.href)) onCallHistoryEnter();
+  })();
+
+} // -------- end CALL HISTORY guard --------
+
+
 
 
 
