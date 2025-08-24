@@ -2553,9 +2553,24 @@ if (!window.__cvCallHistoryInit) {
     { key: 'transcript', src: '${HISTORY_ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
-  // Phone links
-  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
-  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v; }
+ // Treat as external phone if it has 10+ digits after stripping non-digits
+function isExternalNumber(v) {
+  v = String(v || '');
+  var digits = '';
+  for (var i = 0; i < v.length; i++) {
+    var c = v.charCodeAt(i);
+    if (c >= 48 && c <= 57) digits += v[i]; // keep 0–9
+  }
+  return digits.length >= 10;
+}
+
+// Keep blue link + tooltip for real phone numbers; leave extensions plain
+function wrapPhone(v) {
+  return isExternalNumber(v)
+    ? '<a href="#" title="Click to Call">' + v + '</a>'
+    : v;
+}
+
 
   // Relative dates
   const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
@@ -2898,6 +2913,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
