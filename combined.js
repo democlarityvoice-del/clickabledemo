@@ -2646,36 +2646,39 @@ if (!window.__cvCallHistoryInit) {
   ];
 
   // Render rows
-var tbody = document.getElementById('cvCallHistoryTableBody');
-var now = Date.now(), cursor = now;
-
 rows.forEach(function(row, idx) {
   var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
 
-  var iconsHTML = ICONS.map(function(icon) {
-    var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-    return '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
-  }).join('');
+  // Build icons cell using constants
+  var iconsHTML = `
+    <td class="icon-cell">
+      <button data-action="listen" title="Listen">
+        <img src="${ICON_LISTEN}" alt="Listen" />
+      </button>
+      <button data-action="download" title="Download">
+        <img src="${ICON_DOWNLOAD}" alt="Download" />
+      </button>
+      <button data-action="cradle" title="Cradle to Grave">
+        <img src="${ICON_CRADLE}" alt="Cradle" />
+      </button>
+      <button data-action="notes" title="Notes">
+        <img src="${ICON_NOTES}" alt="Notes" />
+      </button>
+      <button data-action="transcript" title="Transcript">
+        <img src="${ICON_TRANSCRIPT}" alt="Transcript" />
+      </button>
+    </td>
+  `;
 
-  tr.innerHTML = `
-    <td>${row.cnam}</td>
-    <td>${wrapPhone(row.from)}</td>
-    <td><span class="qos-tag">${row.q1}</span></td>
-    <td>${wrapPhone(row.dialed)}</td>
-    <td></td>
-    <td>${wrapPhone(normalizeTo(row))}</td>
-    <td><span class="qos-tag">${row.q2}</span></td>
-    <td>${dateStr}</td>
-    <td>${row.duration}</td>
-    <td>${row.disposition || ''}</td>
-    <td>${row.release}</td>
-    <td class="icon-cell">${iconsHTML}</td>`;
-    
+  // Safely add the icons cell into the row
+  tr.innerHTML = iconsHTML;
+
   tbody.appendChild(tr);
 
   cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
 });
+
 
 
   // Resize host iframe to fit content
@@ -2991,6 +2994,7 @@ rows.forEach(function(row, idx) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
