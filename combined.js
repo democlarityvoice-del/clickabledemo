@@ -2576,13 +2576,12 @@ if (!window.__cvCallHistoryInit) {
 <script>
 (function () {
   // Icons (Listen is plain)
-  const ICONS = [
-  { key: 'download',   src: ICON_DOWNLOAD,   title: 'Download',   circle: true  },
-  { key: 'listen',     src: ICON_LISTEN,     title: 'Listen',     circle: false },
-  { key: 'cradle',     src: ICON_CRADLE,     title: 'Cradle',     circle: true  },
-  { key: 'notes',      src: ICON_NOTES,      title: 'Notes',      circle: true  },
-  { key: 'transcript', src: ICON_TRANSCRIPT, title: 'Transcript', circle: true  }
-];
+const ICON_LISTEN     = '${ICON_LISTEN}';
+const ICON_DOWNLOAD   = '${ICON_DOWNLOAD}';
+const ICON_CRADLE     = '${ICON_CRADLE}';
+const ICON_NOTES      = '${ICON_NOTES}';
+const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
+
 
 
   // Phone links (constructor form = safe in srcdoc)
@@ -2985,6 +2984,7 @@ var iconsHTML =
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
