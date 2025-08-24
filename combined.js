@@ -223,7 +223,7 @@ function buildSrcdoc() {
       <td>\${c.t()}</td>
       <td>
         <button class="listen-btn" aria-pressed="false" title="Listen in">
-          <img src="${HOME_ICON_SPEAKER}" alt="">
+          <img src="${ICON_SPEAKER}" alt="">
         </button>
       </td>\`;
     tb.appendChild(tr);
@@ -2999,6 +2999,7 @@ for (var i = 0; i < rows.length; i++) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
