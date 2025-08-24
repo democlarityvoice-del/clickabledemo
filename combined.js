@@ -2655,73 +2655,6 @@ if (!window.__cvCallHistoryInit) {
     } catch (e) {}
   });
 
- // === CRADLE MODAL SETUP ===
-(function attachCradleModal() {
-  const cradleBtn = document.querySelector("img[src*='" + HISTORY_ICON_CRADLE + "']");
-  if (!cradleBtn) return; // failsafe if button doesn't exist
-
-  // Create the modal container
-  const modal = document.createElement("div");
-  modal.id = "cv-cradle-modal";
-  modal.style.cssText = `
-    position: fixed;
-    bottom: 20px;
-    left: 20px;
-    width: 400px;
-    height: 300px;
-    background: #fff;
-    border: 1px solid #ccc;
-    box-shadow: 0 0 10px rgba(0,0,0,0.3);
-    border-radius: 6px;
-    z-index: 9999;
-    display: none;
-    flex-direction: column;
-    font-family: Arial, sans-serif;
-  `;
-
-  // Modal header
-  const header = document.createElement("div");
-  header.style.cssText = `
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background: #e57027;
-    color: #fff;
-    font-weight: bold;
-    font-size: 14px;
-  `;
-  header.textContent = "Cradle To Grave";
-
-  const closeBtn = document.createElement("span");
-  closeBtn.textContent = "×";
-  closeBtn.style.cssText = `
-    cursor: pointer;
-    font-size: 18px;
-    line-height: 18px;
-  `;
-  closeBtn.onclick = () => (modal.style.display = "none");
-  header.appendChild(closeBtn);
-
-  // Modal body placeholder
-  const body = document.createElement("div");
-  body.style.cssText = `
-    flex: 1;
-    padding: 16px;
-    font-size: 14px;
-    color: #333;
-  `;
-  body.textContent = "TEST";
-
-  modal.appendChild(header);
-  modal.appendChild(body);
-  document.body.appendChild(modal);
-
-  // Attach button click
-  cradleBtn.addEventListener("click", () => {
-    modal.style.display = "flex";
-  });
-})();
 
 
   // Listen: drop a visual-only player row beneath the clicked row
@@ -2901,6 +2834,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
