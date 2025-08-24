@@ -2644,15 +2644,15 @@ const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
-// ---- Render rows ----
-rows.forEach(function(row, idx){
-  var tr = document.createElement('tr');
+
+// ---- Render rows (no DOM variable, no template literals) ----
+var tbody  = document.getElementById('cvCallHistoryTableBody');
+var now    = Date.now();
+var cursor = now;
+
+for (var i = 0; i < rows.length; i++) {
+  var row = rows[i];
   var dateStr = fmtToday(cursor);
-  ...
-  tr.innerHTML = /* full set of <td> cells, including icons */;
-  tbody.appendChild(tr);
-  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-});
 
 
   
@@ -2990,6 +2990,7 @@ var iconsHTML =
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
