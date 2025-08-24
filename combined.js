@@ -2576,24 +2576,30 @@ if (!window.__cvCallHistoryInit) {
     h = (h % 12) || 12;
     return 'Today, ' + h + ':' + m + ' ' + ap;
   }
+
+
   // Normalize "To" column per rules
-var EXT_ONLY     = new RegExp('^\\d{3}$');             // '207'
-var EXT_PREFIXED = new RegExp('^Ext\\.\\s*\\d{3}$');   // 'Ext. 207'
-var TO_EXT_RE    = new RegExp('^Ext\\.\\s*(\\d{3})');  // extract '207' from 'Ext. 207 (Name)'
-var DIGITS       = new RegExp('\\D', 'g');
-
-var EXT_ONLY = /^\d{3}$/;           // 3 digits (extension)
-var DIGITS   = /\D/g;               // non-digits
-
-function normalizeTo(row){
-  var from = String(row.from || '');
-  var to   = String(row.to   || '');
-
-  // Outbound: From is an extension → To = Dialed
-  if (EXT_ONLY.test(from) || /^Ext\.\s*\d{3}$/.test(from)) {
-    return row.dialed;
+  var EXT_ONLY = /^\\d{3}$/;
+  var DIGITS = /\\D/g;
+  function pickExtFromPhone(phone){
+    var exts = [200,201,202,203,204,205,206,207];
+    var d = String(phone || '').replace(DIGITS, '');
+    var last2 = d.slice(-2) || '0';
+    var idx = parseInt(last2, 10) % exts.length;
+    return 'Ext. ' + exts[idx];
+  }
+  function normalizeTo(row){
+    // Outbound (from = extension): To = Dialed
+    if (EXT_ONLY.test(row.from)) return row.dialed;
+    // Inbound: ensure final destination is an extension; strip appended name
+    var to = row.to || '';
+    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
+    if (m) return 'Ext. ' + m[1];
+    return pickExtFromPhone(row.from);
   }
 
+
+  
   // Inbound: keep explicit Ext. ### if present; otherwise derive
   var m = /^Ext\.\s*(\d{3})/.exec(to);
   if (m) return 'Ext. ' + m[1];
@@ -3009,6 +3015,7 @@ function normalizeTo(row){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
