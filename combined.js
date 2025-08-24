@@ -2670,6 +2670,7 @@ if (!window.__cvCallHistoryInit) {
       <td>${row.disposition || ''}</td>
       <td>${row.release}</td>
       <td class="icon-cell">${iconsHTML}</td>`;
+
     tbody.appendChild(tr);
 
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
@@ -2988,6 +2989,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
