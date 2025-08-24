@@ -2667,6 +2667,75 @@ if (!window.__cvCallHistoryInit) {
   }
   renderRows();
 
+  // ---- CTG wiring (delegated; no globals) ----
+(function wireCradle(){
+  if (document._cvCradleWired) return; document._cvCradleWired = true;
+
+  function ensureModal() {
+    var modal = document.getElementById('cv-cradle-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'cv-cradle-modal';
+    modal.innerHTML =
+      '<div class="cv-modal-backdrop"></div>' +
+      '<div class="cv-modal">' +
+        '<div class="cv-modal-header">' +
+          '<span>Cradle To Grave</span>' +
+          '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
+        '<div class="cv-modal-footer">' +
+          '<button class="cv-modal-close">Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
+    for (var i = 0; i < closes.length; i++) {
+      closes[i].addEventListener('click', function(){ modal.remove(); });
+    }
+    return modal;
+  }
+
+  function openCTG(html) {
+    var modal = ensureModal();
+    var body = document.getElementById('cv-ctg-body');
+    if (body) body.innerHTML = html || '<div>Test</div>';
+  }
+
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+    if (!btn) return;
+    e.preventDefault();
+
+    var tr  = btn.closest('tr');
+    var tds = tr ? tr.querySelectorAll('td') : null;
+    var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
+    var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
+
+    // Outbound if 'From' is a bare 3-digit ext or 'Ext. 123'
+    var isOutbound = /^\d{3}$/.test(from) || /^Ext\.\s*\d{3}$/.test(from);
+
+    var html = isOutbound
+      ? '<div class="cvctg-steps">' +
+          '<div class="cvctg-step">' +
+            '<div class="cvctg-time">' + date + '</div>' +
+            '<div class="cvctg-dot"></div>' +
+            '<div class="cvctg-text">Outbound call placed from ' + from + '</div>' +
+          '</div>' +
+        '</div>'
+      : '<div class="cvctg-steps">' +
+          '<div class="cvctg-step">' +
+            '<div class="cvctg-time">' + date + '</div>' +
+            '<div class="cvctg-dot"></div>' +
+            '<div class="cvctg-text">Inbound call from ' + from + ' to STIR</div>' +
+          '</div>' +
+        '</div>';
+
+    openCTG(html);
+  }, true);
+})();
+
+
   /* ----- Listen dropdown (single handler) ----- */
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
@@ -2840,6 +2909,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
