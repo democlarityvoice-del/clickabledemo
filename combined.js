@@ -2645,35 +2645,40 @@ const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
   ];
 
 
-// ---- Render rows (no DOM variable, no template literals) ----
+// ---- Render rows ----
 var tbody  = document.getElementById('cvCallHistoryTableBody');
 var now    = Date.now();
 var cursor = now;
 
 for (var i = 0; i < rows.length; i++) {
   var row = rows[i];
+  var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
 
+  // Build icons HTML safely
+  var iconsHTML =
+    '<td class="icon-cell">' +
+      '<button data-action="listen" title="Listen"><img src="' + ICON_LISTEN + '" alt="Listen"></button>' +
+      '<button data-action="download" title="Download"><img src="' + ICON_DOWNLOAD + '" alt="Download"></button>' +
+      '<button data-action="cradle" title="Cradle to Grave"><img src="' + ICON_CRADLE + '" alt="Cradle"></button>' +
+      '<button data-action="notes" title="Notes"><img src="' + ICON_NOTES + '" alt="Notes"></button>' +
+      '<button data-action="transcript" title="Transcript"><img src="' + ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
+    '</td>';
 
-  
-// Build icons HTML inside srcdoc safely
-var iconsHTML =
-  '<td class="icon-cell">' +
-    '<button data-action="listen" title="Listen"><img src="' + ICON_LISTEN + '" alt="Listen"></button>' +
-    '<button data-action="download" title="Download"><img src="' + ICON_DOWNLOAD + '" alt="Download"></button>' +
-    '<button data-action="cradle" title="Cradle to Grave"><img src="' + ICON_CRADLE + '" alt="Cradle"></button>' +
-    '<button data-action="notes" title="Notes"><img src="' + ICON_NOTES + '" alt="Notes"></button>' +
-    '<button data-action="transcript" title="Transcript"><img src="' + ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
-  '</td>';
-
-
-  // Safely add the icons cell into the row
-  tr.innerHTML = iconsHTML;
+  // Restore the rest of your row here
+  tr.innerHTML =
+    '<td>' + dateStr + '</td>' +
+    '<td>' + wrapPhone(row.phone) + '</td>' +
+    '<td>' + row.name + '</td>' +
+    '<td>' + row.direction + '</td>' +
+    '<td>' + row.duration + '</td>' +
+    '<td>' + row.status + '</td>' +
+    iconsHTML;
 
   tbody.appendChild(tr);
 
-  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-});
+  cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
+}
 
 
 
@@ -2990,6 +2995,7 @@ var iconsHTML =
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
