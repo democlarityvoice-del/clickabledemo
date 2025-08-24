@@ -2678,135 +2678,68 @@ if (!window.__cvCallHistoryInit) {
  
 
 // === One-time CTG wiring for the Call History iframe (no srcdoc edits) ===
-(function wireCTGToCallHistoryIframe(){
-  var IFRAME_ID = 'cv-callhistory-iframe';
+// Render
+var tbody = document.getElementById('cvCallHistoryTableBody');
+var now = Date.now();
+var cursor = now;
 
-  function installCTG(doc){
-    if (!doc || !doc.body || doc.__cvCTGInstalled) return;
-    doc.__cvCTGInstalled = true;
+rows.forEach(function(row, idx){
+  var tr = document.createElement('tr');
+  var dateStr = fmtToday(cursor);
 
-    // --- Minimal inline styles (no template literals) ---
-    var style = doc.createElement('style');
-    style.textContent =
-      '#cvctg-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:9998;display:none;}' +
-      '#cvctg-modal{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);' +
-      'width:720px;max-width:95%;max-height:80vh;overflow:auto;background:#fff;border-radius:6px;' +
-      'box-shadow:0 10px 28px rgba(0,0,0,.35);z-index:9999;display:none;font:13px/1.45 -apple-system,BlinkMacSystemFont,"Helvetica Neue",Arial,sans-serif;color:#333;}' +
-      '.cvctg-header,.cvctg-footer{padding:10px 16px;border-bottom:1px solid #ddd;display:flex;align-items:center;}' +
-      '.cvctg-footer{border-top:1px solid #ddd;border-bottom:0;justify-content:flex-end;}' +
-      '.cvctg-title{margin:0;font-weight:600;}' +
-      '.cvctg-close{margin-left:auto;border:0;background:transparent;font-size:20px;cursor:pointer;}' +
-      '.cvctg-body{padding:12px 16px;font-size:13px;}' +
-      '.cvctg-steps{position:relative;padding-left:140px;}' +
-      '.cvctg-steps:before{content:"";position:absolute;left:120px;top:0;bottom:0;width:2px;background:#e5e5e5;}' +
-      '.cvctg-step{display:flex;gap:14px;margin:8px 0;align-items:flex-start;}' +
-      '.cvctg-time{width:120px;color:#888;text-align:right;padding-right:8px;font-variant-numeric:tabular-nums;}' +
-      '.cvctg-dot{width:12px;height:12px;border-radius:50%;background:#cfcfcf;margin-top:4px;}' +
-      '.cvctg-text{color:#333;}';
-    doc.head.appendChild(style);
+  var iconsHTML = ICONS.map(function(icon){
+    var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+    return '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
+  }).join('');
 
-    // --- Modal DOM (created, hidden by default) ---
-    var backdrop = doc.createElement('div'); backdrop.id = 'cvctg-backdrop';
-    var modal    = doc.createElement('div'); modal.id    = 'cvctg-modal';
+  tr.innerHTML =
+      '<td>' + row.cnam + '</td>'
+    + '<td>' + wrapPhone(row.from) + '</td>'
+    + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
+    + '<td>' + wrapPhone(row.dialed) + '</td>'
+    + '<td></td>'
+    + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
+    + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
+    + '<td>' + dateStr + '</td>'
+    + '<td>' + row.duration + '</td>'
+    + '<td>' + (row.disposition || '') + '</td>'
+    + '<td>' + row.release + '</td>'
+    + '<td class="icon-cell">' + iconsHTML + '</td>';
 
-    var header = doc.createElement('div'); header.className = 'cvctg-header';
-    var title  = doc.createElement('h3');  title.className  = 'cvctg-title'; title.textContent = 'Cradle To Grave';
-    var xBtn   = doc.createElement('button'); xBtn.className = 'cvctg-close'; xBtn.setAttribute('aria-label','Close'); xBtn.textContent = '×';
-    header.appendChild(title); header.appendChild(xBtn);
+  tbody.appendChild(tr);
 
-    var body   = doc.createElement('div'); body.id = 'cvctg-content'; body.className = 'cvctg-body';
-    var footer = doc.createElement('div'); footer.className = 'cvctg-footer';
-    var close  = doc.createElement('button'); close.className = 'cvctg-close'; close.textContent = 'Close';
-    footer.appendChild(close);
-
-    modal.appendChild(header); modal.appendChild(body); modal.appendChild(footer);
-    doc.body.appendChild(backdrop); doc.body.appendChild(modal);
-
-    function openModal(innerHTML){
-      body.innerHTML = innerHTML || '';
-      backdrop.style.display = 'block';
-      modal.style.display = 'block';
-    }
-    function closeModal(){
-      modal.style.display = 'none';
-      backdrop.style.display = 'none';
-    }
-    xBtn.addEventListener('click', closeModal);
-    close.addEventListener('click', closeModal);
-    backdrop.addEventListener('click', closeModal);
-
-    // Utility: make a tiny timeline using the row cells (no deps on your srcdoc vars)
-    function buildInboundHTML(from, dateStr){
-      var steps = [
-        [dateStr, '', 'Call from ' + from + ' to STIR'],
-        ['', '+2ms',  'The currently active time frame is Daytime'],
-        ['', '+15ms', 'Connected to Auto Attendant 700 Daytime'],
-        ['', '+20s',  'Selected 2'],
-        ['', '+25s',  'Connected to Call Queue 301 (New Sales)'],
-        ['', '+30s',  'Agent 3011 (Alice Carter) is ringing'],
-        ['', '+36s',  'Call answered by Ben Smith (3012)']
-      ];
-      var html = '<div class="cvctg-steps">';
-      for (var i=0;i<steps.length;i++){
-        var t = steps[i][0] || ''; var d = steps[i][1] || ''; var txt = steps[i][2] || '';
-        html += '<div class="cvctg-step">'
-             +    '<div class="cvctg-time">' + t + (d?'<div style="color:#aaa;font-size:11px;">'+d+'</div>':'') + '</div>'
-             +    '<div class="cvctg-dot"></div>'
-             +    '<div class="cvctg-text">' + txt + '</div>'
-             +  '</div>';
-      }
-      html += '</div>';
-      return html;
-    }
-
-// --- Cradle click handler (drop-in) ---
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
-
-  var tr   = btn.closest('tr');
-  var tds  = tr ? tr.querySelectorAll('td') : null;
-  var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-  var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
-
-  // Outbound = 3-digit extension like "207" or "Ext. 207"
-  var EXT_3DIG     = new RegExp('^\\d{3}$');
-  var EXT_PREFIXED = new RegExp('^Ext\\.\\s*\\d{3}$');
-
-  if (EXT_3DIG.test(from) || EXT_PREFIXED.test(from)) {
-    // OUTBOUND
-    var start  = parseStartTimeFromCell(date);
-    var t0     = fmtClock(start);
-    var htmlOut = ''
-      + '<div class="cvctg-steps">'
-      +   '<div class="cvctg-step">'
-      +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
-      +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
-      +   '</div>'
-      + '</div>';
-    openCradleModal('Cradle To Grave', htmlOut);
-  } else {
-    // INBOUND
-    var htmlIn = buildInboundCradleHTML(from, date);
-    openCradleModal('Cradle To Grave', htmlIn);
-  }
+  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
 });
-// --- end Cradle click handler ---
 
+// Resize host iframe to fit content
+requestAnimationFrame(function () {
+  try {
+    var h = document.documentElement.scrollHeight;
+    if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+  } catch (e) {}
+});
+
+// Listen: drop a visual-only player row beneath the clicked row
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+  if (!btn) return;
+  e.preventDefault();
+
+  var tr = btn.closest('tr');
+  var next = tr && tr.nextElementSibling;
+
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cv-audio-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded','false');
+    return;
   }
 
-  function tryInstall(){
-    var ifr = document.getElementById(IFRAME_ID);
-    if (!ifr) return;
-    var doc = ifr.contentDocument || (ifr.contentWindow && ifr.contentWindow.document);
-    if (doc && doc.readyState === 'complete') installCTG(doc);
-    else ifr.addEventListener('load', function(){ installCTG(ifr.contentDocument); });
-  }
+  // close others
+  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
 
-  // run now and also after you inject the iframe
-  tryInstall();
-  // if your router reinjects, feel free to call wireCTGToCallHistoryIframe() again—it's guarded.
-})();
+  // build drop-down player row
+
 
 
 
@@ -2965,6 +2898,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
