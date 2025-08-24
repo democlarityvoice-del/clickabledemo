@@ -2415,11 +2415,11 @@ if (!window.__cvCallHistoryInit) {
   const CALLHISTORY_SLOT        = 'div.callhistory-panel-main';
   const CALLHISTORY_IFRAME_ID   = 'cv-callhistory-iframe';
 
-  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
-  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const HISTORY_ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const HISTORY_ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const HISTORY_ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
   // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) -------- //
   function buildCallHistorySrcdoc() {
@@ -2576,11 +2576,11 @@ if (!window.__cvCallHistoryInit) {
 <script>
 (function () {
   // Icons (Listen is plain)
-  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
-  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const HISTORY_ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const HISTORY_ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const HISTORY_ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
 
   // Phone links (constructor form = safe in srcdoc)
@@ -2657,11 +2657,11 @@ for (var i = 0; i < rows.length; i++) {
   // icon cell
   var iconsHTML =
     '<td class="icon-cell">' +
-      '<button data-action="listen" title="Listen"><img src="' + ICON_LISTEN + '" alt="Listen"></button>' +
-      '<button data-action="download" title="Download"><img src="' + ICON_DOWNLOAD + '" alt="Download"></button>' +
-      '<button data-action="cradle" title="Cradle to Grave"><img src="' + ICON_CRADLE + '" alt="Cradle"></button>' +
-      '<button data-action="notes" title="Notes"><img src="' + ICON_NOTES + '" alt="Notes"></button>' +
-      '<button data-action="transcript" title="Transcript"><img src="' + ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
+      '<button data-action="listen" title="Listen"><img src="' + HISTORY_ICON_LISTEN + '" alt="Listen"></button>' +
+      '<button data-action="download" title="Download"><img src="' + HISTORY_ICON_DOWNLOAD + '" alt="Download"></button>' +
+      '<button data-action="cradle" title="Cradle to Grave"><img src="' + HISTORY_ICON_CRADLE + '" alt="Cradle"></button>' +
+      '<button data-action="notes" title="Notes"><img src="' + HISTORY_ICON_NOTES + '" alt="Notes"></button>' +
+      '<button data-action="transcript" title="Transcript"><img src="' + HISTORY_ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
     '</td>';
 
   // match the header:
@@ -2999,6 +2999,7 @@ for (var i = 0; i < rows.length; i++) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
