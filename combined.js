@@ -2644,12 +2644,12 @@ const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
+// ---- Render rows ----
 var tbody = document.getElementById('cvCallHistoryTableBody');
-var now = Date.now(), cursor = now;
+var now = Date.now();
+var cursor = now;
 
-  // Render rows
-rows.forEach(function(row, idx) {
-  var tr = document.createElement('tr');
+rows.forEach(function(row, idx){
   var dateStr = fmtToday(cursor);
 
   
@@ -2987,6 +2987,7 @@ var iconsHTML =
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
