@@ -2620,47 +2620,50 @@ if (!window.__cvCallHistoryInit) {
   var now = Date.now();
   var cursor = now;
 
-  rows.forEach(function(row, idx){
-    var tr = document.createElement('tr');
-    var dateStr = fmtToday(cursor);
+  rows.forEach(function(row, idx) {
+  var tr = document.createElement('tr');
+  var dateStr = fmtToday(cursor);
 
-    var iconsHTML = ICONS.map(function(icon){
-      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-    }).join('');
+  var iconsHTML = ICONS.map(function(icon) {
+    var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+    return '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
+  }).join('');
 
-    tr.innerHTML = `
-      <td>${row.cnam}</td>
-      <td>${wrapPhone(row.from)}</td>
-      <td><span class="qos-tag">${row.q1}</span></td>
-      <td>${wrapPhone(row.dialed)}</td>
-      <td></td>
-      <td>${wrapPhone(normalizeTo(row))}</td>
-      <td><span class="qos-tag">${row.q2}</span></td>
-      <td>${dateStr}</td>
-      <td>${row.duration}</td>
-      <td>${row.disposition || ''}</td>
-      <td>${row.release}</td>
-      <td class="icon-cell">${iconsHTML}</td>`;
+  tr.innerHTML = `
+    <td>${row.cnam}</td>
+    <td>${wrapPhone(row.from)}</td>
+    <td><span class="qos-tag">${row.q1}</span></td>
+    <td>${wrapPhone(row.dialed)}</td>
+    <td></td>
+    <td>${wrapPhone(normalizeTo(row))}</td>
+    <td><span class="qos-tag">${row.q2}</span></td>
+    <td>${dateStr}</td>
+    <td>${row.duration}</td>
+    <td>${row.disposition || ''}</td>
+    <td>${row.release}</td>
+    <td class="icon-cell">${iconsHTML}</td>
+  `;
 
-// Wire tester modal ONLY for cradle button (inside loop)
-const cradleBtn = tr.querySelector('button[data-action="cradle"]');
-if (cradleBtn) {
-  cradleBtn.addEventListener('click', function (e) {
-    e.preventDefault();
-    const loadModal = getLoadModal(document);
-    if (loadModal) {
-      loadModal('<div style="padding:20px;font-size:16px;">Tester</div>');
-    } else {
-      console.warn('loadModal not found');
-    }
-  });
-}
+  // ✅ Tester modal wired ONLY to cradle button per row
+  const cradleBtn = tr.querySelector('button[data-action="cradle"]');
+  if (cradleBtn) {
+    cradleBtn.addEventListener('click', function(e) {
+      e.preventDefault();
+      const loadModal = getLoadModal(document);
+      if (loadModal) {
+        loadModal('<div style="padding:20px;font-size:16px;">Tester</div>');
+      } else {
+        console.warn('loadModal not found');
+      }
+    });
+  }
 
-tbody.appendChild(tr);
+  // ✅ Append the row into the table body
+  tbody.appendChild(tr);
 
-tbody.appendChild(tr);
-cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+  // ✅ Adjust cursor for next row's date
+  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+});
 
 
 
@@ -2818,6 +2821,7 @@ cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
