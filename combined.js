@@ -2591,9 +2591,19 @@ if (!window.__cvCallHistoryInit) {
     { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
-  // Phone links
-  var PHONE = /^\\(?\\d{3}\\)?[ -]\\d{3}-\\d{4}$/;
-  function wrapPhone(v){ return PHONE.test(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v; }
+
+ // ✅ safer phone wrapper (no backslash-heavy regex literal)
+function wrapPhone(v){
+  var s = String(v || '');
+  // strip non-digits without backslash-heavy regex literals
+  var digits = s.replace(/[^0-9]/g, '');   // <- no escapes like \d or \( so it won't break
+  // treat anything that *looks* like NANPA with a hyphen as clickable
+  var looksFormatted = s.indexOf('-') > 0;
+  return (looksFormatted && digits.length === 10)
+    ? '<a href="#" title="Click to Call">' + s + '</a>'
+    : s;
+}
+
 
   // Relative dates
   const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
@@ -2925,6 +2935,7 @@ document.addEventListener('click', function(e){
 })();
 
 } // <-- closes if (!window.__cvCallHistoryInit)
+
 
 
 
