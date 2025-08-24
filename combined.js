@@ -2582,29 +2582,28 @@ var EXT_PREFIXED = new RegExp('^Ext\\.\\s*\\d{3}$');   // 'Ext. 207'
 var TO_EXT_RE    = new RegExp('^Ext\\.\\s*(\\d{3})');  // extract '207' from 'Ext. 207 (Name)'
 var DIGITS       = new RegExp('\\D', 'g');
 
-function pickExtFromPhone(phone){
-  var exts = [200,201,202,203,204,205,206,207];
-  var d = String(phone || '').replace(DIGITS, '');
-  var last2 = d.slice(-2) || '0';
-  var idx = parseInt(last2, 10) % exts.length;
-  return 'Ext. ' + exts[idx];
-}
+var EXT_ONLY = /^\d{3}$/;           // 3 digits (extension)
+var DIGITS   = /\D/g;               // non-digits
 
 function normalizeTo(row){
   var from = String(row.from || '');
   var to   = String(row.to   || '');
 
-  // Outbound: From is an extension → To should mirror Dialed
-  if (EXT_ONLY.test(from) || EXT_PREFIXED.test(from)) {
+  // Outbound: From is an extension → To = Dialed
+  if (EXT_ONLY.test(from) || /^Ext\.\s*\d{3}$/.test(from)) {
     return row.dialed;
   }
 
-  // Inbound with explicit 'Ext. 206 (Name)' → keep the bare extension
-  var m = TO_EXT_RE.exec(to);
+  // Inbound: keep explicit Ext. ### if present; otherwise derive
+  var m = /^Ext\.\s*(\d{3})/.exec(to);
   if (m) return 'Ext. ' + m[1];
 
-  // Inbound without explicit final ext → derive a stable ext from caller digits
-  return pickExtFromPhone(from);
+  // Derive an extension from caller digits (your existing fallback)
+  var exts = [200,201,202,203,204,205,206,207];
+  var d = from.replace(DIGITS, '');
+  var last2 = d.slice(-2) || '0';
+  var idx = parseInt(last2, 10) % exts.length;
+  return 'Ext. ' + exts[idx];
 }
 
 
@@ -3010,6 +3009,7 @@ function normalizeTo(row){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
