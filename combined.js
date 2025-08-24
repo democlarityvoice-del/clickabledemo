@@ -2771,19 +2771,28 @@ if (!window.__cvCallHistoryInit) {
       var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
       var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
 
-      // Simple heuristic: phone-looking "from" → inbound
-      if (/^\(?\d{3}\)?[ -]\d{3}-\d{4}$/.test(from)) {
-        openModal(buildInboundHTML(from, date));
-      } else {
-        var html = '<div class="cvctg-steps">'
-                 +   '<div class="cvctg-step">'
-                 +     '<div class="cvctg-time">' + (date||'') + '</div>'
-                 +     '<div class="cvctg-dot"></div>'
-                 +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
-                 +   '</div>'
-                 + '</div>';
-        openModal(html);
-      }
+      // Decide outbound vs inbound by extension vs phone
+var EXT_3DIG = new RegExp("^\\d{3}$");           // any 3 digits
+var EXT_PREFIXED = new RegExp("^Ext\\.\\s*\\d{3}$"); // "Ext. 207"
+
+if (EXT_3DIG.test(from) || EXT_PREFIXED.test(from)) {
+  // OUTBOUND
+  var start = parseStartTimeFromCell(date);
+  var t0 = fmtClock(start);
+  var htmlOut = ''
+    + '<div class="cvctg-steps">'
+    +   '<div class="cvctg-step">'
+    +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
+    +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
+    +   '</div>'
+    + '</div>';
+  openCradleModal('Cradle To Grave', htmlOut);
+} else {
+  // INBOUND
+  var htmlIn = buildInboundCradleHTML(from, date);
+  openCradleModal('Cradle To Grave', htmlIn);
+}
+
     });
   }
 
@@ -2957,6 +2966,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
