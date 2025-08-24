@@ -2759,41 +2759,40 @@ if (!window.__cvCallHistoryInit) {
       return html;
     }
 
-    // Delegated click: works for any future rows too
-    doc.addEventListener('click', function(ev){
-      var tgt = ev.target;
-      var btn = tgt && tgt.closest ? tgt.closest('button[data-action="cradle"]') : null;
-      if (!btn) return;
+// --- Cradle click handler (drop-in) ---
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
 
-      ev.preventDefault();
-      var tr   = btn.closest('tr');
-      var tds  = tr ? tr.querySelectorAll('td') : null;
-      var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-      var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
+  var tr   = btn.closest('tr');
+  var tds  = tr ? tr.querySelectorAll('td') : null;
+  var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
+  var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
 
-      // Decide outbound vs inbound by extension vs phone
-var EXT_3DIG = new RegExp("^\\d{3}$");           // any 3 digits
-var EXT_PREFIXED = new RegExp("^Ext\\.\\s*\\d{3}$"); // "Ext. 207"
+  // Outbound = 3-digit extension like "207" or "Ext. 207"
+  var EXT_3DIG     = new RegExp('^\\d{3}$');
+  var EXT_PREFIXED = new RegExp('^Ext\\.\\s*\\d{3}$');
 
-if (EXT_3DIG.test(from) || EXT_PREFIXED.test(from)) {
-  // OUTBOUND
-  var start = parseStartTimeFromCell(date);
-  var t0 = fmtClock(start);
-  var htmlOut = ''
-    + '<div class="cvctg-steps">'
-    +   '<div class="cvctg-step">'
-    +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
-    +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
-    +   '</div>'
-    + '</div>';
-  openCradleModal('Cradle To Grave', htmlOut);
-} else {
-  // INBOUND
-  var htmlIn = buildInboundCradleHTML(from, date);
-  openCradleModal('Cradle To Grave', htmlIn);
-}
+  if (EXT_3DIG.test(from) || EXT_PREFIXED.test(from)) {
+    // OUTBOUND
+    var start  = parseStartTimeFromCell(date);
+    var t0     = fmtClock(start);
+    var htmlOut = ''
+      + '<div class="cvctg-steps">'
+      +   '<div class="cvctg-step">'
+      +     '<div class="cvctg-time">' + t0 + '</div><div class="cvctg-dot"></div>'
+      +     '<div class="cvctg-text">Outbound call placed from ' + from + '</div>'
+      +   '</div>'
+      + '</div>';
+    openCradleModal('Cradle To Grave', htmlOut);
+  } else {
+    // INBOUND
+    var htmlIn = buildInboundCradleHTML(from, date);
+    openCradleModal('Cradle To Grave', htmlIn);
+  }
+});
+// --- end Cradle click handler ---
 
-    });
   }
 
   function tryInstall(){
@@ -2966,6 +2965,7 @@ if (EXT_3DIG.test(from) || EXT_PREFIXED.test(from)) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
