@@ -2622,7 +2622,7 @@ if (!window.__cvCallHistoryInit) {
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
- /* ------- Render ------- */
+   /* ------- Render ------- */
   function renderRows(){
     var tbody  = document.getElementById('cvCallHistoryTableBody');
     if (!tbody) return;
@@ -2657,8 +2657,7 @@ if (!window.__cvCallHistoryInit) {
       cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
     });
 
-
-  // Fit iframe height to content
+    // Fit iframe height to content
     requestAnimationFrame(function () {
       try {
         var h = document.documentElement.scrollHeight;
@@ -2668,10 +2667,7 @@ if (!window.__cvCallHistoryInit) {
   }
   renderRows();
 
-
-
-
-  // Listen: drop a visual-only player row beneath the clicked row
+  /* ----- Listen dropdown (single handler) ----- */
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
     if (!btn) return;
@@ -2689,37 +2685,6 @@ if (!window.__cvCallHistoryInit) {
 
     // close others
     Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
- 
-
-
-// Resize host iframe to fit content
-requestAnimationFrame(function () {
-  try {
-    var h = document.documentElement.scrollHeight;
-    if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-  } catch (e) {}
-});
-
-// Listen: drop a visual-only player row beneath the clicked row
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-  if (!btn) return;
-  e.preventDefault();
-
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
-
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cv-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
-  }
-
-  // close others
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-
-  
 
     // build drop-down player row
     var audioTr = document.createElement('tr');
@@ -2728,7 +2693,7 @@ document.addEventListener('click', function(e){
     var colCount = tr.children.length;
     var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
 
-    var html =
+    audioTr.innerHTML =
       '<td colspan="'+colCount+'">' +
         '<div class="cv-audio-player">' +
           '<button class="cv-audio-play" aria-label="Play"></button>' +
@@ -2740,10 +2705,10 @@ document.addEventListener('click', function(e){
         '</div>' +
       '</td>';
 
-    audioTr.innerHTML = html;
     tr.parentNode.insertBefore(audioTr, tr.nextSibling);
     btn.setAttribute('aria-expanded','true');
   });
+
 
 })();
 <\/script>
@@ -2875,6 +2840,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
