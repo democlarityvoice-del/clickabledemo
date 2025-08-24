@@ -2643,7 +2643,7 @@ if (!window.__cvCallHistoryInit) {
       <td>${row.release}</td>
       <td class="icon-cell">${iconsHTML}</td>`;
 
-// ✅ Wire tester modal ONLY for cradle button
+// Wire tester modal ONLY for cradle button (inside loop)
 const cradleBtn = tr.querySelector('button[data-action="cradle"]');
 if (cradleBtn) {
   cradleBtn.addEventListener('click', function (e) {
@@ -2656,6 +2656,8 @@ if (cradleBtn) {
     }
   });
 }
+
+tbody.appendChild(tr);
 
 tbody.appendChild(tr);
 cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
@@ -2816,6 +2818,7 @@ cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
