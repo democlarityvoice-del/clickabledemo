@@ -2412,11 +2412,11 @@ if (!window.__cvCallHistoryInit) {
   const CALLHISTORY_SLOT        = 'div.callhistory-panel-main';
   const CALLHISTORY_IFRAME_ID   = 'cv-callhistory-iframe';
 
-  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
-  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const HISTORY_ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const HISTORY_ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const HISTORY_ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
   // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) -------- //
   function buildCallHistorySrcdoc() {
@@ -2546,11 +2546,11 @@ if (!window.__cvCallHistoryInit) {
 (function () {
   // Icons (Listen is plain, others circles)
   const ICONS = [
-    { key: 'download',   src: '${ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${ICON_LISTEN}',     title: 'Listen',     circle: false },
-    { key: 'cradle',     src: '${ICON_CRADLE}',     title: 'Cradle',     circle: true  },
-    { key: 'notes',      src: '${ICON_NOTES}',      title: 'Notes',      circle: true  },
-    { key: 'transcript', src: '${ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
+    { key: 'download',   src: '${HISTORY_ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
+    { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'cradle',     src: '${HISTORY_ICON_CRADLE}',     title: 'Cradle',     circle: true  },
+    { key: 'notes',      src: '${HISTORY_ICON_NOTES}',      title: 'Notes',      circle: true  },
+    { key: 'transcript', src: '${HISTORY_ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
   // Phone links
@@ -2832,6 +2832,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
