@@ -2608,50 +2608,59 @@ if (!window.__cvCallHistoryInit) {
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
-   /* ------- Render ------- */
-  function renderRows(){
-    var tbody  = document.getElementById('cvCallHistoryTableBody');
-    if (!tbody) return;
+  
+/* ---- Render (hard-wired rows; dynamic Date only) ---- */
+(function renderRowsDynamicDate(){
+  var tbody = document.getElementById('cvCallHistoryTableBody');
+  if (!tbody) return;
+  tbody.innerHTML = '';
 
-    tbody.innerHTML = '';
-    var cursor = Date.now();
+  var cursor = Date.now();
 
-    rows.forEach(function(row, idx){
-      var tr = document.createElement('tr');
-      var dateStr = fmtToday(cursor);
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var tr  = document.createElement('tr');
 
-      var iconsHTML = ICONS.map(function(icon){
-        var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-        return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-      }).join('');
+    // Date is dynamic; everything else uses the row as-is
+    var dateStr = (typeof fmtToday === 'function') ? fmtToday(cursor) : (row.date || '');
 
-      tr.innerHTML =
-          '<td>' + row.cnam + '</td>'
-        + '<td>' + wrapPhone(row.from) + '</td>'
-        + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
-        + '<td>' + wrapPhone(row.dialed) + '</td>'
-        + '<td></td>'
-        + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
-        + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
-        + '<td>' + dateStr + '</td>'
-        + '<td>' + row.duration + '</td>'
-        + '<td>' + (row.disposition || '') + '</td>'
-        + '<td>' + row.release + '</td>'
-        + '<td class="icon-cell">' + iconsHTML + '</td>';
+    // Build the 5 action icons
+    var iconsHTML = '';
+    for (var j = 0; j < ICONS.length; j++) {
+      var icon = ICONS[j];
+      var cls  = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      iconsHTML += '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
+    }
 
-      tbody.appendChild(tr);
-      cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-    });
+    tr.innerHTML =
+        '<td>' + row.cnam + '</td>'
+      + '<td>' + wrapPhone(row.from) + '</td>'
+      + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
+      + '<td>' + wrapPhone(row.dialed) + '</td>'
+      + '<td></td>'
+      + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
+      + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
+      + '<td>' + dateStr + '</td>'
+      + '<td>' + row.duration + '</td>'
+      + '<td>' + (row.disposition || '') + '</td>'
+      + '<td>' + row.release + '</td>'
+      + '<td class="icon-cell">' + iconsHTML + '</td>';
 
-    // Fit iframe height to content
-    requestAnimationFrame(function () {
-      try {
-        var h = document.documentElement.scrollHeight;
-        if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-      } catch (e) {}
-    });
+    tbody.appendChild(tr);
+
+    // advance “time ago” for the next row (defaults to 2 min if array missing)
+    cursor -= ((DATE_GAPS_MIN && DATE_GAPS_MIN[i] || 2) * 60 * 1000);
   }
-  renderRows();
+
+  // fit iframe height
+  requestAnimationFrame(function () {
+    try {
+      var h = document.documentElement.scrollHeight;
+      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+    } catch (e) {}
+  });
+})();
+
 
 // ---- CTG wiring (delegated; fills modal timeline) ----
 (function wireCradle(){
@@ -2981,6 +2990,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
