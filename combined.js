@@ -2655,6 +2655,88 @@ if (!window.__cvCallHistoryInit) {
     } catch (e) {}
   });
 
+  // Attach click handler to fake Cradle button
+document.querySelector("#fakeCradleBtn").addEventListener("click", () => {
+  openCradleModal();
+});
+
+// Create modal structure
+function openCradleModal() {
+  // Check if modal already exists
+  let existingModal = document.querySelector("#cv-cradle-modal");
+  if (existingModal) {
+    existingModal.style.display = "block";
+    return;
+  }
+
+  const modal = document.createElement("div");
+  modal.id = "cv-cradle-modal";
+  modal.style.position = "fixed";
+  modal.style.top = "0";
+  modal.style.left = "0";
+  modal.style.width = "100%";
+  modal.style.height = "100%";
+  modal.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
+  modal.style.display = "flex";
+  modal.style.alignItems = "center";
+  modal.style.justifyContent = "center";
+  modal.style.zIndex = "9999";
+
+  // Modal content box
+  const content = document.createElement("div");
+  content.style.background = "#fff";
+  content.style.width = "800px";      // Matches Call Center modal
+  content.style.height = "500px";     // Matches Call Center modal
+  content.style.borderRadius = "8px";
+  content.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.4)";
+  content.style.display = "flex";
+  content.style.flexDirection = "column";
+
+  // Modal header
+  const header = document.createElement("div");
+  header.style.display = "flex";
+  header.style.justifyContent = "space-between";
+  header.style.alignItems = "center";
+  header.style.padding = "15px 20px";
+  header.style.backgroundColor = "#f5f5f5";
+  header.style.borderBottom = "1px solid #ddd";
+
+  const title = document.createElement("h2");
+  title.textContent = "Cradle To Grave";
+  title.style.margin = "0";
+  title.style.fontSize = "18px";
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "×";
+  closeBtn.style.fontSize = "22px";
+  closeBtn.style.border = "none";
+  closeBtn.style.background = "transparent";
+  closeBtn.style.cursor = "pointer";
+
+  closeBtn.addEventListener("click", () => {
+    modal.style.display = "none";
+  });
+
+  header.appendChild(title);
+  header.appendChild(closeBtn);
+
+  // Modal body
+  const body = document.createElement("div");
+  body.style.flex = "1";
+  body.style.padding = "20px";
+  body.style.display = "flex";
+  body.style.alignItems = "center";
+  body.style.justifyContent = "center";
+  body.style.fontSize = "24px";
+  body.textContent = "TEST";
+
+  // Build modal
+  content.appendChild(header);
+  content.appendChild(body);
+  modal.appendChild(content);
+  document.body.appendChild(modal);
+}
+
   // Listen: drop a visual-only player row beneath the clicked row
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
@@ -2832,6 +2914,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
