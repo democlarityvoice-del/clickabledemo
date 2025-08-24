@@ -2644,19 +2644,6 @@ if (!window.__cvCallHistoryInit) {
     <td class="icon-cell">${iconsHTML}</td>
   `;
 
-  // ✅ Tester modal wired ONLY to cradle button per row
-  const cradleBtn = tr.querySelector('button[data-action="cradle"]');
-  if (cradleBtn) {
-    cradleBtn.addEventListener('click', function(e) {
-      e.preventDefault();
-      const loadModal = getLoadModal(document);
-      if (loadModal) {
-        loadModal('<div style="padding:20px;font-size:16px;">Tester</div>');
-      } else {
-        console.warn('loadModal not found');
-      }
-    });
-  }
 
   // ✅ Append the row into the table body
   tbody.appendChild(tr);
@@ -2821,6 +2808,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
