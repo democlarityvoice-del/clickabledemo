@@ -2650,26 +2650,17 @@ rows.forEach(function(row, idx) {
   var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
 
-  // Build icons cell using constants
-  var iconsHTML = `
-    <td class="icon-cell">
-      <button data-action="listen" title="Listen">
-        <img src="${ICON_LISTEN}" alt="Listen" />
-      </button>
-      <button data-action="download" title="Download">
-        <img src="${ICON_DOWNLOAD}" alt="Download" />
-      </button>
-      <button data-action="cradle" title="Cradle to Grave">
-        <img src="${ICON_CRADLE}" alt="Cradle" />
-      </button>
-      <button data-action="notes" title="Notes">
-        <img src="${ICON_NOTES}" alt="Notes" />
-      </button>
-      <button data-action="transcript" title="Transcript">
-        <img src="${ICON_TRANSCRIPT}" alt="Transcript" />
-      </button>
-    </td>
-  `;
+  
+// Build icons HTML inside srcdoc safely
+var iconsHTML =
+  '<td class="icon-cell">' +
+    '<button data-action="listen" title="Listen"><img src="' + ICON_LISTEN + '" alt="Listen"></button>' +
+    '<button data-action="download" title="Download"><img src="' + ICON_DOWNLOAD + '" alt="Download"></button>' +
+    '<button data-action="cradle" title="Cradle to Grave"><img src="' + ICON_CRADLE + '" alt="Cradle"></button>' +
+    '<button data-action="notes" title="Notes"><img src="' + ICON_NOTES + '" alt="Notes"></button>' +
+    '<button data-action="transcript" title="Transcript"><img src="' + ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
+  '</td>';
+
 
   // Safely add the icons cell into the row
   tr.innerHTML = iconsHTML;
@@ -2994,6 +2985,7 @@ rows.forEach(function(row, idx) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
