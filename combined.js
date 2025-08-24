@@ -2657,7 +2657,7 @@ if (!window.__cvCallHistoryInit) {
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('');
 
-    tr.innerHTML = `
+    tr.innerHTML = \`
       <td>${row.cnam}</td>
       <td>${wrapPhone(row.from)}</td>
       <td><span class="qos-tag">${row.q1}</span></td>
@@ -2669,7 +2669,7 @@ if (!window.__cvCallHistoryInit) {
       <td>${row.duration}</td>
       <td>${row.disposition || ''}</td>
       <td>${row.release}</td>
-      <td class="icon-cell">${iconsHTML}</td>`;
+      <td class="icon-cell">\${iconsHTML}</td>\`;
     tbody.appendChild(tr);
 
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
@@ -2988,6 +2988,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
