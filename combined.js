@@ -2542,9 +2542,11 @@ if (!window.__cvCallHistoryInit) {
       <tbody id="cvCallHistoryTableBody"></tbody>
     </table>
   </div>
+
 <script>
 (function () {
-  // Icons (Listen is plain, others circles)
+  
+// Icons (Listen is plain, others circles)
   const ICONS = [
     { key: 'download',   src: '${HISTORY_ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
     { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: true },
@@ -2553,37 +2555,29 @@ if (!window.__cvCallHistoryInit) {
     { key: 'transcript', src: '${HISTORY_ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
- // Treat as external phone if it has 10+ digits after stripping non-digits
-function isExternalNumber(v) {
-  v = String(v || '');
-  var digits = '';
-  for (var i = 0; i < v.length; i++) {
-    var c = v.charCodeAt(i);
-    if (c >= 48 && c <= 57) digits += v[i]; // keep 0–9
+ 
+/* ------- Helpers ------- */
+  function isExternalNumber(v) {
+    v = String(v || '');
+    var digits = '';
+    for (var i = 0; i < v.length; i++) {
+      var c = v.charCodeAt(i);
+      if (c >= 48 && c <= 57) digits += v[i];
+    }
+    return digits.length >= 10;
   }
-  return digits.length >= 10;
-}
-
-// Keep blue link + tooltip for real phone numbers; leave extensions plain
-function wrapPhone(v) {
-  return isExternalNumber(v)
-    ? '<a href="#" title="Click to Call">' + v + '</a>'
-    : v;
-}
-
-
-  // Relative dates
+  function wrapPhone(v) {
+    return isExternalNumber(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v;
+  }
   const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
   function fmtToday(ts){
     var d = new Date(ts), h = d.getHours(), m = String(d.getMinutes()).padStart(2,'0');
-    var ampm = h >= 12 ? 'pm' : 'am';
+    var ap = h >= 12 ? 'pm' : 'am';
     h = (h % 12) || 12;
-    return 'Today, ' + h + ':' + m + ' ' + ampm;
+    return 'Today, ' + h + ':' + m + ' ' + ap;
   }
-
-  // Normalize "To" column per rules
-  var EXT_ONLY = /^\\d{3}$/;
-  var DIGITS = /\\D/g;
+  var EXT_ONLY = /^\d{3}$/;
+  var DIGITS   = /\D/g;
   function pickExtFromPhone(phone){
     var exts = [200,201,202,203,204,205,206,207];
     var d = String(phone || '').replace(DIGITS, '');
@@ -2592,11 +2586,9 @@ function wrapPhone(v) {
     return 'Ext. ' + exts[idx];
   }
   function normalizeTo(row){
-    // Outbound (from = extension): To = Dialed
-    if (EXT_ONLY.test(row.from)) return row.dialed;
-    // Inbound: ensure final destination is an extension; strip appended name
+    if (EXT_ONLY.test(row.from)) return row.dialed; // outbound (from is an extension)
     var to = row.to || '';
-    var m = /^Ext\\.\\s*(\\d{3})/.exec(to);
+    var m = /^Ext\.\s*(\d{3})/.exec(to);
     if (m) return 'Ext. ' + m[1];
     return pickExtFromPhone(row.from);
   }
@@ -2630,45 +2622,52 @@ function wrapPhone(v) {
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
-  // Render
-  var tbody = document.getElementById('cvCallHistoryTableBody');
-  var now = Date.now();
-  var cursor = now;
+ /* ------- Render ------- */
+  function renderRows(){
+    var tbody  = document.getElementById('cvCallHistoryTableBody');
+    if (!tbody) return;
 
-  rows.forEach(function(row, idx){
-    var tr = document.createElement('tr');
-    var dateStr = fmtToday(cursor);
+    tbody.innerHTML = '';
+    var cursor = Date.now();
 
-    var iconsHTML = ICONS.map(function(icon){
-      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-    }).join('');
+    rows.forEach(function(row, idx){
+      var tr = document.createElement('tr');
+      var dateStr = fmtToday(cursor);
 
-    tr.innerHTML = \`
-      <td>\${row.cnam}</td>
-      <td>\${wrapPhone(row.from)}</td>
-      <td><span class="qos-tag">\${row.q1}</span></td>
-      <td>\${wrapPhone(row.dialed)}</td>
-      <td></td>
-      <td>\${wrapPhone(normalizeTo(row))}</td>
-      <td><span class="qos-tag">\${row.q2}</span></td>
-      <td>\${dateStr}</td>
-      <td>\${row.duration}</td>
-      <td>\${row.disposition || ''}</td>
-      <td>\${row.release}</td>
-      <td class="icon-cell">\${iconsHTML}</td>\`;
-    tbody.appendChild(tr);
+      var iconsHTML = ICONS.map(function(icon){
+        var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+        return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+      }).join('');
 
-    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-  });
+      tr.innerHTML =
+          '<td>' + row.cnam + '</td>'
+        + '<td>' + wrapPhone(row.from) + '</td>'
+        + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
+        + '<td>' + wrapPhone(row.dialed) + '</td>'
+        + '<td></td>'
+        + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
+        + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
+        + '<td>' + dateStr + '</td>'
+        + '<td>' + row.duration + '</td>'
+        + '<td>' + (row.disposition || '') + '</td>'
+        + '<td>' + row.release + '</td>'
+        + '<td class="icon-cell">' + iconsHTML + '</td>';
 
-  // Resize host iframe to fit content
-  requestAnimationFrame(function () {
-    try {
-      var h = document.documentElement.scrollHeight;
-      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-    } catch (e) {}
-  });
+      tbody.appendChild(tr);
+      cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+    });
+
+
+  // Fit iframe height to content
+    requestAnimationFrame(function () {
+      try {
+        var h = document.documentElement.scrollHeight;
+        if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+      } catch (e) {}
+    });
+  }
+  renderRows();
+
 
 
 
@@ -2720,11 +2719,7 @@ document.addEventListener('click', function(e){
   // close others
   Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
 
-  // build drop-down player row
-
-
-
-
+  
 
     // build drop-down player row
     var audioTr = document.createElement('tr');
@@ -2880,6 +2875,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
