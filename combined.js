@@ -2647,6 +2647,12 @@ if (!window.__cvCallHistoryInit) {
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
   });
 
+document.addEventListener('click', function(e) {
+  if (e.target.closest('button[data-action="cradle"]')) {
+    alert("tester");
+  }
+});
+
 // ---- Cradle-to-Grave Tester Modal ----
 
 // 1. Create modal HTML once
@@ -2889,6 +2895,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
