@@ -2547,7 +2547,7 @@ if (!window.__cvCallHistoryInit) {
   // Icons (Listen is plain, others circles)
   const ICONS = [
     { key: 'download',   src: '${HISTORY_ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: false },
+    { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: true },
     { key: 'cradle',     src: '${HISTORY_ICON_CRADLE}',     title: 'Cradle',     circle: true  },
     { key: 'notes',      src: '${HISTORY_ICON_NOTES}',      title: 'Notes',      circle: true  },
     { key: 'transcript', src: '${HISTORY_ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
@@ -2655,87 +2655,74 @@ if (!window.__cvCallHistoryInit) {
     } catch (e) {}
   });
 
-  // Attach click handler to fake Cradle button
-document.querySelector("#fakeCradleBtn").addEventListener("click", () => {
-  openCradleModal();
-});
+ // === CRADLE MODAL SETUP ===
+(function attachCradleModal() {
+  const cradleBtn = document.querySelector("img[src*='" + HISTORY_ICON_CRADLE + "']");
+  if (!cradleBtn) return; // failsafe if button doesn't exist
 
-// Create modal structure
-function openCradleModal() {
-  // Check if modal already exists
-  let existingModal = document.querySelector("#cv-cradle-modal");
-  if (existingModal) {
-    existingModal.style.display = "block";
-    return;
-  }
-
+  // Create the modal container
   const modal = document.createElement("div");
   modal.id = "cv-cradle-modal";
-  modal.style.position = "fixed";
-  modal.style.top = "0";
-  modal.style.left = "0";
-  modal.style.width = "100%";
-  modal.style.height = "100%";
-  modal.style.backgroundColor = "rgba(0, 0, 0, 0.6)";
-  modal.style.display = "flex";
-  modal.style.alignItems = "center";
-  modal.style.justifyContent = "center";
-  modal.style.zIndex = "9999";
-
-  // Modal content box
-  const content = document.createElement("div");
-  content.style.background = "#fff";
-  content.style.width = "800px";      // Matches Call Center modal
-  content.style.height = "500px";     // Matches Call Center modal
-  content.style.borderRadius = "8px";
-  content.style.boxShadow = "0 4px 16px rgba(0, 0, 0, 0.4)";
-  content.style.display = "flex";
-  content.style.flexDirection = "column";
+  modal.style.cssText = `
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    width: 400px;
+    height: 300px;
+    background: #fff;
+    border: 1px solid #ccc;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+    border-radius: 6px;
+    z-index: 9999;
+    display: none;
+    flex-direction: column;
+    font-family: Arial, sans-serif;
+  `;
 
   // Modal header
   const header = document.createElement("div");
-  header.style.display = "flex";
-  header.style.justifyContent = "space-between";
-  header.style.alignItems = "center";
-  header.style.padding = "15px 20px";
-  header.style.backgroundColor = "#f5f5f5";
-  header.style.borderBottom = "1px solid #ddd";
+  header.style.cssText = `
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background: #e57027;
+    color: #fff;
+    font-weight: bold;
+    font-size: 14px;
+  `;
+  header.textContent = "Cradle To Grave";
 
-  const title = document.createElement("h2");
-  title.textContent = "Cradle To Grave";
-  title.style.margin = "0";
-  title.style.fontSize = "18px";
-
-  const closeBtn = document.createElement("button");
+  const closeBtn = document.createElement("span");
   closeBtn.textContent = "×";
-  closeBtn.style.fontSize = "22px";
-  closeBtn.style.border = "none";
-  closeBtn.style.background = "transparent";
-  closeBtn.style.cursor = "pointer";
-
-  closeBtn.addEventListener("click", () => {
-    modal.style.display = "none";
-  });
-
-  header.appendChild(title);
+  closeBtn.style.cssText = `
+    cursor: pointer;
+    font-size: 18px;
+    line-height: 18px;
+  `;
+  closeBtn.onclick = () => (modal.style.display = "none");
   header.appendChild(closeBtn);
 
-  // Modal body
+  // Modal body placeholder
   const body = document.createElement("div");
-  body.style.flex = "1";
-  body.style.padding = "20px";
-  body.style.display = "flex";
-  body.style.alignItems = "center";
-  body.style.justifyContent = "center";
-  body.style.fontSize = "24px";
+  body.style.cssText = `
+    flex: 1;
+    padding: 16px;
+    font-size: 14px;
+    color: #333;
+  `;
   body.textContent = "TEST";
 
-  // Build modal
-  content.appendChild(header);
-  content.appendChild(body);
-  modal.appendChild(content);
+  modal.appendChild(header);
+  modal.appendChild(body);
   document.body.appendChild(modal);
-}
+
+  // Attach button click
+  cradleBtn.addEventListener("click", () => {
+    modal.style.display = "flex";
+  });
+})();
+
 
   // Listen: drop a visual-only player row beneath the clicked row
   document.addEventListener('click', function(e){
@@ -2914,6 +2901,7 @@ function openCradleModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
