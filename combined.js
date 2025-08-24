@@ -2651,11 +2651,11 @@ var now    = Date.now();
 var cursor = now;
 
 for (var i = 0; i < rows.length; i++) {
-  var row = rows[i];
+  var d = rows[i];
   var tr = document.createElement('tr');
   var dateStr = fmtToday(cursor);
 
-  // Build icons HTML safely
+  // icon cell
   var iconsHTML =
     '<td class="icon-cell">' +
       '<button data-action="listen" title="Listen"><img src="' + ICON_LISTEN + '" alt="Listen"></button>' +
@@ -2665,18 +2665,23 @@ for (var i = 0; i < rows.length; i++) {
       '<button data-action="transcript" title="Transcript"><img src="' + ICON_TRANSCRIPT + '" alt="Transcript"></button>' +
     '</td>';
 
-  // Restore the rest of your row here
+  // match the header:
+  // From Name | From | QOS | Dialed | To Name | To | QOS | Date | Duration | Disposition | Release Reason | (icons)
   tr.innerHTML =
-    '<td>' + dateStr + '</td>' +
-    '<td>' + wrapPhone(row.phone) + '</td>' +
-    '<td>' + row.name + '</td>' +
-    '<td>' + row.direction + '</td>' +
-    '<td>' + row.duration + '</td>' +
-    '<td>' + row.status + '</td>' +
-    iconsHTML;
+      '<td>' + d.cnam + '</td>' +
+      '<td>' + wrapPhone(d.from) + '</td>' +
+      '<td><span class="qos-tag">' + d.q1 + '</span></td>' +
+      '<td>' + wrapPhone(d.dialed) + '</td>' +
+      '<td></td>' +
+      '<td>' + wrapPhone(normalizeTo(d)) + '</td>' +
+      '<td><span class="qos-tag">' + d.q2 + '</span></td>' +
+      '<td>' + dateStr + '</td>' +
+      '<td>' + d.duration + '</td>' +
+      '<td>' + (d.disposition || '') + '</td>' +
+      '<td>' + d.release + '</td>' +
+      iconsHTML;
 
   tbody.appendChild(tr);
-
   cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
 }
 
@@ -2995,6 +3000,7 @@ for (var i = 0; i < rows.length; i++) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
