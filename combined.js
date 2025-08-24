@@ -2647,98 +2647,6 @@ if (!window.__cvCallHistoryInit) {
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
   });
 
-document.addEventListener('click', function(e) {
-  if (e.target.closest('button[data-action="cradle"]')) {
-    alert("tester");
-  }
-});
-
-// ---- Cradle-to-Grave Tester Modal ----
-
-// 1. Create modal HTML once
-(function addHistoryTesterModal() {
-  if (document.getElementById('historyTesterModal')) return; // safety guard
-
-  const modal = document.createElement('div');
-  modal.id = 'historyTesterModal';
-  modal.style.cssText = `
-    display: none;
-    position: fixed;
-    z-index: 9999;
-    left: 0; top: 0;
-    width: 100%; height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    justify-content: center;
-    align-items: center;
-  `;
-  modal.innerHTML = `
-    <div style="
-      background: #fff;
-      padding: 20px 30px;
-      border-radius: 10px;
-      font-size: 22px;
-      font-weight: bold;
-      box-shadow: 0 0 10px rgba(0,0,0,0.3);
-      text-align: center;
-    ">
-      Tester<br><br>
-      <button id="historyTesterClose" style="
-        padding: 6px 14px;
-        border: none;
-        background: #e57027;
-        color: #fff;
-        border-radius: 5px;
-        cursor: pointer;
-        font-size: 14px;
-      ">Close</button>
-    </div>
-  `;
-  document.body.appendChild(modal);
-
-  // Close button behavior
-  document.getElementById('historyTesterClose').onclick = function () {
-    modal.style.display = 'none';
-  };
-})();
-
-// 2. Attach click handler ONLY to cradle-to-grave buttons
-document.addEventListener('click', function (e) {
-  if (e.target.closest('button[data-action="cradle"]')) {
-    e.preventDefault();
-    const modal = document.getElementById('historyTesterModal');
-    if (modal) modal.style.display = 'flex';
-  }
-});
-
-  // Resize host iframe to fit content
-  requestAnimationFrame(function () {
-    try {
-      var h = document.documentElement.scrollHeight;
-      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-    } catch (e) {}
-  });
-
-  // Listen: drop a visual-only player row beneath the clicked row
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-    if (!btn) return;
-    e.preventDefault();
-
-    var tr = btn.closest('tr');
-    var next = tr && tr.nextElementSibling;
-
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cv-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded','false');
-      return;
-    }
-
-    // close others
-    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
- 
-
-
 
 
     // build drop-down player row
@@ -2895,6 +2803,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
