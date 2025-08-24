@@ -2643,20 +2643,20 @@ if (!window.__cvCallHistoryInit) {
       <td>\${row.release}</td>
       <td class="icon-cell">\${iconsHTML}</td>\`;
 
- // Inside your Call History render() loop, after creating `tr.innerHTML` but BEFORE appending `tr`
-const cradleBtn = tr.querySelector('button[data-action="cradle"]');
+ // ✅ Wire tester modal ONLY for cradle button
+var cradleBtn = tr.querySelector('button[data-action="cradle"]');
 if (cradleBtn) {
   cradleBtn.addEventListener('click', function (e) {
     e.preventDefault();
-    // Get the portal's built-in loadModal function
-    const loadModal = getLoadModal(document);
+    var loadModal = getLoadModal(document);
     if (loadModal) {
       loadModal('<div style="padding:20px;font-size:16px;">Tester</div>');
     } else {
-      console.warn("loadModal not found");
+      console.warn('loadModal not found');
     }
   });
-}    
+}
+
     tbody.appendChild(tr);
 
     
@@ -2820,6 +2820,7 @@ if (cradleBtn) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
