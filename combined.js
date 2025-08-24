@@ -2620,37 +2620,61 @@ if (!window.__cvCallHistoryInit) {
   var now = Date.now();
   var cursor = now;
 
-  rows.forEach(function(row, idx) {
-  var tr = document.createElement('tr');
-  var dateStr = fmtToday(cursor);
+  rows.forEach(function(row, idx){
+    var tr = document.createElement('tr');
+    var dateStr = fmtToday(cursor);
 
-  var iconsHTML = ICONS.map(function(icon) {
-    var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-    return '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
-  }).join('');
+    var iconsHTML = ICONS.map(function(icon){
+      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('');
 
-  tr.innerHTML = `
-    <td>${row.cnam}</td>
-    <td>${wrapPhone(row.from)}</td>
-    <td><span class="qos-tag">${row.q1}</span></td>
-    <td>${wrapPhone(row.dialed)}</td>
-    <td></td>
-    <td>${wrapPhone(normalizeTo(row))}</td>
-    <td><span class="qos-tag">${row.q2}</span></td>
-    <td>${dateStr}</td>
-    <td>${row.duration}</td>
-    <td>${row.disposition || ''}</td>
-    <td>${row.release}</td>
-    <td class="icon-cell">${iconsHTML}</td>
-  `;
+    tr.innerHTML = \`
+      <td>\${row.cnam}</td>
+      <td>\${wrapPhone(row.from)}</td>
+      <td><span class="qos-tag">\${row.q1}</span></td>
+      <td>\${wrapPhone(row.dialed)}</td>
+      <td></td>
+      <td>\${wrapPhone(normalizeTo(row))}</td>
+      <td><span class="qos-tag">\${row.q2}</span></td>
+      <td>\${dateStr}</td>
+      <td>\${row.duration}</td>
+      <td>\${row.disposition || ''}</td>
+      <td>\${row.release}</td>
+      <td class="icon-cell">\${iconsHTML}</td>\`;
+    tbody.appendChild(tr);
 
+    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+  });
 
-  // ✅ Append the row into the table body
-  tbody.appendChild(tr);
+  // Resize host iframe to fit content
+  requestAnimationFrame(function () {
+    try {
+      var h = document.documentElement.scrollHeight;
+      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+    } catch (e) {}
+  });
 
-  // ✅ Adjust cursor for next row's date
-  cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-});
+  // Listen: drop a visual-only player row beneath the clicked row
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+    if (!btn) return;
+    e.preventDefault();
+
+    var tr = btn.closest('tr');
+    var next = tr && tr.nextElementSibling;
+
+    // collapse if already open
+    if (next && next.classList && next.classList.contains('cv-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded','false');
+      return;
+    }
+
+    // close others
+    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+ 
+
 
 
 
@@ -2808,17 +2832,6 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
-
-
-
 
 
 
