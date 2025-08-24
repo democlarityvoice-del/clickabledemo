@@ -2578,40 +2578,6 @@ if (!window.__cvCallHistoryInit) {
   }
 
 
-  // inside the srcdoc string
-var EXT_ONLY = /^\\d{3}$/;
-var DIGITS   = /\\D/g;
-
-function pickExtFromPhone(phone){
-  var exts = [200,201,202,203,204,205,206,207];
-  var d = String(phone || '').replace(DIGITS, '');
-  var last2 = d.slice(-2) || '0';
-  var idx = parseInt(last2, 10) % exts.length;
-  return 'Ext. ' + exts[idx];
-}
-function normalizeTo(row){
-  if (EXT_ONLY.test(row.from)) return row.dialed;     // OUTBOUND
-  var to = row.to || '';
-  var m = /^Ext\\.\\s*(\\d{3})/.exec(to);             // INBOUND (strip name)
-  if (m) return 'Ext. ' + m[1];
-  return pickExtFromPhone(row.from);                   // fallback
-}
-
-
-
-  
-  // Inbound: keep explicit Ext. ### if present; otherwise derive
-  var m = /^Ext\.\s*(\d{3})/.exec(to);
-  if (m) return 'Ext. ' + m[1];
-
-  // Derive an extension from caller digits (your existing fallback)
-  var exts = [200,201,202,203,204,205,206,207];
-  var d = from.replace(DIGITS, '');
-  var last2 = d.slice(-2) || '0';
-  var idx = parseInt(last2, 10) % exts.length;
-  return 'Ext. ' + exts[idx];
-}
-
 
   // ---- STATIC SNAPSHOT (25 rows) ----
   const rows = [
@@ -3015,6 +2981,7 @@ function normalizeTo(row){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
