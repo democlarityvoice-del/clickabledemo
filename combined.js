@@ -2576,22 +2576,37 @@ if (!window.__cvCallHistoryInit) {
     h = (h % 12) || 12;
     return 'Today, ' + h + ':' + m + ' ' + ap;
   }
-  var EXT_ONLY = /^\d{3}$/;
-  var DIGITS   = /\D/g;
-  function pickExtFromPhone(phone){
-    var exts = [200,201,202,203,204,205,206,207];
-    var d = String(phone || '').replace(DIGITS, '');
-    var last2 = d.slice(-2) || '0';
-    var idx = parseInt(last2, 10) % exts.length;
-    return 'Ext. ' + exts[idx];
+  // Normalize "To" column per rules
+var EXT_ONLY     = new RegExp('^\\d{3}$');             // '207'
+var EXT_PREFIXED = new RegExp('^Ext\\.\\s*\\d{3}$');   // 'Ext. 207'
+var TO_EXT_RE    = new RegExp('^Ext\\.\\s*(\\d{3})');  // extract '207' from 'Ext. 207 (Name)'
+var DIGITS       = new RegExp('\\D', 'g');
+
+function pickExtFromPhone(phone){
+  var exts = [200,201,202,203,204,205,206,207];
+  var d = String(phone || '').replace(DIGITS, '');
+  var last2 = d.slice(-2) || '0';
+  var idx = parseInt(last2, 10) % exts.length;
+  return 'Ext. ' + exts[idx];
+}
+
+function normalizeTo(row){
+  var from = String(row.from || '');
+  var to   = String(row.to   || '');
+
+  // Outbound: From is an extension → To should mirror Dialed
+  if (EXT_ONLY.test(from) || EXT_PREFIXED.test(from)) {
+    return row.dialed;
   }
-  function normalizeTo(row){
-    if (EXT_ONLY.test(row.from)) return row.dialed; // outbound (from is an extension)
-    var to = row.to || '';
-    var m = /^Ext\.\s*(\d{3})/.exec(to);
-    if (m) return 'Ext. ' + m[1];
-    return pickExtFromPhone(row.from);
-  }
+
+  // Inbound with explicit 'Ext. 206 (Name)' → keep the bare extension
+  var m = TO_EXT_RE.exec(to);
+  if (m) return 'Ext. ' + m[1];
+
+  // Inbound without explicit final ext → derive a stable ext from caller digits
+  return pickExtFromPhone(from);
+}
+
 
   // ---- STATIC SNAPSHOT (25 rows) ----
   const rows = [
@@ -2995,6 +3010,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
