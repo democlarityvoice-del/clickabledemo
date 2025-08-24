@@ -2576,12 +2576,11 @@ if (!window.__cvCallHistoryInit) {
 <script>
 (function () {
   // Icons (Listen is plain)
-const ICON_LISTEN     = '${ICON_LISTEN}';
-const ICON_DOWNLOAD   = '${ICON_DOWNLOAD}';
-const ICON_CRADLE     = '${ICON_CRADLE}';
-const ICON_NOTES      = '${ICON_NOTES}';
-const ICON_TRANSCRIPT = '${ICON_TRANSCRIPT}';
-
+  const ICON_LISTEN             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const ICON_DOWNLOAD           = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const ICON_CRADLE             = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-arrow-down-solid-full.svg';
+  const ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
 
   // Phone links (constructor form = safe in srcdoc)
@@ -3000,6 +2999,7 @@ for (var i = 0; i < rows.length; i++) {
   })();
 
 } // -------- end CALL HISTORY guard --------
+
 
 
 
