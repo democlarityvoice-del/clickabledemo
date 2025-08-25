@@ -2527,6 +2527,39 @@ function buildCallHistorySrcdoc() {
   .cv-modal-close { background:none; border:none; font-size:18px; cursor:pointer; }
   .cv-ctg-list { list-style:none; padding:0; margin:0; font-size:13px; }
   .cv-ctg-list li { margin:6px 0; }
+
+  /* Modal sizing to match other modals */
+.cv-modal { width: 720px; max-width: 92%; }
+.cv-modal-body { min-height: 380px; max-height: 65vh; overflow-y: auto; }
+
+/* CTG timeline layout */
+.cvctg-steps { padding: 8px 6px 2px; }
+.cvctg-step {
+  display: grid;
+  grid-template-columns: 140px 40px 1fr;
+  align-items: start;
+  gap: 10px;
+  margin: 10px 0;
+}
+.cvctg-time { font-weight: 600; color: #333; }
+.cvctg-time .cvctg-delta { color:#9aa0a6; font-weight: 500; font-size: 11px; margin-top: 2px; }
+
+.cvctg-marker { display: flex; flex-direction: column; align-items: center; }
+.cvctg-icon {
+  width: 28px; height: 28px;
+  background: #f5f5f5; border: 1px solid #ddd; border-radius: 50%;
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 5px;
+}
+.cvctg-icon img { width: 16px; height: 16px; }
+
+.cvctg-vert {
+  width: 2px; flex: 1 1 auto; background: #e0e0e0;
+  margin: 6px 0 0 0; border-radius: 1px;
+}
+.cvctg-step:last-child .cvctg-vert { display: none; } /* no tail on last */
+.cvctg-text { color: #444; }
+
 </style>
 </head><body>
   <div class="call-container">
@@ -2836,20 +2869,60 @@ const rows = [
         +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
         + '</div>';
     }
-    function buildOutboundHTML(from, dateText, dialed, durText){
-      var start = parseStart(dateText);
-      var t0 = fmtClock(start);
-      var tC = fmtClock(addMs(start, 5000));
-      var secs = parseDurSecs(durText);
-      var end = isNaN(secs) ? addMs(start, 45000) : addMs(start, secs*1000);
-      var tE = fmtClock(end);
-      return ''
-        + '<div class="cvctg-steps">'
-        +   row(t0, '',     'Outbound call placed from ' + from + (dialed ? ' to ' + dialed : ''))
-        +   row(tC, '+5s',  'Connected')
-        +   row(tE, isNaN(secs)? '+45s' : '+' + secs + 's', 'Call ended (duration ' + (durText||'') + ')')
-        + '</div>';
-    }
+ function buildOutboundHTML(from, dateText, dialed, durText){
+  // Icons you provided
+  var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing';
+  var ICON_ANSWER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+  var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+
+  // Base time = parsed from "Today, h:mm am/pm"
+  var start = parseStart(dateText);
+
+  // Screenshot-style timeline:
+  // step1: t0        (ringing)
+  // step2: t0+303ms  (ringing again)
+  // step3: t0+6s     (answered)
+  // step4: t3+1m59s  (hang up)  – or use actual duration if provided
+  var t0 = start;
+  var t1 = addMs(start, 303);
+  var t2 = addMs(start, 6000);
+
+  // Prefer real duration if we have it (mm:ss), else 1m59s
+  var secs = parseDurSecs(durText);
+  var tailMs = isNaN(secs) ? (1*60 + 59) * 1000 : Math.max(0, (secs - 6) * 1000); // after answer
+  var t3 = addMs(t2, tailMs);
+
+  function timeBlock(d, deltaText, iconSrc, text){
+    return ''
+      + '<div class="cvctg-step">'
+      +   '<div class="cvctg-time">' + fmtClock(d)
+      +     (deltaText ? '<div class="cvctg-delta">'+deltaText+'</div>' : '')
+      +   '</div>'
+      +   '<div class="cvctg-marker">'
+      +     '<span class="cvctg-icon"><img src="'+iconSrc+'" alt=""></span>'
+      +     '<span class="cvctg-vert"></span>'
+      +   '</div>'
+      +   '<div class="cvctg-text">' + text + '</div>'
+      + '</div>';
+  }
+
+  // For answered line, prefer showing the dialed party like your screenshot
+  var answeredWho = dialed ? ('Call answered by ' + dialed) : 'Call answered';
+
+  // For hangup line, screenshot shows the extension (e.g., "268p hung up")
+  var hangWho = (String(from||'').trim() || 'Caller') + ' hung up';
+
+  return ''
+    + '<div class="cvctg-steps">'
+    +   timeBlock(t0, '',        ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
+    +   timeBlock(t1, '+303ms',  ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
+    +   timeBlock(t2, '+6s',     ICON_ANSWER, answeredWho)
+    +   timeBlock(t3, (isNaN(secs) ? '+1m 59s' : (secs >= 6
+          ? ('+' + Math.floor((secs-6)/60) + 'm ' + ((secs-6)%60) + 's')
+          : '+0s')), ICON_HANG, hangWho)
+    + '</div>';
+}
+
 
     document.addEventListener('click', function(e){
       var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
@@ -3004,6 +3077,7 @@ const rows = [
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
