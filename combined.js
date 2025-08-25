@@ -2560,6 +2560,96 @@ function buildCallHistorySrcdoc() {
 .cvctg-step:last-child .cvctg-vert { display: none; } /* no tail on last */
 .cvctg-text { color: #444; }
 
+/* --- Modal header/title --- */
+.cv-modal-header {
+  padding: 14px 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+.cv-modal-header > span {
+  font-size: 18px;      /* bigger */
+  font-weight: 700;     /* bold  */
+  color: #1f2937;
+}
+
+/* --- Modal body height to match other modals --- */
+.cv-modal-body {
+  min-height: 380px;    /* keeps a healthy vertical size */
+  max-height: 65vh;
+  overflow-y: auto;
+}
+
+/* --- Footer + Close button like screenshot --- */
+.cv-modal-footer {
+  padding: 12px 16px;
+  border-top: 1px solid #e5e7eb;
+  text-align: right;
+}
+.cv-btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 6px 12px;
+  border: 1px solid #cfd3d7;
+  border-radius: 4px;
+  background: #fff;
+  font-weight: 600;
+  color: #111827;
+  cursor: pointer;
+}
+.cv-btn:hover { background: #f9fafb; }
+
+/* --- CTG timeline layout (icons in the rail, dashed connector) --- */
+.cvctg-steps { padding: 8px 6px 2px; }
+
+.cvctg-step {
+  display: grid;
+  grid-template-columns: 120px 40px 1fr; /* time | rail | text */
+  align-items: start;
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.cvctg-time {
+  text-align: right;
+  font-weight: 700;
+  color: #111827;
+}
+.cvctg-time .cvctg-delta {
+  display: block;
+  margin-top: 2px;
+  font-size: 11px;
+  color: #9aa0a6;
+  font-weight: 500;
+}
+
+.cvctg-marker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 6px;
+}
+
+.cvctg-icon {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  box-shadow: 0 1px 0 rgba(0,0,0,.04);
+  display: inline-flex; align-items: center; justify-content: center;
+}
+.cvctg-icon img { width: 18px; height: 18px; display:block; }
+
+/* dashed vertical path between steps */
+.cvctg-vert {
+  flex: 1 1 auto;
+  width: 0;
+  border-left: 2px dashed #d8dbe0;
+  margin-top: 6px;
+}
+.cvctg-step:last-child .cvctg-vert { display: none; }
+
+.cvctg-text { color: #374151; }
+
+
 </style>
 </head><body>
   <div class="call-container">
@@ -3092,6 +3182,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
