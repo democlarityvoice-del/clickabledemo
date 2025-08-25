@@ -2971,9 +2971,7 @@ const rows = [
   const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
 
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+
 
   try {
     const tr  = btn.closest('tr');
@@ -3144,6 +3142,7 @@ const rows = [
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
