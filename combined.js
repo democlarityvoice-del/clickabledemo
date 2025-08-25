@@ -1613,7 +1613,7 @@ if (!window.__cvAgentsPanelInit) {
   }
 
   function openModal(title, bodyHTML){
-    var parts = ensureModal(document);
+    var parts = (document);
     var root  = parts.root;
     root.querySelector('.cvhf-ttl').textContent = title || '';
     root.querySelector('.cvhf-bd').innerHTML = bodyHTML || '';
@@ -2951,20 +2951,20 @@ function parseDurSecs(txt){
 
   // One shared row renderer that mirrors outbound look
   function timeBlock(d, deltaText, iconSrc, text){
-    return ''
-      + '<div class="cvctg-step" style="display:grid;grid-template-columns:140px 40px 1fr;gap:10px;align-items:start;margin:10px 0">'
-      +   `<div class="cvctg-time" style="font-weight:600;color:#333">${fmtClock(d)}`
-      +     (deltaText ? `<div class="cvctg-delta" style="color:#9aa0a6;font-size:11px;margin-top:2px">${deltaText}</div>` : '')
-      +   '</div>'
-      +   '<div class="cvctg-marker" style="display:flex;flex-direction:column;align-items:center">'
-      +     '<span class="cvctg-icon" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;display:inline-flex;align-items:center;justify-content:center;padding:5px">'
-      +       `<img src="${iconSrc}" alt="" style="width:16px;height:16px" />`
-      +     '</span>'
-      +     '<span class="cvctg-vert" style="width:2px;flex:1 1 auto;background:#e0e0e0;margin:6px 0 0;border-radius:1px"></span>'
-      +   '</div>'
-      +   `<div class="cvctg-text" style="color:#444">${text}</div>`
-      + '</div>';
-  }
+  return ''
+    + '<div class="cvctg-step" style="display:grid;grid-template-columns:140px 40px 1fr;gap:10px;align-items:start;margin:10px 0">'
+    +   '<div class="cvctg-time" style="font-weight:600;color:#333">' + fmtClock(d)
+    +     (deltaText ? '<div class="cvctg-delta" style="color:#9aa0a6;font-size:11px;margin-top:2px">' + deltaText + '</div>' : '')
+    +   '</div>'
+    +   '<div class="cvctg-marker" style="display:flex;flex-direction:column;align-items:center">'
+    +     '<span class="cvctg-icon" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;display:inline-flex;align-items:center;justify-content:center;padding:5px">'
+    +       '<img src="' + iconSrc + '" alt="" style="width:16px;height:16px" />'
+    +     '</span>'
+    +     '<span class="cvctg-vert" style="width:2px;flex:1 1 auto;background:#e0e0e0;margin:6px 0 0;border-radius:1px"></span>'
+    +   '</div>'
+    +   '<div class="cvctg-text" style="color:#444">' + text + '</div>'
+    + '</div>';
+}
 
   // STIR now inline on line 1; adjust label if/when you wire real status
   const stirStatus = 'Verified';
@@ -2978,15 +2978,11 @@ function parseDurSecs(txt){
 
   return ''
     + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
-    +   timeBlock(t0, '',       ICON_RING,   `Inbound call from ${from} (STIR: ${stirStatus}) to ${to || 'Ext.'} is ringing`)
+    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText||'Ext.') + ' is ringing')
     +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
     +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
-    +   timeBlock(
-          t3,
-          isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
-          ICON_HANG,
-          `${to || 'Extension'} hung up`
-        )
+    +   timeBlock(t3, isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
+               ICON_HANG, (toText || 'Extension') + ' hung up')
     + '</div>';
 }
 
@@ -3195,6 +3191,7 @@ function parseDurSecs(txt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
