@@ -2418,9 +2418,9 @@ if (!window.__cvCallHistoryInit) {
   const HISTORY_ICON_NOTES              = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
   const HISTORY_ICON_TRANSCRIPT         = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 
-  // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) -------- //
-  function buildCallHistorySrcdoc() {
-    return `<!doctype html><html><head><meta charset="utf-8">
+ // -------- BUILD CALL HISTORY SRCDOC (DROP-IN) --------
+function buildCallHistorySrcdoc() {
+  return `<!doctype html><html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
   :root{
@@ -2527,7 +2527,6 @@ if (!window.__cvCallHistoryInit) {
   .cv-modal-close { background:none; border:none; font-size:18px; cursor:pointer; }
   .cv-ctg-list { list-style:none; padding:0; margin:0; font-size:13px; }
   .cv-ctg-list li { margin:6px 0; }
-
 </style>
 </head><body>
   <div class="call-container">
@@ -2545,28 +2544,26 @@ if (!window.__cvCallHistoryInit) {
 
 <script>
 (function () {
-  
-// Icons (Listen is plain, others circles)
+  // Icons (Listen is plain, others circles)
   const ICONS = [
     { key: 'download',   src: '${HISTORY_ICON_DOWNLOAD}',   title: 'Download',   circle: true  },
-    { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: true },
+    { key: 'listen',     src: '${HISTORY_ICON_LISTEN}',     title: 'Listen',     circle: true  },
     { key: 'cradle',     src: '${HISTORY_ICON_CRADLE}',     title: 'Cradle',     circle: true  },
     { key: 'notes',      src: '${HISTORY_ICON_NOTES}',      title: 'Notes',      circle: true  },
     { key: 'transcript', src: '${HISTORY_ICON_TRANSCRIPT}', title: 'Transcript', circle: true  }
   ];
 
- 
-/* ------- Helpers ------- */
-  function isExternalNumber(v) {
+  /* Helpers */
+  function isExternalNumber(v){
     v = String(v || '');
     var digits = '';
-    for (var i = 0; i < v.length; i++) {
+    for (var i = 0; i < v.length; i++){
       var c = v.charCodeAt(i);
       if (c >= 48 && c <= 57) digits += v[i];
     }
     return digits.length >= 10;
   }
-  function wrapPhone(v) {
+  function wrapPhone(v){
     return isExternalNumber(v) ? '<a href="#" title="Click to Call">' + v + '</a>' : v;
   }
   const DATE_GAPS_MIN = [0,3,2,2,2,2,2,2,2,2,2,2,2,3,2,2,2,2,2,3,2,2,2,3,2];
@@ -2577,9 +2574,7 @@ if (!window.__cvCallHistoryInit) {
     return 'Today, ' + h + ':' + m + ' ' + ap;
   }
 
-
-
-  // ---- STATIC SNAPSHOT (25 rows) ----
+  /* Static snapshot (25 rows) */
   const rows = [
     { cnam:"Ruby Foster",  from:"(248) 555-0102", q1:"4.5", dialed:"248-436-3443", toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 10:02 pm", duration:"32:06", disposition:"", release:"Orig: Bye" },
     { cnam:"John Smith",   from:"207",            q1:"4.4", dialed:"(517) 555-0162", toName:"", to:"External", q2:"4.3", date:"Today, 9:59 pm", duration:"22:17", disposition:"", release:"Term: Bye" },
@@ -2608,256 +2603,245 @@ if (!window.__cvCallHistoryInit) {
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
 
-  
-// --- keep everything above the function as-is ---
+  /* Render (dynamic Date only) */
+  function renderRowsDynamicDate(){
+    var tbody  = document.getElementById('cvCallHistoryTableBody');
+    if (!tbody) return;
 
-function renderRowsDynamicDate() {
-  var tbody  = document.getElementById('cvCallHistoryTableBody');
-  if (!tbody) return;
+    tbody.innerHTML = '';
+    var cursor = Date.now();
 
-  tbody.innerHTML = '';
-  var cursor = Date.now();
+    rows.forEach(function(row, idx){
+      var tr = document.createElement('tr');
+      var dateStr = fmtToday(cursor);
 
-  rows.forEach(function(row, idx){
-    var tr = document.createElement('tr');
-    var dateStr = fmtToday(cursor);
+      var iconsHTML = ICONS.map(function(icon){
+        var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+        return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+      }).join('');
 
-    var iconsHTML = ICONS.map(function(icon){
-      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
-    }).join('');
+      tr.innerHTML =
+          '<td>' + row.cnam + '</td>'
+        + '<td>' + wrapPhone(row.from) + '</td>'
+        + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
+        + '<td>' + wrapPhone(row.dialed) + '</td>'
+        + '<td>' + (row.toName || '') + '</td>'
+        + '<td>' + row.to + '</td>'
+        + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
+        + '<td>' + dateStr + '</td>'
+        + '<td>' + row.duration + '</td>'
+        + '<td>' + (row.disposition || '') + '</td>'
+        + '<td>' + row.release + '</td>'
+        + '<td class="icon-cell">' + iconsHTML + '</td>';
 
+      tbody.appendChild(tr);
+      cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+    });
 
-    tr.innerHTML =
-        '<td>' + row.cnam + '</td>'
-      + '<td>' + wrapPhone(row.from) + '</td>'
-      + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
-      + '<td>' + wrapPhone(row.dialed) + '</td>'
-      + '<td>' + (row.toName || '') + '</td>'
-      + '<td>' + row.to + '</td>'
-      + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
-      + '<td>' + dateStr + '</td>'
-      + '<td>' + row.duration + '</td>'
-      + '<td>' + (row.disposition || '') + '</td>'
-      + '<td>' + row.release + '</td>'
-      + '<td class="icon-cell">' + iconsHTML + '</td>';
-
-    tbody.appendChild(tr);
-    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
-  });
-
-  requestAnimationFrame(function () {
-    try {
-      var h = document.documentElement.scrollHeight;
-      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-    } catch (e) {}
-  });
-}
-
-//  Call it once
-renderRowsDynamicDate();
-
-// Register the Listen handler ONCE, outside the function
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-  if (!btn) return;
-  e.preventDefault();
-
-  var tr = btn.closest('tr');
-  var next = tr && tr.nextElementSibling;
-
-  if (next && next.classList && next.classList.contains('cv-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded','false');
-    return;
+    // fit iframe height
+    requestAnimationFrame(function(){
+      try {
+        var h = document.documentElement.scrollHeight;
+        if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+      } catch(e){}
+    });
   }
 
-  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+  // draw once
+  renderRowsDynamicDate();
 
-  var audioTr = document.createElement('tr');
-  audioTr.className = 'cv-audio-row';
-
-  var colCount = tr.children.length;
-  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
-
-  audioTr.innerHTML =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cv-audio-player">' +
-        '<button class="cv-audio-play" aria-label="Play"></button>' +
-        '<span class="cv-audio-time">0:00 / 0:00</span>' +
-        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cv-audio-right">' +
-          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
-        '</div>' +
-      '</div>' +
-    '</td>';
-
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded','true');
-});
-
-
-// ---- CTG wiring (delegated; fills modal timeline) ----
-(function wireCradle(){
-  if (document._cvCradleWired) return; document._cvCradleWired = true;
-
-  // --- modal plumbing ---
-  function ensureModal() {
-    var modal = document.getElementById('cv-cradle-modal');
-    if (modal) return modal;
-    modal = document.createElement('div');
-    modal.id = 'cv-cradle-modal';
-    modal.innerHTML =
-      '<div class="cv-modal-backdrop"></div>' +
-      '<div class="cv-modal">' +
-        '<div class="cv-modal-header">' +
-          '<span>Cradle To Grave</span>' +
-          '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
-        '</div>' +
-        '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
-        '<div class="cv-modal-footer">' +
-          '<button class="cv-modal-close">Close</button>' +
-        '</div>' +
-      '</div>';
-    document.body.appendChild(modal);
-    var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
-    for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
-    return modal;
-  }
-  function openCTG(html) {
-    var modal = ensureModal();
-    var body = document.getElementById('cv-ctg-body');
-    if (body) body.innerHTML = html || '<div>Empty</div>';
-  }
-
-  // --- helpers just for CTG rendering ---
-  function parseStart(dateText){
-    var d = new Date();
-    var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
-    if (m){
-      var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-      if (ap === 'pm' && h !== 12) h += 12;
-      if (ap === 'am' && h === 12) h = 0;
-      d.setHours(h, min, 0, 0);
-    }
-    return d;
-  }
-  function addMs(d, ms){ return new Date(d.getTime() + ms); }
-  function fmtClock(d){
-    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-    var ap = h >= 12 ? 'PM' : 'AM';
-    h = (h % 12) || 12;
-    var pad = function(n){ return String(n).padStart(2,'0'); };
-    return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
-  }
-  function parseDurSecs(txt){
-    var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
-    return m ? (+m[1]*60 + +m[2]) : NaN;
-  }
-  function pickDept(fromNum){
-    var digits = String(fromNum||'').replace(/\D/g,'');
-    var last = digits ? +digits[digits.length-1] : 0;
-    return (last % 2 === 0) ? 301 : 302;
-  }
-  var AGENTS = {
-    301: [
-      {ext:3011, name:'Alice Carter'},
-      {ext:3012, name:'Ben Smith'},
-      {ext:3013, name:'Chris Lee'},
-      {ext:3014, name:'Dana Park'}
-    ],
-    302: [
-      {ext:3021, name:'Evan Reed'},
-      {ext:3022, name:'Fiona Gray'},
-      {ext:3023, name:'Gina Lopez'},
-      {ext:3024, name:'Henry Kim'}
-    ]
-  };
-  function row(time, delta, text){
-    return ''
-      + '<div class="cvctg-step">'
-      +   '<div class="cvctg-time">' + time + '<div style="color:#aaa;font-size:11px;">' + (delta||'') + '</div></div>'
-      +   '<div class="cvctg-dot"></div>'
-      +   '<div class="cvctg-text">' + text + '</div>'
-      + '</div>';
-  }
-  function buildInboundHTML(from, dateText){
-    var start = parseStart(dateText);
-    var dept  = pickDept(from);
-    var agents = AGENTS[dept] || [];
-    var answered = agents[1] || {ext:'-', name:'Agent'};
-    var t0 = fmtClock(start);
-    var t1 = fmtClock(addMs(start,     2));
-    var t2 = fmtClock(addMs(start,    15));
-    var t3 = fmtClock(addMs(start, 20000));
-    var t4 = fmtClock(addMs(start, 25000));
-    var tR = fmtClock(addMs(start, 30000));
-    var tA = fmtClock(addMs(start, 36000));
-    var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
-
-    var ringRows = '';
-    for (var i=0;i<agents.length;i++){
-      ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
-    }
-
-    return ''
-      + '<div class="cvctg-steps">'
-      +   row(t0, '',      'Inbound call from ' + from + ' to STIR')
-      +   row(t1, '+2ms',  'The currently active time frame is Daytime')
-      +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
-      +   row(t3, '+20s',  'Selected 2')
-      +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
-      +   ringRows
-      +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
-      + '</div>';
-  }
-  function buildOutboundHTML(from, dateText, dialed, durText){
-    var start = parseStart(dateText);
-    var t0 = fmtClock(start);
-    var tC = fmtClock(addMs(start, 5000));
-    var secs = parseDurSecs(durText);
-    var end = isNaN(secs) ? addMs(start, 45000) : addMs(start, secs*1000);
-    var tE = fmtClock(end);
-    return ''
-      + '<div class="cvctg-steps">'
-      +   row(t0, '',     'Outbound call placed from ' + from + (dialed ? ' to ' + dialed : ''))
-      +   row(tC, '+5s',  'Connected')
-      +   row(tE, isNaN(secs)? '+45s' : '+' + secs + 's', 'Call ended (duration ' + (durText||'') + ')')
-      + '</div>';
-  }
-
-  // --- delegate click on Cradle buttons ---
+  /* Listen dropdown (single handler) */
   document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
     if (!btn) return;
     e.preventDefault();
 
-    var tr   = btn.closest('tr');
-    var tds  = tr ? tr.querySelectorAll('td') : null;
-    var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-    var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
-    var dial = (tds && tds[3]) ? tds[3].innerText.trim() : '';
-    var dur  = (tds && tds[8]) ? tds[8].innerText.trim() : '';
+    var tr = btn.closest('tr');
+    var next = tr && tr.nextElementSibling;
 
-    // Outbound if 'From' is 3-digit ext or 'Ext. 123'
-    var isOutbound = /^\d{3}$/.test(from) || /^Ext\.\s*\d{3}$/.test(from);
+    // collapse if open
+    if (next && next.classList && next.classList.contains('cv-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded','false');
+      return;
+    }
+    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
 
-    var html = isOutbound
-      ? buildOutboundHTML(from, date, dial, dur)
-      : buildInboundHTML(from, date);
+    var audioTr = document.createElement('tr');
+    audioTr.className = 'cv-audio-row';
 
-    openCTG(html);
-  }, true);
-})();
+    var colCount = tr.children.length;
+    var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
 
+    audioTr.innerHTML =
+      '<td colspan="'+colCount+'">' +
+        '<div class="cv-audio-player">' +
+          '<button class="cv-audio-play" aria-label="Play"></button>' +
+          '<span class="cv-audio-time">0:00 / 0:00</span>' +
+          '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+          '<div class="cv-audio-right">' +
+            '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+          '</div>' +
+        '</div>' +
+      '</td>';
 
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded','true');
+  });
 
+  /* CTG wiring (delegated; fills modal timeline) */
+  (function wireCradle(){
+    if (document._cvCradleWired) return; document._cvCradleWired = true;
 
-// ... end of the IIFE inside the srcdoc ...
-</scr'+'ipt>
-</body></html>
+    function ensureModal() {
+      var modal = document.getElementById('cv-cradle-modal');
+      if (modal) return modal;
+      modal = document.createElement('div');
+      modal.id = 'cv-cradle-modal';
+      modal.innerHTML =
+        '<div class="cv-modal-backdrop"></div>' +
+        '<div class="cv-modal">' +
+          '<div class="cv-modal-header">' +
+            '<span>Cradle To Grave</span>' +
+            '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
+          '</div>' +
+          '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
+          '<div class="cv-modal-footer">' +
+            '<button class="cv-modal-close">Close</button>' +
+          '</div>' +
+        '</div>';
+      document.body.appendChild(modal);
+      var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
+      for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
+      return modal;
+    }
+    function openCTG(html) {
+      var modal = ensureModal();
+      var body = document.getElementById('cv-ctg-body');
+      if (body) body.innerHTML = html || '<div>Empty</div>';
+    }
 
-} // end buildCallHistorySrcdoc
+    function parseStart(dateText){
+      var d = new Date();
+      var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
+      if (m){
+        var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+        if (ap === 'pm' && h !== 12) h += 12;
+        if (ap === 'am' && h === 12) h = 0;
+        d.setHours(h, min, 0, 0);
+      }
+      return d;
+    }
+    function addMs(d, ms){ return new Date(d.getTime() + ms); }
+    function fmtClock(d){
+      var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+      var ap = h >= 12 ? 'PM' : 'AM';
+      h = (h % 12) || 12;
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
+    }
+    function parseDurSecs(txt){
+      var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
+      return m ? (+m[1]*60 + +m[2]) : NaN;
+    }
+    function pickDept(fromNum){
+      var digits = String(fromNum||'').replace(/\D/g,'');
+      var last = digits ? +digits[digits.length-1] : 0;
+      return (last % 2 === 0) ? 301 : 302;
+    }
+    var AGENTS = {
+      301: [
+        {ext:3011, name:'Alice Carter'},
+        {ext:3012, name:'Ben Smith'},
+        {ext:3013, name:'Chris Lee'},
+        {ext:3014, name:'Dana Park'}
+      ],
+      302: [
+        {ext:3021, name:'Evan Reed'},
+        {ext:3022, name:'Fiona Gray'},
+        {ext:3023, name:'Gina Lopez'},
+        {ext:3024, name:'Henry Kim'}
+      ]
+    };
+    function row(time, delta, text){
+      return ''
+        + '<div class="cvctg-step">'
+        +   '<div class="cvctg-time">' + time + '<div style="color:#aaa;font-size:11px;">' + (delta||'') + '</div></div>'
+        +   '<div class="cvctg-dot"></div>'
+        +   '<div class="cvctg-text">' + text + '</div>'
+        + '</div>';
+    }
+    function buildInboundHTML(from, dateText){
+      var start = parseStart(dateText);
+      var dept  = pickDept(from);
+      var agents = AGENTS[dept] || [];
+      var answered = agents[1] || {ext:'-', name:'Agent'};
+      var t0 = fmtClock(start);
+      var t1 = fmtClock(addMs(start,     2));
+      var t2 = fmtClock(addMs(start,    15));
+      var t3 = fmtClock(addMs(start, 20000));
+      var t4 = fmtClock(addMs(start, 25000));
+      var tR = fmtClock(addMs(start, 30000));
+      var tA = fmtClock(addMs(start, 36000));
+      var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
+
+      var ringRows = '';
+      for (var i=0;i<agents.length;i++){
+        ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
+      }
+
+      return ''
+        + '<div class="cvctg-steps">'
+        +   row(t0, '',      'Inbound call from ' + from + ' to STIR')
+        +   row(t1, '+2ms',  'The currently active time frame is Daytime')
+        +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
+        +   row(t3, '+20s',  'Selected 2')
+        +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
+        +   ringRows
+        +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
+        + '</div>';
+    }
+    function buildOutboundHTML(from, dateText, dialed, durText){
+      var start = parseStart(dateText);
+      var t0 = fmtClock(start);
+      var tC = fmtClock(addMs(start, 5000));
+      var secs = parseDurSecs(durText);
+      var end = isNaN(secs) ? addMs(start, 45000) : addMs(start, secs*1000);
+      var tE = fmtClock(end);
+      return ''
+        + '<div class="cvctg-steps">'
+        +   row(t0, '',     'Outbound call placed from ' + from + (dialed ? ' to ' + dialed : ''))
+        +   row(tC, '+5s',  'Connected')
+        +   row(tE, isNaN(secs)? '+45s' : '+' + secs + 's', 'Call ended (duration ' + (durText||'') + ')')
+        + '</div>';
+    }
+
+    document.addEventListener('click', function(e){
+      var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+      if (!btn) return;
+      e.preventDefault();
+
+      var tr   = btn.closest('tr');
+      var tds  = tr ? tr.querySelectorAll('td') : null;
+      var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
+      var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
+      var dial = (tds && tds[3]) ? tds[3].innerText.trim() : '';
+      var dur  = (tds && tds[8]) ? tds[8].innerText.trim() : '';
+
+      var isOutbound = /^\d{3}$/.test(from) || /^Ext\.\s*\d{3}$/.test(from);
+
+      var html = isOutbound
+        ? buildOutboundHTML(from, date, dial, dur)
+        : buildInboundHTML(from, date);
+
+      openCTG(html);
+    }, true);
+  })();
+
+})(); 
+<\/script>
+</body></html>`;
+}
 
 
   // -------- REMOVE CALL HISTORY -------- //
@@ -2985,41 +2969,6 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
