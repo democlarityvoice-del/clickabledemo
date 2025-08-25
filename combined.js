@@ -2574,6 +2574,30 @@ function buildCallHistorySrcdoc() {
     return 'Today, ' + h + ':' + m + ' ' + ap;
   }
 
+// --- Display-only normalization for the "To" column ---
+var EXT_ONLY = /^\d{3}$/;     // 3-digit extension in From => outbound
+var DIGITS   = /\D/g;
+
+function pickExtFromPhone(phone){
+  var exts = [200,201,202,203,204,205,206,207];
+  var d = String(phone || '').replace(DIGITS, '');
+  var last2 = d.slice(-2) || '0';
+  var idx = parseInt(last2, 10) % exts.length;
+  return 'Ext. ' + exts[idx];
+}
+
+function normalizeToDisplay(row){
+  // Outbound: From is an extension => To = Dialed
+  if (EXT_ONLY.test(row.from)) return row.dialed;
+
+  // Inbound: if To already has an extension with a name, strip the name
+  var m = /^Ext\.\s*(\d{3})/.exec(String(row.to || ''));
+  if (m) return 'Ext. ' + m[1];
+
+  // Inbound but To is "CallQueue"/"External"/etc => synthesize final Ext
+  return pickExtFromPhone(row.from);
+}
+
   // Normalize To for display (outbound=Dialed, inbound ext without name)
 var EXT_ONLY = /^\d{3}$/;
 function normalizeTo(row){
@@ -2980,6 +3004,7 @@ function normalizeTo(row){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
