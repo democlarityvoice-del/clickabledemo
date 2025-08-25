@@ -2863,7 +2863,7 @@ function renderRowsDynamicDate() {
 
 
 })();
-<\/script>
+</script>
 </body></html>`;
   }
 
@@ -2992,6 +2992,7 @@ function renderRowsDynamicDate() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
