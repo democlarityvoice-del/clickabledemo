@@ -2609,36 +2609,30 @@ if (!window.__cvCallHistoryInit) {
   ];
 
   
-/* ---- Render (hard-wired rows; dynamic Date only) ---- */
-(function renderRowsDynamicDate(){
-  var tbody = document.getElementById('cvCallHistoryTableBody');
+function renderRowsDynamicDate() {
+  var tbody  = document.getElementById('cvCallHistoryTableBody');
   if (!tbody) return;
-  tbody.innerHTML = '';
 
+  tbody.innerHTML = '';
   var cursor = Date.now();
 
-  for (var i = 0; i < rows.length; i++) {
-    var row = rows[i];
-    var tr  = document.createElement('tr');
+  rows.forEach(function(row, idx){
+    var tr = document.createElement('tr');
+    var dateStr = fmtToday(cursor);
 
-    // Date is dynamic; everything else uses the row as-is
-    var dateStr = (typeof fmtToday === 'function') ? fmtToday(cursor) : (row.date || '');
+    var iconsHTML = ICONS.map(function(icon){
+      var cls = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
+      return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
+    }).join('');
 
-    // Build the 5 action icons
-    var iconsHTML = '';
-    for (var j = 0; j < ICONS.length; j++) {
-      var icon = ICONS[j];
-      var cls  = icon.circle ? 'icon-btn' : 'icon-btn icon-btn--plain';
-      iconsHTML += '<button class="' + cls + '" data-action="' + icon.key + '" title="' + icon.title + '"><img src="' + icon.src + '" alt=""/></button>';
-    }
-
+    // 🚨 Use only the values already defined in `rows` (no normalizeTo)
     tr.innerHTML =
         '<td>' + row.cnam + '</td>'
       + '<td>' + wrapPhone(row.from) + '</td>'
       + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
       + '<td>' + wrapPhone(row.dialed) + '</td>'
-      + '<td></td>'
-      + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
+      + '<td>' + (row.toName || '') + '</td>'
+      + '<td>' + row.to + '</td>'
       + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
       + '<td>' + dateStr + '</td>'
       + '<td>' + row.duration + '</td>'
@@ -2647,10 +2641,18 @@ if (!window.__cvCallHistoryInit) {
       + '<td class="icon-cell">' + iconsHTML + '</td>';
 
     tbody.appendChild(tr);
+    cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
+  });
 
-    // advance “time ago” for the next row (defaults to 2 min if array missing)
-    cursor -= ((DATE_GAPS_MIN && DATE_GAPS_MIN[i] || 2) * 60 * 1000);
-  }
+  // Resize iframe to fit content
+  requestAnimationFrame(function () {
+    try {
+      var h = document.documentElement.scrollHeight;
+      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
+    } catch (e) {}
+  });
+}
+
 
   // fit iframe height
   requestAnimationFrame(function () {
@@ -2990,6 +2992,7 @@ if (!window.__cvCallHistoryInit) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
