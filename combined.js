@@ -3018,7 +3018,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
 
 
- document.addEventListener('click', function(e){
+document.addEventListener('click', function(e){
   var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
 
@@ -3034,18 +3034,13 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
   var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
 
-  // Robust inbound test: From has 10+ digits OR To contains an Ext
-  var fromDigits = fromText.replace(/\D/g,'');
-  var fromLooksExternal = fromDigits.length >= 10;
-  var toHasExt = /\bExt\.?\s*\d{2,4}\b/i.test(toText);
-  var isInbound = fromLooksExternal || toHasExt;
+  // ✅ Simple rule: if To contains "Ext.", inbound; else outbound
+  var isInbound = /\bExt\.?/i.test(toText);
 
-  // Prefer agent ext from To; fallback to From
+  // Extract extension for hang-up label
   function extractExt(text){
     var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
-    if (m) return m[1];
-    var d = String(text||'').replace(/\D/g,'');
-    return (d.length >= 2 && d.length <= 4) ? d : '';
+    return m ? m[1] : '';
   }
   var agentExt = extractExt(toText) || extractExt(fromText);
 
@@ -3055,6 +3050,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
   openCTG(html);
 }, true);
+
 
 
 
@@ -3191,6 +3187,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
