@@ -2970,7 +2970,7 @@ const rows = [
     }
 
 function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
-  var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing';
+  var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
   var ICON_ANSWER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
 
@@ -3022,25 +3022,31 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
 
-  // Block any other handlers from also processing this click
   e.preventDefault();
-  e.stopPropagation();
-  if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
 
   var tr   = btn.closest('tr');
   var tds  = tr ? tr.querySelectorAll('td') : null;
 
-  // columns: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration, ...
+  // columns: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration...
   var fromText = (tds && tds[1]) ? (tds[1].textContent || '').trim() : '';
   var dial     = (tds && tds[3]) ? (tds[3].textContent || '').trim() : '';
   var toText   = (tds && tds[5]) ? (tds[5].textContent || '').trim() : '';
   var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
   var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
 
-  // More forgiving: treat as inbound if To contains an "Ext" with 2–4 digits anywhere
-  var isInbound = /\bExt\.?\s*\d{2,4}\b/i.test(toText);
+  // Robust inbound test: From has 10+ digits OR To contains an Ext
+  var fromDigits = fromText.replace(/\D/g,'');
+  var fromLooksExternal = fromDigits.length >= 10;
+  var toHasExt = /\bExt\.?\s*\d{2,4}\b/i.test(toText);
+  var isInbound = fromLooksExternal || toHasExt;
 
-  // Prefer To's extension for labels; fall back to From
+  // Prefer agent ext from To; fallback to From
+  function extractExt(text){
+    var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+    if (m) return m[1];
+    var d = String(text||'').replace(/\D/g,'');
+    return (d.length >= 2 && d.length <= 4) ? d : '';
+  }
   var agentExt = extractExt(toText) || extractExt(fromText);
 
   var html = isInbound
@@ -3049,6 +3055,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
   openCTG(html);
 }, true);
+
 
 
   })();
@@ -3184,6 +3191,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
