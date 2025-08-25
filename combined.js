@@ -2967,48 +2967,47 @@ const rows = [
   }
 
   // ----- One, safe, capturing listener; blocks other handlers -----
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-    if (!btn) return;
+ document.addEventListener('click', function(e){
+  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
 
-    e.preventDefault();
-    e.stopPropagation();
-    e.stopImmediatePropagation();
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-    try {
-      var tr  = btn.closest('tr');
-      var tds = tr ? tr.querySelectorAll('td') : [];
+  try {
+    const tr  = btn.closest('tr');
+    const tds = tr ? tr.querySelectorAll('td') : [];
 
-      // column mapping: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration
-      var fromText = (tds[1] && tds[1].textContent ? tds[1].textContent : '').trim();
-      var dial     = (tds[3] && tds[3].textContent ? tds[3].textContent : '').trim();
-      var toText   = (tds[5] && tds[5].textContent ? tds[5].textContent : '').trim();
-      var date     = (tds[7] && tds[7].textContent ? tds[7].textContent : '').trim();
-      var dur      = (tds[8] && tds[8].textContent ? tds[8].textContent : '').trim();
+    const fromText = (tds[1]?.textContent || '').trim();
+    const dial     = (tds[3]?.textContent || '').trim();
+    const toText   = (tds[5]?.textContent || '').trim();
+    const date     = (tds[7]?.textContent || '').trim();
+    const dur      = (tds[8]?.textContent || '').trim();
 
-      // Simple rule: if To starts with "Ext.", it's inbound; else outbound
-      var isInbound = /^Ext\.?\s*\d+/i.test(toText);
+    // Decide inbound/outbound
+    const isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
-      // agent ext for outbound hang-up label
-      function extractExt(text){
-        var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
-        return m ? m[1] : '';
-      }
-      var agentExt = extractExt(toText) || extractExt(fromText);
-
-      var html = isInbound
-        ? buildInboundHTML(fromText, date, toText, dur)
-        : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-
-      // Defer to ensure we win over any other CTG handlers on the page
-      setTimeout(function(){ openCTG(html); }, 0);
-    } catch (err) {
-      console.error('[CTG] render error:', err);
-      setTimeout(function(){
-        openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>');
-      }, 0);
+    // Extract agent ext for outbound hang-up label
+    function extractExt(text){
+      const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+      return m ? m[1] : '';
     }
-  }, true);
+    const agentExt = extractExt(toText) || extractExt(fromText);
+
+    // Build correct timeline
+    const html = isInbound
+      ? buildInboundHTML(fromText, date, toText, dur)
+      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
+    // Open modal
+    setTimeout(() => openCTG(html), 0);
+
+  } catch (err) {
+    console.error('[CTG] render error:', err);
+  }
+}, true);
+
 })(); /* end self-contained CTG block */
 
 
@@ -3145,6 +3144,7 @@ const rows = [
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
