@@ -3067,12 +3067,10 @@ document.addEventListener('click', function(e){
 
 })(); // ✅ closes wireCradle IIFE
 
- 
-
-
 <\/script>
 </body></html>`;
 }
+
 
 
   // -------- REMOVE CALL HISTORY -------- //
@@ -3200,6 +3198,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
