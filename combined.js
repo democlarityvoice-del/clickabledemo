@@ -2866,15 +2866,17 @@ const rows = [
       modal.innerHTML =
         '<div class="cv-modal-backdrop"></div>' +
         '<div class="cv-modal">' +
-          '<div class="cv-modal-header">' +
-            '<span>Cradle To Grave</span>' +
-            '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
-          '</div>' +
-          '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
-          '<div class="cv-modal-footer">' +
-            '<button class="cv-modal-close">Close</button>' +
-          '</div>' +
-        '</div>';
+            '<div class="cv-modal-header">' +
+              '<span>Cradle To Grave</span>' +
+              '<button class="cv-modal-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;">&times;</button>' +
+            '</div>' +
+            '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
+            '<div class="cv-modal-footer">' +
+              '<button class="cv-modal-close cv-btn">Close</button>' +   // <-- add cv-btn
+              '</div>' +
+          '</div>';
+
+
       document.body.appendChild(modal);
       var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
       for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
@@ -3182,6 +3184,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
