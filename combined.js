@@ -2574,6 +2574,15 @@ function buildCallHistorySrcdoc() {
     return 'Today, ' + h + ':' + m + ' ' + ap;
   }
 
+  // Normalize To for display (outbound=Dialed, inbound ext without name)
+var EXT_ONLY = /^\d{3}$/;
+function normalizeTo(row){
+  if (EXT_ONLY.test(row.from)) return row.dialed; // outbound (from is an extension)
+  var m = /^Ext\.\s*(\d{3})/.exec(String(row.to || ''));
+  return m ? ('Ext. ' + m[1]) : (row.to || '');
+}
+
+
   /* Static snapshot (25 rows) */
   const rows = [
     { cnam:"Ruby Foster",  from:"(248) 555-0102", q1:"4.5", dialed:"248-436-3443", toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 10:02 pm", duration:"32:06", disposition:"", release:"Orig: Bye" },
@@ -2626,7 +2635,7 @@ function buildCallHistorySrcdoc() {
         + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
         + '<td>' + wrapPhone(row.dialed) + '</td>'
         + '<td>' + (row.toName || '') + '</td>'
-        + '<td>' + row.to + '</td>'
+        + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
         + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
         + '<td>' + dateStr + '</td>'
         + '<td>' + row.duration + '</td>'
@@ -2969,6 +2978,7 @@ function buildCallHistorySrcdoc() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
