@@ -3011,85 +3011,53 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
     + '</div>';
 }
 
+/* CTG wiring (delegated; fills modal timeline) */
+(function wireCradle(){
+  if (document._cvCradleWired) return; 
+  document._cvCradleWired = true;
 
-function onCradleClick(e){
-  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
+  // … keep all your ensureModal, openCTG, parseStart, fmtClock, buildInboundHTML, buildOutboundHTML …
 
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+  // ✅ New cradle click listener (replaces the old one)
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+    if (!btn) return;
 
-  try {
-    const tr  = btn.closest('tr');
-    const tds = tr ? tr.querySelectorAll('td') : [];
+    e.preventDefault();
 
-    const fromText = (tds[1]?.textContent || '').trim();
-    const dial     = (tds[3]?.textContent || '').trim();
-    const toText   = (tds[5]?.textContent || '').trim();
-    const date     = (tds[7]?.textContent || '').trim();
-    const dur      = (tds[8]?.textContent || '').trim();
+    var tr   = btn.closest('tr');
+    var tds  = tr ? tr.querySelectorAll('td') : [];
 
-    const isInbound = /^Ext\.?\s*\d+/i.test(toText);
+    var fromText = (tds[1]?.textContent || '').trim();
+    var dial     = (tds[3]?.textContent || '').trim();
+    var toText   = (tds[5]?.textContent || '').trim();
+    var date     = (tds[7]?.textContent || '').trim();
+    var dur      = (tds[8]?.textContent || '').trim();
 
-    const m = /Ext\.?\s*(\d{2,4})/i.exec(toText) || /(\d{2,4})$/.exec(fromText);
-    const agentExt = m ? m[1] : '';
+    // ✅ Simple rule: if To starts with "Ext.", inbound; else outbound
+    var isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
-    console.log('[CTG] row ->', { fromText, toText, dial, date, dur, isInbound, agentExt });
+    // Extension extraction
+    function extractExt(text){
+      var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+      return m ? m[1] : '';
+    }
+    var agentExt = extractExt(toText) || extractExt(fromText);
 
-    const html = isInbound
+    console.log('[CTG]', { fromText, toText, dial, date, dur, isInbound, agentExt });
+
+    var html = isInbound
       ? buildInboundHTML(fromText, date, toText, dur)
       : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
-    setTimeout(() => openCTG(html), 0);
-  } catch (err) {
-    console.error('[CTG] render error:', err);
-    setTimeout(() => openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>'), 0);
-  }
-}
+    openCTG(html);
+  }, true);
 
-document.addEventListener('click', onCradleClick, { capture: true, passive: false });
+})(); // ✅ closes wireCradle IIFE
+
+ 
 
 
-
-  var tr   = btn.closest('tr');
-  var tds  = tr ? tr.querySelectorAll('td') : null;
-
-  // columns: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration...
-  var fromText = (tds && tds[1]) ? (tds[1].textContent || '').trim() : '';
-  var dial     = (tds && tds[3]) ? (tds[3].textContent || '').trim() : '';
-  var toText   = (tds && tds[5]) ? (tds[5].textContent || '').trim() : '';
-  var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
-  var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
-
-
- // ✅ Simple rule: if To contains "Ext.", inbound; else outbound
-var isInbound = /^Ext\.?\s*\d+/i.test(toText);
-
-
-  // Extract extension for hang-up label
-  function extractExt(text){
-    var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
-    return m ? m[1] : '';
-  }
-  var agentExt = extractExt(toText) || extractExt(fromText);
-
-var html = isInbound
-  ? buildInboundHTML(fromText, date, toText, dur)
-  : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-
-
-
-
-  openCTG(html);
-}, true);
-
-
-
-
-  })();
-
-})(); 
 <\/script>
 </body></html>`;
 }
@@ -3220,6 +3188,7 @@ var html = isInbound
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
