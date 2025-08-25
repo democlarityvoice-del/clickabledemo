@@ -3012,12 +3012,45 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 }
 
 
-
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+function onCradleClick(e){
+  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
 
   e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+
+  try {
+    const tr  = btn.closest('tr');
+    const tds = tr ? tr.querySelectorAll('td') : [];
+
+    const fromText = (tds[1]?.textContent || '').trim();
+    const dial     = (tds[3]?.textContent || '').trim();
+    const toText   = (tds[5]?.textContent || '').trim();
+    const date     = (tds[7]?.textContent || '').trim();
+    const dur      = (tds[8]?.textContent || '').trim();
+
+    const isInbound = /^Ext\.?\s*\d+/i.test(toText);
+
+    const m = /Ext\.?\s*(\d{2,4})/i.exec(toText) || /(\d{2,4})$/.exec(fromText);
+    const agentExt = m ? m[1] : '';
+
+    console.log('[CTG] row ->', { fromText, toText, dial, date, dur, isInbound, agentExt });
+
+    const html = isInbound
+      ? buildInboundHTML(fromText, date, toText, dur)
+      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
+    setTimeout(() => openCTG(html), 0);
+  } catch (err) {
+    console.error('[CTG] render error:', err);
+    setTimeout(() => openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>'), 0);
+  }
+}
+
+document.addEventListener('click', onCradleClick, { capture: true, passive: false });
+
+
 
   var tr   = btn.closest('tr');
   var tds  = tr ? tr.querySelectorAll('td') : null;
@@ -3187,6 +3220,7 @@ var html = isInbound
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
