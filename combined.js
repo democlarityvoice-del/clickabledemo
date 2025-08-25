@@ -3018,40 +3018,52 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
   // … keep all your ensureModal, openCTG, parseStart, fmtClock, buildInboundHTML, buildOutboundHTML …
 
-  // ✅ New cradle click listener (replaces the old one)
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-    if (!btn) return;
+ 
+  // ✅ Improved cradle listener with safety + correct column logic
+document.addEventListener('click', function(e){
+  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
 
-    e.preventDefault();
+  e.preventDefault();
+  // stop earlier cradle handlers from overriding
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
-    var tr   = btn.closest('tr');
-    var tds  = tr ? tr.querySelectorAll('td') : [];
+  try {
+    const tr   = btn.closest('tr');
+    const tds  = tr ? tr.querySelectorAll('td') : [];
 
-    var fromText = (tds[1]?.textContent || '').trim();
-    var dial     = (tds[3]?.textContent || '').trim();
-    var toText   = (tds[5]?.textContent || '').trim();
-    var date     = (tds[7]?.textContent || '').trim();
-    var dur      = (tds[8]?.textContent || '').trim();
+    // 🔹 Correct column mapping
+    const fromText = (tds[1]?.textContent || '').trim();
+    const dial     = (tds[3]?.textContent || '').trim();
+    const toText   = (tds[5]?.textContent || '').trim();
+    const date     = (tds[7]?.textContent || '').trim();
+    const dur      = (tds[8]?.textContent || '').trim();
 
-    // ✅ Simple rule: if To starts with "Ext.", inbound; else outbound
-    var isInbound = /^Ext\.?\s*\d+/i.test(toText);
+    // 🔹 Decide inbound/outbound from To
+    const isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
-    // Extension extraction
+    // 🔹 Extract extension for hang-up label
     function extractExt(text){
-      var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+      const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
       return m ? m[1] : '';
     }
-    var agentExt = extractExt(toText) || extractExt(fromText);
+    const agentExt = extractExt(toText) || extractExt(fromText);
 
     console.log('[CTG]', { fromText, toText, dial, date, dur, isInbound, agentExt });
 
-    var html = isInbound
+    // 🔹 Use the correct builder
+    const html = isInbound
       ? buildInboundHTML(fromText, date, toText, dur)
       : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
-    openCTG(html);
-  }, true);
+    // 🔹 Defer opening to overwrite old CTG handlers cleanly
+    setTimeout(() => openCTG(html), 0);
+  } catch (err) {
+    console.error('[CTG] render error:', err);
+    setTimeout(() => openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>'), 0);
+  }
+}, true);
 
 })(); // ✅ closes wireCradle IIFE
 
@@ -3188,6 +3200,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
