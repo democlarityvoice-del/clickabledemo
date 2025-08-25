@@ -2826,10 +2826,10 @@ const rows = [
     }
     var AGENTS = {
       301: [
-        {ext:3011, name:'Alice Carter'},
-        {ext:3012, name:'Ben Smith'},
-        {ext:3013, name:'Chris Lee'},
-        {ext:3014, name:'Dana Park'}
+        {ext:200, name:'Alice Carter'},
+        {ext:201, name:'Ben Smith'},
+        {ext:202, name:'Chris Lee'},
+        {ext:203, name:'Dana Park'}
       ],
       302: [
         {ext:3021, name:'Evan Reed'},
@@ -2926,32 +2926,38 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
 
 
-    document.addEventListener('click', function(e){
+ document.addEventListener('click', function(e){
   var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
   if (!btn) return;
+
+  // Block any other handlers from also processing this click
   e.preventDefault();
+  e.stopPropagation();
+  if (typeof e.stopImmediatePropagation === 'function') e.stopImmediatePropagation();
 
   var tr   = btn.closest('tr');
   var tds  = tr ? tr.querySelectorAll('td') : null;
 
+  // columns: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration, ...
   var fromText = (tds && tds[1]) ? (tds[1].textContent || '').trim() : '';
   var dial     = (tds && tds[3]) ? (tds[3].textContent || '').trim() : '';
   var toText   = (tds && tds[5]) ? (tds[5].textContent || '').trim() : '';
   var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
   var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
 
-  // Simple rule: if To shows Ext., treat as inbound
-  var isInbound = /^Ext\.?/i.test(toText);
+  // More forgiving: treat as inbound if To contains an "Ext" with 2–4 digits anywhere
+  var isInbound = /\bExt\.?\s*\d{2,4}\b/i.test(toText);
 
-  // For labeling who hung up (and for screenshots): prefer To's extension, else From's
+  // Prefer To's extension for labels; fall back to From
   var agentExt = extractExt(toText) || extractExt(fromText);
 
   var html = isInbound
     ? buildInboundHTML(fromText, date)
-    : buildOutboundHTML(fromText, date, dial, dur, agentExt); // <-- pass agentExt
+    : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
   openCTG(html);
 }, true);
+
 
   })();
 
@@ -3086,6 +3092,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
