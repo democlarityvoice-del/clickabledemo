@@ -2915,36 +2915,54 @@ const rows = [
         + '</div>';
     }
 
-    function buildInboundHTML(from, dateText, toText) {
-      var start = parseStart(dateText);
-      var dept  = pickDept(from);
-      var agents = AGENTS[dept] || [];
-      var answered = agents[1] || {ext:'-', name:'Agent'};
-      var t0 = fmtClock(start);
-      var t1 = fmtClock(addMs(start,     2));
-      var t2 = fmtClock(addMs(start,    15));
-      var t3 = fmtClock(addMs(start, 20000));
-      var t4 = fmtClock(addMs(start, 25000));
-      var tR = fmtClock(addMs(start, 30000));
-      var tA = fmtClock(addMs(start, 36000));
-      var queueLabel = (dept === 301 ? 'New Sales' : 'Existing Customer');
+function buildInboundHTML(from, dateText, toText, durText){
+  const ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+  const ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+  const ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  const ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
 
-      var ringRows = '';
-      for (var i=0;i<agents.length;i++){
-        ringRows += row(tR, '+30s', 'Agent ' + agents[i].ext + ' (' + agents[i].name + ') is ringing');
-      }
+  const stirStatus = 'Verified'; // placeholder
 
-      return ''
-        + '<div class="cvctg-steps">'
-        +   row(t0, '',      'Inbound call from ' + from + ' to STIR')
-        +   row(t1, '+2ms',  'The currently active time frame is Daytime')
-        +   row(t2, '+15ms', 'Connected to Auto Attendant 700 Daytime')
-        +   row(t3, '+20s',  'Selected 2')
-        +   row(t4, '+25s',  'Connected to Call Queue ' + dept + ' (' + queueLabel + ')')
-        +   ringRows
-        +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
-        + '</div>';
-    }
+  const start = parseStart(dateText);
+  const t0 = start;
+  const t1 = addMs(start, 500);
+  const t2 = addMs(start, 5000);
+
+  // 🔹 Parse duration into seconds
+  const secs = parseDurSecs(durText);
+  // fallback ~2m if no duration available
+  const tailMs = isNaN(secs) ? 120000 : secs * 1000;
+  const t3 = addMs(start, tailMs);
+
+  function timeBlock(d, deltaText, iconSrc, text){
+    return ''
+      + '<div class="cvctg-step">'
+      +   '<div class="cvctg-time">' + fmtClock(d)
+      +     (deltaText ? '<div class="cvctg-delta">'+deltaText+'</div>' : '')
+      +   '</div>'
+      +   '<div class="cvctg-marker">'
+      +     '<span class="cvctg-icon"><img src="'+iconSrc+'" alt=""></span>'
+      +     '<span class="cvctg-vert"></span>'
+      +   '</div>'
+      +   '<div class="cvctg-text">' + text + '</div>'
+      + '</div>';
+  }
+
+  return ''
+    + '<div class="cvctg-steps">'
+    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + toText + ' is ringing')
+    +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
+    +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
+    +   timeBlock(
+          t3,
+          (isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's')),
+          ICON_HANG,
+          (toText || 'Extension') + ' hung up'
+        )
+    + '</div>';
+}
+
+    
 
 function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
@@ -3023,9 +3041,11 @@ var isInbound = /^Ext\.?\s*\d+/i.test(toText);
   }
   var agentExt = extractExt(toText) || extractExt(fromText);
 
-  var html = isInbound
-  ? buildInboundHTML(fromText, date, toText)
+var html = isInbound
+  ? buildInboundHTML(fromText, date, toText, dur)
   : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
+
 
 
   openCTG(html);
@@ -3167,6 +3187,7 @@ var isInbound = /^Ext\.?\s*\d+/i.test(toText);
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
