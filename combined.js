@@ -2625,7 +2625,7 @@ function renderRowsDynamicDate() {
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('');
 
-    // Use only the values already defined in `rows` (no normalizeTo)
+    // Use only the values already defined in rows
     tr.innerHTML =
         '<td>' + row.cnam + '</td>'
       + '<td>' + wrapPhone(row.from) + '</td>'
@@ -2992,6 +2992,7 @@ function renderRowsDynamicDate() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
