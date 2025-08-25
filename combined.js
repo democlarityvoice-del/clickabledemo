@@ -2889,7 +2889,7 @@ const rows = [
     return m ? (+m[1]*60 + +m[2]) : NaN;
   }
 
-  // ----- Icons (URLs you provided) -----
+  // ----- Icons (URLs) -----
   var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
   var ICON_ANSWER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
@@ -2913,30 +2913,82 @@ const rows = [
       + '</div>';
   }
 
-  // ----- Inbound builder (self-contained) -----
-  function buildInboundHTML(from, dateText, toText, durText){
-    var stirStatus = 'Verified'; // placeholder only
-    var start = parseStart(dateText);
-    var t0 = start;
-    var t1 = addMs(start, 500);
-    var t2 = addMs(start, 5000);
-    var secs = parseDurSecs(durText);
-    var tailMs = isNaN(secs) ? 120000 : secs*1000;
-    var t3 = addMs(start, tailMs);
+  // ---- Polished inbound builder (matches outbound styling) ----
+function buildInboundHTML(ctx){
+  const { from, to, date, dur } = ctx;
 
+  // Local helpers (same as in the block already)
+  function parseStart(dateText){
+    const d = new Date();
+    const m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
+    if (m){
+      let h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+      if (ap === 'pm' && h !== 12) h += 12;
+      if (ap === 'am' && h === 12) h = 0;
+      d.setHours(h, min, 0, 0);
+    }
+    return d;
+  }
+  const addMs = (d, ms) => new Date(d.getTime() + ms);
+  function fmtClock(d){
+    let h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    const ap = h >= 12 ? 'PM' : 'AM';
+    h = (h % 12) || 12;
+    const pad = n => String(n).padStart(2,'0');
+    return `${h}:${pad(m)}:${pad(s)} ${ap}`;
+  }
+  function parseDurSecs(txt){
+    const m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
+    return m ? (+m[1]*60 + +m[2]) : NaN;
+  }
+
+  // Icon URLs (same set you used)
+  const ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+  const ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+  const ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  const ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+
+  // One shared row renderer that mirrors outbound look
+  function timeBlock(d, deltaText, iconSrc, text){
     return ''
-      + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
-      +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText||'Ext.') + ' is ringing')
-      +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
-      +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
-      +   timeBlock(
-            t3,
-            isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
-            ICON_HANG,
-            (toText || 'Extension') + ' hung up'
-          )
+      + '<div class="cvctg-step" style="display:grid;grid-template-columns:140px 40px 1fr;gap:10px;align-items:start;margin:10px 0">'
+      +   `<div class="cvctg-time" style="font-weight:600;color:#333">${fmtClock(d)}`
+      +     (deltaText ? `<div class="cvctg-delta" style="color:#9aa0a6;font-size:11px;margin-top:2px">${deltaText}</div>` : '')
+      +   '</div>'
+      +   '<div class="cvctg-marker" style="display:flex;flex-direction:column;align-items:center">'
+      +     '<span class="cvctg-icon" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;display:inline-flex;align-items:center;justify-content:center;padding:5px">'
+      +       `<img src="${iconSrc}" alt="" style="width:16px;height:16px" />`
+      +     '</span>'
+      +     '<span class="cvctg-vert" style="width:2px;flex:1 1 auto;background:#e0e0e0;margin:6px 0 0;border-radius:1px"></span>'
+      +   '</div>'
+      +   `<div class="cvctg-text" style="color:#444">${text}</div>`
       + '</div>';
   }
+
+  // STIR now inline on line 1; adjust label if/when you wire real status
+  const stirStatus = 'Verified';
+
+  const start = parseStart(date);
+  const t0 = start;              // Ringing
+  const t1 = addMs(start, 500);  // Dialpad
+  const t2 = addMs(start, 5000); // Queueing
+  const secs = parseDurSecs(dur);
+  const t3 = addMs(start, isNaN(secs) ? 120000 : secs * 1000); // Hang at call end
+
+  return ''
+    + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
+    +   timeBlock(t0, '',       ICON_RING,   `Inbound call from ${from} (STIR: ${stirStatus}) to ${to || 'Ext.'} is ringing`)
+    +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
+    +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
+    +   timeBlock(
+          t3,
+          isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
+          ICON_HANG,
+          `${to || 'Extension'} hung up`
+        )
+    + '</div>';
+}
+
 
   // ----- Outbound builder (self-contained) -----
   function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
@@ -3142,6 +3194,7 @@ const rows = [
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
