@@ -2917,30 +2917,31 @@ const rows = [
 function buildInboundHTML(ctx){
   const { from, to, date, dur } = ctx;
 
-  // Local helpers (same as in the block already)
-  function parseStart(dateText){
-    const d = new Date();
-    const m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
-    if (m){
-      let h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-      if (ap === 'pm' && h !== 12) h += 12;
-      if (ap === 'am' && h === 12) h = 0;
-      d.setHours(h, min, 0, 0);
-    }
-    return d;
+ // Local helpers (same logic, no template literals)
+function parseStart(dateText){
+  var d = new Date();
+  var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
+  if (m){
+    var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+    if (ap === 'pm' && h !== 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    d.setHours(h, min, 0, 0);
   }
-  const addMs = (d, ms) => new Date(d.getTime() + ms);
-  function fmtClock(d){
-    let h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-    const ap = h >= 12 ? 'PM' : 'AM';
-    h = (h % 12) || 12;
-    const pad = n => String(n).padStart(2,'0');
-    return `${h}:${pad(m)}:${pad(s)} ${ap}`;
-  }
-  function parseDurSecs(txt){
-    const m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
-    return m ? (+m[1]*60 + +m[2]) : NaN;
-  }
+  return d;
+}
+function addMs(d, ms){ return new Date(d.getTime() + ms); }
+function fmtClock(d){
+  var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+  var ap = h >= 12 ? 'PM' : 'AM';
+  h = (h % 12) || 12;
+  function pad(n){ return String(n).padStart(2,'0'); }
+  return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
+}
+function parseDurSecs(txt){
+  var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
+  return m ? (+m[1]*60 + +m[2]) : NaN;
+}
+
 
   // Icon URLs (same set you used)
   const ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
@@ -3194,6 +3195,7 @@ function buildInboundHTML(ctx){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
