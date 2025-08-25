@@ -2830,202 +2830,148 @@ const rows = [
     btn.setAttribute('aria-expanded','true');
   });
 
-  /* CTG wiring (delegated; fills modal timeline) */
-  (function wireCradle(){
-    if (document._cvCradleWired) return; document._cvCradleWired = true;
+/* CTG wiring (self-contained; no external refs) */
+(function wireCradleSelfContained(){
+  if (document._cvCradleSelfBound) return;
+  document._cvCradleSelfBound = true;
 
-    function ensureModal() {
-      var modal = document.getElementById('cv-cradle-modal');
-      if (modal) return modal;
-      modal = document.createElement('div');
-      modal.id = 'cv-cradle-modal';
-      modal.innerHTML =
-        '<div class="cv-modal-backdrop"></div>' +
-        '<div class="cv-modal">' +
-            '<div class="cv-modal-header">' +
-              '<span>Cradle To Grave</span>' +
-              '<button class="cv-modal-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;">&times;</button>' +
-            '</div>' +
-            '<div class="cv-modal-body" id="cv-ctg-body">...</div>' +
-            '<div class="cv-modal-footer">' +
-              '<button class="cv-modal-close cv-btn">Close</button>' +   // <-- add cv-btn
-              '</div>' +
-          '</div>';
-
-
-      document.body.appendChild(modal);
-      var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
-      for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
-      return modal;
-    }
-    function openCTG(html) {
-      var modal = ensureModal();
-      var body = document.getElementById('cv-ctg-body');
-      if (body) body.innerHTML = html || '<div>Empty</div>';
-    }
-
-    function parseStart(dateText){
-      var d = new Date();
-      var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
-      if (m){
-        var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-        if (ap === 'pm' && h !== 12) h += 12;
-        if (ap === 'am' && h === 12) h = 0;
-        d.setHours(h, min, 0, 0);
-      }
-      return d;
-    }
-    function addMs(d, ms){ return new Date(d.getTime() + ms); }
-    function fmtClock(d){
-      var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-      var ap = h >= 12 ? 'PM' : 'AM';
-      h = (h % 12) || 12;
-      var pad = function(n){ return String(n).padStart(2,'0'); };
-      return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
-    }
-    function parseDurSecs(txt){
-      var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
-      return m ? (+m[1]*60 + +m[2]) : NaN;
-    }
-    function pickDept(fromNum){
-      var digits = String(fromNum||'').replace(/\D/g,'');
-      var last = digits ? +digits[digits.length-1] : 0;
-      return (last % 2 === 0) ? 301 : 302;
-    }
-    var AGENTS = {
-      301: [
-        {ext:200, name:'Alice Carter'},
-        {ext:201, name:'Ben Smith'},
-        {ext:202, name:'Chris Lee'},
-        {ext:203, name:'Dana Park'}
-      ],
-      302: [
-        {ext:3021, name:'Evan Reed'},
-        {ext:3022, name:'Fiona Gray'},
-        {ext:3023, name:'Gina Lopez'},
-        {ext:3024, name:'Henry Kim'}
-      ]
-    };
-    function row(time, delta, text){
-      return ''
-        + '<div class="cvctg-step">'
-        +   '<div class="cvctg-time">' + time + '<div style="color:#aaa;font-size:11px;">' + (delta||'') + '</div></div>'
-        +   '<div class="cvctg-dot"></div>'
-        +   '<div class="cvctg-text">' + text + '</div>'
-        + '</div>';
-    }
-
-function buildInboundHTML(from, dateText, toText, durText){
-  const ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
-  const ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
-  const ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-  const ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
-
-  const stirStatus = 'Verified'; // placeholder
-
-  const start = parseStart(dateText);
-  const t0 = start;
-  const t1 = addMs(start, 500);
-  const t2 = addMs(start, 5000);
-
-  // 🔹 Parse duration into seconds
-  const secs = parseDurSecs(durText);
-  // fallback ~2m if no duration available
-  const tailMs = isNaN(secs) ? 120000 : secs * 1000;
-  const t3 = addMs(start, tailMs);
-
-  function timeBlock(d, deltaText, iconSrc, text){
-    return ''
-      + '<div class="cvctg-step">'
-      +   '<div class="cvctg-time">' + fmtClock(d)
-      +     (deltaText ? '<div class="cvctg-delta">'+deltaText+'</div>' : '')
-      +   '</div>'
-      +   '<div class="cvctg-marker">'
-      +     '<span class="cvctg-icon"><img src="'+iconSrc+'" alt=""></span>'
-      +     '<span class="cvctg-vert"></span>'
-      +   '</div>'
-      +   '<div class="cvctg-text">' + text + '</div>'
-      + '</div>';
+  // ----- Modal helpers (self-contained) -----
+  function ensureModal() {
+    var modal = document.getElementById('cv-cradle-modal');
+    if (modal) return modal;
+    modal = document.createElement('div');
+    modal.id = 'cv-cradle-modal';
+    modal.innerHTML =
+      '<div class="cv-modal-backdrop"></div>' +
+      '<div class="cv-modal">' +
+        '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;border-bottom:1px solid #ddd;">' +
+          '<span style="font-weight:700;font-size:16px">Cradle To Grave</span>' +
+          '<button class="cv-modal-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
+        '</div>' +
+        '<div class="cv-modal-body" id="cv-ctg-body" style="padding:16px;max-height:65vh;overflow:auto"></div>' +
+        '<div class="cv-modal-footer" style="padding:10px 16px;border-top:1px solid #ddd;text-align:right">' +
+          '<button class="cv-modal-close" style="padding:6px 12px;border:1px solid #ccc;border-radius:6px;background:#f8f9fa;cursor:pointer">Close</button>' +
+        '</div>' +
+      '</div>';
+    document.body.appendChild(modal);
+    var closes = modal.querySelectorAll('.cv-modal-close, .cv-modal-backdrop');
+    for (var i = 0; i < closes.length; i++) closes[i].addEventListener('click', function(){ modal.remove(); });
+    return modal;
+  }
+  function openCTG(html) {
+    var modal = ensureModal();
+    var body = document.getElementById('cv-ctg-body');
+    if (body) body.innerHTML = html || '<div>Empty</div>';
   }
 
-  return ''
-    + '<div class="cvctg-steps">'
-    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + toText + ' is ringing')
-    +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
-    +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
-    +   timeBlock(
-          t3,
-          (isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's')),
-          ICON_HANG,
-          (toText || 'Extension') + ' hung up'
-        )
-    + '</div>';
-}
+  // ----- Local time utils -----
+  function parseStart(dateText){
+    var d = new Date();
+    var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
+    if (m){
+      var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+      if (ap === 'pm' && h !== 12) h += 12;
+      if (ap === 'am' && h === 12) h = 0;
+      d.setHours(h, min, 0, 0);
+    }
+    return d;
+  }
+  function addMs(d, ms){ return new Date(d.getTime() + ms); }
+  function fmtClock(d){
+    var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
+    var ap = h >= 12 ? 'PM' : 'AM';
+    h = (h % 12) || 12;
+    function pad(n){ return String(n).padStart(2,'0'); }
+    return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
+  }
+  function parseDurSecs(txt){
+    var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
+    return m ? (+m[1]*60 + +m[2]) : NaN;
+  }
 
-    
-
-function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
+  // ----- Icons (URLs you provided) -----
   var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
   var ICON_ANSWER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+  var ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+  var ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
 
-  var start = parseStart(dateText);
-  var t0 = start;
-  var t1 = addMs(start, 303);
-  var t2 = addMs(start, 6000);
-
-  var secs   = parseDurSecs(durText);
-  var tailMs = isNaN(secs) ? (1*60 + 59) * 1000 : Math.max(0, (secs - 6) * 1000);
-  var t3 = addMs(t2, tailMs);
-
+  // ----- Common timeline block (local CSS hooks) -----
   function timeBlock(d, deltaText, iconSrc, text){
     return ''
-      + '<div class="cvctg-step">'
-      +   '<div class="cvctg-time">' + fmtClock(d)
-      +     (deltaText ? '<div class="cvctg-delta">'+deltaText+'</div>' : '')
+      + '<div class="cvctg-step" style="display:grid;grid-template-columns:140px 40px 1fr;gap:10px;align-items:start;margin:10px 0">'
+      +   '<div class="cvctg-time" style="font-weight:600;color:#333">' + fmtClock(d)
+      +     (deltaText ? '<div class="cvctg-delta" style="color:#9aa0a6;font-size:11px;margin-top:2px">'+deltaText+'</div>' : '')
       +   '</div>'
-      +   '<div class="cvctg-marker">'
-      +     '<span class="cvctg-icon"><img src="'+iconSrc+'" alt=""></span>'
-      +     '<span class="cvctg-vert"></span>'
+      +   '<div class="cvctg-marker" style="display:flex;flex-direction:column;align-items:center">'
+      +     '<span class="cvctg-icon" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;display:inline-flex;align-items:center;justify-content:center;padding:5px">'
+      +       '<img src="'+iconSrc+'" alt="" style="width:16px;height:16px" />'
+      +     '</span>'
+      +     '<span class="cvctg-vert" style="width:2px;flex:1 1 auto;background:#e0e0e0;margin:6px 0 0;border-radius:1px"></span>'
       +   '</div>'
-      +   '<div class="cvctg-text">' + text + '</div>'
+      +   '<div class="cvctg-text" style="color:#444">' + text + '</div>'
       + '</div>';
   }
 
-  var answeredWho = dialed ? ('Call answered by ' + dialed) : 'Call answered';
-  var hangLabel   = agentExt ? ('Ext. ' + agentExt) : (String(from||'').trim() || 'Caller');
-  var hangWho     = hangLabel + ' hung up';
+  // ----- Inbound builder (self-contained) -----
+  function buildInboundHTML(from, dateText, toText, durText){
+    var stirStatus = 'Verified'; // placeholder only
+    var start = parseStart(dateText);
+    var t0 = start;
+    var t1 = addMs(start, 500);
+    var t2 = addMs(start, 5000);
+    var secs = parseDurSecs(durText);
+    var tailMs = isNaN(secs) ? 120000 : secs*1000;
+    var t3 = addMs(start, tailMs);
 
-  return ''
-    + '<div class="cvctg-steps">'
-    +   timeBlock(t0, '',        ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
-    +   timeBlock(t1, '+303ms',  ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
-    +   timeBlock(t2, '+6s',     ICON_ANSWER, answeredWho)
-    +   timeBlock(
-          t3,
-          (isNaN(secs) ? '+1m 59s'
-                       : (secs >= 6 ? ('+' + Math.floor((secs-6)/60) + 'm ' + ((secs-6)%60) + 's') : '+0s')),
-          ICON_HANG,
-          hangWho
-        )
-    + '</div>';
-}
+    return ''
+      + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
+      +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText||'Ext.') + ' is ringing')
+      +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
+      +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
+      +   timeBlock(
+            t3,
+            isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
+            ICON_HANG,
+            (toText || 'Extension') + ' hung up'
+          )
+      + '</div>';
+  }
 
-/* CTG wiring (delegated; fills modal timeline) */
-(function wireCradle(){
-  if (document._cvCradleWired) return;
-  document._cvCradleWired = true;
+  // ----- Outbound builder (self-contained) -----
+  function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
+    var start = parseStart(dateText);
+    var t0 = start;
+    var t1 = addMs(start, 303);
+    var t2 = addMs(start, 6000);
+    var secs   = parseDurSecs(durText);
+    var tailMs = isNaN(secs) ? (1*60 + 59)*1000 : Math.max(0, (secs - 6)*1000);
+    var t3 = addMs(t2, tailMs);
 
-  // ensureModal(), openCTG(), parseStart(), addMs(), fmtClock(), parseDurSecs(),
-  // row(), buildInboundHTML(), buildOutboundHTML() are already defined above.
+    var answeredWho = dialed ? ('Call answered by ' + dialed) : 'Call answered';
+    var hangLabel   = agentExt ? ('Ext. ' + agentExt) : (String(from||'').trim() || 'Caller');
+    var hangWho     = hangLabel + ' hung up';
 
-  // Improved cradle listener with safety + correct column logic
+    return ''
+      + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
+      +   timeBlock(t0, '',        ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
+      +   timeBlock(t1, '+303ms',  ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
+      +   timeBlock(t2, '+6s',     ICON_ANSWER, answeredWho)
+      +   timeBlock(
+            t3,
+            (isNaN(secs) ? '+1m 59s' : (secs >= 6 ? ('+' + Math.floor((secs-6)/60) + 'm ' + ((secs-6)%60) + 's') : '+0s')),
+            ICON_HANG,
+            hangWho
+          )
+      + '</div>';
+  }
+
+  // ----- One, safe, capturing listener; blocks other handlers -----
   document.addEventListener('click', function(e){
     var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
     if (!btn) return;
 
     e.preventDefault();
-    // prevent older handlers from double-processing
     e.stopPropagation();
     e.stopImmediatePropagation();
 
@@ -3033,16 +2979,17 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
       var tr  = btn.closest('tr');
       var tds = tr ? tr.querySelectorAll('td') : [];
 
-      // Column mapping
-      var fromText = ((tds[1] && tds[1].textContent) || '').trim();
-      var dial     = ((tds[3] && tds[3].textContent) || '').trim();
-      var toText   = ((tds[5] && tds[5].textContent) || '').trim();
-      var date     = ((tds[7] && tds[7].textContent) || '').trim();
-      var dur      = ((tds[8] && tds[8].textContent) || '').trim();
+      // column mapping: 0 From Name, 1 From, 2 QOS, 3 Dialed, 4 To Name, 5 To, 6 QOS, 7 Date, 8 Duration
+      var fromText = (tds[1] && tds[1].textContent ? tds[1].textContent : '').trim();
+      var dial     = (tds[3] && tds[3].textContent ? tds[3].textContent : '').trim();
+      var toText   = (tds[5] && tds[5].textContent ? tds[5].textContent : '').trim();
+      var date     = (tds[7] && tds[7].textContent ? tds[7].textContent : '').trim();
+      var dur      = (tds[8] && tds[8].textContent ? tds[8].textContent : '').trim();
 
-      // Simple rule: "To" starts with Ext. => inbound
+      // Simple rule: if To starts with "Ext.", it's inbound; else outbound
       var isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
+      // agent ext for outbound hang-up label
       function extractExt(text){
         var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
         return m ? m[1] : '';
@@ -3053,6 +3000,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
         ? buildInboundHTML(fromText, date, toText, dur)
         : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
+      // Defer to ensure we win over any other CTG handlers on the page
       setTimeout(function(){ openCTG(html); }, 0);
     } catch (err) {
       console.error('[CTG] render error:', err);
@@ -3061,7 +3009,8 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
       }, 0);
     }
   }, true);
-})(); // <-- closes wireCradle IIFE
+})(); /* end self-contained CTG block */
+
 
 })(); // <-- closes the top (function(){ ... }) wrapper
 <\/script>
@@ -3196,6 +3145,7 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
