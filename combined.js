@@ -3010,8 +3010,10 @@ document.addEventListener('click', function(e){
   var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
   var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
 
-  // ✅ Simple rule: if To contains "Ext.", inbound; else outbound
-  var isInbound = /\bExt\.?/i.test(toText);
+
+ // ✅ Simple rule: if To contains "Ext.", inbound; else outbound
+var isInbound = /\bExt\.?/i.test(toText);
+
 
   // Extract extension for hang-up label
   function extractExt(text){
@@ -3163,6 +3165,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
