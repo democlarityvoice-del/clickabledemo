@@ -2862,10 +2862,12 @@ function renderRowsDynamicDate() {
   });
 
 
+// ... end of the IIFE inside the srcdoc ...
 })();
-</script>
+</scr'+'ipt>
 </body></html>`;
-  }
+} // end buildCallHistorySrcdoc
+
 
   // -------- REMOVE CALL HISTORY -------- //
   function removeCallHistory() {
@@ -2992,6 +2994,7 @@ function renderRowsDynamicDate() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
