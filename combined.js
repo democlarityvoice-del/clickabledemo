@@ -2914,7 +2914,8 @@ const rows = [
         +   '<div class="cvctg-text">' + text + '</div>'
         + '</div>';
     }
-    function buildInboundHTML(from, dateText){
+
+    function buildInboundHTML(from, dateText, toText) {
       var start = parseStart(dateText);
       var dept  = pickDept(from);
       var agents = AGENTS[dept] || [];
@@ -3023,8 +3024,9 @@ var isInbound = /^Ext\.?\s*\d+/i.test(toText);
   var agentExt = extractExt(toText) || extractExt(fromText);
 
   var html = isInbound
-    ? buildInboundHTML(fromText, date)
-    : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+  ? buildInboundHTML(fromText, date, toText)
+  : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
 
   openCTG(html);
 }, true);
@@ -3165,6 +3167,7 @@ var isInbound = /^Ext\.?\s*\d+/i.test(toText);
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
