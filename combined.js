@@ -2639,6 +2639,13 @@ function normalizeTo(row){
   return m ? ('Ext. ' + m[1]) : (row.to || '');
 }
 
+// --- helpers for classifying and labeling ---
+function extractExt(text){
+  var m = /Ext\.?\s*(\d{3})/i.exec(String(text || ''));
+  if (m) return m[1];
+  var digits = String(text || '').replace(/\D/g,'');
+  return digits.length === 3 ? digits : '';
+}
 
 
   // ---- STATIC SNAPSHOT (25 rows) ----
@@ -2869,27 +2876,19 @@ const rows = [
         +   row(tA, '+36s',  'Call answered by ' + answered.name + ' (' + answered.ext + ')')
         + '</div>';
     }
- function buildOutboundHTML(from, dateText, dialed, durText){
-  // Icons you provided
+
+function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
   var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing';
   var ICON_ANSWER = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
   var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
 
-  // Base time = parsed from "Today, h:mm am/pm"
   var start = parseStart(dateText);
-
-  // Screenshot-style timeline:
-  // step1: t0        (ringing)
-  // step2: t0+303ms  (ringing again)
-  // step3: t0+6s     (answered)
-  // step4: t3+1m59s  (hang up)  – or use actual duration if provided
   var t0 = start;
   var t1 = addMs(start, 303);
   var t2 = addMs(start, 6000);
 
-  // Prefer real duration if we have it (mm:ss), else 1m59s
-  var secs = parseDurSecs(durText);
-  var tailMs = isNaN(secs) ? (1*60 + 59) * 1000 : Math.max(0, (secs - 6) * 1000); // after answer
+  var secs   = parseDurSecs(durText);
+  var tailMs = isNaN(secs) ? (1*60 + 59) * 1000 : Math.max(0, (secs - 6) * 1000);
   var t3 = addMs(t2, tailMs);
 
   function timeBlock(d, deltaText, iconSrc, text){
@@ -2906,44 +2905,54 @@ const rows = [
       + '</div>';
   }
 
-  // For answered line, prefer showing the dialed party like your screenshot
   var answeredWho = dialed ? ('Call answered by ' + dialed) : 'Call answered';
-
-  // For hangup line, screenshot shows the extension (e.g., "268p hung up")
-  var hangWho = (String(from||'').trim() || 'Caller') + ' hung up';
+  var hangLabel   = agentExt ? ('Ext. ' + agentExt) : (String(from||'').trim() || 'Caller');
+  var hangWho     = hangLabel + ' hung up';
 
   return ''
     + '<div class="cvctg-steps">'
     +   timeBlock(t0, '',        ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
     +   timeBlock(t1, '+303ms',  ICON_RING,   (dialed ? (dialed + ' is ringing') : 'Ringing'))
     +   timeBlock(t2, '+6s',     ICON_ANSWER, answeredWho)
-    +   timeBlock(t3, (isNaN(secs) ? '+1m 59s' : (secs >= 6
-          ? ('+' + Math.floor((secs-6)/60) + 'm ' + ((secs-6)%60) + 's')
-          : '+0s')), ICON_HANG, hangWho)
+    +   timeBlock(
+          t3,
+          (isNaN(secs) ? '+1m 59s'
+                       : (secs >= 6 ? ('+' + Math.floor((secs-6)/60) + 'm ' + ((secs-6)%60) + 's') : '+0s')),
+          ICON_HANG,
+          hangWho
+        )
     + '</div>';
 }
 
 
+
     document.addEventListener('click', function(e){
-      var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-      if (!btn) return;
-      e.preventDefault();
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
+  e.preventDefault();
 
-      var tr   = btn.closest('tr');
-      var tds  = tr ? tr.querySelectorAll('td') : null;
-      var from = (tds && tds[1]) ? tds[1].innerText.trim() : '';
-      var date = (tds && tds[7]) ? tds[7].innerText.trim() : '';
-      var dial = (tds && tds[3]) ? tds[3].innerText.trim() : '';
-      var dur  = (tds && tds[8]) ? tds[8].innerText.trim() : '';
+  var tr   = btn.closest('tr');
+  var tds  = tr ? tr.querySelectorAll('td') : null;
 
-      var isOutbound = /^\d{3}$/.test(from) || /^Ext\.\s*\d{3}$/.test(from);
+  var fromText = (tds && tds[1]) ? (tds[1].textContent || '').trim() : '';
+  var dial     = (tds && tds[3]) ? (tds[3].textContent || '').trim() : '';
+  var toText   = (tds && tds[5]) ? (tds[5].textContent || '').trim() : '';
+  var date     = (tds && tds[7]) ? (tds[7].textContent || '').trim() : '';
+  var dur      = (tds && tds[8]) ? (tds[8].textContent || '').trim() : '';
 
-      var html = isOutbound
-        ? buildOutboundHTML(from, date, dial, dur)
-        : buildInboundHTML(from, date);
+  // Simple rule: if To shows Ext., treat as inbound
+  var isInbound = /^Ext\.?/i.test(toText);
 
-      openCTG(html);
-    }, true);
+  // For labeling who hung up (and for screenshots): prefer To's extension, else From's
+  var agentExt = extractExt(toText) || extractExt(fromText);
+
+  var html = isInbound
+    ? buildInboundHTML(fromText, date)
+    : buildOutboundHTML(fromText, date, dial, dur, agentExt); // <-- pass agentExt
+
+  openCTG(html);
+}, true);
+
   })();
 
 })(); 
@@ -3077,6 +3086,7 @@ const rows = [
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
