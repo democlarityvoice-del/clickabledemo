@@ -3012,7 +3012,7 @@ document.addEventListener('click', function(e){
 
 
  // ✅ Simple rule: if To contains "Ext.", inbound; else outbound
-var isInbound = /\bExt\.?/i.test(toText);
+var isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
 
   // Extract extension for hang-up label
@@ -3165,6 +3165,7 @@ var isInbound = /\bExt\.?/i.test(toText);
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
