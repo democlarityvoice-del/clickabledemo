@@ -2584,6 +2584,7 @@ function normalizeTo(row){
 
 
   /* Static snapshot (25 rows) */
+// ---- STATIC SNAPSHOT (25 rows) ----
   const rows = [
     { cnam:"Ruby Foster",  from:"(248) 555-0102", q1:"4.5", dialed:"248-436-3443", toName:"", to:"Ext. 206 (Grace Smith)", q2:"4.5", date:"Today, 10:02 pm", duration:"32:06", disposition:"", release:"Orig: Bye" },
     { cnam:"John Smith",   from:"207",            q1:"4.4", dialed:"(517) 555-0162", toName:"", to:"External", q2:"4.3", date:"Today, 9:59 pm", duration:"22:17", disposition:"", release:"Term: Bye" },
@@ -2611,6 +2612,7 @@ function normalizeTo(row){
     { cnam:"Zoe Miller",   from:"(248) 555-0144", q1:"4.2", dialed:"248-436-3449",   toName:"", to:"CallQueue", q2:"4.3", date:"Today, 9:12 pm", duration:"0:39", disposition:"", release:"Orig: Bye" },
     { cnam:"Cathy Thomas", from:"201",            q1:"4.4", dialed:"(517) 555-0170", toName:"", to:"External", q2:"4.5", date:"Today, 9:10 pm", duration:"11:33", disposition:"", release:"Orig: Bye" }
   ];
+
 
   /* Render (dynamic Date only) */
   function renderRowsDynamicDate(){
@@ -2978,6 +2980,7 @@ function normalizeTo(row){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
