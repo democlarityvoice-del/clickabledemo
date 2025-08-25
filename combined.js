@@ -2609,6 +2609,8 @@ if (!window.__cvCallHistoryInit) {
   ];
 
   
+// --- keep everything above the function as-is ---
+
 function renderRowsDynamicDate() {
   var tbody  = document.getElementById('cvCallHistoryTableBody');
   if (!tbody) return;
@@ -2625,7 +2627,7 @@ function renderRowsDynamicDate() {
       return '<button class="'+cls+'" data-action="'+icon.key+'" title="'+icon.title+'"><img src="'+icon.src+'" alt=""/></button>';
     }).join('');
 
-    // Use only the values already defined in rows
+
     tr.innerHTML =
         '<td>' + row.cnam + '</td>'
       + '<td>' + wrapPhone(row.from) + '</td>'
@@ -2644,7 +2646,6 @@ function renderRowsDynamicDate() {
     cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
   });
 
-  // Resize iframe to fit content
   requestAnimationFrame(function () {
     try {
       var h = document.documentElement.scrollHeight;
@@ -2653,15 +2654,47 @@ function renderRowsDynamicDate() {
   });
 }
 
+//  Call it once
+renderRowsDynamicDate();
 
-  // fit iframe height
-  requestAnimationFrame(function () {
-    try {
-      var h = document.documentElement.scrollHeight;
-      if (window.frameElement) window.frameElement.style.height = (h + 2) + 'px';
-    } catch (e) {}
-  });
-})();
+// Register the Listen handler ONCE, outside the function
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
+  if (!btn) return;
+  e.preventDefault();
+
+  var tr = btn.closest('tr');
+  var next = tr && tr.nextElementSibling;
+
+  if (next && next.classList && next.classList.contains('cv-audio-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded','false');
+    return;
+  }
+
+  Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
+
+  var audioTr = document.createElement('tr');
+  audioTr.className = 'cv-audio-row';
+
+  var colCount = tr.children.length;
+  var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
+
+  audioTr.innerHTML =
+    '<td colspan="'+colCount+'">' +
+      '<div class="cv-audio-player">' +
+        '<button class="cv-audio-play" aria-label="Play"></button>' +
+        '<span class="cv-audio-time">0:00 / 0:00</span>' +
+        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+        '<div class="cv-audio-right">' +
+          '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+
+  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+  btn.setAttribute('aria-expanded','true');
+});
 
 
 // ---- CTG wiring (delegated; fills modal timeline) ----
@@ -2819,53 +2852,11 @@ function renderRowsDynamicDate() {
 
 
 
-  /* ----- Listen dropdown (single handler) ----- */
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="listen"]') : null;
-    if (!btn) return;
-    e.preventDefault();
-
-    var tr = btn.closest('tr');
-    var next = tr && tr.nextElementSibling;
-
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cv-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded','false');
-      return;
-    }
-
-    // close others
-    Array.prototype.forEach.call(document.querySelectorAll('.cv-audio-row'), function(r){ r.remove(); });
-
-    // build drop-down player row
-    var audioTr = document.createElement('tr');
-    audioTr.className = 'cv-audio-row';
-
-    var colCount = tr.children.length;
-    var listenIconSrc = (ICONS.find(function(i){return i.key==='listen';}) || {}).src || '';
-
-    audioTr.innerHTML =
-      '<td colspan="'+colCount+'">' +
-        '<div class="cv-audio-player">' +
-          '<button class="cv-audio-play" aria-label="Play"></button>' +
-          '<span class="cv-audio-time">0:00 / 0:00</span>' +
-          '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-          '<div class="cv-audio-right">' +
-            '<img class="cv-audio-icon" src="'+listenIconSrc+'" alt="Listen">' +
-          '</div>' +
-        '</div>' +
-      '</td>';
-
-    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-    btn.setAttribute('aria-expanded','true');
-  });
-
 
 // ... end of the IIFE inside the srcdoc ...
-})();
 </scr'+'ipt>
-</body></html>`;
+</body></html>
+
 } // end buildCallHistorySrcdoc
 
 
@@ -2994,6 +2985,7 @@ function renderRowsDynamicDate() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
