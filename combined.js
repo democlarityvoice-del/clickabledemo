@@ -3013,63 +3013,61 @@ function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
 
 /* CTG wiring (delegated; fills modal timeline) */
 (function wireCradle(){
-  if (document._cvCradleWired) return; 
+  if (document._cvCradleWired) return;
   document._cvCradleWired = true;
 
-  // … keep all your ensureModal, openCTG, parseStart, fmtClock, buildInboundHTML, buildOutboundHTML …
+  // ensureModal(), openCTG(), parseStart(), addMs(), fmtClock(), parseDurSecs(),
+  // row(), buildInboundHTML(), buildOutboundHTML() are already defined above.
 
- 
-  // ✅ Improved cradle listener with safety + correct column logic
-document.addEventListener('click', function(e){
-  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
+  // Improved cradle listener with safety + correct column logic
+  document.addEventListener('click', function(e){
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+    if (!btn) return;
 
-  e.preventDefault();
-  // stop earlier cradle handlers from overriding
-  e.stopPropagation();
-  e.stopImmediatePropagation();
+    e.preventDefault();
+    // prevent older handlers from double-processing
+    e.stopPropagation();
+    e.stopImmediatePropagation();
 
-  try {
-    const tr   = btn.closest('tr');
-    const tds  = tr ? tr.querySelectorAll('td') : [];
+    try {
+      var tr  = btn.closest('tr');
+      var tds = tr ? tr.querySelectorAll('td') : [];
 
-    // 🔹 Correct column mapping
-    const fromText = (tds[1]?.textContent || '').trim();
-    const dial     = (tds[3]?.textContent || '').trim();
-    const toText   = (tds[5]?.textContent || '').trim();
-    const date     = (tds[7]?.textContent || '').trim();
-    const dur      = (tds[8]?.textContent || '').trim();
+      // Column mapping
+      var fromText = ((tds[1] && tds[1].textContent) || '').trim();
+      var dial     = ((tds[3] && tds[3].textContent) || '').trim();
+      var toText   = ((tds[5] && tds[5].textContent) || '').trim();
+      var date     = ((tds[7] && tds[7].textContent) || '').trim();
+      var dur      = ((tds[8] && tds[8].textContent) || '').trim();
 
-    // 🔹 Decide inbound/outbound from To
-    const isInbound = /^Ext\.?\s*\d+/i.test(toText);
+      // Simple rule: "To" starts with Ext. => inbound
+      var isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
-    // 🔹 Extract extension for hang-up label
-    function extractExt(text){
-      const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
-      return m ? m[1] : '';
+      function extractExt(text){
+        var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+        return m ? m[1] : '';
+      }
+      var agentExt = extractExt(toText) || extractExt(fromText);
+
+      var html = isInbound
+        ? buildInboundHTML(fromText, date, toText, dur)
+        : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
+      setTimeout(function(){ openCTG(html); }, 0);
+    } catch (err) {
+      console.error('[CTG] render error:', err);
+      setTimeout(function(){
+        openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>');
+      }, 0);
     }
-    const agentExt = extractExt(toText) || extractExt(fromText);
+  }, true);
+})(); // <-- closes wireCradle IIFE
 
-    console.log('[CTG]', { fromText, toText, dial, date, dur, isInbound, agentExt });
-
-    // 🔹 Use the correct builder
-    const html = isInbound
-      ? buildInboundHTML(fromText, date, toText, dur)
-      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-
-    // 🔹 Defer opening to overwrite old CTG handlers cleanly
-    setTimeout(() => openCTG(html), 0);
-  } catch (err) {
-    console.error('[CTG] render error:', err);
-    setTimeout(() => openCTG('<div style="padding:12px;color:#b00020">CTG error: ' + String(err) + '</div>'), 0);
-  }
-}, true);
-
-})(); // ✅ closes wireCradle IIFE
-
+})(); // <-- closes the top (function(){ ... }) wrapper
 <\/script>
-</body></html>`;
+</body></html>`; 
 }
+
 
 
 
@@ -3198,6 +3196,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
