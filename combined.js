@@ -3203,6 +3203,134 @@ document.addEventListener('click', function (e) {
 
 /* ===== NOTES MODAL (self-contained) ===== */
 
+<script>
+// --- NOTES modal wiring (self-contained; lives alongside CTG) ---
+(function wireNotes(){
+  if (document._cvNotesBound) return;
+  document._cvNotesBound = true;
+
+  const DISPOSITIONS = ["Inbound Sales","Outbound Sales"];
+  const REASONS = {
+    "Inbound Sales": ["Existing customer question","Follow up","Referral"],
+    "Outbound Sales": ["Cold Call","Follow-up"]
+  };
+
+  function closeNotes(){
+    const m = document.getElementById('cv-notes-modal');
+    if (m) m.style.display = 'none';
+  }
+
+  function ensureNotesModal(){
+    let modal = document.getElementById('cv-notes-modal');
+    if (modal) return modal;
+
+    modal = document.createElement('div');
+    modal.id = 'cv-notes-modal';
+    modal.style.display = 'none';                     // hidden until opened
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.zIndex = '10000';                     // above CTG
+
+    modal.innerHTML =
+      '<div class="cv-modal-backdrop"></div>' +
+      '<div class="cv-modal">' +
+        '<div class="cv-modal-header">' +
+          '<span>Notes</span>' +
+          '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
+        '</div>' +
+        '<div class="cv-modal-body" id="cv-notes-body"></div>' +
+        '<div class="cv-modal-footer">' +
+          '<button class="cv-btn cv-notes-cancel">Cancel</button> ' +
+          '<button class="cv-btn cv-notes-save" ' +
+                  'style="background:#1a73e8;color:#fff;border-color:#1a73e8">Save</button>' +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    // close wiring
+    modal.querySelector('.cv-modal-backdrop').addEventListener('click', closeNotes);
+    modal.querySelector('.cv-modal-close').addEventListener('click', closeNotes);
+
+    return modal;
+  }
+
+  function openNotes(prefill){
+    const modal = ensureNotesModal();
+    const body  = modal.querySelector('#cv-notes-body');
+
+    // build form
+    body.innerHTML =
+      '<div class="cv-field">' +
+        '<label style="display:block;margin-bottom:6px">Disposition</label>' +
+        '<select id="cv-notes-dispo" ' +
+                'style="width:100%;padding:6px 8px;border:1px solid #cfd3d7;border-radius:4px"></select>' +
+      '</div>' +
+      '<div class="cv-field" style="margin-top:12px">' +
+        '<label style="display:block;margin-bottom:6px">Reason</label>' +
+        '<select id="cv-notes-reason" ' +
+                'style="width:100%;padding:6px 8px;border:1px solid #cfd3d7;border-radius:4px"></select>' +
+      '</div>' +
+      '<div class="cv-field" style="margin-top:12px">' +
+        '<label style="display:block;margin-bottom:6px">Notes</label>' +
+        '<textarea id="cv-notes-text" rows="4" ' +
+                 'style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
+      '</div>';
+
+    const dSel = body.querySelector('#cv-notes-dispo');
+    const rSel = body.querySelector('#cv-notes-reason');
+    const tBox = body.querySelector('#cv-notes-text');
+
+    // populate dispositions
+    DISPOSITIONS.forEach(d=>{
+      const o = document.createElement('option');
+      o.value = o.textContent = d;
+      dSel.appendChild(o);
+    });
+
+    function populateReasons(){
+      rSel.innerHTML = '';
+      REASONS[dSel.value].forEach(r=>{
+        const o = document.createElement('option');
+        o.value = o.textContent = r;
+        rSel.appendChild(o);
+      });
+    }
+    dSel.addEventListener('change', populateReasons);
+
+    // defaults / prefill (optional)
+    dSel.value = (prefill && prefill.disposition) || DISPOSITIONS[0];
+    populateReasons();
+    if (prefill && prefill.reason) rSel.value = prefill.reason;
+    if (prefill && prefill.notes)  tBox.value = prefill.notes;
+
+    // buttons
+    modal.querySelector('.cv-notes-cancel').onclick = closeNotes;
+    modal.querySelector('.cv-notes-save').onclick = function(){
+      const payload = {
+        disposition: dSel.value,
+        reason: rSel.value,
+        notes: tBox.value.trim()
+      };
+      console.log('[NOTES] saved:', payload);
+      // TODO: post to your API here if needed
+      closeNotes();
+    };
+
+    modal.style.display = 'block';
+  }
+
+  // open on click of the Notes icon
+  document.addEventListener('click', function(e){
+    const btn = e.target instanceof Element ? e.target.closest('button[data-action="notes"]') : null;
+    if (!btn) return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    openNotes();            // pass prefill if you want later
+  }, true);
+})();
+</script>
+
+
 /* Create (or return) the Notes modal */
 function ensureNotesModal () {
   var modal = document.getElementById('cv-notes-modal');
@@ -3329,6 +3457,8 @@ document.addEventListener('click', function(e){
     // notes: '' // add a default if you want
   });
 }, true);
+
+
 /* ===== /NOTES MODAL ===== */
 
 
@@ -3466,5 +3596,6 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
