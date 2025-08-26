@@ -2986,6 +2986,32 @@ function parseDurSecs(txt){
     + '</div>';
 }
 
+// Capture last clicked row for CTG (does not block their handlers)
+document.addEventListener('click', function(e){
+  var btn = e.target && e.target.closest ? e.target.closest('button[data-action="cradle"]') : null;
+  if (!btn) return;
+
+  var tr  = btn.closest('tr');
+  var tds = tr ? tr.querySelectorAll('td') : [];
+
+  var p = {};
+  p.from = (tds[1] && tds[1].textContent || '').trim();
+  p.dial = (tds[3] && tds[3].textContent || '').trim();
+  p.to   = (tds[5] && tds[5].textContent || '').trim();
+  p.date = (tds[7] && tds[7].textContent || '').trim();
+  p.dur  = (tds[8] && tds[8].textContent || '').trim();
+
+  p.isInbound = /^Ext\.?\s*\d+/i.test(p.to);
+
+  function xtract(t){
+    var m = /Ext\.?\s*(\d{2,4})/i.exec(String(t||''));
+    return m ? m[1] : '';
+  }
+  p.agentExt = xtract(p.to) || xtract(p.from);
+
+  window.__ctgPayload = p; // used by the observer below
+}, true);
+
 
   // ----- Outbound builder (self-contained) -----
   function buildOutboundHTML(from, dateText, dialed, durText, agentExt){
@@ -3014,6 +3040,37 @@ function parseDurSecs(txt){
           )
       + '</div>';
   }
+
+
+// Once: observe DOM changes and, when CTG opens, replace body with the correct view
+(function setupCTGObserver(){
+  if (document.__ctgObsSetup) return;
+  document.__ctgObsSetup = true;
+
+  var obs = new MutationObserver(function(){
+    var body = document.getElementById('cv-ctg-body');
+    var p = window.__ctgPayload;
+    if (!body || !p) return; // nothing to do yet
+
+    // Pick the right builder you already have
+    var html;
+    if (p.isInbound && typeof buildInboundHTML === 'function') {
+      html = buildInboundHTML(p.from, p.date, p.to, p.dur);
+    } else if (!p.isInbound && typeof buildOutboundHTML === 'function') {
+      html = buildOutboundHTML(p.from, p.date, p.dial, p.dur, p.agentExt);
+    } else {
+      // Loud fallback (shouldn’t be hit if your builders exist)
+      html = '<div style="padding:12px;font:700 14px system-ui">'
+           + (p.isInbound ? 'INBOUND' : 'OUTBOUND') + ' (override)</div>';
+    }
+
+    body.innerHTML = html;      // our content wins last
+    window.__ctgPayload = null; // clear so we don’t re-apply on unrelated mutations
+  });
+
+  // Observe the whole document for the modal/body updates
+  obs.observe(document.documentElement, { childList:true, subtree:true });
+})();
 
   // ----- One, safe, capturing listener; blocks other handlers -----
  document.addEventListener('click', function(e){
@@ -3191,6 +3248,7 @@ function parseDurSecs(txt){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
