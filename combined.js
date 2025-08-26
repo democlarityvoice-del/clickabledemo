@@ -3201,6 +3201,138 @@ document.addEventListener('click', function (e) {
 })(); /* end self-contained CTG block */
 
 
+/* ===== NOTES MODAL (self-contained) ===== */
+
+/* Create (or return) the Notes modal */
+function ensureNotesModal () {
+  var modal = document.getElementById('cv-notes-modal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'cv-notes-modal';
+  modal.innerHTML =
+    '<div class="cv-modal-backdrop"></div>' +
+    '<div class="cv-modal">' +
+      '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span style="font-weight:700;font-size:16px">Notes</span>' +
+        '<button class="cv-notes-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
+      '</div>' +
+      '<div class="cv-modal-body" style="padding:16px">' +
+
+        '<div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;align-items:center">' +
+
+          '<label for="cv-notes-disposition" style="justify-self:end;font-weight:600">Disposition</label>' +
+          '<select id="cv-notes-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+            '<option value="">Select a Disposition</option>' +
+            '<option>Inbound Sales</option>' +
+            '<option>Outbound Sales</option>' +
+          '</select>' +
+
+          '<label for="cv-notes-reason" style="justify-self:end;font-weight:600">Reason</label>' +
+          '<select id="cv-notes-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+            '<option value="">Select a Disposition First</option>' +
+          '</select>' +
+
+          '<label for="cv-notes-text" style="justify-self:end;font-weight:600">Notes</label>' +
+          '<textarea id="cv-notes-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
+
+        '</div>' +
+
+      '</div>' +
+      '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
+        '<button class="cv-notes-cancel cv-btn">Cancel</button>' +
+        '<button class="cv-notes-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(modal);
+
+  // close handlers
+  function close(){ modal.remove(); }
+  modal.querySelector('.cv-notes-close').addEventListener('click', close);
+  modal.querySelector('.cv-modal-backdrop').addEventListener('click', close);
+  modal.querySelector('.cv-notes-cancel').addEventListener('click', close);
+
+  // Save handler (replace with real persistence later)
+  modal.querySelector('.cv-notes-save').addEventListener('click', function(){
+    var disp   = document.getElementById('cv-notes-disposition').value || '';
+    var reason = document.getElementById('cv-notes-reason').value || '';
+    var notes  = document.getElementById('cv-notes-text').value || '';
+    console.log('[NOTES] Saved →', { disposition: disp, reason, notes });
+    close();
+  });
+
+  return modal;
+}
+
+/* Reason options per disposition (exact strings requested) */
+var NOTES_REASONS = {
+  'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
+  'Outbound Sales': ['Cold Call', 'Follow-up']
+};
+
+/* Populate reasons based on disposition */
+function populateReasonOptions(disp){
+  var sel = document.getElementById('cv-notes-reason');
+  sel.innerHTML = '';
+  var opts = NOTES_REASONS[disp] || [];
+  if (!opts.length){
+    sel.innerHTML = '<option value="">Select a Disposition First</option>';
+    return;
+  }
+  opts.forEach(function(label, i){
+    var o = document.createElement('option');
+    o.value = label;
+    o.textContent = label;
+    if (i === 0) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+/* Open & initialize the notes modal */
+function openNotesModal(initial){
+  var modal = ensureNotesModal();
+
+  var dispSel = document.getElementById('cv-notes-disposition');
+  var rsnSel  = document.getElementById('cv-notes-reason');
+  var txt     = document.getElementById('cv-notes-text');
+
+  // Initial values
+  var dispInit = initial && initial.disposition ? initial.disposition : '';
+  dispSel.value = dispInit;
+  populateReasonOptions(dispInit);
+  txt.value = initial && initial.notes ? initial.notes : '';
+
+  // When disposition changes, refresh reasons
+  dispSel.onchange = function(){ populateReasonOptions(dispSel.value); };
+
+  // show (already appended)
+}
+
+/* Click handler for Notes buttons */
+document.addEventListener('click', function(e){
+  var btn = e.target instanceof Element ? e.target.closest('button[data-action="notes"]') : null;
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+
+  // Infer inbound vs outbound from the row (same rule you use elsewhere)
+  var tr    = btn.closest('tr');
+  var tds   = tr ? tr.querySelectorAll('td') : [];
+  var toTxt = (tds[5]?.textContent || '').trim();
+  var isInbound = /^Ext\.?\s*\d+/i.test(toTxt);
+
+  openNotesModal({
+    disposition: isInbound ? 'Inbound Sales' : 'Outbound Sales'
+    // notes: '' // add a default if you want
+  });
+}, true);
+/* ===== /NOTES MODAL ===== */
+
+
+
 })(); // <-- closes the top (function(){ ... }) wrapper
 <\/script>
 </body></html>`; 
@@ -3334,4 +3466,5 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
