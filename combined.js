@@ -3041,7 +3041,6 @@ document.addEventListener('click', function(e){
       + '</div>';
   }
 
-
 // Once: observe DOM changes and, when CTG opens, replace body with the correct view
 (function setupCTGObserver(){
   if (document.__ctgObsSetup) return;
@@ -3071,6 +3070,7 @@ document.addEventListener('click', function(e){
   // Observe the whole document for the modal/body updates
   obs.observe(document.documentElement, { childList:true, subtree:true });
 })();
+
 
   // ----- One, safe, capturing listener; blocks other handlers -----
  document.addEventListener('click', function(e){
@@ -3248,6 +3248,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
