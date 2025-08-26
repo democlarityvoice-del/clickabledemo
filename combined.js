@@ -3001,10 +3001,19 @@ function buildInboundHTML(from, dateText, toText, durText){
     }
     const agentExt = extractExt(toText) || extractExt(fromText);
 
-    // Build correct timeline
-    const html = isInbound
-      ? buildInboundHTML(fromText, date, toText, dur)
-      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+console.log('[CTG Debug]', {
+  fromText,
+  toText,
+  dial,
+  date,
+  dur,
+  isInbound
+});
+
+const html = isInbound
+  ? buildInboundHTML(fromText, date, toText, dur)
+  : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+
 
     // Open modal
     setTimeout(() => openCTG(html), 0);
@@ -3150,6 +3159,7 @@ function buildInboundHTML(from, dateText, toText, durText){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
