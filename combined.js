@@ -2654,6 +2654,60 @@ function buildCallHistorySrcdoc() {
 #cv-notes-modal { position: fixed; inset: 0; z-index: 10002; } /* above CTG's 9999 */
 #cv-notes-modal .cv-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
 
+/* Notes modal typography — match app font */
+#cv-notes-modal,
+#cv-notes-modal .cv-modal,
+#cv-notes-modal .cv-modal * {
+  font-family: var(--font-stack);   /* uses your Helvetica/Arial stack */
+  font-size: 13px;
+  line-height: 1.428;
+  color: var(--text-color);
+}
+
+/* Title */
+#cv-notes-modal .cv-modal-header > span {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+/* Labels */
+#cv-notes-modal label {
+  font-weight: 600;
+  color: #111827;
+}
+
+/* Inputs inherit font and sizing */
+#cv-notes-modal select,
+#cv-notes-modal textarea,
+#cv-notes-modal button {
+  font: inherit;
+}
+
+/* Inputs look like the rest of the UI */
+#cv-notes-modal select,
+#cv-notes-modal textarea {
+  padding: 6px 8px;
+  border: 1px solid #cfd3d7;
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* Buttons */
+#cv-notes-modal .cv-btn {           /* you already have .cv-btn, this tightens it for the modal */
+  padding: 6px 12px;
+  border: 1px solid #cfd3d7;
+  border-radius: 4px;
+  font-weight: 600;
+}
+#cv-notes-modal .cv-notes-save {
+  background: #1a73e8;
+  border-color: #1a73e8;
+  color: #fff;
+  font-weight: 700;
+}
+
+
 
 </style>
 </head><body>
@@ -3469,6 +3523,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
