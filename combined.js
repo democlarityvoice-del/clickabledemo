@@ -2917,11 +2917,6 @@ const rows = [
 
   // ---- Inbound builder (uses shared helpers above; no template literals) ----
 function buildInboundHTML(from, dateText, toText, durText){
-  var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
-  var ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
-  var ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-  var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
-
   var stirStatus = 'Verified'; // placeholder; wire real status when ready
 
   var start = parseStart(dateText);
@@ -3155,6 +3150,7 @@ function buildInboundHTML(from, dateText, toText, durText){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
