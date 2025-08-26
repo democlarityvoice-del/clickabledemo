@@ -3220,6 +3220,8 @@ document.addEventListener('click', function (e) {
   function ensureNotesModal () {
     var modal = document.getElementById('cv-notes-modal');
     if (modal) return modal;
+    modal.style.display = 'none';
+
 
     modal = document.createElement('div');
     modal.id = 'cv-notes-modal';
@@ -3296,6 +3298,8 @@ document.addEventListener('click', function (e) {
 
     var dispSel = document.getElementById('cv-notes-disposition');
     var txt     = document.getElementById('cv-notes-text');
+
+    modal.style.display = 'block';
 
     var dispInit = initial && initial.disposition ? initial.disposition : '';
     dispSel.value = dispInit;
@@ -3464,6 +3468,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
