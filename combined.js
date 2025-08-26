@@ -2980,8 +2980,8 @@ var iconsHTML = ICONS.map(function(icon){
 // 1x1 transparent for “plain circle” steps
 var ICON_DOT = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
 
-// Agents directory
-const AGENTS = [
+// Agent directory (ext → name)
+var AGENTS = [
   {ext:'200', name:'Mike Johnson'},
   {ext:'201', name:'Cathy Thomas'},
   {ext:'202', name:'Jake Lee'},
@@ -2994,24 +2994,6 @@ const AGENTS = [
   {ext:'209', name:'Michael Williams'},
   {ext:'210', name:'Jessica Brown'}
 ];
-
-function findAgentLabel(ext){
-  ext = String(ext||'').replace(/\D/g,'');
-  const a = AGENTS.find(a => a.ext === ext);
-  return a ? `${a.name} (${a.ext})` : (ext ? `Ext. ${ext}` : '');
-}
-
-// very forgiving: “Ext. 206”, “(266p)”, “x206”, “206”
-function extractAnyExt(text){
-  const s = String(text||'');
-  return (
-    (s.match(/Ext\.?\s*(\d{2,4})/i)          || 
-     s.match(/\((\d{2,4})[a-z]?\)/i)         || 
-     s.match(/(?:^|\D)(\d{3,4})(?!\d)/)
-    )?.[1] || ''
-  );
-}
-
 
 // More forgiving ext extractor: "Ext. 206", "(266p)", "266p", "x206"
 function extractAnyExt(text){
@@ -3053,7 +3035,7 @@ function extractExtSimple(text){
  
 
   // ---- Inbound builder (uses shared helpers above; no template literals) ----
-function buildInboundHTML(from, dateText, toText, durText, agentExt){ 
+function buildInboundHTML(from, dateText, toText, durText, releaseText, agentExt){
   var start = parseStart(dateText);
 
   // Labels you asked for
@@ -3062,8 +3044,8 @@ function buildInboundHTML(from, dateText, toText, durText, agentExt){
   var queueLbl  = 'Call Queue 301';
 
   // Who answered (use the “To” ext if present)
-  var answeredExt   = extractAnyExt(agentExt || toText || from);
-  var answeredLabel = findAgentLabel(answeredExt) || 'Agent';
+  var answeredExt   = String(agentExt || extractAnyExt(toText) || extractAnyExt(from) || '');
+  var answeredLabel = answeredExt ? findAgentLabel(answeredExt) : 'Agent';
 
   // Duration math
   var secs   = parseDurSecs(durText);
@@ -3123,16 +3105,15 @@ function buildInboundHTML(from, dateText, toText, durText, agentExt){
 
   // 7) Each agent ringing (phone icon)
   for (var i=0; i<AGENTS.length; i++){
-    var a = AGENTS[i];
-    var ti = addMs(t2, 200 + i*286);              // whatever timing already used
-    html += timeBlock(ti, i?('+'+(200+i*286)+'ms'):'+286ms',
-                      ICON_AGENTRING,
-                      findAgentLabel(a.ext) + ' is ringing');
+    var a   = AGENTS[i];
+    var ti  = addMs(ringStart, i*ringStep);
+    var dlt = (i===0) ? '+286ms' : ('+' + (i*ringStep) + 'ms');
+    html += timeBlock(ti, dlt, ICON_AGENTRING, findAgentLabel(a.ext) + ' is ringing'); // <-- swapped icon
   }
 
 
   // 8) Answered by {name (ext)}
-  html += timeBlock(addMs(t2, 8000), '+8s', ICON_ANSWER, 'Call answered by ' + answeredLabel);
+  html += timeBlock(tAnswer, '+8s', ICON_ANSWER, 'Call answered by ' + answeredLabel);
 
   // 9+10) Hangup — show duration as delta; say who hung up
   html += timeBlock(
@@ -3198,16 +3179,15 @@ document.addEventListener('click', function (e) {
     const toText   = (tds[5]?.textContent || '').trim();
     const date     = (tds[7]?.textContent || '').trim();
     const dur      = (tds[8]?.textContent || '').trim();
+    const release  = (tds[10]?.textContent || '').trim();   // <-- add this
 
     const type = btn.dataset.ctg;
 
-// try To, then Dialed, then From
-    const agentExt = extractAnyExt(toText) || extractAnyExt(dial) || extractAnyExt(fromText);
+    const agentExt = extractAnyExt(tds[5]?.textContent) || extractAnyExt(tds[1]?.textContent);
 
     const html = (type === 'inbound')
-      ? buildInboundHTML(fromText, date, toText, dur, agentExt)   // <-- pass it
+      ? buildInboundHTML(fromText, date, toText, dur, release, agentExt)   // <-- pass agentExt
       : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-    
 
     setTimeout(function(){ openCTG(html); }, 0);
     return;
@@ -3354,49 +3334,4 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
