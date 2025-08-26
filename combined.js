@@ -3387,13 +3387,13 @@ document.addEventListener('click', function (e) {
 /* ===== /NOTES MODAL ===== */
 
 
-<script>
+
 /* ================= AI TRANSCRIPT (full-screen modal) ================= */
 (function wireAITranscript(){
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
-  /* ---------- tiny toast: “Analyzing …” ---------- */
+  // ---------- tiny toast: “Analyzing …” ----------
   function showAnalyzingToast(anchor){
     let t = document.getElementById('cv-ai-analyzing');
     if (!t){
@@ -3401,9 +3401,12 @@ document.addEventListener('click', function (e) {
       t.id = 'cv-ai-analyzing';
       t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;gap:8px;align-items:center';
       t.innerHTML = '<span style="font-weight:700">Analyzing</span><span style="width:16px;height:16px;border:2px solid #d1d5db;border-top-color:#1a73e8;border-radius:50%;display:inline-block;animation:cvspin .8s linear infinite"></span>';
-      const kf = document.createElement('style');
-      kf.textContent = '@keyframes cvspin{to{transform:rotate(360deg)}}';
-      document.head.appendChild(kf);
+      if (!document.getElementById('cvspin-kf')){
+        const kf = document.createElement('style');
+        kf.id = 'cvspin-kf';
+        kf.textContent = '@keyframes cvspin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(kf);
+      }
       document.body.appendChild(t);
     }
     const r = anchor.getBoundingClientRect();
@@ -3412,9 +3415,12 @@ document.addEventListener('click', function (e) {
     t.style.display = 'flex';
     return t;
   }
-  function hideAnalyzingToast(){ const t = document.getElementById('cv-ai-analyzing'); if (t) t.style.display = 'none'; }
+  function hideAnalyzingToast(){
+    const t = document.getElementById('cv-ai-analyzing');
+    if (t) t.style.display = 'none';
+  }
 
-  /* ---------- modal scaffold ---------- */
+  // ---------- modal scaffold ----------
   function ensureAIModal(){
     let m = document.getElementById('cv-ai-modal');
     if (m) return m;
@@ -3442,17 +3448,20 @@ document.addEventListener('click', function (e) {
       '</div>';
     document.body.appendChild(m);
 
-    // close + ESC + scroll lock
     function close(){ m.style.display='none'; document.documentElement.style.overflow = ''; }
     m.querySelector('.cv-modal-backdrop').onclick = close;
     m.querySelector('.cv-ai-close').onclick       = close;
-    document.addEventListener('keydown', e => { if (m.style.display==='block' && e.key==='Escape') close(); });
+    document.addEventListener('keydown', e => {
+      if (m.style.display==='block' && e.key==='Escape') close();
+    });
 
     return m;
   }
 
-  /* ---------- helpers ---------- */
-  function chip(label, color){ return '<span style="display:inline-flex;align-items:center;gap:6px;background:'+(color||'#eaf2ff')+';color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>'; }
+  // ---------- helpers ----------
+  function chip(label, color){
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:'+(color||'#eaf2ff')+';color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>';
+  }
   function segmentsFor(type){
     return (type==='inbound') ? [
       {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
@@ -3472,7 +3481,7 @@ document.addEventListener('click', function (e) {
       : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; a follow-up may be scheduled if requested.';
   }
 
-  /* ---------- builder ---------- */
+  // ---------- builder ----------
   function openAI(row, type){
     const m = ensureAIModal();
     const root = m.querySelector('#cv-ai-content');
@@ -3517,7 +3526,7 @@ document.addEventListener('click', function (e) {
 
     root.innerHTML = left + right;
     m.style.display = 'block';
-    document.documentElement.style.overflow = 'hidden'; // lock scroll
+    document.documentElement.style.overflow = 'hidden';
 
     // interactions
     const range = m.querySelector('#cv-ai-range');
@@ -3538,21 +3547,30 @@ document.addEventListener('click', function (e) {
     };
     range.oninput = ()=> setPos(range.value);
 
-    // downloads (fake but functional)
+    // downloads (fake but functional, Blob written safely)
     m.querySelector('#cv-ai-btn-txt').onclick = function(){
-      const blob = new Blob(
-        ['Summary:\n', aiSummaryFor(type), '\n\nSegments:\n', segs.map(s => `[${s.t0}s–${s.t1}s] ${s.text}`).join('\n')],
-        {type:'text/plain'}
-      );
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'transcript.txt'; a.click(); URL.revokeObjectURL(a.href);
+      const text =
+        'Summary:\n' + aiSummaryFor(type) +
+        '\n\nSegments:\n' +
+        segs.map(s => `[${s.t0}s–${s.t1}s] ${s.text}`).join('\n');
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'transcript.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
     };
     m.querySelector('#cv-ai-btn-rec').onclick = function(){
-      const blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
-      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'recording.wav'; a.click(); URL.revokeObjectURL(a.href);
+      const blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'recording.wav';
+      a.click();
+      URL.revokeObjectURL(a.href);
     };
   }
 
-  /* ---------- click binding on the row icon ---------- */
+  // ---------- click binding on the row icon ----------
   document.addEventListener('click', function(e){
     const btn = e.target instanceof Element ? e.target.closest('button[data-action="transcript"]') : null;
     if (!btn) return;
@@ -3560,22 +3578,22 @@ document.addEventListener('click', function (e) {
 
     const toast = showAnalyzingToast(btn);
 
-    // pull row values from the table you already render
     const tr  = btn.closest('tr');
     const tds = tr ? tr.querySelectorAll('td') : [];
     const row = {
-      from:      (tds[1]?.textContent || '').trim(),
-      dialed:    (tds[3]?.textContent || '').trim(),
-      to:        (tds[5]?.textContent || '').trim(),
-      date:      (tds[7]?.textContent || '').trim(),
-      duration:  (tds[8]?.textContent || '').trim()
+      from:     (tds[1]?.textContent || '').trim(),
+      dialed:   (tds[3]?.textContent || '').trim(),
+      to:       (tds[5]?.textContent || '').trim(),
+      date:     (tds[7]?.textContent || '').trim(),
+      duration: (tds[8]?.textContent || '').trim()
     };
     const type = /^Ext\.?\s*\d+/i.test(row.to) ? 'inbound' : 'outbound';
 
     setTimeout(function(){ hideAnalyzingToast(); openAI(row, type); }, 850);
   }, true);
 })();
-</script>
+
+
 
 
 
@@ -3712,6 +3730,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
