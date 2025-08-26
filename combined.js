@@ -2913,104 +2913,40 @@ const rows = [
       + '</div>';
   }
 
-  // ---- Polished inbound builder (matches outbound styling) ----
-function buildInboundHTML(ctx){
-  const { from, to, date, dur } = ctx;
+ 
 
- // Local helpers (same logic, no template literals)
-function parseStart(dateText){
-  var d = new Date();
-  var m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(String(dateText||''));
-  if (m){
-    var h = +m[1], min = +m[2], ap = m[3].toLowerCase();
-    if (ap === 'pm' && h !== 12) h += 12;
-    if (ap === 'am' && h === 12) h = 0;
-    d.setHours(h, min, 0, 0);
-  }
-  return d;
-}
-function addMs(d, ms){ return new Date(d.getTime() + ms); }
-function fmtClock(d){
-  var h = d.getHours(), m = d.getMinutes(), s = d.getSeconds();
-  var ap = h >= 12 ? 'PM' : 'AM';
-  h = (h % 12) || 12;
-  function pad(n){ return String(n).padStart(2,'0'); }
-  return h + ':' + pad(m) + ':' + pad(s) + ' ' + ap;
-}
-function parseDurSecs(txt){
-  var m = /^(\d+):(\d{2})$/.exec(String(txt||'').trim());
-  return m ? (+m[1]*60 + +m[2]) : NaN;
-}
+  // ---- Inbound builder (uses shared helpers above; no template literals) ----
+function buildInboundHTML(from, dateText, toText, durText){
+  var ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+  var ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+  var ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  var ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
 
+  var stirStatus = 'Verified'; // placeholder; wire real status when ready
 
-  // Icon URLs (same set you used)
-  const ICON_RING   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
-  const ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
-  const ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-  const ICON_HANG   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
-
-  // One shared row renderer that mirrors outbound look
-  function timeBlock(d, deltaText, iconSrc, text){
-  return ''
-    + '<div class="cvctg-step" style="display:grid;grid-template-columns:140px 40px 1fr;gap:10px;align-items:start;margin:10px 0">'
-    +   '<div class="cvctg-time" style="font-weight:600;color:#333">' + fmtClock(d)
-    +     (deltaText ? '<div class="cvctg-delta" style="color:#9aa0a6;font-size:11px;margin-top:2px">' + deltaText + '</div>' : '')
-    +   '</div>'
-    +   '<div class="cvctg-marker" style="display:flex;flex-direction:column;align-items:center">'
-    +     '<span class="cvctg-icon" style="width:28px;height:28px;border-radius:50%;border:1px solid #ddd;background:#f5f5f5;display:inline-flex;align-items:center;justify-content:center;padding:5px">'
-    +       '<img src="' + iconSrc + '" alt="" style="width:16px;height:16px" />'
-    +     '</span>'
-    +     '<span class="cvctg-vert" style="width:2px;flex:1 1 auto;background:#e0e0e0;margin:6px 0 0;border-radius:1px"></span>'
-    +   '</div>'
-    +   '<div class="cvctg-text" style="color:#444">' + text + '</div>'
-    + '</div>';
-}
-
-  // STIR now inline on line 1; adjust label if/when you wire real status
-  const stirStatus = 'Verified';
-
-  const start = parseStart(date);
-  const t0 = start;              // Ringing
-  const t1 = addMs(start, 500);  // Dialpad
-  const t2 = addMs(start, 5000); // Queueing
-  const secs = parseDurSecs(dur);
-  const t3 = addMs(start, isNaN(secs) ? 120000 : secs * 1000); // Hang at call end
+  var start = parseStart(dateText);
+  var t0 = start;               // ringing
+  var t1 = addMs(start, 500);   // dialpad
+  var t2 = addMs(start, 5000);  // queue/routing
+  var secs = parseDurSecs(durText);
+  var t3 = addMs(start, isNaN(secs) ? 120000 : secs * 1000); // hangup at end
 
   return ''
     + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
-    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText||'Ext.') + ' is ringing')
+    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText || 'Ext.') + ' is ringing')
     +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
     +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
-    +   timeBlock(t3, isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
-               ICON_HANG, (toText || 'Extension') + ' hung up')
+    +   timeBlock(
+          t3,
+          (isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's')),
+          ICON_HANG,
+          (toText || 'Extension') + ' hung up'
+        )
     + '</div>';
 }
 
-// Capture last clicked row for CTG (does not block their handlers)
-document.addEventListener('click', function(e){
-  var btn = e.target && e.target.closest ? e.target.closest('button[data-action="cradle"]') : null;
-  if (!btn) return;
 
-  var tr  = btn.closest('tr');
-  var tds = tr ? tr.querySelectorAll('td') : [];
 
-  var p = {};
-  p.from = (tds[1] && tds[1].textContent || '').trim();
-  p.dial = (tds[3] && tds[3].textContent || '').trim();
-  p.to   = (tds[5] && tds[5].textContent || '').trim();
-  p.date = (tds[7] && tds[7].textContent || '').trim();
-  p.dur  = (tds[8] && tds[8].textContent || '').trim();
-
-  p.isInbound = /^Ext\.?\s*\d+/i.test(p.to);
-
-  function xtract(t){
-    var m = /Ext\.?\s*(\d{2,4})/i.exec(String(t||''));
-    return m ? m[1] : '';
-  }
-  p.agentExt = xtract(p.to) || xtract(p.from);
-
-  window.__ctgPayload = p; // used by the observer below
-}, true);
 
 
   // ----- Outbound builder (self-contained) -----
@@ -3041,35 +2977,6 @@ document.addEventListener('click', function(e){
       + '</div>';
   }
 
-// Once: observe DOM changes and, when CTG opens, replace body with the correct view
-(function setupCTGObserver(){
-  if (document.__ctgObsSetup) return;
-  document.__ctgObsSetup = true;
-
-  var obs = new MutationObserver(function(){
-    var body = document.getElementById('cv-ctg-body');
-    var p = window.__ctgPayload;
-    if (!body || !p) return; // nothing to do yet
-
-    // Pick the right builder you already have
-    var html;
-    if (p.isInbound && typeof buildInboundHTML === 'function') {
-      html = buildInboundHTML(p.from, p.date, p.to, p.dur);
-    } else if (!p.isInbound && typeof buildOutboundHTML === 'function') {
-      html = buildOutboundHTML(p.from, p.date, p.dial, p.dur, p.agentExt);
-    } else {
-      // Loud fallback (shouldn’t be hit if your builders exist)
-      html = '<div style="padding:12px;font:700 14px system-ui">'
-           + (p.isInbound ? 'INBOUND' : 'OUTBOUND') + ' (override)</div>';
-    }
-
-    body.innerHTML = html;      // our content wins last
-    window.__ctgPayload = null; // clear so we don’t re-apply on unrelated mutations
-  });
-
-  // Observe the whole document for the modal/body updates
-  obs.observe(document.documentElement, { childList:true, subtree:true });
-})();
 
 
   // ----- One, safe, capturing listener; blocks other handlers -----
@@ -3248,6 +3155,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
