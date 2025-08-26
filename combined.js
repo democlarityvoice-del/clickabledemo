@@ -3332,12 +3332,12 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ================= AI TRANSCRIPT (full-screen modal, simple/safe) ================= */
-;(function () {
+/* ================= AI TRANSCRIPT (full-screen modal, minimal/safe) ================= */
+(function () {
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
-  /* ---------- tiny toast ---------- */
+  /* toast */
   function cvAI_showToast(anchor){
     var t = document.getElementById('cv-ai-analyzing');
     if (!t){
@@ -3353,7 +3353,7 @@ document.addEventListener('click', function (e) {
       t.appendChild(document.createTextNode('Analyzing…'));
       document.body.appendChild(t);
     }
-    var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left: 20, top: 20};
+    var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:20, top:20};
     t.style.left = (r.left - 12) + 'px';
     t.style.top  = (r.top  - 40) + 'px';
     t.style.display = 'block';
@@ -3364,7 +3364,7 @@ document.addEventListener('click', function (e) {
     if (t) t.style.display = 'none';
   }
 
-  /* ---------- helpers ---------- */
+  /* small helpers */
   function cvAI_closestTranscriptBtn(node){
     var n = node;
     while (n && n.nodeType === 1){
@@ -3406,8 +3406,8 @@ document.addEventListener('click', function (e) {
   }
   function cvAI_summary(type){
     return (type === 'inbound')
-      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional based on caller preference.'
-      : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; a follow-up may be scheduled if requested.';
+      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional.'
+      : 'Agent placed a courtesy outreach. Recipient received information and next steps. No commitments; follow-up can be scheduled if requested.';
   }
   function cvAI_fmtTime(n){
     n = Math.max(0, Math.floor(n));
@@ -3416,7 +3416,7 @@ document.addEventListener('click', function (e) {
     return m + ':' + (s<10 ? '0'+s : ''+s);
   }
 
-  /* ---------- modal scaffold (all via DOM, no big strings) ---------- */
+  /* modal scaffold (DOM only) */
   function cvAI_ensureModal(){
     var m = document.getElementById('cv-ai-modal');
     if (m) return m;
@@ -3429,14 +3429,12 @@ document.addEventListener('click', function (e) {
     m.style.display = 'none';
 
     var backdrop = document.createElement('div');
-    backdrop.className = 'cv-modal-backdrop';
     backdrop.style.position = 'absolute';
     backdrop.style.inset = '0';
     backdrop.style.background = 'rgba(0,0,0,.5)';
     m.appendChild(backdrop);
 
     var card = document.createElement('div');
-    card.className = 'cv-modal';
     card.style.position = 'relative';
     card.style.margin = '3vh auto 0';
     card.style.background = '#fff';
@@ -3449,7 +3447,6 @@ document.addEventListener('click', function (e) {
     m.appendChild(card);
 
     var header = document.createElement('div');
-    header.className = 'cv-modal-header';
     header.style.display = 'flex';
     header.style.alignItems = 'center';
     header.style.justifyContent = 'space-between';
@@ -3478,37 +3475,30 @@ document.addEventListener('click', function (e) {
     rightH.style.alignItems = 'center';
     var btnTxt = cvAI_make('button', 'Download Transcript');
     btnTxt.id = 'cv-ai-btn-txt';
-    btnTxt.className = 'cv-btn';
-    btnTxt.style.background = '#f1f5f9';
-    btnTxt.style.border = '1px solid #e2e8f0';
     btnTxt.style.padding = '6px 12px';
+    btnTxt.style.border = '1px solid #e2e8f0';
     btnTxt.style.borderRadius = '4px';
-
+    btnTxt.style.background = '#f1f5f9';
     var btnRec = cvAI_make('button', 'Download Recording');
     btnRec.id = 'cv-ai-btn-rec';
-    btnRec.className = 'cv-btn';
+    btnRec.style.padding = '6px 12px';
+    btnRec.style.border = '1px solid #1a73e8';
+    btnRec.style.borderRadius = '4px';
     btnRec.style.background = '#1a73e8';
     btnRec.style.color = '#fff';
-    btnRec.style.border = '1px solid #1a73e8';
-    btnRec.style.padding = '6px 12px';
-    btnRec.style.borderRadius = '4px';
-
     var btnClose = cvAI_make('button', '×');
-    btnClose.className = 'cv-ai-close';
     btnClose.setAttribute('aria-label','Close');
     btnClose.style.marginLeft = '8px';
     btnClose.style.background = 'none';
     btnClose.style.border = '0';
     btnClose.style.fontSize = '22px';
     btnClose.style.cursor = 'pointer';
-
     rightH.appendChild(btnTxt);
     rightH.appendChild(btnRec);
     rightH.appendChild(btnClose);
     header.appendChild(rightH);
 
     var body = document.createElement('div');
-    body.className = 'cv-modal-body';
     body.style.flex = '1 1 auto';
     body.style.overflow = 'auto';
     body.style.padding = '16px';
@@ -3530,30 +3520,28 @@ document.addEventListener('click', function (e) {
     backdrop.onclick = close;
     btnClose.onclick = close;
     document.addEventListener('keydown', function(e){
-      var key = e && (e.key || e.keyCode);
-      if (m.style.display === 'block' && (key === 'Escape' || key === 27)) close();
+      var k = e && (e.key || e.keyCode);
+      if (m.style.display === 'block' && (k === 'Escape' || k === 27)) close();
     });
 
     return m;
   }
 
-  /* ---------- open & render ---------- */
+  /* open & render */
   function cvAI_open(row, type){
     var m = cvAI_ensureModal();
     var root = m.querySelector('#cv-ai-content');
-    root.innerHTML = ''; // clear
+    root.innerHTML = '';
 
     var from = row.from || '';
     var to   = row.to   || row.dialed || '';
     var dur  = row.duration || '0:00';
     var date = row.date || '';
 
-    // seconds from h:mm:ss / mm:ss
     var parts = String(dur).split(':');
     var secsTotal = 0;
     for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
 
-    // LEFT card
     var left = document.createElement('div');
     left.style.border = '1px solid #e5e7eb';
     left.style.borderRadius = '12px';
@@ -3587,7 +3575,6 @@ document.addEventListener('click', function (e) {
     sum.style.color = '#243447';
     left.appendChild(sum);
 
-    // RIGHT card
     var right = document.createElement('div');
     right.style.border = '1px solid #e5e7eb';
     right.style.borderRadius = '12px';
@@ -3601,7 +3588,6 @@ document.addEventListener('click', function (e) {
     controls.style.alignItems = 'center';
     controls.style.gap = '10px';
     var play = cvAI_make('button', 'Play');
-    play.className = 'cv-btn';
     play.style.minWidth = '60px';
     var range = document.createElement('input');
     range.type = 'range';
@@ -3619,14 +3605,12 @@ document.addEventListener('click', function (e) {
     right.appendChild(controls);
 
     var segWrap = document.createElement('div');
-    segWrap.id = 'cv-ai-seglist';
     segWrap.style.overflow = 'auto';
     segWrap.style.maxHeight = 'calc(94vh - 260px)';
     var segs = cvAI_segments(type);
     for (var j=0;j<segs.length;j++){
       var s = segs[j];
       var item = document.createElement('div');
-      item.className = 'cv-ai-seg';
       item.setAttribute('data-t', String(s.t0));
       item.style.border = '1px solid #e5e7eb';
       item.style.borderRadius = '10px';
@@ -3660,19 +3644,19 @@ document.addEventListener('click', function (e) {
     }
     right.appendChild(segWrap);
 
-    root.appendChild(left);
-    root.appendChild(right);
+    var content = m.querySelector('#cv-ai-content');
+    content.appendChild(left);
+    content.appendChild(right);
 
     m.style.display = 'block';
     document.documentElement.style.overflow = 'hidden';
 
-    // interactions
     var timer = null;
     function setPos(s){ range.value = String(s); clock.textContent = cvAI_fmtTime(Number(s)); }
     segWrap.addEventListener('click', function(ev){
       var n = ev.target;
       while (n && n !== segWrap){
-        if (n.className === 'cv-ai-seg'){
+        if (n.getAttribute && n.getAttribute('data-t')){
           var t = Number(n.getAttribute('data-t')) || 0;
           setPos(t);
           break;
@@ -3691,7 +3675,6 @@ document.addEventListener('click', function (e) {
     };
     range.oninput = function(){ setPos(range.value); };
 
-    // fake downloads
     var btnTxt = m.querySelector('#cv-ai-btn-txt');
     if (btnTxt) btnTxt.onclick = function(){
       var out = 'Summary:\n' + cvAI_summary(type) + '\n\nSegments:\n';
@@ -3717,31 +3700,25 @@ document.addEventListener('click', function (e) {
     };
   }
 
-  /* ---------- click binding ---------- */
+  /* click binding */
   document.addEventListener('click', function(e){
     var btn = cvAI_closestTranscriptBtn(e.target || e.srcElement);
     if (!btn) return;
-
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
     var toast = cvAI_showToast(btn);
 
-    // find the row and cells
     var tr = btn;
     while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
     var tds = tr ? tr.getElementsByTagName('td') : [];
     function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
-    var row = {
-      from:     cell(1),
-      dialed:   cell(3),
-      to:       cell(5),
-      date:     cell(7),
-      duration: cell(8)
-    };
+    var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
     var type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
 
     setTimeout(function(){ cvAI_hideToast(); cvAI_open(row, type); }, 700);
   }, true);
 })();
+
 
 
 
@@ -3878,6 +3855,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
