@@ -3220,11 +3220,12 @@ document.addEventListener('click', function (e) {
   function ensureNotesModal () {
     var modal = document.getElementById('cv-notes-modal');
     if (modal) return modal;
-    modal.style.display = 'none';
+   
 
 
     modal = document.createElement('div');
     modal.id = 'cv-notes-modal';
+    modal.style.display = 'none';
     modal.innerHTML =
       '<div class="cv-modal-backdrop"></div>' +
       '<div class="cv-modal">' +
@@ -3468,6 +3469,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
