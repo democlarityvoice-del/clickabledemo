@@ -3332,6 +3332,227 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
+/* ================= AI TRANSCRIPT (full-screen modal) ================= */
+(function () {
+  if (document._cvAIBound) return;
+  document._cvAIBound = true;
+
+  // --- tiny toast: “Analyzing …” (shows near clicked icon) ---
+  function showAnalyzingToast(anchor){
+    var t = document.getElementById('cv-ai-analyzing');
+    if (!t){
+      t = document.createElement('div');
+      t.id = 'cv-ai-analyzing';
+      t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;gap:8px;align-items:center';
+      t.innerHTML = '<span style="font-weight:700">Analyzing</span><span style="width:16px;height:16px;border:2px solid #d1d5db;border-top-color:#1a73e8;border-radius:50%;display:inline-block;animation:cvspin .8s linear infinite"></span>';
+      if (!document.getElementById('cvspin-kf')) {
+        var kf = document.createElement('style');
+        kf.id = 'cvspin-kf';
+        kf.textContent = '@keyframes cvspin{to{transform:rotate(360deg)}}';
+        document.head.appendChild(kf);
+      }
+      document.body.appendChild(t);
+    }
+    var r = anchor.getBoundingClientRect();
+    t.style.left = (r.left - 12) + 'px';
+    t.style.top  = (r.top  - 40) + 'px';
+    t.style.display = 'flex';
+    return t;
+  }
+  function hideAnalyzingToast(){
+    var t = document.getElementById('cv-ai-analyzing');
+    if (t) t.style.display = 'none';
+  }
+
+  // --- modal scaffold ---
+  function ensureAIModal(){
+    var m = document.getElementById('cv-ai-modal');
+    if (m) return m;
+
+    m = document.createElement('div');
+    m.id = 'cv-ai-modal';
+    m.style.cssText = 'position:fixed;inset:0;z-index:10040;display:none';
+    m.innerHTML =
+      '<div class="cv-modal-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>'+
+      '<div class="cv-modal" style="position:relative;margin:3vh auto 0;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)">'+
+        '<div class="cv-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb">'+
+          '<div style="display:flex;align-items:center;gap:12px">'+
+            '<img alt="" style="height:26px" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/clarity-badge-mini.svg">'+
+            '<span style="font-weight:700;font-size:16px">AI Transcript and Summary</span>'+
+          '</div>'+
+          '<div style="display:flex;gap:8px;align-items:center">'+
+            '<button id="cv-ai-btn-txt" class="cv-btn" style="background:#f1f5f9;border-color:#e2e8f0">Download Transcript</button>'+
+            '<button id="cv-ai-btn-rec" class="cv-btn" style="background:#1a73e8;color:#fff;border-color:#1a73e8">Download Recording</button>'+
+            '<button class="cv-ai-close" aria-label="Close" style="margin-left:8px;background:none;border:0;font-size:22px;cursor:pointer">&times;</button>'+
+          '</div>'+
+        '</div>'+
+        '<div class="cv-modal-body" style="flex:1 1 auto;overflow:auto;padding:16px">'+
+          '<div id="cv-ai-content" style="display:grid;grid-template-columns:420px 1fr;gap:18px"></div>'+
+        '</div>'+
+      '</div>';
+    document.body.appendChild(m);
+
+    function close(){
+      m.style.display='none';
+      document.documentElement.style.overflow = '';
+    }
+    m.querySelector('.cv-modal-backdrop').onclick = close;
+    m.querySelector('.cv-ai-close').onclick       = close;
+    document.addEventListener('keydown', function(e){
+      if (m.style.display==='block' && e.key==='Escape') close();
+    });
+
+    return m;
+  }
+
+  // --- helpers ---
+  function chip(label, color){
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:'+(color||'#eaf2ff')+';color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>';
+  }
+  function segmentsFor(type){
+    return (type==='inbound') ? [
+      {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
+      {t0:28, t1:32, text:'Please hold while I route your call.'},
+      {t0:32, t1:42, text:'Agent greets caller and verifies account.'},
+      {t0:42, t1:55, text:'Agent provides answer and next steps.'}
+    ] : [
+      {t0:0,  t1:6,  text:'Agent greeting and purpose of call.'},
+      {t0:6,  t1:24, text:'Prospect explains needs / questions.'},
+      {t0:24, t1:40, text:'Agent outlines options and follow-up.'},
+      {t0:40, t1:58, text:'Wrap-up and thanks.'}
+    ];
+  }
+  function aiSummaryFor(type){
+    return (type==='inbound')
+      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional based on caller preference.'
+      : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; a follow-up may be scheduled if requested.';
+  }
+
+  // --- builder ---
+  function openAI(row, type){
+    var m = ensureAIModal();
+    var root = m.querySelector('#cv-ai-content');
+
+    var from = row.from || '';
+    var to   = row.to   || row.dialed || '';
+    var dur  = row.duration || '0:00';
+    var date = row.date || '';
+
+    var parts = String(dur).split(':');
+    var secsTotal = 0;
+    for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
+
+    var left =
+      '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px">'+
+        '<div style="font-weight:800;font-size:18px;margin-bottom:10px">Call Details</div>'+
+        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+
+          chip('From:'+from) + chip('To:'+to) + chip('⏱ '+dur) + chip('📅 '+date) +
+        '</div>'+
+        '<div style="font-weight:800;font-size:18px;margin-bottom:8px">Summary</div>'+
+        '<div style="line-height:1.5;color:#243447">'+ aiSummaryFor(type) +'</div>'+
+      '</div>';
+
+    var segs = segmentsFor(type);
+    var items = segs.map(function(s){
+      return ''+
+        '<div class="cv-ai-seg" data-t="'+s.t0+'" style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer">'+
+          '<div style="display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700">'+
+            '<span style="width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block"></span>'+
+            '<span>'+ s.t0 +'s</span>'+
+            '<span style="color:#94a3b8;font-weight:600">– '+ s.t1 +'s</span>'+
+          '</div>'+
+          '<div style="margin-top:8px">'+ s.text +'</div>'+
+        '</div>';
+    }).join('');
+
+    var right =
+      '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px">'+
+        '<div style="display:flex;align-items:center;gap:10px">'+
+          '<button id="cv-ai-play" class="cv-btn" style="min-width:60px">Play</button>'+
+          '<input id="cv-ai-range" type="range" min="0" max="'+secsTotal+'" value="0" style="flex:1">'+
+          '<span id="cv-ai-clock" style="width:70px;text-align:right;font-weight:700">0:00</span>'+
+        '</div>'+
+        '<div id="cv-ai-seglist" style="overflow:auto;max-height:calc(94vh - 260px)">'+ items +'</div>'+
+      '</div>';
+
+    root.innerHTML = left + right;
+    m.style.display = 'block';
+    document.documentElement.style.overflow = 'hidden';
+
+    // interactions
+    var range = m.querySelector('#cv-ai-range');
+    var clock = m.querySelector('#cv-ai-clock');
+    var play  = m.querySelector('#cv-ai-play');
+    var timer = null;
+
+    function fmt(n){ n = Math.max(0, Math.floor(n)); return Math.floor(n/60)+':'+String(n%60).padStart(2,'0'); }
+    function setPos(s){ range.value = s; clock.textContent = fmt(s); }
+
+    var segEls = m.querySelectorAll('.cv-ai-seg');
+    for (var k=0;k<segEls.length;k++){
+      (function(el){ el.addEventListener('click', function(){ setPos(Number(el.getAttribute('data-t'))||0); }); })(segEls[k]);
+    }
+
+    play.onclick = function(){
+      if (timer){ clearInterval(timer); timer=null; play.textContent='Play'; return; }
+      play.textContent='Pause';
+      timer = setInterval(function(){
+        var v = Number(range.value)+1;
+        if (v>secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; }
+        setPos(v);
+      }, 1000);
+    };
+    range.oninput = function(){ setPos(range.value); };
+
+    // downloads (fake)
+    m.querySelector('#cv-ai-btn-txt').onclick = function () {
+      var lines = ['Summary:\n' + aiSummaryFor(type), '\n\nSegments:\n'];
+      for (var j=0;j<segs.length;j++){
+        var s = segs[j];
+        lines.push('['+s.t0+'s–'+s.t1+'s] ' + s.text + '\n');
+      }
+      var blob = new Blob([lines.join('')], { type: 'text/plain' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'transcript.txt';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+    m.querySelector('#cv-ai-btn-rec').onclick = function(){
+      var blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'recording.wav';
+      a.click();
+      URL.revokeObjectURL(a.href);
+    };
+  }
+
+  // --- click binding on the row icon ---
+  document.addEventListener('click', function(e){
+    var target = e.target || e.srcElement;
+    var btn = target && target.closest ? target.closest('button[data-action="transcript"]') : null;
+    if (!btn) return;
+
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+
+    var toast = showAnalyzingToast(btn);
+
+    var tr  = btn.closest('tr');
+    var tds = tr ? tr.querySelectorAll('td') : [];
+    var row = {
+      from:     (tds[1] && tds[1].textContent ? tds[1].textContent : '').trim(),
+      dialed:   (tds[3] && tds[3].textContent ? tds[3].textContent : '').trim(),
+      to:       (tds[5] && tds[5].textContent ? tds[5].textContent : '').trim(),
+      date:     (tds[7] && tds[7].textContent ? tds[7].textContent : '').trim(),
+      duration: (tds[8] && tds[8].textContent ? tds[8].textContent : '').trim()
+    };
+    var type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
+
+    setTimeout(function(){ hideAnalyzingToast(); openAI(row, type); }, 800);
+  }, true);
+})();
+
 
 
 
@@ -3469,6 +3690,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
