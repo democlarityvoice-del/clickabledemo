@@ -2975,6 +2975,34 @@ var iconsHTML = ICONS.map(function(icon){
   var ICON_DIAL   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
   var ICON_ELLIPS = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
 
+// 1x1 transparent for “plain circle” steps
+var ICON_DOT = 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=';
+
+// Agent directory (ext → name)
+var AGENTS = [
+  {ext:'200', name:'Mike Johnson'},
+  {ext:'201', name:'Cathy Thomas'},
+  {ext:'202', name:'Jake Lee'},
+  {ext:'203', name:'Bob Andersen'},
+  {ext:'204', name:'Brittany Lawrence'},
+  {ext:'205', name:'Alex Roberts'},
+  {ext:'206', name:'Mark Sanchez'},
+  {ext:'207', name:'John Smith'},
+  {ext:'208', name:'Emily Johnson'},
+  {ext:'209', name:'Michael Williams'},
+  {ext:'210', name:'Jessica Brown'}
+];
+
+function findAgentLabel(ext){
+  ext = String(ext||'').replace(/\D/g,'');
+  var a = AGENTS.find(function(x){ return x.ext === ext; });
+  return a ? (a.name + ' (' + a.ext + ')') : ('Ext. ' + (ext || ''));
+}
+function extractExtSimple(text){
+  var m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
+  return m ? m[1] : '';
+}
+
   // ----- Common timeline block (local CSS hooks) -----
   function timeBlock(d, deltaText, iconSrc, text){
     return ''
@@ -2995,30 +3023,97 @@ var iconsHTML = ICONS.map(function(icon){
  
 
   // ---- Inbound builder (uses shared helpers above; no template literals) ----
-function buildInboundHTML(from, dateText, toText, durText){
-  var stirStatus = 'Verified'; // placeholder; wire real status when ready
-
+function buildInboundHTML(from, dateText, toText, durText, releaseText){
   var start = parseStart(dateText);
-  var t0 = start;               // ringing
-  var t1 = addMs(start, 500);   // dialpad
-  var t2 = addMs(start, 5000);  // queue/routing
-  var secs = parseDurSecs(durText);
-  var t3 = addMs(start, isNaN(secs) ? 120000 : secs * 1000); // hangup at end
 
-  return ''
-    + '<div class="cvctg-steps" style="padding:8px 6px 2px">'
-    +   timeBlock(t0, '',       ICON_RING,   'Inbound call from ' + from + ' (STIR: ' + stirStatus + ') to ' + (toText || 'Ext.') + ' is ringing')
-    +   timeBlock(t1, '+0.5s',  ICON_DIAL,   'Dialpad menu accessed')
-    +   timeBlock(t2, '+5s',    ICON_ELLIPS, 'Call queued / routing in progress')
-    +   timeBlock(
-          t3,
-          (isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's')),
-          ICON_HANG,
-          (toText || 'Extension') + ' hung up'
-        )
-    + '</div>';
+  // Labels you asked for
+  var timeframe = 'Daytime';
+  var aaLabel   = 'Auto Attendant Daytime 700';
+  var queueLbl  = 'Call Queue 301';
+
+  // Who answered (use the “To” ext if present)
+  var answeredExt   = extractExtSimple(toText);
+  var answeredLabel = findAgentLabel(answeredExt);
+
+  // Duration math
+  var secs   = parseDurSecs(durText);
+  function deltaLabel(ms){
+    if (isNaN(ms)) return '+0s';
+    var s = Math.round(ms/1000);
+    return (s>=60) ? ('+' + Math.floor(s/60) + 'm ' + (s%60) + 's') : ('+' + s + 's');
+  }
+
+  // Rough timeline (readable spacing; tweak if you want):
+  var t0 = start;                    // inbound call lands
+  var t1 = addMs(start, 2);          // timeframe check #1
+  var t2 = addMs(start, 135);        // AA connected
+  var t3 = addMs(start, 158);        // menu selection
+  var t4 = addMs(start, 14*1000);    // timeframe check #2
+  var t5 = addMs(t4, 1000);          // queue connect
+  // Agents begin ringing ~300ms apart
+  var ringStart = addMs(t5, 286);
+  var ringStep  = 286;               // ms between “is ringing” lines
+  // Answer about 8s after queue connect (demo feel)
+  var tAnswer = addMs(t5, 8000);
+  // Hang at answer + actual duration (fallback 2m)
+  var tHang   = isNaN(secs) ? addMs(tAnswer, 2*60*1000) : addMs(tAnswer, secs*1000);
+
+  // Who hung up (uses Release Reason column “Orig/Term”)
+  var hungBy =
+    /Orig/i.test(String(releaseText||'')) ? (String(from||'').trim() || 'Caller')
+      : (answeredLabel || ('Ext. ' + answeredExt));
+
+  // Build HTML
+  var html = '';
+  html += '<div class="cvctg-steps" style="padding:8px 6px 2px">';
+
+  // 1) Phone icon — no “to Ext.”, no “is ringing” suffix
+  html += timeBlock(t0, '', ICON_RING,
+          'Inbound call from ' + (from||'') + ' (STIR: Verified)');
+
+  // 2) Plain circle — timeframe
+  html += timeBlock(t1, '+2ms', ICON_DOT,
+          'The currently active time frame is ' + timeframe);
+
+  // 3) Dialpad — AA
+  html += timeBlock(t2, '+135ms', ICON_DIAL,
+          'Connected to ' + aaLabel);
+
+  // 4) Plain circle — Selected 1
+  html += timeBlock(t3, '+23ms', ICON_DOT,
+          'Selected 1');
+
+  // 5) Plain circle — timeframe again
+  html += timeBlock(t4, '+14s', ICON_DOT,
+          'The currently active time frame is ' + timeframe);
+
+  // 6) Ellipsis — queue
+  html += timeBlock(t5, '+1s', ICON_ELLIPS,
+          'Connected to ' + queueLbl);
+
+  // 7) Each agent ringing (phone icon)
+  for (var i=0; i<AGENTS.length; i++){
+    var a   = AGENTS[i];
+    var ti  = addMs(ringStart, i*ringStep);
+    var dlt = (i===0) ? '+286ms' : ('+' + (i*ringStep) + 'ms');
+    html += timeBlock(ti, dlt, ICON_RING, findAgentLabel(a.ext) + ' is ringing');
+  }
+
+  // 8) Answered by {name (ext)}
+  html += timeBlock(tAnswer, '+8s', ICON_ANSWER,
+          'Call answered by ' + answeredLabel);
+
+  // 9+10) Hangup — show duration as delta; say who hung up
+  html += timeBlock(
+           tHang,
+           isNaN(secs) ? '+2m' : ('+' + Math.floor(secs/60) + 'm ' + (secs%60) + 's'),
+           ICON_HANG,
+           hungBy + ' hung up'
+         );
+
+  html += '</div>';
+  return html;
 }
-
 
 
 
@@ -3072,28 +3167,22 @@ document.addEventListener('click', function (e) {
     const toText   = (tds[5]?.textContent || '').trim();
     const date     = (tds[7]?.textContent || '').trim();
     const dur      = (tds[8]?.textContent || '').trim();
+    const release  = (tds[10]?.textContent || '').trim();   // <-- add this
 
-    // prefer hard-coded flag on the button; fallback is optional
-    const inferred = /^Ext\.?\s*\d+/i.test(toText) ? 'inbound' : 'outbound';
-    const type = btn.dataset.ctg || inferred;
+    const type = btn.dataset.ctg;
 
-    function extractExt(text){
-      const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
-      return m ? m[1] : '';
-    }
-    const agentExt = extractExt(toText) || extractExt(fromText);
+    const agentExt = extractExtSimple(toText) || extractExtSimple(fromText);
 
-    // declare once, after agentExt exists
     const html = (type === 'inbound')
-      ? buildInboundHTML(fromText, date, toText, dur)
+      ? buildInboundHTML(fromText, date, toText, dur, release) // <-- pass release
       : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
-    setTimeout(() => openCTG(html), 0);
-  } catch (err) {
+    setTimeout(function(){ openCTG(html); }, 0);
+    return;
+  } catch(err){
     console.error('[CTG] render error:', err);
   }
 }, true);
-
 
 
 
@@ -3233,6 +3322,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
