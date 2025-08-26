@@ -2913,10 +2913,7 @@ const rows = [
       + '</div>';
   }
 
- function buildInboundHTML(fromText, date, toText, dur) {
-  console.log("[CTG Debug] USING INBOUND BUILDER", fromText, "→", toText);
-  // existing code stays untouched...
-}
+ 
 
   // ---- Inbound builder (uses shared helpers above; no template literals) ----
 function buildInboundHTML(from, dateText, toText, durText){
@@ -2944,10 +2941,6 @@ function buildInboundHTML(from, dateText, toText, durText){
 }
 
 
-function buildOutboundHTML(fromText, date, dial, dur, agentExt) {
-  console.log("[CTG Debug] USING OUTBOUND BUILDER", fromText, "→", dial);
-  // existing code stays untouched...
-}
 
 
   // ----- Outbound builder (self-contained) -----
@@ -3159,6 +3152,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
