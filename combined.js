@@ -3332,31 +3332,31 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ================= AI TRANSCRIPT (full-screen modal, safe) ================= */
-(function () {
+/* ================= AI TRANSCRIPT (full-screen modal, simple/safe) ================= */
+;(function () {
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
-  // --- tiny toast: “Analyzing …” ---
+  /* ---------- tiny toast ---------- */
   function cvAI_showToast(anchor){
     var t = document.getElementById('cv-ai-analyzing');
     if (!t){
       t = document.createElement('div');
       t.id = 'cv-ai-analyzing';
-      t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);display:flex;gap:8px;align-items:center';
-      t.innerHTML = '<span style="font-weight:700">Analyzing</span><span style="width:16px;height:16px;border:2px solid #d1d5db;border-top-color:#1a73e8;border-radius:50%;display:inline-block;animation:cvspin .8s linear infinite"></span>';
-      if (!document.getElementById('cvspin-kf')) {
-        var kf = document.createElement('style');
-        kf.id = 'cvspin-kf';
-        kf.textContent = '@keyframes cvspin{to{transform:rotate(360deg)}}';
-        document.head.appendChild(kf);
-      }
+      t.style.position = 'fixed';
+      t.style.zIndex = '10050';
+      t.style.padding = '8px 12px';
+      t.style.borderRadius = '8px';
+      t.style.background = '#fff';
+      t.style.boxShadow = '0 6px 24px rgba(0,0,0,.12)';
+      t.style.fontWeight = '700';
+      t.appendChild(document.createTextNode('Analyzing…'));
       document.body.appendChild(t);
     }
-    var r = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:0, top:0};
+    var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left: 20, top: 20};
     t.style.left = (r.left - 12) + 'px';
     t.style.top  = (r.top  - 40) + 'px';
-    t.style.display = 'flex';
+    t.style.display = 'block';
     return t;
   }
   function cvAI_hideToast(){
@@ -3364,7 +3364,7 @@ document.addEventListener('click', function (e) {
     if (t) t.style.display = 'none';
   }
 
-  // --- simple closest() for transcript buttons (no DOM polyfill needed) ---
+  /* ---------- helpers ---------- */
   function cvAI_closestTranscriptBtn(node){
     var n = node;
     while (n && n.nodeType === 1){
@@ -3373,55 +3373,23 @@ document.addEventListener('click', function (e) {
     }
     return null;
   }
-
-  // --- modal scaffold (full-screen) ---
-  function cvAI_ensureModal(){
-    var m = document.getElementById('cv-ai-modal');
-    if (m) return m;
-
-    m = document.createElement('div');
-    m.id = 'cv-ai-modal';
-    m.style.cssText = 'position:fixed;inset:0;z-index:10040;display:none';
-    m.innerHTML =
-      '<div class="cv-modal-backdrop" style="position:absolute;inset:0;background:rgba(0,0,0,.5)"></div>'+
-      '<div class="cv-modal" style="position:relative;margin:3vh auto 0;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)">'+
-        '<div class="cv-modal-header" style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb">'+
-          '<div style="display:flex;align-items:center;gap:12px">'+
-            '<img alt="" style="height:26px" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/clarity-badge-mini.svg">'+
-            '<span style="font-weight:700;font-size:16px">AI Transcript and Summary</span>'+
-          '</div>'+
-          '<div style="display:flex;gap:8px;align-items:center">'+
-            '<button id="cv-ai-btn-txt" class="cv-btn" style="background:#f1f5f9;border-color:#e2e8f0">Download Transcript</button>'+
-            '<button id="cv-ai-btn-rec" class="cv-btn" style="background:#1a73e8;color:#fff;border-color:#1a73e8">Download Recording</button>'+
-            '<button class="cv-ai-close" aria-label="Close" style="margin-left:8px;background:none;border:0;font-size:22px;cursor:pointer">&times;</button>'+
-          '</div>'+
-        '</div>'+
-        '<div class="cv-modal-body" style="flex:1 1 auto;overflow:auto;padding:16px">'+
-          '<div id="cv-ai-content" style="display:grid;grid-template-columns:420px 1fr;gap:18px"></div>'+
-        '</div>'+
-      '</div>';
-    document.body.appendChild(m);
-
-    function close(){
-      m.style.display='none';
-      document.documentElement.style.overflow = '';
-    }
-    var back = m.querySelector('.cv-modal-backdrop');
-    var xBtn = m.querySelector('.cv-ai-close');
-    if (back) back.onclick = close;
-    if (xBtn) xBtn.onclick = close;
-    document.addEventListener('keydown', function(e){
-      e = e || window.event;
-      var key = e.key || e.keyCode;
-      if (m.style.display==='block' && (key === 'Escape' || key === 27)) close();
-    });
-
-    return m;
+  function cvAI_make(tag, text){
+    var el = document.createElement(tag);
+    if (text != null) el.textContent = text;
+    return el;
   }
-
-  // --- helpers for content ---
   function cvAI_chip(label){
-    return '<span style="display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>';
+    var span = cvAI_make('span', label);
+    span.style.display = 'inline-flex';
+    span.style.alignItems = 'center';
+    span.style.gap = '6px';
+    span.style.background = '#eaf2ff';
+    span.style.color = '#1a73e8';
+    span.style.borderRadius = '12px';
+    span.style.padding = '4px 8px';
+    span.style.fontSize = '12px';
+    span.style.fontWeight = '700';
+    return span;
   }
   function cvAI_segments(type){
     return (type === 'inbound') ? [
@@ -3441,93 +3409,294 @@ document.addEventListener('click', function (e) {
       ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional based on caller preference.'
       : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; a follow-up may be scheduled if requested.';
   }
+  function cvAI_fmtTime(n){
+    n = Math.max(0, Math.floor(n));
+    var m = Math.floor(n/60);
+    var s = n%60;
+    return m + ':' + (s<10 ? '0'+s : ''+s);
+  }
 
-  // --- open & render ---
+  /* ---------- modal scaffold (all via DOM, no big strings) ---------- */
+  function cvAI_ensureModal(){
+    var m = document.getElementById('cv-ai-modal');
+    if (m) return m;
+
+    m = document.createElement('div');
+    m.id = 'cv-ai-modal';
+    m.style.position = 'fixed';
+    m.style.inset = '0';
+    m.style.zIndex = '10040';
+    m.style.display = 'none';
+
+    var backdrop = document.createElement('div');
+    backdrop.className = 'cv-modal-backdrop';
+    backdrop.style.position = 'absolute';
+    backdrop.style.inset = '0';
+    backdrop.style.background = 'rgba(0,0,0,.5)';
+    m.appendChild(backdrop);
+
+    var card = document.createElement('div');
+    card.className = 'cv-modal';
+    card.style.position = 'relative';
+    card.style.margin = '3vh auto 0';
+    card.style.background = '#fff';
+    card.style.width = '95vw';
+    card.style.height = '94vh';
+    card.style.borderRadius = '10px';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.boxShadow = '0 16px 60px rgba(0,0,0,.35)';
+    m.appendChild(card);
+
+    var header = document.createElement('div');
+    header.className = 'cv-modal-header';
+    header.style.display = 'flex';
+    header.style.alignItems = 'center';
+    header.style.justifyContent = 'space-between';
+    header.style.padding = '12px 16px';
+    header.style.borderBottom = '1px solid #e5e7eb';
+    card.appendChild(header);
+
+    var leftH = document.createElement('div');
+    leftH.style.display = 'flex';
+    leftH.style.alignItems = 'center';
+    leftH.style.gap = '12px';
+    var logo = document.createElement('img');
+    logo.alt = '';
+    logo.style.height = '26px';
+    logo.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/clarity-badge-mini.svg';
+    var ttl = cvAI_make('span', 'AI Transcript and Summary');
+    ttl.style.fontWeight = '700';
+    ttl.style.fontSize = '16px';
+    leftH.appendChild(logo);
+    leftH.appendChild(ttl);
+    header.appendChild(leftH);
+
+    var rightH = document.createElement('div');
+    rightH.style.display = 'flex';
+    rightH.style.gap = '8px';
+    rightH.style.alignItems = 'center';
+    var btnTxt = cvAI_make('button', 'Download Transcript');
+    btnTxt.id = 'cv-ai-btn-txt';
+    btnTxt.className = 'cv-btn';
+    btnTxt.style.background = '#f1f5f9';
+    btnTxt.style.border = '1px solid #e2e8f0';
+    btnTxt.style.padding = '6px 12px';
+    btnTxt.style.borderRadius = '4px';
+
+    var btnRec = cvAI_make('button', 'Download Recording');
+    btnRec.id = 'cv-ai-btn-rec';
+    btnRec.className = 'cv-btn';
+    btnRec.style.background = '#1a73e8';
+    btnRec.style.color = '#fff';
+    btnRec.style.border = '1px solid #1a73e8';
+    btnRec.style.padding = '6px 12px';
+    btnRec.style.borderRadius = '4px';
+
+    var btnClose = cvAI_make('button', '×');
+    btnClose.className = 'cv-ai-close';
+    btnClose.setAttribute('aria-label','Close');
+    btnClose.style.marginLeft = '8px';
+    btnClose.style.background = 'none';
+    btnClose.style.border = '0';
+    btnClose.style.fontSize = '22px';
+    btnClose.style.cursor = 'pointer';
+
+    rightH.appendChild(btnTxt);
+    rightH.appendChild(btnRec);
+    rightH.appendChild(btnClose);
+    header.appendChild(rightH);
+
+    var body = document.createElement('div');
+    body.className = 'cv-modal-body';
+    body.style.flex = '1 1 auto';
+    body.style.overflow = 'auto';
+    body.style.padding = '16px';
+    card.appendChild(body);
+
+    var content = document.createElement('div');
+    content.id = 'cv-ai-content';
+    content.style.display = 'grid';
+    content.style.gridTemplateColumns = '420px 1fr';
+    content.style.gap = '18px';
+    body.appendChild(content);
+
+    document.body.appendChild(m);
+
+    function close(){
+      m.style.display = 'none';
+      document.documentElement.style.overflow = '';
+    }
+    backdrop.onclick = close;
+    btnClose.onclick = close;
+    document.addEventListener('keydown', function(e){
+      var key = e && (e.key || e.keyCode);
+      if (m.style.display === 'block' && (key === 'Escape' || key === 27)) close();
+    });
+
+    return m;
+  }
+
+  /* ---------- open & render ---------- */
   function cvAI_open(row, type){
     var m = cvAI_ensureModal();
     var root = m.querySelector('#cv-ai-content');
+    root.innerHTML = ''; // clear
 
     var from = row.from || '';
     var to   = row.to   || row.dialed || '';
     var dur  = row.duration || '0:00';
     var date = row.date || '';
 
-    // seconds from mm:ss or h:mm:ss safely
+    // seconds from h:mm:ss / mm:ss
     var parts = String(dur).split(':');
-    var secsTotal = 0, i;
-    for (i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
+    var secsTotal = 0;
+    for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
 
-    var left =
-      '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px">'+
-        '<div style="font-weight:800;font-size:18px;margin-bottom:10px">Call Details</div>'+
-        '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+
-          cvAI_chip('From: '+from) + cvAI_chip('To: '+to) + cvAI_chip('⏱ '+dur) + cvAI_chip('📅 '+date) +
-        '</div>'+
-        '<div style="font-weight:800;font-size:18px;margin-bottom:8px">Summary</div>'+
-        '<div style="line-height:1.5;color:#243447">'+ cvAI_summary(type) +'</div>'+
-      '</div>';
+    // LEFT card
+    var left = document.createElement('div');
+    left.style.border = '1px solid #e5e7eb';
+    left.style.borderRadius = '12px';
+    left.style.padding = '14px';
 
+    var h1 = cvAI_make('div', 'Call Details');
+    h1.style.fontWeight = '800';
+    h1.style.fontSize = '18px';
+    h1.style.marginBottom = '10px';
+    left.appendChild(h1);
+
+    var chips = document.createElement('div');
+    chips.style.display = 'flex';
+    chips.style.flexWrap = 'wrap';
+    chips.style.gap = '8px';
+    chips.style.marginBottom = '16px';
+    chips.appendChild(cvAI_chip('From: '+from));
+    chips.appendChild(cvAI_chip('To: '+to));
+    chips.appendChild(cvAI_chip('⏱ '+dur));
+    chips.appendChild(cvAI_chip('📅 '+date));
+    left.appendChild(chips);
+
+    var h2 = cvAI_make('div', 'Summary');
+    h2.style.fontWeight = '800';
+    h2.style.fontSize = '18px';
+    h2.style.marginBottom = '8px';
+    left.appendChild(h2);
+
+    var sum = cvAI_make('div', cvAI_summary(type));
+    sum.style.lineHeight = '1.5';
+    sum.style.color = '#243447';
+    left.appendChild(sum);
+
+    // RIGHT card
+    var right = document.createElement('div');
+    right.style.border = '1px solid #e5e7eb';
+    right.style.borderRadius = '12px';
+    right.style.padding = '14px';
+    right.style.display = 'flex';
+    right.style.flexDirection = 'column';
+    right.style.gap = '12px';
+
+    var controls = document.createElement('div');
+    controls.style.display = 'flex';
+    controls.style.alignItems = 'center';
+    controls.style.gap = '10px';
+    var play = cvAI_make('button', 'Play');
+    play.className = 'cv-btn';
+    play.style.minWidth = '60px';
+    var range = document.createElement('input');
+    range.type = 'range';
+    range.min = '0';
+    range.max = String(secsTotal);
+    range.value = '0';
+    range.style.flex = '1';
+    var clock = cvAI_make('span', '0:00');
+    clock.style.width = '70px';
+    clock.style.textAlign = 'right';
+    clock.style.fontWeight = '700';
+    controls.appendChild(play);
+    controls.appendChild(range);
+    controls.appendChild(clock);
+    right.appendChild(controls);
+
+    var segWrap = document.createElement('div');
+    segWrap.id = 'cv-ai-seglist';
+    segWrap.style.overflow = 'auto';
+    segWrap.style.maxHeight = 'calc(94vh - 260px)';
     var segs = cvAI_segments(type);
-    var items = '';
-    for (i=0;i<segs.length;i++){
-      var s = segs[i];
-      items += ''+
-        '<div class="cv-ai-seg" data-t="'+s.t0+'" style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer">'+
-          '<div style="display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700">'+
-            '<span style="width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block"></span>'+
-            '<span>'+ s.t0 +'s</span>'+
-            '<span style="color:#94a3b8;font-weight:600"> - '+ s.t1 +'s</span>'+
-          '</div>'+
-          '<div style="margin-top:8px">'+ s.text +'</div>'+
-        '</div>';
+    for (var j=0;j<segs.length;j++){
+      var s = segs[j];
+      var item = document.createElement('div');
+      item.className = 'cv-ai-seg';
+      item.setAttribute('data-t', String(s.t0));
+      item.style.border = '1px solid #e5e7eb';
+      item.style.borderRadius = '10px';
+      item.style.padding = '12px';
+      item.style.margin = '10px 0';
+      item.style.cursor = 'pointer';
+      var rowT = document.createElement('div');
+      rowT.style.display = 'flex';
+      rowT.style.alignItems = 'center';
+      rowT.style.gap = '8px';
+      rowT.style.color = '#2563eb';
+      rowT.style.fontWeight = '700';
+      var dot = document.createElement('span');
+      dot.style.width = '8px';
+      dot.style.height = '8px';
+      dot.style.borderRadius = '50%';
+      dot.style.background = '#2563eb';
+      dot.style.display = 'inline-block';
+      var t0 = cvAI_make('span', s.t0 + 's');
+      var t1 = cvAI_make('span', ' - ' + s.t1 + 's');
+      t1.style.color = '#94a3b8';
+      t1.style.fontWeight = '600';
+      rowT.appendChild(dot);
+      rowT.appendChild(t0);
+      rowT.appendChild(t1);
+      var body = cvAI_make('div', s.text);
+      body.style.marginTop = '8px';
+      item.appendChild(rowT);
+      item.appendChild(body);
+      segWrap.appendChild(item);
     }
+    right.appendChild(segWrap);
 
-    var right =
-      '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px">'+
-        '<div style="display:flex;align-items:center;gap:10px">'+
-          '<button id="cv-ai-play" class="cv-btn" style="min-width:60px">Play</button>'+
-          '<input id="cv-ai-range" type="range" min="0" max="'+secsTotal+'" value="0" style="flex:1">'+
-          '<span id="cv-ai-clock" style="width:70px;text-align:right;font-weight:700">0:00</span>'+
-        '</div>'+
-        '<div id="cv-ai-seglist" style="overflow:auto;max-height:calc(94vh - 260px)">'+ items +'</div>'+
-      '</div>';
+    root.appendChild(left);
+    root.appendChild(right);
 
-    root.innerHTML = left + right;
     m.style.display = 'block';
     document.documentElement.style.overflow = 'hidden';
 
     // interactions
-    var range = m.querySelector('#cv-ai-range');
-    var clock = m.querySelector('#cv-ai-clock');
-    var play  = m.querySelector('#cv-ai-play');
     var timer = null;
-
-    function cvAI_pad2(n){ n = n|0; return (n<10 ? '0'+n : ''+n); }
-    function cvAI_fmt(n){ n = Math.max(0, Math.floor(n)); return Math.floor(n/60)+':'+cvAI_pad2(n%60); }
-    function cvAI_setPos(s){ range.value = s; clock.textContent = cvAI_fmt(s); }
-
-    var segEls = m.querySelectorAll('.cv-ai-seg');
-    for (i=0;i<segEls.length;i++){
-      (function(el){ el.addEventListener('click', function(){ cvAI_setPos(Number(el.getAttribute('data-t'))||0); }); })(segEls[i]);
-    }
-
+    function setPos(s){ range.value = String(s); clock.textContent = cvAI_fmtTime(Number(s)); }
+    segWrap.addEventListener('click', function(ev){
+      var n = ev.target;
+      while (n && n !== segWrap){
+        if (n.className === 'cv-ai-seg'){
+          var t = Number(n.getAttribute('data-t')) || 0;
+          setPos(t);
+          break;
+        }
+        n = n.parentNode;
+      }
+    });
     play.onclick = function(){
       if (timer){ clearInterval(timer); timer=null; play.textContent='Play'; return; }
       play.textContent='Pause';
       timer = setInterval(function(){
-        var v = Number(range.value)+1;
-        if (v>secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; cvAI_setPos(0); return; }
-        cvAI_setPos(v);
+        var v = Number(range.value) + 1;
+        if (v > secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; }
+        setPos(v);
       }, 1000);
     };
-    range.oninput = function(){ cvAI_setPos(range.value); };
+    range.oninput = function(){ setPos(range.value); };
 
     // fake downloads
     var btnTxt = m.querySelector('#cv-ai-btn-txt');
     if (btnTxt) btnTxt.onclick = function(){
       var out = 'Summary:\n' + cvAI_summary(type) + '\n\nSegments:\n';
-      for (var j=0;j<segs.length;j++){
-        var ss = segs[j];
+      for (var k=0;k<segs.length;k++){
+        var ss = segs[k];
         out += '['+ss.t0+'s-'+ss.t1+'s] ' + ss.text + '\n';
       }
       var blob = new Blob([out], { type: 'text/plain' });
@@ -3548,20 +3717,18 @@ document.addEventListener('click', function (e) {
     };
   }
 
-  // --- click binding on the row icon ---
+  /* ---------- click binding ---------- */
   document.addEventListener('click', function(e){
     var btn = cvAI_closestTranscriptBtn(e.target || e.srcElement);
     if (!btn) return;
 
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-
     var toast = cvAI_showToast(btn);
 
-    // walk up to row, read cells
+    // find the row and cells
     var tr = btn;
     while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
     var tds = tr ? tr.getElementsByTagName('td') : [];
-
     function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
     var row = {
       from:     cell(1),
@@ -3575,8 +3742,6 @@ document.addEventListener('click', function (e) {
     setTimeout(function(){ cvAI_hideToast(); cvAI_open(row, type); }, 700);
   }, true);
 })();
-
-
 
 
 
@@ -3713,6 +3878,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
