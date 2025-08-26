@@ -2841,17 +2841,18 @@ var iconsHTML = ICONS.map(function(icon){
 
       tr.innerHTML =
           '<td>' + row.cnam + '</td>'
-        + '<td>' + wrapPhone(row.from) + '</td>'
-        + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
-        + '<td>' + wrapPhone(row.dialed) + '</td>'
-        + '<td>' + (row.toName || '') + '</td>'
-        + '<td>' + wrapPhone(normalizeTo(row)) + '</td>'
-        + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
-        + '<td>' + dateStr + '</td>'
-        + '<td>' + row.duration + '</td>'
-        + '<td>' + (row.disposition || '') + '</td>'
-        + '<td>' + row.release + '</td>'
-        + '<td class="icon-cell">' + iconsHTML + '</td>';
+       + '<td>' + wrapPhone(row.from) + '</td>'
+       + '<td><span class="qos-tag">' + row.q1 + '</span></td>'
+       + '<td>' + wrapPhone(row.dialed) + '</td>'
+       + '<td>' + (row.toName || '') + '</td>'
+       + '<td>' + (row.to || '') + '</td>'        // ← was wrapPhone(normalizeTo(row))
+       + '<td><span class="qos-tag">' + row.q2 + '</span></td>'
+       + '<td>' + dateStr + '</td>'
+       + '<td>' + row.duration + '</td>'
+       + '<td>' + (row.disposition || '') + '</td>'
+       + '<td>' + row.release + '</td>'
+       + '<td class="icon-cell">' + iconsHTML + '</td>';
+
 
       tbody.appendChild(tr);
       cursor -= ((DATE_GAPS_MIN[idx] || 2) * 60 * 1000);
@@ -3072,28 +3073,27 @@ document.addEventListener('click', function (e) {
     const date     = (tds[7]?.textContent || '').trim();
     const dur      = (tds[8]?.textContent || '').trim();
 
-    // hard-coded type from the button
-    const type = btn.dataset.ctg;
+    // prefer hard-coded flag on the button; fallback is optional
+    const inferred = /^Ext\.?\s*\d+/i.test(toText) ? 'inbound' : 'outbound';
+    const type = btn.dataset.ctg || inferred;
 
-    // compute agentExt BEFORE using it
     function extractExt(text){
       const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
       return m ? m[1] : '';
     }
     const agentExt = extractExt(toText) || extractExt(fromText);
 
-    // declare html ONCE
+    // declare once, after agentExt exists
     const html = (type === 'inbound')
       ? buildInboundHTML(fromText, date, toText, dur)
       : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
     setTimeout(() => openCTG(html), 0);
-    return;
-
   } catch (err) {
     console.error('[CTG] render error:', err);
   }
 }, true);
+
 
 
 
@@ -3233,6 +3233,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
