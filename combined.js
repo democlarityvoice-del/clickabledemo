@@ -3596,16 +3596,14 @@ document.addEventListener('click', function (e) {
 
     setTimeout(function(){ hideAnalyzingToast(); openAI(row, type); }, 850);
   }, true);
-})();
 
 
 
 
+})(); // closes AI transcript
+})(); // closes the top wrapper
+</script>
 
-})(); // <-- closes the top (function(){ ... }) wrapper
-<\/script>
-</body></html>`; 
-}
 
 
 
@@ -3735,6 +3733,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
