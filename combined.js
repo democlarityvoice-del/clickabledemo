@@ -3332,24 +3332,18 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ================= AI TRANSCRIPT (full-screen modal, minimal/safe) ================= */
+/* ===== AI TRANSCRIPT (self-contained) ===== */
 (function () {
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
-  /* toast */
-  function cvAI_showToast(anchor){
+  // small toast
+  function showToast(anchor){
     var t = document.getElementById('cv-ai-analyzing');
     if (!t){
       t = document.createElement('div');
       t.id = 'cv-ai-analyzing';
-      t.style.position = 'fixed';
-      t.style.zIndex = '10050';
-      t.style.padding = '8px 12px';
-      t.style.borderRadius = '8px';
-      t.style.background = '#fff';
-      t.style.boxShadow = '0 6px 24px rgba(0,0,0,.12)';
-      t.style.fontWeight = '700';
+      t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);font-weight:700';
       t.appendChild(document.createTextNode('Analyzing…'));
       document.body.appendChild(t);
     }
@@ -3357,369 +3351,184 @@ document.addEventListener('click', function (e) {
     t.style.left = (r.left - 12) + 'px';
     t.style.top  = (r.top  - 40) + 'px';
     t.style.display = 'block';
-    return t;
   }
-  function cvAI_hideToast(){
+  function hideToast(){
     var t = document.getElementById('cv-ai-analyzing');
     if (t) t.style.display = 'none';
   }
 
-  /* small helpers */
-  function cvAI_closestTranscriptBtn(node){
-    var n = node;
-    while (n && n.nodeType === 1){
-      if (n.tagName === 'BUTTON' && n.getAttribute('data-action') === 'transcript') return n;
-      n = n.parentNode;
-    }
-    return null;
-  }
-  function cvAI_make(tag, text){
-    var el = document.createElement(tag);
-    if (text != null) el.textContent = text;
-    return el;
-  }
-  function cvAI_chip(label){
-    var span = cvAI_make('span', label);
-    span.style.display = 'inline-flex';
-    span.style.alignItems = 'center';
-    span.style.gap = '6px';
-    span.style.background = '#eaf2ff';
-    span.style.color = '#1a73e8';
-    span.style.borderRadius = '12px';
-    span.style.padding = '4px 8px';
-    span.style.fontSize = '12px';
-    span.style.fontWeight = '700';
-    return span;
-  }
-  function cvAI_segments(type){
-    return (type === 'inbound') ? [
-      {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
-      {t0:28, t1:32, text:'Please hold while I route your call.'},
-      {t0:32, t1:42, text:'Agent greets caller and verifies account.'},
-      {t0:42, t1:55, text:'Agent provides answer and next steps.'}
-    ] : [
-      {t0:0,  t1:6,  text:'Agent greeting and purpose of call.'},
-      {t0:6,  t1:24, text:'Prospect explains needs / questions.'},
-      {t0:24, t1:40, text:'Agent outlines options and follow-up.'},
-      {t0:40, t1:58, text:'Wrap-up and thanks.'}
-    ];
-  }
-  function cvAI_summary(type){
-    return (type === 'inbound')
-      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional.'
-      : 'Agent placed a courtesy outreach. Recipient received information and next steps. No commitments; follow-up can be scheduled if requested.';
-  }
-  function cvAI_fmtTime(n){
-    n = Math.max(0, Math.floor(n));
-    var m = Math.floor(n/60);
-    var s = n%60;
-    return m + ':' + (s<10 ? '0'+s : ''+s);
-  }
-
-  /* modal scaffold (DOM only) */
-  function cvAI_ensureModal(){
+  // modal scaffold (DOM-only)
+  function ensureModal(){
     var m = document.getElementById('cv-ai-modal');
     if (m) return m;
 
     m = document.createElement('div');
     m.id = 'cv-ai-modal';
-    m.style.position = 'fixed';
-    m.style.inset = '0';
-    m.style.zIndex = '10040';
-    m.style.display = 'none';
+    m.style.cssText = 'position:fixed;inset:0;z-index:10040;display:none';
 
-    var backdrop = document.createElement('div');
-    backdrop.style.position = 'absolute';
-    backdrop.style.inset = '0';
-    backdrop.style.background = 'rgba(0,0,0,.5)';
-    m.appendChild(backdrop);
+    var bg = document.createElement('div');
+    bg.className = 'cv-modal-backdrop';
+    bg.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.5)';
+    m.appendChild(bg);
 
     var card = document.createElement('div');
-    card.style.position = 'relative';
-    card.style.margin = '3vh auto 0';
-    card.style.background = '#fff';
-    card.style.width = '95vw';
-    card.style.height = '94vh';
-    card.style.borderRadius = '10px';
-    card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.boxShadow = '0 16px 60px rgba(0,0,0,.35)';
+    card.className = 'cv-modal';
+    card.style.cssText = 'position:relative;margin:3vh auto 0;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)';
     m.appendChild(card);
 
-    var header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.alignItems = 'center';
-    header.style.justifyContent = 'space-between';
-    header.style.padding = '12px 16px';
-    header.style.borderBottom = '1px solid #e5e7eb';
-    card.appendChild(header);
+    var head = document.createElement('div');
+    head.className = 'cv-modal-header';
+    head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb';
+    card.appendChild(head);
 
-    var leftH = document.createElement('div');
-    leftH.style.display = 'flex';
-    leftH.style.alignItems = 'center';
-    leftH.style.gap = '12px';
+    var left = document.createElement('div');
+    left.style.cssText = 'display:flex;align-items:center;gap:12px';
     var logo = document.createElement('img');
     logo.alt = '';
     logo.style.height = '26px';
     logo.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/clarity-badge-mini.svg';
-    var ttl = cvAI_make('span', 'AI Transcript and Summary');
-    ttl.style.fontWeight = '700';
-    ttl.style.fontSize = '16px';
-    leftH.appendChild(logo);
-    leftH.appendChild(ttl);
-    header.appendChild(leftH);
+    var title = document.createElement('span');
+    title.textContent = 'AI Transcript and Summary';
+    title.style.fontWeight = '700';
+    title.style.fontSize = '16px';
+    left.appendChild(logo);
+    left.appendChild(title);
+    head.appendChild(left);
 
-    var rightH = document.createElement('div');
-    rightH.style.display = 'flex';
-    rightH.style.gap = '8px';
-    rightH.style.alignItems = 'center';
-    var btnTxt = cvAI_make('button', 'Download Transcript');
+    var right = document.createElement('div');
+    right.style.cssText = 'display:flex;gap:8px;align-items:center';
+    var btnTxt = document.createElement('button');
     btnTxt.id = 'cv-ai-btn-txt';
-    btnTxt.style.padding = '6px 12px';
-    btnTxt.style.border = '1px solid #e2e8f0';
-    btnTxt.style.borderRadius = '4px';
-    btnTxt.style.background = '#f1f5f9';
-    var btnRec = cvAI_make('button', 'Download Recording');
+    btnTxt.className = 'cv-btn';
+    btnTxt.textContent = 'Download Transcript';
+    btnTxt.style.cssText = 'padding:6px 12px;border:1px solid #e2e8f0;background:#f1f5f9;border-radius:4px';
+    var btnRec = document.createElement('button');
     btnRec.id = 'cv-ai-btn-rec';
-    btnRec.style.padding = '6px 12px';
-    btnRec.style.border = '1px solid #1a73e8';
-    btnRec.style.borderRadius = '4px';
-    btnRec.style.background = '#1a73e8';
-    btnRec.style.color = '#fff';
-    var btnClose = cvAI_make('button', '×');
-    btnClose.setAttribute('aria-label','Close');
-    btnClose.style.marginLeft = '8px';
-    btnClose.style.background = 'none';
-    btnClose.style.border = '0';
-    btnClose.style.fontSize = '22px';
-    btnClose.style.cursor = 'pointer';
-    rightH.appendChild(btnTxt);
-    rightH.appendChild(btnRec);
-    rightH.appendChild(btnClose);
-    header.appendChild(rightH);
+    btnRec.className = 'cv-btn';
+    btnRec.textContent = 'Download Recording';
+    btnRec.style.cssText = 'padding:6px 12px;border:1px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:4px';
+    var btnX = document.createElement('button');
+    btnX.className = 'cv-ai-close';
+    btnX.setAttribute('aria-label','Close');
+    btnX.textContent = '×';
+    btnX.style.cssText = 'margin-left:8px;background:none;border:0;font-size:22px;cursor:pointer';
+    right.appendChild(btnTxt); right.appendChild(btnRec); right.appendChild(btnX);
+    head.appendChild(right);
 
     var body = document.createElement('div');
-    body.style.flex = '1 1 auto';
-    body.style.overflow = 'auto';
-    body.style.padding = '16px';
+    body.className = 'cv-modal-body';
+    body.style.cssText = 'flex:1 1 auto;overflow:auto;padding:16px';
     card.appendChild(body);
 
     var content = document.createElement('div');
     content.id = 'cv-ai-content';
-    content.style.display = 'grid';
-    content.style.gridTemplateColumns = '420px 1fr';
-    content.style.gap = '18px';
+    content.style.cssText = 'display:grid;grid-template-columns:420px 1fr;gap:18px';
     body.appendChild(content);
 
     document.body.appendChild(m);
 
-    function close(){
-      m.style.display = 'none';
-      document.documentElement.style.overflow = '';
-    }
-    backdrop.onclick = close;
-    btnClose.onclick = close;
-    document.addEventListener('keydown', function(e){
-      var k = e && (e.key || e.keyCode);
-      if (m.style.display === 'block' && (k === 'Escape' || k === 27)) close();
-    });
+    function close(){ m.style.display='none'; document.documentElement.style.overflow=''; }
+    bg.onclick = close; btnX.onclick = close;
+    document.addEventListener('keydown', function(e){ if (m.style.display==='block' && (e.key==='Escape'||e.keyCode===27)) close(); });
+
+    // simple download actions (fake)
+    btnTxt.onclick = function(){
+      var blob = new Blob(['Summary:\nFake summary\n\nSegments:\n0s–10s Hello\n10s–20s Thanks'], {type:'text/plain'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='transcript.txt'; a.click(); URL.revokeObjectURL(a.href);
+    };
+    btnRec.onclick = function(){
+      var blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
+      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='recording.wav'; a.click(); URL.revokeObjectURL(a.href);
+    };
 
     return m;
   }
 
-  /* open & render */
-  function cvAI_open(row, type){
-    var m = cvAI_ensureModal();
+  function openModal(row, type){
+    var m = ensureModal();
     var root = m.querySelector('#cv-ai-content');
     root.innerHTML = '';
 
-    var from = row.from || '';
-    var to   = row.to   || row.dialed || '';
-    var dur  = row.duration || '0:00';
-    var date = row.date || '';
+    // left
+    var L = document.createElement('div');
+    L.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px';
+    var h = document.createElement('div'); h.textContent='Call Details'; h.style.cssText='font-weight:800;font-size:18px;margin-bottom:10px'; L.appendChild(h);
+    function chip(txt){ var s=document.createElement('span'); s.textContent=txt; s.style.cssText='display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700'; return s; }
+    var chips = document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px';
+    chips.appendChild(chip('From: '+(row.from||'')));
+    chips.appendChild(chip('To: '+(row.to||row.dialed||'')));
+    chips.appendChild(chip('⏱ '+(row.duration||'0:00')));
+    chips.appendChild(chip('📅 '+(row.date||'')));
+    L.appendChild(chips);
+    var h2=document.createElement('div'); h2.textContent='Summary'; h2.style.cssText='font-weight:800;font-size:18px;margin-bottom:8px'; L.appendChild(h2);
+    var p=document.createElement('div'); p.textContent=(type==='inbound'
+      ? 'Caller reached support with a question…'
+      : 'Agent placed a courtesy outreach…'); p.style.cssText='line-height:1.5;color:#243447'; L.appendChild(p);
 
-    var parts = String(dur).split(':');
-    var secsTotal = 0;
-    for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
+    // right (mock timeline)
+    var R = document.createElement('div');
+    R.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px';
+    var controls = document.createElement('div'); controls.style.cssText='display:flex;align-items:center;gap:10px';
+    var play = document.createElement('button'); play.className='cv-btn'; play.textContent='Play'; play.style.minWidth='60px';
+    var range = document.createElement('input'); range.type='range'; range.min='0'; range.max='60'; range.value='0'; range.style.flex='1';
+    var clock = document.createElement('span'); clock.textContent='0:00'; clock.style.cssText='width:70px;text-align:right;font-weight:700';
+    controls.appendChild(play); controls.appendChild(range); controls.appendChild(clock); R.appendChild(controls);
 
-    var left = document.createElement('div');
-    left.style.border = '1px solid #e5e7eb';
-    left.style.borderRadius = '12px';
-    left.style.padding = '14px';
-
-    var h1 = cvAI_make('div', 'Call Details');
-    h1.style.fontWeight = '800';
-    h1.style.fontSize = '18px';
-    h1.style.marginBottom = '10px';
-    left.appendChild(h1);
-
-    var chips = document.createElement('div');
-    chips.style.display = 'flex';
-    chips.style.flexWrap = 'wrap';
-    chips.style.gap = '8px';
-    chips.style.marginBottom = '16px';
-    chips.appendChild(cvAI_chip('From: '+from));
-    chips.appendChild(cvAI_chip('To: '+to));
-    chips.appendChild(cvAI_chip('⏱ '+dur));
-    chips.appendChild(cvAI_chip('📅 '+date));
-    left.appendChild(chips);
-
-    var h2 = cvAI_make('div', 'Summary');
-    h2.style.fontWeight = '800';
-    h2.style.fontSize = '18px';
-    h2.style.marginBottom = '8px';
-    left.appendChild(h2);
-
-    var sum = cvAI_make('div', cvAI_summary(type));
-    sum.style.lineHeight = '1.5';
-    sum.style.color = '#243447';
-    left.appendChild(sum);
-
-    var right = document.createElement('div');
-    right.style.border = '1px solid #e5e7eb';
-    right.style.borderRadius = '12px';
-    right.style.padding = '14px';
-    right.style.display = 'flex';
-    right.style.flexDirection = 'column';
-    right.style.gap = '12px';
-
-    var controls = document.createElement('div');
-    controls.style.display = 'flex';
-    controls.style.alignItems = 'center';
-    controls.style.gap = '10px';
-    var play = cvAI_make('button', 'Play');
-    play.style.minWidth = '60px';
-    var range = document.createElement('input');
-    range.type = 'range';
-    range.min = '0';
-    range.max = String(secsTotal);
-    range.value = '0';
-    range.style.flex = '1';
-    var clock = cvAI_make('span', '0:00');
-    clock.style.width = '70px';
-    clock.style.textAlign = 'right';
-    clock.style.fontWeight = '700';
-    controls.appendChild(play);
-    controls.appendChild(range);
-    controls.appendChild(clock);
-    right.appendChild(controls);
-
-    var segWrap = document.createElement('div');
-    segWrap.style.overflow = 'auto';
-    segWrap.style.maxHeight = 'calc(94vh - 260px)';
-    var segs = cvAI_segments(type);
-    for (var j=0;j<segs.length;j++){
-      var s = segs[j];
-      var item = document.createElement('div');
-      item.setAttribute('data-t', String(s.t0));
-      item.style.border = '1px solid #e5e7eb';
-      item.style.borderRadius = '10px';
-      item.style.padding = '12px';
-      item.style.margin = '10px 0';
-      item.style.cursor = 'pointer';
-      var rowT = document.createElement('div');
-      rowT.style.display = 'flex';
-      rowT.style.alignItems = 'center';
-      rowT.style.gap = '8px';
-      rowT.style.color = '#2563eb';
-      rowT.style.fontWeight = '700';
-      var dot = document.createElement('span');
-      dot.style.width = '8px';
-      dot.style.height = '8px';
-      dot.style.borderRadius = '50%';
-      dot.style.background = '#2563eb';
-      dot.style.display = 'inline-block';
-      var t0 = cvAI_make('span', s.t0 + 's');
-      var t1 = cvAI_make('span', ' - ' + s.t1 + 's');
-      t1.style.color = '#94a3b8';
-      t1.style.fontWeight = '600';
-      rowT.appendChild(dot);
-      rowT.appendChild(t0);
-      rowT.appendChild(t1);
-      var body = cvAI_make('div', s.text);
-      body.style.marginTop = '8px';
-      item.appendChild(rowT);
-      item.appendChild(body);
-      segWrap.appendChild(item);
+    var list = document.createElement('div'); list.style.cssText='overflow:auto;max-height:calc(94vh - 260px)';
+    function rowSeg(t0,t1,txt){
+      var d=document.createElement('div'); d.className='cv-ai-seg'; d.setAttribute('data-t', String(t0));
+      d.style.cssText='border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer';
+      var top=document.createElement('div'); top.style.cssText='display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700';
+      var dot=document.createElement('span'); dot.style.cssText='width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block';
+      var s1=document.createElement('span'); s1.textContent=t0+'s';
+      var s2=document.createElement('span'); s2.textContent=' – '+t1+'s'; s2.style.cssText='color:#94a3b8;font-weight:600';
+      top.appendChild(dot); top.appendChild(s1); top.appendChild(s2);
+      var body=document.createElement('div'); body.textContent=txt; body.style.marginTop='8px';
+      d.appendChild(top); d.appendChild(body); return d;
     }
-    right.appendChild(segWrap);
+    var segs = (type==='inbound'
+      ? [[0,28,'Greeting'],[28,32,'Routing'],[32,42,'Verification'],[42,55,'Resolution']]
+      : [[0,6,'Greeting'],[6,24,'Needs'],[24,40,'Options'],[40,58,'Wrap-up']]);
+    for (var i=0;i<segs.length;i++){ list.appendChild(rowSeg(segs[i][0],segs[i][1],segs[i][2])); }
+    R.appendChild(list);
 
-    var content = m.querySelector('#cv-ai-content');
-    content.appendChild(left);
-    content.appendChild(right);
+    root.appendChild(L); root.appendChild(R);
 
-    m.style.display = 'block';
-    document.documentElement.style.overflow = 'hidden';
+    m.style.display='block';
+    document.documentElement.style.overflow='hidden';
 
-    var timer = null;
-    function setPos(s){ range.value = String(s); clock.textContent = cvAI_fmtTime(Number(s)); }
-    segWrap.addEventListener('click', function(ev){
-      var n = ev.target;
-      while (n && n !== segWrap){
-        if (n.getAttribute && n.getAttribute('data-t')){
-          var t = Number(n.getAttribute('data-t')) || 0;
-          setPos(t);
-          break;
-        }
-        n = n.parentNode;
-      }
+    // simple scrubbing
+    var timer=null;
+    function fmt(n){ n=Math.max(0,Math.floor(n)); return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2); }
+    function setPos(s){ range.value=String(s); clock.textContent=fmt(Number(s)); }
+    list.addEventListener('click', function(ev){
+      var n=ev.target; while(n&&n!==list){ if(n.className==='cv-ai-seg'){ setPos(Number(n.getAttribute('data-t'))||0); break; } n=n.parentNode; }
     });
-    play.onclick = function(){
+    play.onclick=function(){
       if (timer){ clearInterval(timer); timer=null; play.textContent='Play'; return; }
       play.textContent='Pause';
-      timer = setInterval(function(){
-        var v = Number(range.value) + 1;
-        if (v > secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; }
-        setPos(v);
-      }, 1000);
+      timer=setInterval(function(){ var v=Number(range.value)+1; if(v>Number(range.max)){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; } setPos(v); }, 1000);
     };
-    range.oninput = function(){ setPos(range.value); };
-
-    var btnTxt = m.querySelector('#cv-ai-btn-txt');
-    if (btnTxt) btnTxt.onclick = function(){
-      var out = 'Summary:\n' + cvAI_summary(type) + '\n\nSegments:\n';
-      for (var k=0;k<segs.length;k++){
-        var ss = segs[k];
-        out += '['+ss.t0+'s-'+ss.t1+'s] ' + ss.text + '\n';
-      }
-      var blob = new Blob([out], { type: 'text/plain' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'transcript.txt';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    };
-    var btnRec = m.querySelector('#cv-ai-btn-rec');
-    if (btnRec) btnRec.onclick = function(){
-      var blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
-      var a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = 'recording.wav';
-      a.click();
-      URL.revokeObjectURL(a.href);
-    };
+    range.oninput=function(){ setPos(range.value); };
   }
 
-  /* click binding */
+  // one delegated click handler
   document.addEventListener('click', function(e){
-    var btn = cvAI_closestTranscriptBtn(e.target || e.srcElement);
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="transcript"]') : null;
     if (!btn) return;
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
 
-    var toast = cvAI_showToast(btn);
+    showToast(btn);
 
-    var tr = btn;
-    while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
+    var tr = btn; while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
     var tds = tr ? tr.getElementsByTagName('td') : [];
     function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
     var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
     var type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
 
-    setTimeout(function(){ cvAI_hideToast(); cvAI_open(row, type); }, 700);
+    setTimeout(function(){ hideToast(); openModal(row, type); }, 700);
   }, true);
 })();
-
-
 
 
 })(); // <-- closes the top (function(){ ... }) wrapper
@@ -3854,6 +3663,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
