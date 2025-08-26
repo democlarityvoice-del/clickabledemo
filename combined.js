@@ -3332,62 +3332,62 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ===== AI TRANSCRIPT (self-contained) ===== */
+/* ===== AI TRANSCRIPT (fully isolated) ===== */
 (function () {
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
   // small toast
   function showToast(anchor){
-    var t = document.getElementById('cv-ai-analyzing');
+    let t = document.getElementById('cv-ai-analyzing');
     if (!t){
       t = document.createElement('div');
       t.id = 'cv-ai-analyzing';
       t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);font-weight:700';
-      t.appendChild(document.createTextNode('Analyzing…'));
+      t.textContent = 'Analyzing…';
       document.body.appendChild(t);
     }
-    var r = anchor && anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:20, top:20};
+    const r = anchor?.getBoundingClientRect?.() || {left:20, top:20};
     t.style.left = (r.left - 12) + 'px';
     t.style.top  = (r.top  - 40) + 'px';
     t.style.display = 'block';
   }
   function hideToast(){
-    var t = document.getElementById('cv-ai-analyzing');
+    const t = document.getElementById('cv-ai-analyzing');
     if (t) t.style.display = 'none';
   }
 
-  // modal scaffold (DOM-only)
+  // modal scaffold (AI-specific, isolated classes & IDs)
   function ensureModal(){
-    var m = document.getElementById('cv-ai-modal');
+    let m = document.getElementById('cv-ai-modal');
     if (m) return m;
 
     m = document.createElement('div');
     m.id = 'cv-ai-modal';
     m.style.cssText = 'position:fixed;inset:0;z-index:10040;display:none';
 
-    var bg = document.createElement('div');
-    bg.className = 'cv-modal-backdrop';
+    const bg = document.createElement('div');
+    bg.className = 'cv-ai-backdrop';
     bg.style.cssText = 'position:absolute;inset:0;background:rgba(0,0,0,.5)';
     m.appendChild(bg);
 
-    var card = document.createElement('div');
-    card.className = 'cv-modal';
+    const card = document.createElement('div');
+    card.className = 'cv-ai-card';
     card.style.cssText = 'position:relative;margin:3vh auto 0;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)';
     m.appendChild(card);
 
-    var head = document.createElement('div');
-    head.className = 'cv-modal-header';
+    const head = document.createElement('div');
+    head.className = 'cv-ai-header';
     head.style.cssText = 'display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid #e5e7eb';
     card.appendChild(head);
 
-    var left = document.createElement('div');
+    const left = document.createElement('div');
     left.style.cssText = 'display:flex;align-items:center;gap:12px';
-    var logo = document.createElement('img');
+    const logo = document.createElement('img');
     logo.alt = '';
     logo.style.height = '26px';
     logo.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/clarity-badge-mini.svg';
-    var title = document.createElement('span');
+    const title = document.createElement('span');
     title.textContent = 'AI Transcript and Summary';
     title.style.fontWeight = '700';
     title.style.fontSize = '16px';
@@ -3395,19 +3395,19 @@ document.addEventListener('click', function (e) {
     left.appendChild(title);
     head.appendChild(left);
 
-    var right = document.createElement('div');
+    const right = document.createElement('div');
     right.style.cssText = 'display:flex;gap:8px;align-items:center';
-    var btnTxt = document.createElement('button');
+    const btnTxt = document.createElement('button');
     btnTxt.id = 'cv-ai-btn-txt';
-    btnTxt.className = 'cv-btn';
+    btnTxt.className = 'cv-ai-btn';
     btnTxt.textContent = 'Download Transcript';
     btnTxt.style.cssText = 'padding:6px 12px;border:1px solid #e2e8f0;background:#f1f5f9;border-radius:4px';
-    var btnRec = document.createElement('button');
+    const btnRec = document.createElement('button');
     btnRec.id = 'cv-ai-btn-rec';
-    btnRec.className = 'cv-btn';
+    btnRec.className = 'cv-ai-btn';
     btnRec.textContent = 'Download Recording';
     btnRec.style.cssText = 'padding:6px 12px;border:1px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:4px';
-    var btnX = document.createElement('button');
+    const btnX = document.createElement('button');
     btnX.className = 'cv-ai-close';
     btnX.setAttribute('aria-label','Close');
     btnX.textContent = '×';
@@ -3415,12 +3415,12 @@ document.addEventListener('click', function (e) {
     right.appendChild(btnTxt); right.appendChild(btnRec); right.appendChild(btnX);
     head.appendChild(right);
 
-    var body = document.createElement('div');
-    body.className = 'cv-modal-body';
+    const body = document.createElement('div');
+    body.className = 'cv-ai-body';
     body.style.cssText = 'flex:1 1 auto;overflow:auto;padding:16px';
     card.appendChild(body);
 
-    var content = document.createElement('div');
+    const content = document.createElement('div');
     content.id = 'cv-ai-content';
     content.style.cssText = 'display:grid;grid-template-columns:420px 1fr;gap:18px';
     body.appendChild(content);
@@ -3431,65 +3431,65 @@ document.addEventListener('click', function (e) {
     bg.onclick = close; btnX.onclick = close;
     document.addEventListener('keydown', function(e){ if (m.style.display==='block' && (e.key==='Escape'||e.keyCode===27)) close(); });
 
-    // simple download actions (fake)
+    // fake downloads
     btnTxt.onclick = function(){
-      var blob = new Blob(['Summary:\nFake summary\n\nSegments:\n0s–10s Hello\n10s–20s Thanks'], {type:'text/plain'});
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='transcript.txt'; a.click(); URL.revokeObjectURL(a.href);
+      const blob = new Blob(['Summary:\nFake summary\n\nSegments:\n0s–10s Hello\n10s–20s Thanks'], {type:'text/plain'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='transcript.txt'; a.click(); URL.revokeObjectURL(a.href);
     };
     btnRec.onclick = function(){
-      var blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='recording.wav'; a.click(); URL.revokeObjectURL(a.href);
+      const blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='recording.wav'; a.click(); URL.revokeObjectURL(a.href);
     };
 
     return m;
   }
 
   function openModal(row, type){
-    var m = ensureModal();
-    var root = m.querySelector('#cv-ai-content');
+    const m = ensureModal();
+    const root = m.querySelector('#cv-ai-content');
     root.innerHTML = '';
 
     // left
-    var L = document.createElement('div');
+    const L = document.createElement('div');
     L.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px';
-    var h = document.createElement('div'); h.textContent='Call Details'; h.style.cssText='font-weight:800;font-size:18px;margin-bottom:10px'; L.appendChild(h);
-    function chip(txt){ var s=document.createElement('span'); s.textContent=txt; s.style.cssText='display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700'; return s; }
-    var chips = document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px';
+    const h = document.createElement('div'); h.textContent='Call Details'; h.style.cssText='font-weight:800;font-size:18px;margin-bottom:10px'; L.appendChild(h);
+    function chip(txt){ const s=document.createElement('span'); s.textContent=txt; s.style.cssText='display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700'; return s; }
+    const chips = document.createElement('div'); chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px';
     chips.appendChild(chip('From: '+(row.from||'')));
     chips.appendChild(chip('To: '+(row.to||row.dialed||'')));
     chips.appendChild(chip('⏱ '+(row.duration||'0:00')));
     chips.appendChild(chip('📅 '+(row.date||'')));
     L.appendChild(chips);
-    var h2=document.createElement('div'); h2.textContent='Summary'; h2.style.cssText='font-weight:800;font-size:18px;margin-bottom:8px'; L.appendChild(h2);
-    var p=document.createElement('div'); p.textContent=(type==='inbound'
+    const h2=document.createElement('div'); h2.textContent='Summary'; h2.style.cssText='font-weight:800;font-size:18px;margin-bottom:8px'; L.appendChild(h2);
+    const p=document.createElement('div'); p.textContent=(type==='inbound'
       ? 'Caller reached support with a question…'
       : 'Agent placed a courtesy outreach…'); p.style.cssText='line-height:1.5;color:#243447'; L.appendChild(p);
 
     // right (mock timeline)
-    var R = document.createElement('div');
+    const R = document.createElement('div');
     R.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px';
-    var controls = document.createElement('div'); controls.style.cssText='display:flex;align-items:center;gap:10px';
-    var play = document.createElement('button'); play.className='cv-btn'; play.textContent='Play'; play.style.minWidth='60px';
-    var range = document.createElement('input'); range.type='range'; range.min='0'; range.max='60'; range.value='0'; range.style.flex='1';
-    var clock = document.createElement('span'); clock.textContent='0:00'; clock.style.cssText='width:70px;text-align:right;font-weight:700';
+    const controls = document.createElement('div'); controls.style.cssText='display:flex;align-items:center;gap:10px';
+    const play = document.createElement('button'); play.className='cv-ai-btn'; play.textContent='Play'; play.style.minWidth='60px';
+    const range = document.createElement('input'); range.type='range'; range.min='0'; range.max='60'; range.value='0'; range.style.flex='1';
+    const clock = document.createElement('span'); clock.textContent='0:00'; clock.style.cssText='width:70px;text-align:right;font-weight:700';
     controls.appendChild(play); controls.appendChild(range); controls.appendChild(clock); R.appendChild(controls);
 
-    var list = document.createElement('div'); list.style.cssText='overflow:auto;max-height:calc(94vh - 260px)';
+    const list = document.createElement('div'); list.style.cssText='overflow:auto;max-height:calc(94vh - 260px)';
     function rowSeg(t0,t1,txt){
-      var d=document.createElement('div'); d.className='cv-ai-seg'; d.setAttribute('data-t', String(t0));
+      const d=document.createElement('div'); d.className='cv-ai-seg'; d.setAttribute('data-t', String(t0));
       d.style.cssText='border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer';
-      var top=document.createElement('div'); top.style.cssText='display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700';
-      var dot=document.createElement('span'); dot.style.cssText='width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block';
-      var s1=document.createElement('span'); s1.textContent=t0+'s';
-      var s2=document.createElement('span'); s2.textContent=' – '+t1+'s'; s2.style.cssText='color:#94a3b8;font-weight:600';
+      const top=document.createElement('div'); top.style.cssText='display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700';
+      const dot=document.createElement('span'); dot.style.cssText='width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block';
+      const s1=document.createElement('span'); s1.textContent=t0+'s';
+      const s2=document.createElement('span'); s2.textContent=' – '+t1+'s'; s2.style.cssText='color:#94a3b8;font-weight:600';
       top.appendChild(dot); top.appendChild(s1); top.appendChild(s2);
-      var body=document.createElement('div'); body.textContent=txt; body.style.marginTop='8px';
+      const body=document.createElement('div'); body.textContent=txt; body.style.marginTop='8px';
       d.appendChild(top); d.appendChild(body); return d;
     }
-    var segs = (type==='inbound'
+    const segs = (type==='inbound'
       ? [[0,28,'Greeting'],[28,32,'Routing'],[32,42,'Verification'],[42,55,'Resolution']]
       : [[0,6,'Greeting'],[6,24,'Needs'],[24,40,'Options'],[40,58,'Wrap-up']]);
-    for (var i=0;i<segs.length;i++){ list.appendChild(rowSeg(segs[i][0],segs[i][1],segs[i][2])); }
+    for (let i=0;i<segs.length;i++){ list.appendChild(rowSeg(segs[i][0],segs[i][1],segs[i][2])); }
     R.appendChild(list);
 
     root.appendChild(L); root.appendChild(R);
@@ -3498,38 +3498,48 @@ document.addEventListener('click', function (e) {
     document.documentElement.style.overflow='hidden';
 
     // simple scrubbing
-    var timer=null;
+    let timer=null;
     function fmt(n){ n=Math.max(0,Math.floor(n)); return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2); }
     function setPos(s){ range.value=String(s); clock.textContent=fmt(Number(s)); }
     list.addEventListener('click', function(ev){
-      var n=ev.target; while(n&&n!==list){ if(n.className==='cv-ai-seg'){ setPos(Number(n.getAttribute('data-t'))||0); break; } n=n.parentNode; }
+      let n=ev.target; while(n&&n!==list){ if(n.className==='cv-ai-seg'){ setPos(Number(n.getAttribute('data-t'))||0); break; } n=n.parentNode; }
     });
     play.onclick=function(){
       if (timer){ clearInterval(timer); timer=null; play.textContent='Play'; return; }
       play.textContent='Pause';
-      timer=setInterval(function(){ var v=Number(range.value)+1; if(v>Number(range.max)){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; } setPos(v); }, 1000);
+      timer=setInterval(function(){ const v=Number(range.value)+1; if(v>Number(range.max)){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; } setPos(v); }, 1000);
     };
     range.oninput=function(){ setPos(range.value); };
   }
 
-  // one delegated click handler
-  document.addEventListener('click', function(e){
-    var btn = e.target instanceof Element ? e.target.closest('button[data-action="transcript"]') : null;
-    if (!btn) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+  // scoped click handler — AI buttons only
+  const table = document.querySelector('#cvCallHistoryTableBody') || document;
+  table.addEventListener('click', function(e){
+    const btn = e.target.closest('button[data-action="transcript"]');
+    if (!btn) return; // Ignore Notes, CTG, etc.
+    e.preventDefault();
+    e.stopPropagation();
 
     showToast(btn);
 
-    var tr = btn; while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
-    var tds = tr ? tr.getElementsByTagName('td') : [];
-    function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
-    var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
-    var type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
+    const tr = btn.closest('tr');
+    const tds = tr ? tr.querySelectorAll('td') : [];
+    const cell = i => (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim();
 
-    setTimeout(function(){ hideToast(); openModal(row, type); }, 700);
-  }, true);
-})();
+    const row = {
+      from: cell(1),
+      dialed: cell(3),
+      to: cell(5),
+      date: cell(7),
+      duration: cell(8)
+    };
+    const type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
 
+    setTimeout(() => {
+      hideToast();
+      openModal(row, type);
+    }, 700);
+  });
 
 
 })();  // <-- closes the top (function(){ ... }) wrapper
@@ -3664,6 +3674,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
