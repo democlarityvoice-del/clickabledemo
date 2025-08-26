@@ -3051,14 +3051,13 @@ function buildInboundHTML(from, dateText, toText, durText){
 
 
 
- // ----- One, safe, capturing listener; blocks other handlers -----
+// ----- One, safe, capturing listener; blocks other handlers -----
 document.addEventListener('click', function (e) {
   const btn = e.target instanceof Element
     ? e.target.closest('button[data-action="cradle"]')
     : null;
   if (!btn) return;
 
-  // ⬇️ This is the missing piece
   e.preventDefault();
   e.stopPropagation();
   e.stopImmediatePropagation();
@@ -3073,30 +3072,29 @@ document.addEventListener('click', function (e) {
     const date     = (tds[7]?.textContent || '').trim();
     const dur      = (tds[8]?.textContent || '').trim();
 
-   const type = btn.dataset.ctg;
+    // hard-coded type from the button
+    const type = btn.dataset.ctg;
 
-  const html = (type === "inbound")
-    ? buildInboundHTML(fromText, date, toText, dur)
-    : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-
-
+    // compute agentExt BEFORE using it
     function extractExt(text){
       const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
       return m ? m[1] : '';
     }
     const agentExt = extractExt(toText) || extractExt(fromText);
 
-    const html = (type === "inbound")
-  ? buildInboundHTML(fromText, date, toText, dur)
-  : buildOutboundHTML(fromText, date, dial, dur, agentExt);
+    // declare html ONCE
+    const html = (type === 'inbound')
+      ? buildInboundHTML(fromText, date, toText, dur)
+      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
     setTimeout(() => openCTG(html), 0);
-    return; // safety
+    return;
 
   } catch (err) {
     console.error('[CTG] render error:', err);
   }
 }, true);
+
 
 
 })(); /* end self-contained CTG block */
@@ -3235,6 +3233,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
