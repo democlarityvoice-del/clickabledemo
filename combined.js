@@ -3549,21 +3549,22 @@ document.addEventListener('click', function (e) {
 
     // downloads (fake but functional, safe string building)
   m.querySelector('#cv-ai-btn-txt').onclick = function () {
-    const text =
+    var text =
       'Summary:\n' + aiSummaryFor(type) +
       '\n\nSegments:\n' +
       segs.map(function (s) {
         return '[' + s.t0 + 's–' + s.t1 + 's] ' + s.text;
       }).join('\n');
 
-  const blob = new Blob([text], { type: 'text/plain' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'transcript.txt';
-  a.click();
-  URL.revokeObjectURL(a.href);
-}; // <— note: just `};` here
+    var blob = new Blob([text], { type: 'text/plain' });
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'transcript.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  };
 
+ 
     m.querySelector('#cv-ai-btn-rec').onclick = function(){
       const blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
       const a = document.createElement('a');
@@ -3734,6 +3735,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
