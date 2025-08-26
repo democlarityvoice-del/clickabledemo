@@ -3613,8 +3613,6 @@ document.addEventListener('click', function (e) {
 
 
 
-/* ================= AI TRANSCRIPT (full-screen modal) ================= */
-// … AI block here (no <script> tags) …
 })();  // <-- closes the top (function(){ ... }) wrapper
 <\/script>
 </body></html>`; 
@@ -3749,6 +3747,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
