@@ -2980,12 +2980,17 @@ function buildOutboundHTML(fromText, date, dial, dur, agentExt) {
 
 
 
-  // ----- One, safe, capturing listener; blocks other handlers -----
- document.addEventListener('click', function(e){
-  const btn = e.target instanceof Element ? e.target.closest('button[data-action="cradle"]') : null;
+ // ----- One, safe, capturing listener; blocks other handlers -----
+document.addEventListener('click', function (e) {
+  const btn = e.target instanceof Element
+    ? e.target.closest('button[data-action="cradle"]')
+    : null;
   if (!btn) return;
 
-
+  // ⬇️ This is the missing piece
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
 
   try {
     const tr  = btn.closest('tr');
@@ -2997,37 +3002,26 @@ function buildOutboundHTML(fromText, date, dial, dur, agentExt) {
     const date     = (tds[7]?.textContent || '').trim();
     const dur      = (tds[8]?.textContent || '').trim();
 
-    // Decide inbound/outbound
     const isInbound = /^Ext\.?\s*\d+/i.test(toText);
 
-    // Extract agent ext for outbound hang-up label
     function extractExt(text){
       const m = /Ext\.?\s*(\d{2,4})/i.exec(String(text||''));
       return m ? m[1] : '';
     }
     const agentExt = extractExt(toText) || extractExt(fromText);
 
-console.log('[CTG Debug]', {
-  fromText,
-  toText,
-  dial,
-  date,
-  dur,
-  isInbound
-});
+    const html = isInbound
+      ? buildInboundHTML(fromText, date, toText, dur)
+      : buildOutboundHTML(fromText, date, dial, dur, agentExt);
 
-const html = isInbound
-  ? buildInboundHTML(fromText, date, toText, dur)
-  : buildOutboundHTML(fromText, date, dial, dur, agentExt);
-
-
-    // Open modal
     setTimeout(() => openCTG(html), 0);
+    return; // safety
 
   } catch (err) {
     console.error('[CTG] render error:', err);
   }
 }, true);
+
 
 })(); /* end self-contained CTG block */
 
@@ -3165,6 +3159,7 @@ const html = isInbound
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
