@@ -3200,266 +3200,129 @@ document.addEventListener('click', function (e) {
 
 })(); /* end self-contained CTG block */
 
-
 /* ===== NOTES MODAL (self-contained) ===== */
-
-<script>
-// --- NOTES modal wiring (self-contained; lives alongside CTG) ---
-(function wireNotes(){
+(function () {
   if (document._cvNotesBound) return;
   document._cvNotesBound = true;
 
-  const DISPOSITIONS = ["Inbound Sales","Outbound Sales"];
-  const REASONS = {
-    "Inbound Sales": ["Existing customer question","Follow up","Referral"],
-    "Outbound Sales": ["Cold Call","Follow-up"]
+  // Disposition -> Reason options (exact strings requested)
+  var NOTES_REASONS = {
+    'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
+    'Outbound Sales': ['Cold Call', 'Follow-up']
   };
 
-  function closeNotes(){
-    const m = document.getElementById('cv-notes-modal');
-    if (m) m.style.display = 'none';
-  }
-
-  function ensureNotesModal(){
-    let modal = document.getElementById('cv-notes-modal');
+  // Ensure a modal exists (uses the same .cv-modal styles you already have)
+  function ensureNotesModal () {
+    var modal = document.getElementById('cv-notes-modal');
     if (modal) return modal;
 
     modal = document.createElement('div');
     modal.id = 'cv-notes-modal';
-    modal.style.display = 'none';                     // hidden until opened
-    modal.style.position = 'fixed';
-    modal.style.inset = '0';
-    modal.style.zIndex = '10000';                     // above CTG
-
     modal.innerHTML =
       '<div class="cv-modal-backdrop"></div>' +
       '<div class="cv-modal">' +
-        '<div class="cv-modal-header">' +
-          '<span>Notes</span>' +
-          '<button class="cv-modal-close" aria-label="Close">&times;</button>' +
+        '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<span style="font-weight:700;font-size:16px">Notes</span>' +
+          '<button class="cv-notes-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
         '</div>' +
-        '<div class="cv-modal-body" id="cv-notes-body"></div>' +
-        '<div class="cv-modal-footer">' +
-          '<button class="cv-btn cv-notes-cancel">Cancel</button> ' +
-          '<button class="cv-btn cv-notes-save" ' +
-                  'style="background:#1a73e8;color:#fff;border-color:#1a73e8">Save</button>' +
+        '<div class="cv-modal-body" style="padding:16px">' +
+          '<div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;align-items:center">' +
+            '<label for="cv-notes-disposition" style="justify-self:end;font-weight:600">Disposition</label>' +
+            '<select id="cv-notes-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+              '<option value="">Select a Disposition</option>' +
+              '<option>Inbound Sales</option>' +
+              '<option>Outbound Sales</option>' +
+            '</select>' +
+            '<label for="cv-notes-reason" style="justify-self:end;font-weight:600">Reason</label>' +
+            '<select id="cv-notes-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+              '<option value="">Select a Disposition First</option>' +
+            '</select>' +
+            '<label for="cv-notes-text" style="justify-self:end;font-weight:600">Notes</label>' +
+            '<textarea id="cv-notes-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
+          '</div>' +
+        '</div>' +
+        '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
+          '<button class="cv-notes-cancel cv-btn">Cancel</button>' +
+          '<button class="cv-notes-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
         '</div>' +
       '</div>';
 
     document.body.appendChild(modal);
 
-    // close wiring
-    modal.querySelector('.cv-modal-backdrop').addEventListener('click', closeNotes);
-    modal.querySelector('.cv-modal-close').addEventListener('click', closeNotes);
+    // Close handlers
+    function close(){ modal.remove(); } // remove so we start clean next time
+    modal.querySelector('.cv-notes-close').addEventListener('click', close);
+    modal.querySelector('.cv-modal-backdrop').addEventListener('click', close);
+    modal.querySelector('.cv-notes-cancel').addEventListener('click', close);
+
+    // Save handler (stub)
+    modal.querySelector('.cv-notes-save').addEventListener('click', function(){
+      var disp   = document.getElementById('cv-notes-disposition').value || '';
+      var reason = document.getElementById('cv-notes-reason').value || '';
+      var notes  = document.getElementById('cv-notes-text').value || '';
+      console.log('[NOTES] Saved →', { disposition: disp, reason, notes });
+      close();
+    });
 
     return modal;
   }
 
-  function openNotes(prefill){
-    const modal = ensureNotesModal();
-    const body  = modal.querySelector('#cv-notes-body');
-
-    // build form
-    body.innerHTML =
-      '<div class="cv-field">' +
-        '<label style="display:block;margin-bottom:6px">Disposition</label>' +
-        '<select id="cv-notes-dispo" ' +
-                'style="width:100%;padding:6px 8px;border:1px solid #cfd3d7;border-radius:4px"></select>' +
-      '</div>' +
-      '<div class="cv-field" style="margin-top:12px">' +
-        '<label style="display:block;margin-bottom:6px">Reason</label>' +
-        '<select id="cv-notes-reason" ' +
-                'style="width:100%;padding:6px 8px;border:1px solid #cfd3d7;border-radius:4px"></select>' +
-      '</div>' +
-      '<div class="cv-field" style="margin-top:12px">' +
-        '<label style="display:block;margin-bottom:6px">Notes</label>' +
-        '<textarea id="cv-notes-text" rows="4" ' +
-                 'style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
-      '</div>';
-
-    const dSel = body.querySelector('#cv-notes-dispo');
-    const rSel = body.querySelector('#cv-notes-reason');
-    const tBox = body.querySelector('#cv-notes-text');
-
-    // populate dispositions
-    DISPOSITIONS.forEach(d=>{
-      const o = document.createElement('option');
-      o.value = o.textContent = d;
-      dSel.appendChild(o);
-    });
-
-    function populateReasons(){
-      rSel.innerHTML = '';
-      REASONS[dSel.value].forEach(r=>{
-        const o = document.createElement('option');
-        o.value = o.textContent = r;
-        rSel.appendChild(o);
-      });
+  // Populate reasons based on disposition
+  function populateReasonOptions(disp){
+    var sel = document.getElementById('cv-notes-reason');
+    sel.innerHTML = '';
+    var opts = NOTES_REASONS[disp] || [];
+    if (!opts.length){
+      sel.innerHTML = '<option value="">Select a Disposition First</option>';
+      return;
     }
-    dSel.addEventListener('change', populateReasons);
-
-    // defaults / prefill (optional)
-    dSel.value = (prefill && prefill.disposition) || DISPOSITIONS[0];
-    populateReasons();
-    if (prefill && prefill.reason) rSel.value = prefill.reason;
-    if (prefill && prefill.notes)  tBox.value = prefill.notes;
-
-    // buttons
-    modal.querySelector('.cv-notes-cancel').onclick = closeNotes;
-    modal.querySelector('.cv-notes-save').onclick = function(){
-      const payload = {
-        disposition: dSel.value,
-        reason: rSel.value,
-        notes: tBox.value.trim()
-      };
-      console.log('[NOTES] saved:', payload);
-      // TODO: post to your API here if needed
-      closeNotes();
-    };
-
-    modal.style.display = 'block';
+    opts.forEach(function(label, i){
+      var o = document.createElement('option');
+      o.value = label;
+      o.textContent = label;
+      if (i === 0) o.selected = true;
+      sel.appendChild(o);
+    });
   }
 
-  // open on click of the Notes icon
+  // Open & initialize the Notes modal
+  function openNotesModal(initial){
+    var modal = ensureNotesModal();
+
+    var dispSel = document.getElementById('cv-notes-disposition');
+    var txt     = document.getElementById('cv-notes-text');
+
+    var dispInit = initial && initial.disposition ? initial.disposition : '';
+    dispSel.value = dispInit;
+    populateReasonOptions(dispInit);
+    txt.value = initial && initial.notes ? initial.notes : '';
+
+    dispSel.onchange = function(){ populateReasonOptions(dispSel.value); };
+  }
+
+  // Click handler for Notes buttons
   document.addEventListener('click', function(e){
-    const btn = e.target instanceof Element ? e.target.closest('button[data-action="notes"]') : null;
+    var btn = e.target instanceof Element ? e.target.closest('button[data-action="notes"]') : null;
     if (!btn) return;
-    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
-    openNotes();            // pass prefill if you want later
+
+    e.preventDefault();
+    e.stopPropagation();
+    e.stopImmediatePropagation();
+
+    // Infer inbound vs outbound from the row
+    var tr    = btn.closest('tr');
+    var tds   = tr ? tr.querySelectorAll('td') : [];
+    var toTxt = (tds[5]?.textContent || '').trim();
+    var isInbound = /^Ext\.?\s*\d+/i.test(toTxt);
+
+    openNotesModal({
+      disposition: isInbound ? 'Inbound Sales' : 'Outbound Sales'
+    });
   }, true);
 })();
-</script>
-
-
-/* Create (or return) the Notes modal */
-function ensureNotesModal () {
-  var modal = document.getElementById('cv-notes-modal');
-  if (modal) return modal;
-
-  modal = document.createElement('div');
-  modal.id = 'cv-notes-modal';
-  modal.innerHTML =
-    '<div class="cv-modal-backdrop"></div>' +
-    '<div class="cv-modal">' +
-      '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;">' +
-        '<span style="font-weight:700;font-size:16px">Notes</span>' +
-        '<button class="cv-notes-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
-      '</div>' +
-      '<div class="cv-modal-body" style="padding:16px">' +
-
-        '<div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;align-items:center">' +
-
-          '<label for="cv-notes-disposition" style="justify-self:end;font-weight:600">Disposition</label>' +
-          '<select id="cv-notes-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
-            '<option value="">Select a Disposition</option>' +
-            '<option>Inbound Sales</option>' +
-            '<option>Outbound Sales</option>' +
-          '</select>' +
-
-          '<label for="cv-notes-reason" style="justify-self:end;font-weight:600">Reason</label>' +
-          '<select id="cv-notes-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
-            '<option value="">Select a Disposition First</option>' +
-          '</select>' +
-
-          '<label for="cv-notes-text" style="justify-self:end;font-weight:600">Notes</label>' +
-          '<textarea id="cv-notes-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
-
-        '</div>' +
-
-      '</div>' +
-      '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
-        '<button class="cv-notes-cancel cv-btn">Cancel</button>' +
-        '<button class="cv-notes-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
-      '</div>' +
-    '</div>';
-
-  document.body.appendChild(modal);
-
-  // close handlers
-  function close(){ modal.remove(); }
-  modal.querySelector('.cv-notes-close').addEventListener('click', close);
-  modal.querySelector('.cv-modal-backdrop').addEventListener('click', close);
-  modal.querySelector('.cv-notes-cancel').addEventListener('click', close);
-
-  // Save handler (replace with real persistence later)
-  modal.querySelector('.cv-notes-save').addEventListener('click', function(){
-    var disp   = document.getElementById('cv-notes-disposition').value || '';
-    var reason = document.getElementById('cv-notes-reason').value || '';
-    var notes  = document.getElementById('cv-notes-text').value || '';
-    console.log('[NOTES] Saved →', { disposition: disp, reason, notes });
-    close();
-  });
-
-  return modal;
-}
-
-/* Reason options per disposition (exact strings requested) */
-var NOTES_REASONS = {
-  'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
-  'Outbound Sales': ['Cold Call', 'Follow-up']
-};
-
-/* Populate reasons based on disposition */
-function populateReasonOptions(disp){
-  var sel = document.getElementById('cv-notes-reason');
-  sel.innerHTML = '';
-  var opts = NOTES_REASONS[disp] || [];
-  if (!opts.length){
-    sel.innerHTML = '<option value="">Select a Disposition First</option>';
-    return;
-  }
-  opts.forEach(function(label, i){
-    var o = document.createElement('option');
-    o.value = label;
-    o.textContent = label;
-    if (i === 0) o.selected = true;
-    sel.appendChild(o);
-  });
-}
-
-/* Open & initialize the notes modal */
-function openNotesModal(initial){
-  var modal = ensureNotesModal();
-
-  var dispSel = document.getElementById('cv-notes-disposition');
-  var rsnSel  = document.getElementById('cv-notes-reason');
-  var txt     = document.getElementById('cv-notes-text');
-
-  // Initial values
-  var dispInit = initial && initial.disposition ? initial.disposition : '';
-  dispSel.value = dispInit;
-  populateReasonOptions(dispInit);
-  txt.value = initial && initial.notes ? initial.notes : '';
-
-  // When disposition changes, refresh reasons
-  dispSel.onchange = function(){ populateReasonOptions(dispSel.value); };
-
-  // show (already appended)
-}
-
-/* Click handler for Notes buttons */
-document.addEventListener('click', function(e){
-  var btn = e.target instanceof Element ? e.target.closest('button[data-action="notes"]') : null;
-  if (!btn) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-  e.stopImmediatePropagation();
-
-  // Infer inbound vs outbound from the row (same rule you use elsewhere)
-  var tr    = btn.closest('tr');
-  var tds   = tr ? tr.querySelectorAll('td') : [];
-  var toTxt = (tds[5]?.textContent || '').trim();
-  var isInbound = /^Ext\.?\s*\d+/i.test(toTxt);
-
-  openNotesModal({
-    disposition: isInbound ? 'Inbound Sales' : 'Outbound Sales'
-    // notes: '' // add a default if you want
-  });
-}, true);
-
-
 /* ===== /NOTES MODAL ===== */
+
+
 
 
 
@@ -3596,6 +3459,7 @@ document.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
