@@ -3332,13 +3332,13 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ================= AI TRANSCRIPT (full-screen modal) ================= */
+/* ================= AI TRANSCRIPT (full-screen modal, safe) ================= */
 (function () {
   if (document._cvAIBound) return;
   document._cvAIBound = true;
 
-  // --- tiny toast: “Analyzing …” (shows near clicked icon) ---
-  function showAnalyzingToast(anchor){
+  // --- tiny toast: “Analyzing …” ---
+  function cvAI_showToast(anchor){
     var t = document.getElementById('cv-ai-analyzing');
     if (!t){
       t = document.createElement('div');
@@ -3353,19 +3353,29 @@ document.addEventListener('click', function (e) {
       }
       document.body.appendChild(t);
     }
-    var r = anchor.getBoundingClientRect();
+    var r = anchor.getBoundingClientRect ? anchor.getBoundingClientRect() : {left:0, top:0};
     t.style.left = (r.left - 12) + 'px';
     t.style.top  = (r.top  - 40) + 'px';
     t.style.display = 'flex';
     return t;
   }
-  function hideAnalyzingToast(){
+  function cvAI_hideToast(){
     var t = document.getElementById('cv-ai-analyzing');
     if (t) t.style.display = 'none';
   }
 
-  // --- modal scaffold ---
-  function ensureAIModal(){
+  // --- simple closest() for transcript buttons (no DOM polyfill needed) ---
+  function cvAI_closestTranscriptBtn(node){
+    var n = node;
+    while (n && n.nodeType === 1){
+      if (n.tagName === 'BUTTON' && n.getAttribute('data-action') === 'transcript') return n;
+      n = n.parentNode;
+    }
+    return null;
+  }
+
+  // --- modal scaffold (full-screen) ---
+  function cvAI_ensureModal(){
     var m = document.getElementById('cv-ai-modal');
     if (m) return m;
 
@@ -3396,21 +3406,25 @@ document.addEventListener('click', function (e) {
       m.style.display='none';
       document.documentElement.style.overflow = '';
     }
-    m.querySelector('.cv-modal-backdrop').onclick = close;
-    m.querySelector('.cv-ai-close').onclick       = close;
+    var back = m.querySelector('.cv-modal-backdrop');
+    var xBtn = m.querySelector('.cv-ai-close');
+    if (back) back.onclick = close;
+    if (xBtn) xBtn.onclick = close;
     document.addEventListener('keydown', function(e){
-      if (m.style.display==='block' && e.key==='Escape') close();
+      e = e || window.event;
+      var key = e.key || e.keyCode;
+      if (m.style.display==='block' && (key === 'Escape' || key === 27)) close();
     });
 
     return m;
   }
 
-  // --- helpers ---
-  function chip(label, color){
-    return '<span style="display:inline-flex;align-items:center;gap:6px;background:'+(color||'#eaf2ff')+';color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>';
+  // --- helpers for content ---
+  function cvAI_chip(label){
+    return '<span style="display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700">'+label+'</span>';
   }
-  function segmentsFor(type){
-    return (type==='inbound') ? [
+  function cvAI_segments(type){
+    return (type === 'inbound') ? [
       {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
       {t0:28, t1:32, text:'Please hold while I route your call.'},
       {t0:32, t1:42, text:'Agent greets caller and verifies account.'},
@@ -3422,15 +3436,15 @@ document.addEventListener('click', function (e) {
       {t0:40, t1:58, text:'Wrap-up and thanks.'}
     ];
   }
-  function aiSummaryFor(type){
-    return (type==='inbound')
+  function cvAI_summary(type){
+    return (type === 'inbound')
       ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional based on caller preference.'
       : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; a follow-up may be scheduled if requested.';
   }
 
-  // --- builder ---
-  function openAI(row, type){
-    var m = ensureAIModal();
+  // --- open & render ---
+  function cvAI_open(row, type){
+    var m = cvAI_ensureModal();
     var root = m.querySelector('#cv-ai-content');
 
     var from = row.from || '';
@@ -3438,32 +3452,35 @@ document.addEventListener('click', function (e) {
     var dur  = row.duration || '0:00';
     var date = row.date || '';
 
+    // seconds from mm:ss or h:mm:ss safely
     var parts = String(dur).split(':');
-    var secsTotal = 0;
-    for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
+    var secsTotal = 0, i;
+    for (i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
 
     var left =
       '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px">'+
         '<div style="font-weight:800;font-size:18px;margin-bottom:10px">Call Details</div>'+
         '<div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px">'+
-          chip('From:'+from) + chip('To:'+to) + chip('⏱ '+dur) + chip('📅 '+date) +
+          cvAI_chip('From: '+from) + cvAI_chip('To: '+to) + cvAI_chip('⏱ '+dur) + cvAI_chip('📅 '+date) +
         '</div>'+
         '<div style="font-weight:800;font-size:18px;margin-bottom:8px">Summary</div>'+
-        '<div style="line-height:1.5;color:#243447">'+ aiSummaryFor(type) +'</div>'+
+        '<div style="line-height:1.5;color:#243447">'+ cvAI_summary(type) +'</div>'+
       '</div>';
 
-    var segs = segmentsFor(type);
-    var items = segs.map(function(s){
-      return ''+
+    var segs = cvAI_segments(type);
+    var items = '';
+    for (i=0;i<segs.length;i++){
+      var s = segs[i];
+      items += ''+
         '<div class="cv-ai-seg" data-t="'+s.t0+'" style="border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer">'+
           '<div style="display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700">'+
             '<span style="width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block"></span>'+
             '<span>'+ s.t0 +'s</span>'+
-            '<span style="color:#94a3b8;font-weight:600">– '+ s.t1 +'s</span>'+
+            '<span style="color:#94a3b8;font-weight:600"> - '+ s.t1 +'s</span>'+
           '</div>'+
           '<div style="margin-top:8px">'+ s.text +'</div>'+
         '</div>';
-    }).join('');
+    }
 
     var right =
       '<div style="border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px">'+
@@ -3485,12 +3502,13 @@ document.addEventListener('click', function (e) {
     var play  = m.querySelector('#cv-ai-play');
     var timer = null;
 
-    function fmt(n){ n = Math.max(0, Math.floor(n)); return Math.floor(n/60)+':'+String(n%60).padStart(2,'0'); }
-    function setPos(s){ range.value = s; clock.textContent = fmt(s); }
+    function cvAI_pad2(n){ n = n|0; return (n<10 ? '0'+n : ''+n); }
+    function cvAI_fmt(n){ n = Math.max(0, Math.floor(n)); return Math.floor(n/60)+':'+cvAI_pad2(n%60); }
+    function cvAI_setPos(s){ range.value = s; clock.textContent = cvAI_fmt(s); }
 
     var segEls = m.querySelectorAll('.cv-ai-seg');
-    for (var k=0;k<segEls.length;k++){
-      (function(el){ el.addEventListener('click', function(){ setPos(Number(el.getAttribute('data-t'))||0); }); })(segEls[k]);
+    for (i=0;i<segEls.length;i++){
+      (function(el){ el.addEventListener('click', function(){ cvAI_setPos(Number(el.getAttribute('data-t'))||0); }); })(segEls[i]);
     }
 
     play.onclick = function(){
@@ -3498,27 +3516,29 @@ document.addEventListener('click', function (e) {
       play.textContent='Pause';
       timer = setInterval(function(){
         var v = Number(range.value)+1;
-        if (v>secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; }
-        setPos(v);
+        if (v>secsTotal){ clearInterval(timer); timer=null; play.textContent='Play'; cvAI_setPos(0); return; }
+        cvAI_setPos(v);
       }, 1000);
     };
-    range.oninput = function(){ setPos(range.value); };
+    range.oninput = function(){ cvAI_setPos(range.value); };
 
-    // downloads (fake)
-    m.querySelector('#cv-ai-btn-txt').onclick = function () {
-      var lines = ['Summary:\n' + aiSummaryFor(type), '\n\nSegments:\n'];
+    // fake downloads
+    var btnTxt = m.querySelector('#cv-ai-btn-txt');
+    if (btnTxt) btnTxt.onclick = function(){
+      var out = 'Summary:\n' + cvAI_summary(type) + '\n\nSegments:\n';
       for (var j=0;j<segs.length;j++){
-        var s = segs[j];
-        lines.push('['+s.t0+'s–'+s.t1+'s] ' + s.text + '\n');
+        var ss = segs[j];
+        out += '['+ss.t0+'s-'+ss.t1+'s] ' + ss.text + '\n';
       }
-      var blob = new Blob([lines.join('')], { type: 'text/plain' });
+      var blob = new Blob([out], { type: 'text/plain' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
       a.download = 'transcript.txt';
       a.click();
       URL.revokeObjectURL(a.href);
     };
-    m.querySelector('#cv-ai-btn-rec').onclick = function(){
+    var btnRec = m.querySelector('#cv-ai-btn-rec');
+    if (btnRec) btnRec.onclick = function(){
       var blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
       var a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -3530,26 +3550,29 @@ document.addEventListener('click', function (e) {
 
   // --- click binding on the row icon ---
   document.addEventListener('click', function(e){
-    var target = e.target || e.srcElement;
-    var btn = target && target.closest ? target.closest('button[data-action="transcript"]') : null;
+    var btn = cvAI_closestTranscriptBtn(e.target || e.srcElement);
     if (!btn) return;
 
     e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
 
-    var toast = showAnalyzingToast(btn);
+    var toast = cvAI_showToast(btn);
 
-    var tr  = btn.closest('tr');
-    var tds = tr ? tr.querySelectorAll('td') : [];
+    // walk up to row, read cells
+    var tr = btn;
+    while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
+    var tds = tr ? tr.getElementsByTagName('td') : [];
+
+    function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
     var row = {
-      from:     (tds[1] && tds[1].textContent ? tds[1].textContent : '').trim(),
-      dialed:   (tds[3] && tds[3].textContent ? tds[3].textContent : '').trim(),
-      to:       (tds[5] && tds[5].textContent ? tds[5].textContent : '').trim(),
-      date:     (tds[7] && tds[7].textContent ? tds[7].textContent : '').trim(),
-      duration: (tds[8] && tds[8].textContent ? tds[8].textContent : '').trim()
+      from:     cell(1),
+      dialed:   cell(3),
+      to:       cell(5),
+      date:     cell(7),
+      duration: cell(8)
     };
     var type = (/^Ext\.?\s*\d+/i.test(row.to)) ? 'inbound' : 'outbound';
 
-    setTimeout(function(){ hideAnalyzingToast(); openAI(row, type); }, 800);
+    setTimeout(function(){ cvAI_hideToast(); cvAI_open(row, type); }, 700);
   }, true);
 })();
 
@@ -3690,6 +3713,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
