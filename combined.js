@@ -2596,6 +2596,8 @@ function buildCallHistorySrcdoc() {
 }
 .cv-btn:hover { background: #f9fafb; }
 
+
+
 /* --- CTG timeline layout (icons in the rail, dashed connector) --- */
 .cvctg-steps { padding: 8px 6px 2px; }
 
@@ -2648,6 +2650,9 @@ function buildCallHistorySrcdoc() {
 .cvctg-step:last-child .cvctg-vert { display: none; }
 
 .cvctg-text { color: #374151; }
+
+#cv-notes-modal { position: fixed; inset: 0; z-index: 10002; } /* above CTG's 9999 */
+#cv-notes-modal .cv-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
 
 
 </style>
@@ -3459,6 +3464,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
