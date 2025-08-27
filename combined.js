@@ -3540,6 +3540,8 @@ document.addEventListener('click', function (e) {
       openModal(row, type);
     }, 700);
   });
+})();
+
 
 
 })();  // <-- closes the top (function(){ ... }) wrapper
@@ -3674,6 +3676,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
