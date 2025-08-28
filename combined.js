@@ -3332,31 +3332,31 @@ document.addEventListener('click', function (e) {
 })();
 /* ===== /NOTES MODAL ===== */
 
-/* ===== AI TRANSCRIPT (Call History – integrated, no extra closure) ===== */
+/* ===== AI TRANSCRIPT (Call History – conflict-free) ===== */
 
-// small toast
-function cvAiShowToast(anchor){
+// --- Toast notification ---
+function cvAiShowToast(anchor) {
   let t = document.getElementById('cv-ai-analyzing');
-  if (!t){
+  if (!t) {
     t = document.createElement('div');
     t.id = 'cv-ai-analyzing';
     t.style.cssText = 'position:fixed;z-index:10050;padding:8px 12px;border-radius:8px;background:#fff;box-shadow:0 6px 24px rgba(0,0,0,.12);font-weight:700';
     t.textContent = 'Analyzing…';
     document.body.appendChild(t);
   }
-  const r = anchor?.getBoundingClientRect?.() || {left:20, top:20};
+  const r = anchor?.getBoundingClientRect?.() || { left: 20, top: 20 };
   t.style.left = (r.left - 12) + 'px';
-  t.style.top  = (r.top  - 40) + 'px';
+  t.style.top = (r.top - 40) + 'px';
   t.style.display = 'block';
 }
 
-function cvAiHideToast(){
+function cvAiHideToast() {
   const t = document.getElementById('cv-ai-analyzing');
   if (t) t.style.display = 'none';
 }
 
-// modal scaffold (isolated IDs & classes)
-function cvAiEnsureModal(){
+// --- Modal builder ---
+function cvAiEnsureModal() {
   let m = document.getElementById('cv-ai-modal');
   if (m) return m;
 
@@ -3371,7 +3371,7 @@ function cvAiEnsureModal(){
 
   const card = document.createElement('div');
   card.className = 'cv-ai-card';
-  card.style.cssText = 'position:relative;margin:3vh auto 0;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)';
+  card.style.cssText = 'position:relative;margin:3vh auto;background:#fff;width:95vw;height:94vh;border-radius:10px;display:flex;flex-direction:column;box-shadow:0 16px 60px rgba(0,0,0,.35)';
   m.appendChild(card);
 
   const head = document.createElement('div');
@@ -3397,18 +3397,15 @@ function cvAiEnsureModal(){
   right.style.cssText = 'display:flex;gap:8px;align-items:center';
   const btnTxt = document.createElement('button');
   btnTxt.id = 'cv-ai-btn-txt';
-  btnTxt.className = 'cv-ai-btn';
   btnTxt.textContent = 'Download Transcript';
   btnTxt.style.cssText = 'padding:6px 12px;border:1px solid #e2e8f0;background:#f1f5f9;border-radius:4px';
   const btnRec = document.createElement('button');
   btnRec.id = 'cv-ai-btn-rec';
-  btnRec.className = 'cv-ai-btn';
   btnRec.textContent = 'Download Recording';
   btnRec.style.cssText = 'padding:6px 12px;border:1px solid #1a73e8;background:#1a73e8;color:#fff;border-radius:4px';
   const btnX = document.createElement('button');
-  btnX.className = 'cv-ai-close';
-  btnX.setAttribute('aria-label','Close');
   btnX.textContent = '×';
+  btnX.setAttribute('aria-label', 'Close');
   btnX.style.cssText = 'margin-left:8px;background:none;border:0;font-size:22px;cursor:pointer';
   right.appendChild(btnTxt);
   right.appendChild(btnRec);
@@ -3427,30 +3424,31 @@ function cvAiEnsureModal(){
 
   document.body.appendChild(m);
 
-  function close(){ 
-    m.style.display='none'; 
-    document.documentElement.style.overflow=''; 
+  // Closing logic
+  function close() {
+    m.style.display = 'none';
+    document.documentElement.style.overflow = '';
   }
   bg.onclick = close;
   btnX.onclick = close;
-  document.addEventListener('keydown', function(e){
-    if (m.style.display==='block' && (e.key==='Escape'||e.keyCode===27)) close();
+  document.addEventListener('keydown', function (e) {
+    if (m.style.display === 'block' && (e.key === 'Escape' || e.keyCode === 27)) close();
   });
 
-  // fake downloads
-  btnTxt.onclick = function(){
-    const blob = new Blob(['Summary:\nFake summary\n\nSegments:\n0s–10s Hello\n10s–20s Thanks'], {type:'text/plain'});
+  // Fake downloads
+  btnTxt.onclick = function () {
+    const blob = new Blob(['Summary:\nFake summary\n\nSegments:\n0s–10s Hello\n10s–20s Thanks'], { type: 'text/plain' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download='transcript.txt';
+    a.download = 'transcript.txt';
     a.click();
     URL.revokeObjectURL(a.href);
   };
-  btnRec.onclick = function(){
-    const blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
+  btnRec.onclick = function () {
+    const blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
-    a.download='recording.wav';
+    a.download = 'recording.wav';
     a.click();
     URL.revokeObjectURL(a.href);
   };
@@ -3458,161 +3456,162 @@ function cvAiEnsureModal(){
   return m;
 }
 
-function cvAiOpenModal(row, type){
+// --- Open AI modal ---
+function cvAiOpenModal(row, type) {
   const m = cvAiEnsureModal();
   const root = m.querySelector('#cv-ai-content');
   root.innerHTML = '';
 
-  // left panel
+  // Left panel: details
   const L = document.createElement('div');
   L.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px';
   const h = document.createElement('div');
-  h.textContent='Call Details';
-  h.style.cssText='font-weight:800;font-size:18px;margin-bottom:10px';
+  h.textContent = 'Call Details';
+  h.style.cssText = 'font-weight:800;font-size:18px;margin-bottom:10px';
   L.appendChild(h);
 
-  function chip(txt){
-    const s=document.createElement('span');
-    s.textContent=txt;
-    s.style.cssText='display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700';
+  function chip(txt) {
+    const s = document.createElement('span');
+    s.textContent = txt;
+    s.style.cssText = 'display:inline-flex;align-items:center;gap:6px;background:#eaf2ff;color:#1a73e8;border-radius:12px;padding:4px 8px;font-size:12px;font-weight:700';
     return s;
   }
 
   const chips = document.createElement('div');
-  chips.style.cssText='display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px';
-  chips.appendChild(chip('From: '+(row.from||'')));
-  chips.appendChild(chip('To: '+(row.to||row.dialed||'')));
-  chips.appendChild(chip('⏱ '+(row.duration||'0:00')));
-  chips.appendChild(chip('📅 '+(row.date||'')));
+  chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:8px;margin-bottom:16px';
+  chips.appendChild(chip('From: ' + (row.from || '')));
+  chips.appendChild(chip('To: ' + (row.to || row.dialed || '')));
+  chips.appendChild(chip('⏱ ' + (row.duration || '0:00')));
+  chips.appendChild(chip('📅 ' + (row.date || '')));
   L.appendChild(chips);
 
-  const h2=document.createElement('div');
-  h2.textContent='Summary';
-  h2.style.cssText='font-weight:800;font-size:18px;margin-bottom:8px';
+  const h2 = document.createElement('div');
+  h2.textContent = 'Summary';
+  h2.style.cssText = 'font-weight:800;font-size:18px;margin-bottom:8px';
   L.appendChild(h2);
 
-  const p=document.createElement('div');
-  p.textContent=(type==='inbound'
+  const p = document.createElement('div');
+  p.textContent = (type === 'inbound'
     ? 'Caller reached support with a question…'
     : 'Agent placed a courtesy outreach…');
-  p.style.cssText='line-height:1.5;color:#243447';
+  p.style.cssText = 'line-height:1.5;color:#243447';
   L.appendChild(p);
 
-  // right panel
+  // Right panel: timeline
   const R = document.createElement('div');
   R.style.cssText = 'border:1px solid #e5e7eb;border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px';
   const controls = document.createElement('div');
-  controls.style.cssText='display:flex;align-items:center;gap:10px';
+  controls.style.cssText = 'display:flex;align-items:center;gap:10px';
   const play = document.createElement('button');
-  play.className='cv-ai-btn';
-  play.textContent='Play';
-  play.style.minWidth='60px';
+  play.textContent = 'Play';
+  play.style.minWidth = '60px';
   const range = document.createElement('input');
-  range.type='range';
-  range.min='0';
-  range.max='60';
-  range.value='0';
-  range.style.flex='1';
+  range.type = 'range';
+  range.min = '0';
+  range.max = '60';
+  range.value = '0';
+  range.style.flex = '1';
   const clock = document.createElement('span');
-  clock.textContent='0:00';
-  clock.style.cssText='width:70px;text-align:right;font-weight:700';
+  clock.textContent = '0:00';
+  clock.style.cssText = 'width:70px;text-align:right;font-weight:700';
   controls.appendChild(play);
   controls.appendChild(range);
   controls.appendChild(clock);
   R.appendChild(controls);
 
   const list = document.createElement('div');
-  list.style.cssText='overflow:auto;max-height:calc(94vh - 260px)';
+  list.style.cssText = 'overflow:auto;max-height:calc(94vh - 260px)';
 
-  function rowSeg(t0,t1,txt){
-    const d=document.createElement('div');
-    d.className='cv-ai-seg';
+  function rowSeg(t0, t1, txt) {
+    const d = document.createElement('div');
+    d.className = 'cv-ai-seg';
     d.setAttribute('data-t', String(t0));
-    d.style.cssText='border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer';
-    const top=document.createElement('div');
-    top.style.cssText='display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700';
-    const dot=document.createElement('span');
-    dot.style.cssText='width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block';
-    const s1=document.createElement('span');
-    s1.textContent=t0+'s';
-    const s2=document.createElement('span');
-    s2.textContent=' – '+t1+'s';
-    s2.style.cssText='color:#94a3b8;font-weight:600';
+    d.style.cssText = 'border:1px solid #e5e7eb;border-radius:10px;padding:12px;margin:10px 0;cursor:pointer';
+    const top = document.createElement('div');
+    top.style.cssText = 'display:flex;align-items:center;gap:8px;color:#2563eb;font-weight:700';
+    const dot = document.createElement('span');
+    dot.style.cssText = 'width:8px;height:8px;border-radius:50%;background:#2563eb;display:inline-block';
+    const s1 = document.createElement('span');
+    s1.textContent = t0 + 's';
+    const s2 = document.createElement('span');
+    s2.textContent = ' – ' + t1 + 's';
+    s2.style.cssText = 'color:#94a3b8;font-weight:600';
     top.appendChild(dot);
     top.appendChild(s1);
     top.appendChild(s2);
-    const body=document.createElement('div');
-    body.textContent=txt;
-    body.style.marginTop='8px';
+    const body = document.createElement('div');
+    body.textContent = txt;
+    body.style.marginTop = '8px';
     d.appendChild(top);
     d.appendChild(body);
     return d;
   }
 
-  const segs = (type==='inbound'
-    ? [[0,28,'Greeting'],[28,32,'Routing'],[32,42,'Verification'],[42,55,'Resolution']]
-    : [[0,6,'Greeting'],[6,24,'Needs'],[24,40,'Options'],[40,58,'Wrap-up']]);
-  for (let i=0;i<segs.length;i++){ 
-    list.appendChild(rowSeg(segs[i][0],segs[i][1],segs[i][2])); 
+  const segs = (type === 'inbound'
+    ? [[0, 28, 'Greeting'], [28, 32, 'Routing'], [32, 42, 'Verification'], [42, 55, 'Resolution']]
+    : [[0, 6, 'Greeting'], [6, 24, 'Needs'], [24, 40, 'Options'], [40, 58, 'Wrap-up']]);
+  for (let i = 0; i < segs.length; i++) {
+    list.appendChild(rowSeg(segs[i][0], segs[i][1], segs[i][2]));
   }
   R.appendChild(list);
 
   root.appendChild(L);
   root.appendChild(R);
 
-  m.style.display='block';
-  document.documentElement.style.overflow='hidden';
+  m.style.display = 'block';
+  document.documentElement.style.overflow = 'hidden';
 
-  // simple scrubbing
-  let timer=null;
-  function fmt(n){
-    n=Math.max(0,Math.floor(n));
-    return Math.floor(n/60)+':'+('0'+(n%60)).slice(-2);
+  // Play & scrub logic
+  let timer = null;
+  function fmt(n) {
+    n = Math.max(0, Math.floor(n));
+    return Math.floor(n / 60) + ':' + ('0' + (n % 60)).slice(-2);
   }
-  function setPos(s){
-    range.value=String(s);
-    clock.textContent=fmt(Number(s));
+  function setPos(s) {
+    range.value = String(s);
+    clock.textContent = fmt(Number(s));
   }
-  list.addEventListener('click', function(ev){
-    let n=ev.target;
-    while(n&&n!==list){
-      if(n.className==='cv-ai-seg'){
-        setPos(Number(n.getAttribute('data-t'))||0);
+  list.addEventListener('click', function (ev) {
+    let n = ev.target;
+    while (n && n !== list) {
+      if (n.className === 'cv-ai-seg') {
+        setPos(Number(n.getAttribute('data-t')) || 0);
         break;
       }
-      n=n.parentNode;
+      n = n.parentNode;
     }
   });
-  play.onclick=function(){
-    if (timer){
+  play.onclick = function () {
+    if (timer) {
       clearInterval(timer);
-      timer=null;
-      play.textContent='Play';
+      timer = null;
+      play.textContent = 'Play';
       return;
     }
-    play.textContent='Pause';
-    timer=setInterval(function(){
-      const v=Number(range.value)+1;
-      if(v>Number(range.max)){
+    play.textContent = 'Pause';
+    timer = setInterval(function () {
+      const v = Number(range.value) + 1;
+      if (v > Number(range.max)) {
         clearInterval(timer);
-        timer=null;
-        play.textContent='Play';
+        timer = null;
+        play.textContent = 'Play';
         setPos(0);
         return;
       }
       setPos(v);
     }, 1000);
   };
-  range.oninput=function(){
+  range.oninput = function () {
     setPos(range.value);
   };
 }
 
-// scoped click handler — AI buttons only
-const table = document.querySelector('#cvCallHistoryTableBody') || document;
-table.addEventListener('click', function(e){
+// --- Scoped click handler for AI buttons only ---
+const cvAiTable = document.querySelector('#cvCallHistoryTableBody') || document;
+cvAiTable.addEventListener('click', function (e) {
   const btn = e.target.closest('button[data-action="transcript"]');
   if (!btn) return; // Ignore Notes, CTG, etc.
+
   e.preventDefault();
   e.stopPropagation();
 
@@ -3636,7 +3635,9 @@ table.addEventListener('click', function(e){
     cvAiOpenModal(row, type);
   }, 700);
 });
+
 /* ===== /AI TRANSCRIPT ===== */
+
 
 
 
@@ -3773,6 +3774,7 @@ table.addEventListener('click', function(e){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
