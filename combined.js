@@ -3637,6 +3637,56 @@ cvAiTable.addEventListener('click', function (e) {
 });
 
 /* ===== /AI TRANSCRIPT ===== */
+/* ===== AI TRANSCRIPT (minimal append-only version) ===== */
+
+// Create AI modal only when needed
+function cvAiEnsureModal() {
+  let modal = document.getElementById('cv-ai-modal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'cv-ai-modal';
+  modal.style.cssText = 'display:none;position:fixed;inset:0;z-index:10050;background:rgba(0,0,0,.5);';
+
+  modal.innerHTML = `
+    <div style="background:#fff;width:600px;max-width:90%;margin:10% auto;padding:20px;border-radius:8px;box-shadow:0 6px 24px rgba(0,0,0,.2)">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <h2 style="margin:0;font-size:18px;font-weight:700">AI Transcript</h2>
+        <button id="cv-ai-close" style="background:none;border:0;font-size:20px;cursor:pointer">&times;</button>
+      </div>
+      <div id="cv-ai-body" style="font-size:14px;color:#333;line-height:1.5;">
+        <p>This is a prototype modal for AI Transcript.</p>
+        <p>Once this is confirmed working, we’ll expand it safely.</p>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Close modal
+  modal.querySelector('#cv-ai-close').addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
+  });
+
+  return modal;
+}
+
+// Handle button click (append-only, like Notes)
+document.addEventListener('click', function(e) {
+  const btn = e.target.closest('button[data-action="transcript"]');
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  const modal = cvAiEnsureModal();
+  modal.style.display = 'block';
+});
+/* ===== /AI TRANSCRIPT ===== */
 
 
 
@@ -3774,6 +3824,7 @@ cvAiTable.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
