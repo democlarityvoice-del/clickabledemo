@@ -3335,288 +3335,202 @@ document.addEventListener('click', function (e) {
 
 
 (function () {
-  // Bind once
-  if (document._cvAiPopulateBound) return;
-  document._cvAiPopulateBound = true;
+  if (document._cvAiObserverBound) return;
+  document._cvAiObserverBound = true;
 
-  // ---- simple type detection (redeclared; no CTG dependency) ----
-  function cvAiDetectType(row){
-    var to = String(row.to || '').trim();
-    var from = String(row.from || '').trim();
-    var dialed = String(row.dialed || '').trim();
+  var _lastBtn = null;
 
-    // Inbound if "To" looks like an internal endpoint or queue
+  // Record last transcript button (capture; never stops propagation)
+  document.addEventListener('click', function (ev) {
+    try {
+      var b = ev.target && ev.target.closest ? ev.target.closest('button[data-action="transcript"]') : null;
+      if (b) _lastBtn = b;
+    } catch(_) {}
+  }, true);
+
+  // ---- heuristics (redeclared) ----
+  function detectType(row){
+    var to = String(row.to||''); var from = String(row.from||''); var dialed = String(row.dialed||'');
     if (/^(?:ext\.?|x)\s*\d{2,4}\b/i.test(to)) return 'inbound';
     if (/call\s*queue/i.test(to)) return 'inbound';
-
-    // Outbound if "From" is a short extension or "To" looks external
     if (/^\d{2,4}$/.test(from)) return 'outbound';
     if (to.replace(/\D/g,'').length >= 10) return 'outbound';
     if (dialed.replace(/\D/g,'').length >= 10) return 'outbound';
-
-    // Fallback heuristic: if From is 10+ digits -> inbound
     if (from.replace(/\D/g,'').length >= 10) return 'inbound';
-
-    // Default to inbound (least surprising in demos)
     return 'inbound';
   }
+  function durationToSecs(txt){
+    var parts = String(txt||'0:00').split(':'), s=0;
+    for (var i=0;i<parts.length;i++) s = s*60 + (+parts[i]||0);
+    return s;
+  }
+  function fmtTime(n){ n=Math.max(0,Math.floor(n)); var m=Math.floor(n/60), s=n%60; return m+':' + (s<10?'0'+s:s); }
+  function chip(txt){
+    var e = document.createElement('span');
+    e.textContent = txt;
+    e.style.display='inline-flex'; e.style.alignItems='center'; e.style.gap='6px';
+    e.style.background='#eaf2ff'; e.style.color='#1a73e8'; e.style.borderRadius='12px';
+    e.style.padding='4px 8px'; e.style.fontSize='12px'; e.style.fontWeight='700';
+    return e;
+  }
+  function segments(type){
+    return type==='inbound'
+      ? [{t0:0,t1:20,text:'Greeting & reason'}, {t0:20,t1:40,text:'Verification / context'}, {t0:40,t1:65,text:'Answer & next steps'}]
+      : [{t0:0,t1:10,text:'Intro & purpose'}, {t0:10,t1:35,text:'Needs / objections'}, {t0:35,t1:55,text:'Proposal & recap'}];
+  }
+  function summary(type){
+    return type==='inbound'
+      ? 'Inbound placeholder: agent verified details, answered the question, and outlined next steps.'
+      : 'Outbound placeholder: courtesy outreach; shared info and optional follow-up.';
+  }
 
-  // ---- helper: ensure we have #cv-ai-body inside the modal ----
-  function cvAiEnsureBody(modal){
+  function getRowFromBtn(btn){
+    var tr = btn;
+    while (tr && tr.nodeName!=='TR') tr = tr.parentNode;
+    var tds = tr ? tr.getElementsByTagName('td') : [];
+    function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
+    return { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
+  }
+
+  function ensureBody(modal){
     var body = modal.querySelector('#cv-ai-body');
     if (body) return body;
-
-    // try to find the inner card div your code created
-    var inner = modal.firstElementChild && modal.firstElementChild.firstElementChild
-      ? modal.firstElementChild.firstElementChild
-      : modal.firstElementChild || modal;
-
+    // your opener created an inner card as the first child; use it
+    var inner = modal.firstElementChild;
+    if (!inner) inner = modal; // fallback
     body = document.createElement('div');
     body.id = 'cv-ai-body';
     inner.appendChild(body);
     return body;
   }
 
-  // ---- UI chips ----
-  function cvAiChip(txt){
-    var s = document.createElement('span');
-    s.textContent = txt;
-    s.style.display = 'inline-flex';
-    s.style.alignItems = 'center';
-    s.style.gap = '6px';
-    s.style.background = '#eaf2ff';
-    s.style.color = '#1a73e8';
-    s.style.borderRadius = '12px';
-    s.style.padding = '4px 8px';
-    s.style.fontSize = '12px';
-    s.style.fontWeight = '700';
-    return s;
-  }
-
-  // ---- segments (placeholder) ----
-  function cvAiSegments(type){
-    return (type === 'inbound')
-      ? [
-          { t0:0,  t1:20, text:'Greeting and reason for call' },
-          { t0:20, t1:40, text:'Verification / context gathering' },
-          { t0:40, t1:65, text:'Answer provided and next steps' }
-        ]
-      : [
-          { t0:0,  t1:10, text:'Agent intro and purpose' },
-          { t0:10, t1:35, text:'Prospect needs / objections' },
-          { t0:35, t1:55, text:'Proposal, recap, and follow-up' }
-        ];
-  }
-
-  // ---- summary (placeholder) ----
-  function cvAiSummary(type){
-    return (type === 'inbound')
-      ? 'Inbound placeholder: caller reached support; the agent verified details, addressed the question, and outlined next steps.'
-      : 'Outbound placeholder: agent performed a courtesy outreach; the recipient received key info and optional follow-up.';
-  }
-
-  // ---- time formatting & duration to seconds ----
-  function cvAiFmtTime(n){
-    n = Math.max(0, Math.floor(n));
-    var m = Math.floor(n/60), s = n % 60;
-    return m + ':' + (s < 10 ? '0'+s : s);
-  }
-  function cvAiDurationToSecs(txt){
-    var parts = String(txt || '0:00').split(':');
-    var secs = 0;
-    for (var i=0; i<parts.length; i++) secs = secs*60 + (+parts[i]||0);
-    return secs;
-  }
-
-  // ---- build placeholder into #cv-ai-body (no external CSS) ----
-  function cvAiBuildPlaceholder(modal, row, type){
-    var body = cvAiEnsureBody(modal);
+  function buildPlaceholder(modal, row, type){
+    var body = ensureBody(modal);
     body.innerHTML = '';
 
-    // container
     var wrap = document.createElement('div');
-    wrap.style.display = 'grid';
-    wrap.style.gridTemplateColumns = '420px 1fr';
-    wrap.style.gap = '18px';
+    wrap.style.display='grid'; wrap.style.gridTemplateColumns='420px 1fr'; wrap.style.gap='18px';
     body.appendChild(wrap);
 
-    // LEFT card
+    // left card
     var left = document.createElement('div');
-    left.style.border = '1px solid #e5e7eb';
-    left.style.borderRadius = '12px';
-    left.style.padding = '14px';
+    left.style.border='1px solid #e5e7eb'; left.style.borderRadius='12px'; left.style.padding='14px';
     wrap.appendChild(left);
 
     var h1 = document.createElement('div');
     h1.textContent = 'Call Details';
-    h1.style.fontWeight = '800';
-    h1.style.fontSize = '18px';
-    h1.style.marginBottom = '10px';
+    h1.style.fontWeight='800'; h1.style.fontSize='18px'; h1.style.marginBottom='10px';
     left.appendChild(h1);
 
     var chips = document.createElement('div');
-    chips.id = 'cv-ai-chips';
-    chips.style.display = 'flex';
-    chips.style.flexWrap = 'wrap';
-    chips.style.gap = '8px';
-    chips.style.marginBottom = '16px';
-    chips.appendChild(cvAiChip('From: ' + (row.from || '—')));
-    chips.appendChild(cvAiChip('To: ' + (row.to || row.dialed || '—')));
-    chips.appendChild(cvAiChip('⏱ ' + (row.duration || '0:00')));
-    chips.appendChild(cvAiChip('📅 ' + (row.date || '—')));
+    chips.style.display='flex'; chips.style.flexWrap='wrap'; chips.style.gap='8px'; chips.style.marginBottom='16px';
+    chips.appendChild(chip('From: ' + (row.from||'—')));
+    chips.appendChild(chip('To: ' + (row.to || row.dialed || '—')));
+    chips.appendChild(chip('⏱ ' + (row.duration||'0:00')));
+    chips.appendChild(chip('📅 ' + (row.date||'—')));
     left.appendChild(chips);
 
     var h2 = document.createElement('div');
-    h2.textContent = 'Summary';
-    h2.style.fontWeight = '800';
-    h2.style.fontSize = '18px';
-    h2.style.marginBottom = '8px';
+    h2.textContent='Summary'; h2.style.fontWeight='800'; h2.style.fontSize='18px'; h2.style.marginBottom='8px';
     left.appendChild(h2);
 
-    var summary = document.createElement('div');
-    summary.id = 'cv-ai-summary';
-    summary.textContent = cvAiSummary(type);
-    summary.style.lineHeight = '1.5';
-    summary.style.color = '#243447';
-    left.appendChild(summary);
+    var sum = document.createElement('div');
+    sum.textContent = summary(type);
+    sum.style.lineHeight='1.5'; sum.style.color='#243447';
+    left.appendChild(sum);
 
-    // RIGHT card
+    // right card
     var right = document.createElement('div');
-    right.style.border = '1px solid #e5e7eb';
-    right.style.borderRadius = '12px';
-    right.style.padding = '14px';
-    right.style.display = 'flex';
-    right.style.flexDirection = 'column';
-    right.style.gap = '12px';
+    right.style.border='1px solid #e5e7eb'; right.style.borderRadius='12px'; right.style.padding='14px';
+    right.style.display='flex'; right.style.flexDirection='column'; right.style.gap='12px';
     wrap.appendChild(right);
 
-    // controls
     var controls = document.createElement('div');
-    controls.style.display = 'flex';
-    controls.style.alignItems = 'center';
-    controls.style.gap = '10px';
+    controls.style.display='flex'; controls.style.alignItems='center'; controls.style.gap='10px';
     right.appendChild(controls);
 
-    var play = document.createElement('button');
-    play.textContent = 'Play';
-    play.className = 'cv-btn';
-    play.style.minWidth = '60px';
-    controls.appendChild(play);
+    var play = document.createElement('button'); play.textContent='Play'; play.className='cv-btn'; play.style.minWidth='60px';
+    var range = document.createElement('input'); range.type='range';
+    var total = durationToSecs(row.duration); range.min='0'; range.max=String(total); range.value='0'; range.style.flex='1';
+    var clock = document.createElement('span'); clock.textContent='0:00'; clock.style.width='70px'; clock.style.textAlign='right'; clock.style.fontWeight='700';
+    controls.appendChild(play); controls.appendChild(range); controls.appendChild(clock);
 
-    var range = document.createElement('input');
-    range.type = 'range';
-    var total = cvAiDurationToSecs(row.duration);
-    range.min = '0';
-    range.max = String(total);
-    range.value = '0';
-    range.style.flex = '1';
-    controls.appendChild(range);
-
-    var clock = document.createElement('span');
-    clock.textContent = '0:00';
-    clock.style.width = '70px';
-    clock.style.textAlign = 'right';
-    clock.style.fontWeight = '700';
-    controls.appendChild(clock);
-
-    // segments
     var segWrap = document.createElement('div');
-    segWrap.id = 'cv-ai-seglist';
-    segWrap.style.overflow = 'auto';
-    segWrap.style.maxHeight = 'calc(90vh - 260px)';
+    segWrap.style.overflow='auto'; segWrap.style.maxHeight='calc(90vh - 260px)';
     right.appendChild(segWrap);
 
-    var segs = cvAiSegments(type);
-    for (var j=0; j<segs.length; j++){
-      var s = segs[j];
-      var item = document.createElement('div');
-      item.className = 'cv-ai-seg';
+    var segs = segments(type);
+    for (var i=0;i<segs.length;i++){
+      var s = segs[i];
+      var item = document.createElement('div'); item.className='cv-ai-seg';
       item.setAttribute('data-t', String(s.t0));
-      item.style.border = '1px solid #e5e7eb';
-      item.style.borderRadius = '10px';
-      item.style.padding = '12px';
-      item.style.margin = '10px 0';
-      item.style.cursor = 'pointer';
-
-      var rowT = document.createElement('div');
-      rowT.style.display = 'flex';
-      rowT.style.alignItems = 'center';
-      rowT.style.gap = '8px';
-      rowT.style.color = '#2563eb';
-      rowT.style.fontWeight = '700';
-
-      var dot = document.createElement('span');
-      dot.style.width = '8px';
-      dot.style.height = '8px';
-      dot.style.borderRadius = '50%';
-      dot.style.background = '#2563eb';
-      dot.style.display = 'inline-block';
-
+      item.style.border='1px solid #e5e7eb'; item.style.borderRadius='10px'; item.style.padding='12px';
+      item.style.margin='10px 0'; item.style.cursor='pointer';
+      var rowT = document.createElement('div'); rowT.style.display='flex'; rowT.style.alignItems='center'; rowT.style.gap='8px';
+      rowT.style.color='#2563eb'; rowT.style.fontWeight='700';
+      var dot = document.createElement('span'); dot.style.width='8px'; dot.style.height='8px'; dot.style.borderRadius='50%'; dot.style.background='#2563eb'; dot.style.display='inline-block';
       var t0 = document.createElement('span'); t0.textContent = s.t0 + 's';
-      var t1 = document.createElement('span'); t1.textContent = ' – ' + s.t1 + 's';
-      t1.style.color = '#94a3b8';
-      t1.style.fontWeight = '600';
-
-      var bodyText = document.createElement('div');
-      bodyText.textContent = s.text;
-      bodyText.style.marginTop = '8px';
-
-      rowT.appendChild(dot);
-      rowT.appendChild(t0);
-      rowT.appendChild(t1);
-      item.appendChild(rowT);
-      item.appendChild(bodyText);
-      segWrap.appendChild(item);
+      var t1 = document.createElement('span'); t1.textContent = ' – ' + s.t1 + 's'; t1.style.color='#94a3b8'; t1.style.fontWeight='600';
+      var bodyText = document.createElement('div'); bodyText.textContent = s.text; bodyText.style.marginTop='8px';
+      rowT.appendChild(dot); rowT.appendChild(t0); rowT.appendChild(t1);
+      item.appendChild(rowT); item.appendChild(bodyText); segWrap.appendChild(item);
     }
 
-    // interactions (simple mock)
+    // interactions
     var timer = null;
-    function setPos(s){ range.value = String(s); clock.textContent = cvAiFmtTime(+s||0); }
+    function setPos(s){ range.value=String(s); clock.textContent=fmtTime(+s||0); }
     segWrap.addEventListener('click', function(ev){
       var n = ev.target;
-      while (n && n !== segWrap){
-        if (n.className === 'cv-ai-seg'){
-          var t = Number(n.getAttribute('data-t')) || 0;
-          setPos(t);
-          break;
-        }
+      while (n && n!==segWrap){
+        if (n.className==='cv-ai-seg'){ setPos(Number(n.getAttribute('data-t'))||0); break; }
         n = n.parentNode;
       }
     });
     play.onclick = function(){
-      if (timer){ clearInterval(timer); timer = null; play.textContent = 'Play'; return; }
-      play.textContent = 'Pause';
+      if (timer){ clearInterval(timer); timer=null; play.textContent='Play'; return; }
+      play.textContent='Pause';
       timer = setInterval(function(){
-        var v = Number(range.value) + 1;
-        if (v > total){ clearInterval(timer); timer = null; play.textContent = 'Play'; setPos(0); return; }
+        var v = Number(range.value)+1;
+        if (v>total){ clearInterval(timer); timer=null; play.textContent='Play'; setPos(0); return; }
         setPos(v);
       }, 1000);
     };
     range.oninput = function(){ setPos(range.value); };
   }
 
-  // ---- populate after your modal opens (no interference) ----
-  document.addEventListener('click', function(e){
-    var btn = e.target && e.target.closest ? e.target.closest('button[data-action="transcript"]') : null;
-    if (!btn) return; // let your handler do its thing
-
-    // Give your opener a tick to show the modal, then populate
-    setTimeout(function(){
-      var modal = document.getElementById('cv-ai-modal');
+  function maybePopulate(modal){
+    try{
       if (!modal) return;
+      var visible = window.getComputedStyle(modal).display !== 'none';
+      if (!visible) { modal._cvAiPopulated = false; return; }
+      if (modal._cvAiPopulated) return;
+      modal._cvAiPopulated = true;
 
-      // build row from the clicked table row
-      var tr = btn;
-      while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
-      var tds = tr ? tr.getElementsByTagName('td') : [];
-      function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
-      var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
+      var row = _lastBtn ? getRowFromBtn(_lastBtn) : {from:'',dialed:'',to:'',date:'',duration:'0:00'};
+      var type = detectType(row);
+      buildPlaceholder(modal, row, type);
+    }catch(err){ console.error('[AI placeholder]', err); }
+  }
 
-      var type = cvAiDetectType(row);
-      cvAiBuildPlaceholder(modal, row, type);
-    }, 0);
-  }); // bubbling (default), so it runs after your open handler
+  // Observe for modal creation/visibility changes
+  var mo = new MutationObserver(function(muts){
+    for (var i=0;i<muts.length;i++){
+      var m = muts[i];
+      if (m.type === 'childList'){
+        var modal = document.getElementById('cv-ai-modal');
+        if (modal) maybePopulate(modal);
+      } else if (m.type === 'attributes' && m.target && m.target.id === 'cv-ai-modal'){
+        maybePopulate(m.target);
+      }
+    }
+  });
+  mo.observe(document.body, { childList:true, subtree:true, attributes:true, attributeFilter:['style'] });
+
+  // If already present on load:
+  var existing = document.getElementById('cv-ai-modal');
+  if (existing) maybePopulate(existing);
 })();
+
 
 
 
@@ -3756,6 +3670,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
