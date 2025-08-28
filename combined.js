@@ -3334,12 +3334,10 @@ document.addEventListener('click', function (e) {
 
 
 /* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
-(function () {
-  // Ensure we only bind once
-  if (document._cvAiBound) return;
+// Ensure we only bind once
+if (!document._cvAiBound) {
   document._cvAiBound = true;
 
-  // Create AI modal dynamically
   function cvAiEnsureModal() {
     let modal = document.getElementById('cv-ai-modal');
     if (modal) return modal;
@@ -3393,7 +3391,6 @@ document.addEventListener('click', function (e) {
     body.style.color = '#333';
     inner.appendChild(body);
 
-    // Close modal when clicking × or outside modal
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.style.display = 'none';
@@ -3414,7 +3411,9 @@ document.addEventListener('click', function (e) {
     const modal = cvAiEnsureModal();
     modal.style.display = 'block';
   }, true);
-})();
+}
+/* ===== /AI TRANSCRIPT ===== */
+
 
 
 
@@ -3552,6 +3551,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
