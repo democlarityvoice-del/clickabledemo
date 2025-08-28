@@ -3334,45 +3334,55 @@ document.addEventListener('click', function (e) {
 
 
 <!-- ===== AI TRANSCRIPT MODAL ===== -->
-<div id="cv-ai-transcript-modal" class="cv-ai-modal">
-  <div class="cv-ai-modal-content">
-    <span class="cv-ai-close">&times;</span>
-    <div class="cv-ai-container">
-      
-      <!-- Left column: Call details & summary -->
-      <div class="cv-ai-left">
-        <h2>Call Details</h2>
-        <div class="cv-ai-call-meta">
-          <span class="from">From: 370 Support Main</span>
-          <span class="to">To: (307) 259‑0617</span>
-          <span class="duration">⏱ 0:51</span>
-          <span class="time">📅 Today, 10:37 am</span>
-        </div>
-        <h3>Summary</h3>
-        <p>
-          This is placeholder content for the AI transcript summary area.
-          You'll replace this text with real data later.
-        </p>
-      </div>
+<div id="cv-ai-transcript-modal" style="
+  display:none;
+  position:fixed;
+  top:0;
+  left:0;
+  width:100%;
+  height:100%;
+  background:rgba(0,0,0,0.6);
+  z-index:9999;
+">
+  <div style="
+    background:white;
+    width:90%;
+    height:90%;
+    margin:40px auto;
+    padding:20px;
+    border-radius:8px;
+    position:relative;
+  ">
+    <span id="cv-ai-close" style="
+      position:absolute;
+      top:10px;
+      right:20px;
+      font-size:28px;
+      cursor:pointer;
+    ">&times;</span>
 
-      <!-- Right column: Transcript -->
-      <div class="cv-ai-right">
-        <div class="cv-ai-audio-player">
-          <div class="cv-ai-player-placeholder">
-            ▶ 0:41 / 0:50
-          </div>
-        </div>
-        <div class="cv-ai-transcript-feed">
-          <div class="cv-ai-line"><b>27.8s</b> – Please leave a message and we will return your call as soon as possible.</div>
-          <div class="cv-ai-line"><b>31.8s</b> – Hello, this is Miles speaking from Clarity Voices giving a call back for support.</div>
-          <div class="cv-ai-line"><b>38.8s</b> – If you have any issues with your phone system or just have some questions or concerns…</div>
-          <div class="cv-ai-line"><b>42.8s</b> – Thank you.</div>
-        </div>
-      </div>
-    </div>
+    <h2 style="margin-top:30px">AI Transcript Modal</h2>
+    <p>This is a placeholder modal. If you see this, the button works.</p>
   </div>
 </div>
 <!-- ===== /AI TRANSCRIPT MODAL ===== -->
+
+document.querySelectorAll('.cv-ai-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.getElementById('cv-ai-transcript-modal').style.display = 'block';
+  });
+});
+
+document.getElementById('cv-ai-close').addEventListener('click', () => {
+  document.getElementById('cv-ai-transcript-modal').style.display = 'none';
+});
+
+window.addEventListener('click', e => {
+  const modal = document.getElementById('cv-ai-transcript-modal');
+  if (e.target === modal) modal.style.display = 'none';
+});
+
+
 
 
 
@@ -3512,6 +3522,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
