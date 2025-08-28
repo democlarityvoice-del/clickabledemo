@@ -3333,11 +3333,14 @@ document.addEventListener('click', function (e) {
 /* ===== /NOTES MODAL ===== */
 
 
+
 /* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
-// Ensure we only bind once
-if (!document._cvAiBound) {
+(function () {
+  // Prevent double-binding
+  if (document._cvAiBound) return;
   document._cvAiBound = true;
 
+  // Create AI Transcript modal
   function cvAiEnsureModal() {
     let modal = document.getElementById('cv-ai-modal');
     if (modal) return modal;
@@ -3347,31 +3350,38 @@ if (!document._cvAiBound) {
     modal.style.display = 'none';
     modal.style.position = 'fixed';
     modal.style.inset = '0';
-    modal.style.zIndex = '10050';
     modal.style.background = 'rgba(0,0,0,.5)';
+    modal.style.zIndex = '10050';
+    modal.style.overflow = 'auto';
 
+    // Inner container
     const inner = document.createElement('div');
     inner.style.background = '#fff';
-    inner.style.width = '600px';
-    inner.style.maxWidth = '90%';
-    inner.style.margin = '10% auto';
+    inner.style.width = '90%';
+    inner.style.maxWidth = '1200px';
+    inner.style.margin = '40px auto';
     inner.style.padding = '20px';
     inner.style.borderRadius = '8px';
     inner.style.boxShadow = '0 6px 24px rgba(0,0,0,.2)';
+    inner.style.display = 'flex';
+    inner.style.flexDirection = 'row';
+    inner.style.gap = '20px';
     inner.style.position = 'relative';
     modal.appendChild(inner);
 
+    // Header
     const header = document.createElement('div');
     header.style.display = 'flex';
     header.style.justifyContent = 'space-between';
     header.style.alignItems = 'center';
-    header.style.marginBottom = '12px';
+    header.style.marginBottom = '16px';
+    header.style.width = '100%';
     inner.appendChild(header);
 
     const title = document.createElement('h2');
-    title.textContent = 'AI Transcript';
+    title.textContent = 'AI Transcript and Summary';
     title.style.margin = '0';
-    title.style.fontSize = '18px';
+    title.style.fontSize = '20px';
     title.style.fontWeight = '700';
     header.appendChild(title);
 
@@ -3380,17 +3390,76 @@ if (!document._cvAiBound) {
     closeBtn.setAttribute('aria-label', 'Close');
     closeBtn.style.background = 'none';
     closeBtn.style.border = '0';
-    closeBtn.style.fontSize = '20px';
+    closeBtn.style.fontSize = '24px';
     closeBtn.style.cursor = 'pointer';
     header.appendChild(closeBtn);
 
-    const body = document.createElement('div');
-    body.id = 'cv-ai-body';
-    body.textContent = 'This is a prototype AI Transcript modal.';
-    body.style.fontSize = '14px';
-    body.style.color = '#333';
-    inner.appendChild(body);
+    // Left panel - Call Details + Summary
+    const leftPanel = document.createElement('div');
+    leftPanel.style.flex = '1';
+    leftPanel.style.borderRight = '1px solid #e5e7eb';
+    leftPanel.style.paddingRight = '20px';
+    inner.appendChild(leftPanel);
 
+    const details = document.createElement('div');
+    details.innerHTML = `
+      <h3 style="color:#1a3d7c;margin-top:0;">Call Details</h3>
+      <p><strong>From:</strong> (248) 555-0102</p>
+      <p><strong>To:</strong> (307) 259-0617</p>
+      <p><strong>Duration:</strong> 0:51</p>
+      <p><strong>Date:</strong> Today, 10:37 am</p>
+      <h3 style="color:#1a3d7c;margin-top:20px;">Summary</h3>
+      <p>
+        Placeholder summary goes here. This area will contain AI-generated notes
+        and follow-up recommendations based on the call transcript.
+      </p>
+    `;
+    leftPanel.appendChild(details);
+
+    // Right panel - Transcript
+    const rightPanel = document.createElement('div');
+    rightPanel.style.flex = '2';
+    rightPanel.style.display = 'flex';
+    rightPanel.style.flexDirection = 'column';
+    rightPanel.style.gap = '12px';
+    inner.appendChild(rightPanel);
+
+    const transcriptTitle = document.createElement('h3');
+    transcriptTitle.textContent = 'Transcript';
+    transcriptTitle.style.marginTop = '0';
+    transcriptTitle.style.color = '#1a3d7c';
+    rightPanel.appendChild(transcriptTitle);
+
+    const transcriptBox = document.createElement('div');
+    transcriptBox.style.display = 'flex';
+    transcriptBox.style.flexDirection = 'column';
+    transcriptBox.style.gap = '8px';
+    transcriptBox.style.maxHeight = '600px';
+    transcriptBox.style.overflowY = 'auto';
+    rightPanel.appendChild(transcriptBox);
+
+    // Placeholder transcript rows
+    const sampleTranscript = [
+      { time: '0:12', text: 'Hello, this is Miles from Clarity Voices calling you back.' },
+      { time: '0:18', text: 'I wanted to follow up regarding your support request.' },
+      { time: '0:24', text: 'Please let us know if you have any questions or concerns.' },
+      { time: '0:32', text: 'Thank you for your time!' },
+    ];
+
+    sampleTranscript.forEach((line) => {
+      const row = document.createElement('div');
+      row.style.background = '#f7f9fc';
+      row.style.border = '1px solid #e5e7eb';
+      row.style.borderRadius = '6px';
+      row.style.padding = '10px';
+      row.innerHTML = `
+        <span style="font-weight:600;color:#1a3d7c;margin-right:8px;">${line.time}</span>
+        ${line.text}
+      `;
+      transcriptBox.appendChild(row);
+    });
+
+    // Close events
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.style.display = 'none';
@@ -3400,7 +3469,7 @@ if (!document._cvAiBound) {
     return modal;
   }
 
-  // Click handler for AI buttons only
+  // Button click handler
   document.addEventListener('click', function (e) {
     const btn = e.target.closest('button[data-action="transcript"]');
     if (!btn) return;
@@ -3411,8 +3480,7 @@ if (!document._cvAiBound) {
     const modal = cvAiEnsureModal();
     modal.style.display = 'block';
   }, true);
-}
-/* ===== /AI TRANSCRIPT ===== */
+})();
 
 
 
@@ -3551,6 +3619,7 @@ if (!document._cvAiBound) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
