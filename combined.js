@@ -1706,7 +1706,7 @@ if (!window.__cvAgentsPanelInit) {
   }
 
   // ---------- click wiring (Agents panel ONLY) ----------
- document.querySelector('#cv-agents-panel').addEventListener('click', function(e){
+  document.addEventListener('click', function(e){
     var root = document.getElementById('cv-agents-panel'); if (!root) return;
     var btn = e.target && e.target.closest &&
       e.target.closest('#cv-agents-panel .cv-tool[title="Stats"], #cv-agents-panel .cv-tool-stats, #cv-agents-panel [data-tool="stats"]');
@@ -3725,8 +3725,6 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
 
 
 
