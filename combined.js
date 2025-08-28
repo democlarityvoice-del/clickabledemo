@@ -3336,130 +3336,203 @@ document.addEventListener('click', function (e) {
 
 /* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
 (function () {
-  // Prevent double-binding
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
-  // Create AI Transcript modal
   function cvAiEnsureModal() {
     let modal = document.getElementById('cv-ai-modal');
     if (modal) return modal;
 
+    // === Outer modal wrapper ===
     modal = document.createElement('div');
     modal.id = 'cv-ai-modal';
-    modal.style.display = 'none';
-    modal.style.position = 'fixed';
-    modal.style.inset = '0';
-    modal.style.background = 'rgba(0,0,0,.5)';
-    modal.style.zIndex = '10050';
-    modal.style.overflow = 'auto';
+    Object.assign(modal.style, {
+      display: 'none',
+      position: 'fixed',
+      inset: '0',
+      zIndex: '10050',
+      background: 'rgba(0,0,0,.5)',
+    });
 
-    // Inner container
+    // === Inner modal container ===
     const inner = document.createElement('div');
-    inner.style.background = '#fff';
-    inner.style.width = '90%';
-    inner.style.maxWidth = '1200px';
-    inner.style.margin = '40px auto';
-    inner.style.padding = '20px';
-    inner.style.borderRadius = '8px';
-    inner.style.boxShadow = '0 6px 24px rgba(0,0,0,.2)';
-    inner.style.display = 'flex';
-    inner.style.flexDirection = 'row';
-    inner.style.gap = '20px';
-    inner.style.position = 'relative';
+    Object.assign(inner.style, {
+      background: '#fff',
+      width: '900px',
+      maxWidth: '95%',
+      height: '600px',
+      maxHeight: '90%',
+      margin: '4% auto',
+      padding: '0',
+      borderRadius: '8px',
+      boxShadow: '0 6px 24px rgba(0,0,0,.2)',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'relative',
+      overflow: 'hidden',
+    });
     modal.appendChild(inner);
 
-    // Header
+    // === Header ===
     const header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.style.marginBottom = '16px';
-    header.style.width = '100%';
+    Object.assign(header.style, {
+      display: 'flex',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      padding: '16px 20px',
+      background: '#f5f7fa',
+      borderBottom: '1px solid #e5e7eb',
+    });
     inner.appendChild(header);
 
     const title = document.createElement('h2');
-    title.textContent = 'AI Transcript and Summary';
-    title.style.margin = '0';
-    title.style.fontSize = '20px';
-    title.style.fontWeight = '700';
+    title.textContent = 'AI Transcript';
+    Object.assign(title.style, {
+      margin: '0',
+      fontSize: '18px',
+      fontWeight: '700',
+    });
     header.appendChild(title);
 
     const closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
     closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.style.background = 'none';
-    closeBtn.style.border = '0';
-    closeBtn.style.fontSize = '24px';
-    closeBtn.style.cursor = 'pointer';
+    Object.assign(closeBtn.style, {
+      background: 'none',
+      border: '0',
+      fontSize: '22px',
+      cursor: 'pointer',
+    });
     header.appendChild(closeBtn);
 
-    // Left panel - Call Details + Summary
-    const leftPanel = document.createElement('div');
-    leftPanel.style.flex = '1';
-    leftPanel.style.borderRight = '1px solid #e5e7eb';
-    leftPanel.style.paddingRight = '20px';
-    inner.appendChild(leftPanel);
+    // === Body wrapper ===
+    const body = document.createElement('div');
+    Object.assign(body.style, {
+      display: 'grid',
+      gridTemplateColumns: '300px 1fr',
+      gap: '16px',
+      padding: '20px',
+      flex: '1',
+      overflow: 'hidden',
+      background: '#fff',
+    });
+    inner.appendChild(body);
 
-    const details = document.createElement('div');
-    details.innerHTML = `
-      <h3 style="color:#1a3d7c;margin-top:0;">Call Details</h3>
-      <p><strong>From:</strong> (248) 555-0102</p>
-      <p><strong>To:</strong> (307) 259-0617</p>
-      <p><strong>Duration:</strong> 0:51</p>
-      <p><strong>Date:</strong> Today, 10:37 am</p>
-      <h3 style="color:#1a3d7c;margin-top:20px;">Summary</h3>
-      <p>
-        Placeholder summary goes here. This area will contain AI-generated notes
-        and follow-up recommendations based on the call transcript.
-      </p>
-    `;
-    leftPanel.appendChild(details);
-
-    // Right panel - Transcript
-    const rightPanel = document.createElement('div');
-    rightPanel.style.flex = '2';
-    rightPanel.style.display = 'flex';
-    rightPanel.style.flexDirection = 'column';
-    rightPanel.style.gap = '12px';
-    inner.appendChild(rightPanel);
-
-    const transcriptTitle = document.createElement('h3');
-    transcriptTitle.textContent = 'Transcript';
-    transcriptTitle.style.marginTop = '0';
-    transcriptTitle.style.color = '#1a3d7c';
-    rightPanel.appendChild(transcriptTitle);
-
-    const transcriptBox = document.createElement('div');
-    transcriptBox.style.display = 'flex';
-    transcriptBox.style.flexDirection = 'column';
-    transcriptBox.style.gap = '8px';
-    transcriptBox.style.maxHeight = '600px';
-    transcriptBox.style.overflowY = 'auto';
-    rightPanel.appendChild(transcriptBox);
-
-    // Placeholder transcript rows
-    const sampleTranscript = [
-      { time: '0:12', text: 'Hello, this is Miles from Clarity Voices calling you back.' },
-      { time: '0:18', text: 'I wanted to follow up regarding your support request.' },
-      { time: '0:24', text: 'Please let us know if you have any questions or concerns.' },
-      { time: '0:32', text: 'Thank you for your time!' },
-    ];
-
-    sampleTranscript.forEach((line) => {
-      const row = document.createElement('div');
-      row.style.background = '#f7f9fc';
-      row.style.border = '1px solid #e5e7eb';
-      row.style.borderRadius = '6px';
-      row.style.padding = '10px';
-      row.innerHTML = `
-        <span style="font-weight:600;color:#1a3d7c;margin-right:8px;">${line.time}</span>
-        ${line.text}
-      `;
-      transcriptBox.appendChild(row);
+    // === LEFT COLUMN ===
+    const leftCol = document.createElement('div');
+    Object.assign(leftCol.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '12px',
+      paddingRight: '8px',
     });
 
-    // Close events
+    // Placeholder Call Details
+    const detailsBox = document.createElement('div');
+    Object.assign(detailsBox.style, {
+      padding: '12px',
+      border: '1px solid #e5e7eb',
+      borderRadius: '6px',
+      background: '#fafafa',
+      fontSize: '13px',
+    });
+    detailsBox.innerHTML = `
+      <strong>Call Details</strong><br>
+      From: <span style="color:#333">John Doe</span><br>
+      To: <span style="color:#333">(555) 123-4567</span><br>
+      Duration: <span style="color:#333">5:42</span><br>
+      Date: <span style="color:#333">Aug 25, 2025</span>
+    `;
+    leftCol.appendChild(detailsBox);
+
+    // Placeholder Summary
+    const summaryBox = document.createElement('div');
+    Object.assign(summaryBox.style, {
+      padding: '12px',
+      border: '1px solid #e5e7eb',
+      borderRadius: '6px',
+      background: '#fefefe',
+      fontSize: '13px',
+      lineHeight: '1.5',
+      flex: '1',
+    });
+    summaryBox.innerHTML = `
+      <strong>AI Summary</strong>
+      <p style="margin-top:6px;color:#555">
+        This is a placeholder for the AI-generated call summary.
+        It will show an overview of the conversation when hooked up.
+      </p>
+    `;
+    leftCol.appendChild(summaryBox);
+
+    body.appendChild(leftCol);
+
+    // === RIGHT COLUMN ===
+    const rightCol = document.createElement('div');
+    Object.assign(rightCol.style, {
+      display: 'flex',
+      flexDirection: 'column',
+      overflow: 'hidden',
+    });
+
+    // Transcript Box
+    const transcriptBox = document.createElement('div');
+    transcriptBox.id = 'cv-ai-body';
+    Object.assign(transcriptBox.style, {
+      flex: '1',
+      overflowY: 'auto',
+      padding: '12px',
+      border: '1px solid #e5e7eb',
+      borderRadius: '6px',
+      background: '#fff',
+      fontSize: '13px',
+      lineHeight: '1.6',
+    });
+    transcriptBox.textContent =
+      'This is a placeholder transcript. The full transcript text will appear here when available.';
+    rightCol.appendChild(transcriptBox);
+
+    body.appendChild(rightCol);
+
+    // === Footer ===
+    const footer = document.createElement('div');
+    Object.assign(footer.style, {
+      padding: '12px 20px',
+      borderTop: '1px solid #e5e7eb',
+      background: '#f9f9f9',
+      display: 'flex',
+      justifyContent: 'flex-end',
+      gap: '8px',
+    });
+    inner.appendChild(footer);
+
+    const dlTranscriptBtn = document.createElement('button');
+    dlTranscriptBtn.textContent = 'Download Transcript';
+    Object.assign(dlTranscriptBtn.style, {
+      padding: '6px 12px',
+      background: '#1a73e8',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'not-allowed',
+      opacity: '0.6',
+    });
+    footer.appendChild(dlTranscriptBtn);
+
+    const dlRecordingBtn = document.createElement('button');
+    dlRecordingBtn.textContent = 'Download Recording';
+    Object.assign(dlRecordingBtn.style, {
+      padding: '6px 12px',
+      background: '#1a73e8',
+      color: '#fff',
+      border: 'none',
+      borderRadius: '4px',
+      cursor: 'not-allowed',
+      opacity: '0.6',
+    });
+    footer.appendChild(dlRecordingBtn);
+
+    // Close modal when clicking × or outside modal
     closeBtn.addEventListener('click', () => modal.style.display = 'none');
     modal.addEventListener('click', (e) => {
       if (e.target === modal) modal.style.display = 'none';
@@ -3481,6 +3554,7 @@ document.addEventListener('click', function (e) {
     modal.style.display = 'block';
   }, true);
 })();
+
 
 
 
@@ -3619,6 +3693,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
