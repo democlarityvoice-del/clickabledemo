@@ -3333,110 +3333,46 @@ document.addEventListener('click', function (e) {
 /* ===== /NOTES MODAL ===== */
 
 
-/* ===== AI TRANSCRIPT (append-only, Notes-style, two-panel layout) ===== */
-(function () {
-  if (document._cvAiBound) return;
-  document._cvAiBound = true;
+<!-- ===== AI TRANSCRIPT MODAL ===== -->
+<div id="cv-ai-transcript-modal" class="cv-ai-modal">
+  <div class="cv-ai-modal-content">
+    <span class="cv-ai-close">&times;</span>
+    <div class="cv-ai-container">
+      
+      <!-- Left column: Call details & summary -->
+      <div class="cv-ai-left">
+        <h2>Call Details</h2>
+        <div class="cv-ai-call-meta">
+          <span class="from">From: 370 Support Main</span>
+          <span class="to">To: (307) 259‑0617</span>
+          <span class="duration">⏱ 0:51</span>
+          <span class="time">📅 Today, 10:37 am</span>
+        </div>
+        <h3>Summary</h3>
+        <p>
+          This is placeholder content for the AI transcript summary area.
+          You'll replace this text with real data later.
+        </p>
+      </div>
 
-  function cvAiEnsureModal() {
-    var modal = document.getElementById('cv-ai-modal');
-    if (modal) return modal;
-
-    modal = document.createElement('div');
-    modal.id = 'cv-ai-modal';
-    modal.style.display = 'none';
-    modal.style.position = 'fixed';
-    modal.style.inset = '0';
-    modal.style.zIndex = '10050';
-    modal.style.background = 'rgba(0,0,0,.5)';
-
-    var inner = document.createElement('div');
-    inner.style.background = '#fff';
-    inner.style.width = '900px';
-    inner.style.maxWidth = '95%';
-    inner.style.margin = '3% auto';
-    inner.style.padding = '20px';
-    inner.style.borderRadius = '8px';
-    inner.style.boxShadow = '0 6px 24px rgba(0,0,0,.2)';
-    inner.style.position = 'relative';
-    modal.appendChild(inner);
-
-    // Header
-    var header = document.createElement('div');
-    header.style.display = 'flex';
-    header.style.justifyContent = 'space-between';
-    header.style.alignItems = 'center';
-    header.style.marginBottom = '12px';
-    inner.appendChild(header);
-
-    var title = document.createElement('h2');
-    title.textContent = 'AI Transcript';
-    title.style.margin = '0';
-    title.style.fontSize = '18px';
-    title.style.fontWeight = '700';
-    header.appendChild(title);
-
-    var closeBtn = document.createElement('button');
-    closeBtn.textContent = '×';
-    closeBtn.setAttribute('aria-label', 'Close');
-    closeBtn.style.background = 'none';
-    closeBtn.style.border = '0';
-    closeBtn.style.fontSize = '20px';
-    closeBtn.style.cursor = 'pointer';
-    header.appendChild(closeBtn);
-
-    // Body content — two-panel grid layout, safe single-line HTML string
-    var body = document.createElement('div');
-    body.id = 'cv-ai-body';
-    body.style.display = 'grid';
-    body.style.gridTemplateColumns = '300px 1fr';
-    body.style.gap = '20px';
-    body.style.fontSize = '14px';
-    body.style.color = '#333';
-    body.style.lineHeight = '1.5';
-    body.innerHTML =
-      '<div style="border:1px solid #ddd;border-radius:6px;padding:12px;background:#f9f9f9;">' +
-        '<h3 style="margin-top:0;font-size:15px;font-weight:700;color:#222;">Call Details</h3>' +
-        '<p><strong>Caller:</strong> Placeholder Name</p>' +
-        '<p><strong>Number:</strong> (555) 123‑4567</p>' +
-        '<p><strong>Duration:</strong> 05:32</p>' +
-        '<p><strong>Direction:</strong> Inbound</p>' +
-        '<p><strong>Recording:</strong> <em>link here</em></p>' +
-      '</div>' +
-      '<div style="border:1px solid #ddd;border-radius:6px;padding:12px;background:#fff;">' +
-        '<h3 style="margin-top:0;font-size:15px;font-weight:700;color:#222;">Transcript</h3>' +
-        '<div style="height:300px;overflow-y:auto;padding-right:8px;font-family:monospace;color:#444;">' +
-          '<p>[00:00] Agent: Welcome to Clarity Voice!</p>' +
-          '<p>[00:03] Caller: Hi, I need help setting up my phones.</p>' +
-          '<p>[00:08] Agent: Sure thing, let me walk you through it.</p>' +
-          '<p>[00:12] ...</p>' +
-        '</div>' +
-      '</div>';
-    inner.appendChild(body);
-
-    // Close modal when clicking × or outside
-    closeBtn.addEventListener('click', function() {
-      modal.style.display = 'none';
-    });
-    modal.addEventListener('click', function(e) {
-      if (e.target === modal) modal.style.display = 'none';
-    });
-
-    document.body.appendChild(modal);
-    return modal;
-  }
-
-  document.addEventListener('click', function (e) {
-    var btn = e.target.closest('button[data-action="transcript"]');
-    if (!btn) return;
-
-    e.preventDefault();
-    e.stopPropagation();
-
-    var modal = cvAiEnsureModal();
-    modal.style.display = 'block';
-  }, true);
-})();
+      <!-- Right column: Transcript -->
+      <div class="cv-ai-right">
+        <div class="cv-ai-audio-player">
+          <div class="cv-ai-player-placeholder">
+            ▶ 0:41 / 0:50
+          </div>
+        </div>
+        <div class="cv-ai-transcript-feed">
+          <div class="cv-ai-line"><b>27.8s</b> – Please leave a message and we will return your call as soon as possible.</div>
+          <div class="cv-ai-line"><b>31.8s</b> – Hello, this is Miles speaking from Clarity Voices giving a call back for support.</div>
+          <div class="cv-ai-line"><b>38.8s</b> – If you have any issues with your phone system or just have some questions or concerns…</div>
+          <div class="cv-ai-line"><b>42.8s</b> – Thank you.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ===== /AI TRANSCRIPT MODAL ===== -->
 
 
 
@@ -3576,6 +3512,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
