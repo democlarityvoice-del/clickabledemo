@@ -3333,7 +3333,7 @@ document.addEventListener('click', function (e) {
 /* ===== /NOTES MODAL ===== */
 
 
-/* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
+/* ===== AI TRANSCRIPT (append-only, Notes-style, two-panel layout) ===== */
 (function () {
   if (document._cvAiBound) return;
   document._cvAiBound = true;
@@ -3352,9 +3352,9 @@ document.addEventListener('click', function (e) {
 
     var inner = document.createElement('div');
     inner.style.background = '#fff';
-    inner.style.width = '700px';
-    inner.style.maxWidth = '90%';
-    inner.style.margin = '5% auto';
+    inner.style.width = '900px';
+    inner.style.maxWidth = '95%';
+    inner.style.margin = '3% auto';
     inner.style.padding = '20px';
     inner.style.borderRadius = '8px';
     inner.style.boxShadow = '0 6px 24px rgba(0,0,0,.2)';
@@ -3385,13 +3385,33 @@ document.addEventListener('click', function (e) {
     closeBtn.style.cursor = 'pointer';
     header.appendChild(closeBtn);
 
-    // Body content — make sure it's ONE single line to avoid syntax issues
+    // Body content — two-panel grid layout, safe single-line HTML string
     var body = document.createElement('div');
     body.id = 'cv-ai-body';
+    body.style.display = 'grid';
+    body.style.gridTemplateColumns = '300px 1fr';
+    body.style.gap = '20px';
     body.style.fontSize = '14px';
     body.style.color = '#333';
     body.style.lineHeight = '1.5';
-    body.innerHTML = '<div style="padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;"><strong>Transcript Details:</strong><p style="margin-top:8px;font-style:italic;color:#555;">Placeholder text for transcript goes here…</p></div>';
+    body.innerHTML =
+      '<div style="border:1px solid #ddd;border-radius:6px;padding:12px;background:#f9f9f9;">' +
+        '<h3 style="margin-top:0;font-size:15px;font-weight:700;color:#222;">Call Details</h3>' +
+        '<p><strong>Caller:</strong> Placeholder Name</p>' +
+        '<p><strong>Number:</strong> (555) 123‑4567</p>' +
+        '<p><strong>Duration:</strong> 05:32</p>' +
+        '<p><strong>Direction:</strong> Inbound</p>' +
+        '<p><strong>Recording:</strong> <em>link here</em></p>' +
+      '</div>' +
+      '<div style="border:1px solid #ddd;border-radius:6px;padding:12px;background:#fff;">' +
+        '<h3 style="margin-top:0;font-size:15px;font-weight:700;color:#222;">Transcript</h3>' +
+        '<div style="height:300px;overflow-y:auto;padding-right:8px;font-family:monospace;color:#444;">' +
+          '<p>[00:00] Agent: Welcome to Clarity Voice!</p>' +
+          '<p>[00:03] Caller: Hi, I need help setting up my phones.</p>' +
+          '<p>[00:08] Agent: Sure thing, let me walk you through it.</p>' +
+          '<p>[00:12] ...</p>' +
+        '</div>' +
+      '</div>';
     inner.appendChild(body);
 
     // Close modal when clicking × or outside
@@ -3556,6 +3576,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
