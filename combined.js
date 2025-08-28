@@ -3335,11 +3335,9 @@ document.addEventListener('click', function (e) {
 
 /* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
 (function () {
-  // Ensure we only bind once
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
-  // Create AI modal dynamically
   function cvAiEnsureModal() {
     var modal = document.getElementById('cv-ai-modal');
     if (modal) return modal;
@@ -3387,17 +3385,13 @@ document.addEventListener('click', function (e) {
     closeBtn.style.cursor = 'pointer';
     header.appendChild(closeBtn);
 
-    // Body container for transcript contents
+    // Body content — make sure it's ONE single line to avoid syntax issues
     var body = document.createElement('div');
     body.id = 'cv-ai-body';
     body.style.fontSize = '14px';
     body.style.color = '#333';
     body.style.lineHeight = '1.5';
-    body.innerHTML =
-      '<div style="padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;">' +
-        '<strong>Transcript Details:</strong>' +
-        '<p style="margin-top:8px;font-style:italic;color:#555;">Placeholder text for transcript goes here…</p>' +
-      '</div>';
+    body.innerHTML = '<div style="padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;"><strong>Transcript Details:</strong><p style="margin-top:8px;font-style:italic;color:#555;">Placeholder text for transcript goes here…</p></div>';
     inner.appendChild(body);
 
     // Close modal when clicking × or outside
@@ -3412,7 +3406,6 @@ document.addEventListener('click', function (e) {
     return modal;
   }
 
-  // Click handler for AI Transcript button
   document.addEventListener('click', function (e) {
     var btn = e.target.closest('button[data-action="transcript"]');
     if (!btn) return;
@@ -3563,6 +3556,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
