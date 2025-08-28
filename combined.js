@@ -3333,208 +3333,78 @@ document.addEventListener('click', function (e) {
 /* ===== /NOTES MODAL ===== */
 
 
-
 /* ===== AI TRANSCRIPT (append-only, Notes-style) ===== */
 (function () {
+  // Ensure we only bind once
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
+  // Create AI modal dynamically
   function cvAiEnsureModal() {
-    let modal = document.getElementById('cv-ai-modal');
+    var modal = document.getElementById('cv-ai-modal');
     if (modal) return modal;
 
-    // === Outer modal wrapper ===
     modal = document.createElement('div');
     modal.id = 'cv-ai-modal';
-    Object.assign(modal.style, {
-      display: 'none',
-      position: 'fixed',
-      inset: '0',
-      zIndex: '10050',
-      background: 'rgba(0,0,0,.5)',
-    });
+    modal.style.display = 'none';
+    modal.style.position = 'fixed';
+    modal.style.inset = '0';
+    modal.style.zIndex = '10050';
+    modal.style.background = 'rgba(0,0,0,.5)';
 
-    // === Inner modal container ===
-    const inner = document.createElement('div');
-    Object.assign(inner.style, {
-      background: '#fff',
-      width: '900px',
-      maxWidth: '95%',
-      height: '600px',
-      maxHeight: '90%',
-      margin: '4% auto',
-      padding: '0',
-      borderRadius: '8px',
-      boxShadow: '0 6px 24px rgba(0,0,0,.2)',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'relative',
-      overflow: 'hidden',
-    });
+    var inner = document.createElement('div');
+    inner.style.background = '#fff';
+    inner.style.width = '700px';
+    inner.style.maxWidth = '90%';
+    inner.style.margin = '5% auto';
+    inner.style.padding = '20px';
+    inner.style.borderRadius = '8px';
+    inner.style.boxShadow = '0 6px 24px rgba(0,0,0,.2)';
+    inner.style.position = 'relative';
     modal.appendChild(inner);
 
-    // === Header ===
-    const header = document.createElement('div');
-    Object.assign(header.style, {
-      display: 'flex',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '16px 20px',
-      background: '#f5f7fa',
-      borderBottom: '1px solid #e5e7eb',
-    });
+    // Header
+    var header = document.createElement('div');
+    header.style.display = 'flex';
+    header.style.justifyContent = 'space-between';
+    header.style.alignItems = 'center';
+    header.style.marginBottom = '12px';
     inner.appendChild(header);
 
-    const title = document.createElement('h2');
+    var title = document.createElement('h2');
     title.textContent = 'AI Transcript';
-    Object.assign(title.style, {
-      margin: '0',
-      fontSize: '18px',
-      fontWeight: '700',
-    });
+    title.style.margin = '0';
+    title.style.fontSize = '18px';
+    title.style.fontWeight = '700';
     header.appendChild(title);
 
-    const closeBtn = document.createElement('button');
+    var closeBtn = document.createElement('button');
     closeBtn.textContent = '×';
     closeBtn.setAttribute('aria-label', 'Close');
-    Object.assign(closeBtn.style, {
-      background: 'none',
-      border: '0',
-      fontSize: '22px',
-      cursor: 'pointer',
-    });
+    closeBtn.style.background = 'none';
+    closeBtn.style.border = '0';
+    closeBtn.style.fontSize = '20px';
+    closeBtn.style.cursor = 'pointer';
     header.appendChild(closeBtn);
 
-    // === Body wrapper ===
-    const body = document.createElement('div');
-    Object.assign(body.style, {
-      display: 'grid',
-      gridTemplateColumns: '300px 1fr',
-      gap: '16px',
-      padding: '20px',
-      flex: '1',
-      overflow: 'hidden',
-      background: '#fff',
-    });
+    // Body container for transcript contents
+    var body = document.createElement('div');
+    body.id = 'cv-ai-body';
+    body.style.fontSize = '14px';
+    body.style.color = '#333';
+    body.style.lineHeight = '1.5';
+    body.innerHTML =
+      '<div style="padding:10px;border:1px solid #ddd;border-radius:6px;background:#f9f9f9;">' +
+        '<strong>Transcript Details:</strong>' +
+        '<p style="margin-top:8px;font-style:italic;color:#555;">Placeholder text for transcript goes here…</p>' +
+      '</div>';
     inner.appendChild(body);
 
-    // === LEFT COLUMN ===
-    const leftCol = document.createElement('div');
-    Object.assign(leftCol.style, {
-      display: 'flex',
-      flexDirection: 'column',
-      gap: '12px',
-      paddingRight: '8px',
+    // Close modal when clicking × or outside
+    closeBtn.addEventListener('click', function() {
+      modal.style.display = 'none';
     });
-
-    // Placeholder Call Details
-    const detailsBox = document.createElement('div');
-    Object.assign(detailsBox.style, {
-      padding: '12px',
-      border: '1px solid #e5e7eb',
-      borderRadius: '6px',
-      background: '#fafafa',
-      fontSize: '13px',
-    });
-    detailsBox.innerHTML = `
-      <strong>Call Details</strong><br>
-      From: <span style="color:#333">John Doe</span><br>
-      To: <span style="color:#333">(555) 123-4567</span><br>
-      Duration: <span style="color:#333">5:42</span><br>
-      Date: <span style="color:#333">Aug 25, 2025</span>
-    `;
-    leftCol.appendChild(detailsBox);
-
-    // Placeholder Summary
-    const summaryBox = document.createElement('div');
-    Object.assign(summaryBox.style, {
-      padding: '12px',
-      border: '1px solid #e5e7eb',
-      borderRadius: '6px',
-      background: '#fefefe',
-      fontSize: '13px',
-      lineHeight: '1.5',
-      flex: '1',
-    });
-    summaryBox.innerHTML = `
-      <strong>AI Summary</strong>
-      <p style="margin-top:6px;color:#555">
-        This is a placeholder for the AI-generated call summary.
-        It will show an overview of the conversation when hooked up.
-      </p>
-    `;
-    leftCol.appendChild(summaryBox);
-
-    body.appendChild(leftCol);
-
-    // === RIGHT COLUMN ===
-    const rightCol = document.createElement('div');
-    Object.assign(rightCol.style, {
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-    });
-
-    // Transcript Box
-    const transcriptBox = document.createElement('div');
-    transcriptBox.id = 'cv-ai-body';
-    Object.assign(transcriptBox.style, {
-      flex: '1',
-      overflowY: 'auto',
-      padding: '12px',
-      border: '1px solid #e5e7eb',
-      borderRadius: '6px',
-      background: '#fff',
-      fontSize: '13px',
-      lineHeight: '1.6',
-    });
-    transcriptBox.textContent =
-      'This is a placeholder transcript. The full transcript text will appear here when available.';
-    rightCol.appendChild(transcriptBox);
-
-    body.appendChild(rightCol);
-
-    // === Footer ===
-    const footer = document.createElement('div');
-    Object.assign(footer.style, {
-      padding: '12px 20px',
-      borderTop: '1px solid #e5e7eb',
-      background: '#f9f9f9',
-      display: 'flex',
-      justifyContent: 'flex-end',
-      gap: '8px',
-    });
-    inner.appendChild(footer);
-
-    const dlTranscriptBtn = document.createElement('button');
-    dlTranscriptBtn.textContent = 'Download Transcript';
-    Object.assign(dlTranscriptBtn.style, {
-      padding: '6px 12px',
-      background: '#1a73e8',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'not-allowed',
-      opacity: '0.6',
-    });
-    footer.appendChild(dlTranscriptBtn);
-
-    const dlRecordingBtn = document.createElement('button');
-    dlRecordingBtn.textContent = 'Download Recording';
-    Object.assign(dlRecordingBtn.style, {
-      padding: '6px 12px',
-      background: '#1a73e8',
-      color: '#fff',
-      border: 'none',
-      borderRadius: '4px',
-      cursor: 'not-allowed',
-      opacity: '0.6',
-    });
-    footer.appendChild(dlRecordingBtn);
-
-    // Close modal when clicking × or outside modal
-    closeBtn.addEventListener('click', () => modal.style.display = 'none');
-    modal.addEventListener('click', (e) => {
+    modal.addEventListener('click', function(e) {
       if (e.target === modal) modal.style.display = 'none';
     });
 
@@ -3542,15 +3412,15 @@ document.addEventListener('click', function (e) {
     return modal;
   }
 
-  // Button click handler
+  // Click handler for AI Transcript button
   document.addEventListener('click', function (e) {
-    const btn = e.target.closest('button[data-action="transcript"]');
+    var btn = e.target.closest('button[data-action="transcript"]');
     if (!btn) return;
 
     e.preventDefault();
     e.stopPropagation();
 
-    const modal = cvAiEnsureModal();
+    var modal = cvAiEnsureModal();
     modal.style.display = 'block';
   }, true);
 })();
@@ -3693,6 +3563,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
