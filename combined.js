@@ -3583,6 +3583,203 @@ function cvAiEnsureModal() {
 })();
 
 
+// === AI Transcript placeholder renderer (no mechanics touched) ===
+(function(){
+  if (window.cvAiPopulateFromButton) return;
+
+  function chip(label){
+    var span = document.createElement('span');
+    span.textContent = label;
+    span.style.display = 'inline-flex';
+    span.style.alignItems = 'center';
+    span.style.gap = '6px';
+    span.style.background = '#eaf2ff';
+    span.style.color = '#1a73e8';
+    span.style.borderRadius = '12px';
+    span.style.padding = '4px 8px';
+    span.style.fontSize = '12px';
+    span.style.fontWeight = '700';
+    return span;
+  }
+  function detectType(row){
+    var to = String(row.to||'');
+    var from = String(row.from||'');
+    var dialed = String(row.dialed||'');
+    if (/^(?:ext\.?|x)\s*\d{2,4}\b/i.test(to)) return 'inbound';
+    if (/call\s*queue/i.test(to)) return 'inbound';
+    if (to.replace(/\D/g,'').length >= 10) return 'outbound';
+    if (/^\d{2,4}$/.test(from)) return 'outbound';
+    if (dialed.replace(/\D/g,'').length >= 10) return 'outbound';
+    if (from.replace(/\D/g,'').length >= 10) return 'inbound';
+    return 'inbound';
+  }
+  function toSecs(d){
+    var parts = String(d||'0:00').split(':'), s=0;
+    for (var i=0;i<parts.length;i++) s = s*60 + (+parts[i]||0);
+    return s;
+  }
+  function fmt(n){ n=Math.max(0,Math.floor(n)); var m=Math.floor(n/60), s=n%60; return m+':' + (s<10?'0'+s:s); }
+  function segments(type){
+    return type==='inbound'
+      ? [{t0:0,t1:20,text:'Greeting & reason'},
+         {t0:20,t1:40,text:'Verification / context'},
+         {t0:40,t1:65,text:'Answer & next steps'}]
+      : [{t0:0,t1:10,text:'Intro & purpose'},
+         {t0:10,t1:35,text:'Needs / objections'},
+         {t0:35,t1:55,text:'Proposal & recap'}];
+  }
+  function summary(type){
+    return type==='inbound'
+      ? 'Inbound placeholder: agent verified details, answered the question, and outlined next steps.'
+      : 'Outbound placeholder: courtesy outreach; shared info and optional follow-up.';
+  }
+
+  window.cvAiPopulateFromButton = function(btn){
+    try{
+      var modal = document.getElementById('cv-ai-modal');
+      if (!modal) return;
+
+      // climb to row + pull cells (uses your table layout)
+      var tr = btn;
+      while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
+      var tds = tr ? tr.getElementsByTagName('td') : [];
+      function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
+      var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
+
+      var type = detectType(row);
+      var total = toSecs(row.duration);
+
+      // Chips
+      var chips = document.getElementById('cv-ai-chips');
+      if (chips){
+        chips.innerHTML = '';
+        chips.appendChild(chip('From: ' + (row.from||'—')));
+        chips.appendChild(chip('To: ' + (row.to || row.dialed || '—')));
+        chips.appendChild(chip('⏱ ' + (row.duration||'0:00')));
+        chips.appendChild(chip('📅 ' + (row.date||'—')));
+      }
+
+      // Summary
+      var sumEl = document.getElementById('cv-ai-summary');
+      if (sumEl) sumEl.textContent = summary(type);
+
+      // Controls
+      var range = document.getElementById('cv-ai-range');
+      var clock = document.getElementById('cv-ai-clock');
+      var play  = document.getElementById('cv-ai-play');
+
+      if (range){ range.max = String(total); range.value = '0'; }
+      if (clock){ clock.textContent = '0:00'; }
+
+      // Segments
+      var segWrap = document.getElementById('cv-ai-seglist');
+      if (segWrap){
+        segWrap.innerHTML = '';
+        var segs = segments(type);
+        for (var i=0;i<segs.length;i++){
+          var s = segs[i];
+          var item = document.createElement('div');
+          item.className = 'cv-ai-seg';
+          item.setAttribute('data-t', String(s.t0));
+          item.style.border = '1px solid #e5e7eb';
+          item.style.borderRadius = '10px';
+          item.style.padding = '12px';
+          item.style.margin = '10px 0';
+          item.style.cursor = 'pointer';
+
+          var rowT = document.createElement('div');
+          rowT.style.display = 'flex';
+          rowT.style.alignItems = 'center';
+          rowT.style.gap = '8px';
+          rowT.style.color = '#2563eb';
+          rowT.style.fontWeight = '700';
+
+          var dot = document.createElement('span');
+          dot.style.width='8px'; dot.style.height='8px';
+          dot.style.borderRadius='50%'; dot.style.background='#2563eb';
+          dot.style.display='inline-block';
+
+          var t0 = document.createElement('span'); t0.textContent = s.t0 + 's';
+          var t1 = document.createElement('span'); t1.textContent = ' – ' + s.t1 + 's';
+          t1.style.color = '#94a3b8'; t1.style.fontWeight = '600';
+
+          var bodyText = document.createElement('div');
+          bodyText.textContent = s.text; bodyText.style.marginTop = '8px';
+
+          rowT.appendChild(dot); rowT.appendChild(t0); rowT.appendChild(t1);
+          item.appendChild(rowT); item.appendChild(bodyText);
+          segWrap.appendChild(item);
+        }
+
+        // single handler (replaced each render)
+        segWrap.onclick = function(ev){
+          var n = ev.target;
+          while (n && n!==segWrap){
+            if (n.className==='cv-ai-seg'){
+              var t = Number(n.getAttribute('data-t'))||0;
+              if (range) range.value = String(t);
+              if (clock) clock.textContent = fmt(t);
+              break;
+            }
+            n = n.parentNode;
+          }
+        };
+      }
+
+      // Play / pause (clear any prior timer)
+      if (modal._cvAiTimer){ clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; }
+      if (play){
+        play.textContent = 'Play';
+        play.onclick = function(){
+          if (modal._cvAiTimer){
+            clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; play.textContent='Play'; return;
+          }
+          play.textContent = 'Pause';
+          modal._cvAiTimer = setInterval(function(){
+            var v = (range ? Number(range.value) : 0) + 1;
+            if (v > total){
+              clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; play.textContent='Play';
+              if (range) range.value = '0';
+              if (clock) clock.textContent = '0:00';
+              return;
+            }
+            if (range) range.value = String(v);
+            if (clock) clock.textContent = fmt(v);
+          }, 1000);
+        };
+      }
+      if (range){
+        range.oninput = function(){ if (clock) clock.textContent = fmt(Number(range.value)||0); };
+      }
+
+      // Downloads
+      var btnTxt = document.getElementById('cv-ai-btn-txt');
+      if (btnTxt){
+        btnTxt.onclick = function(){
+          var text = 'Summary:\n' + summary(type) + '\n\nSegments:\n';
+          var segs = segments(type);
+          for (var j=0;j<segs.length;j++){
+            var s = segs[j];
+            text += '['+s.t0+'s–'+s.t1+'s] ' + s.text + '\n';
+          }
+          var blob = new Blob([text], {type:'text/plain'});
+          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'transcript.txt'; a.click();
+          URL.revokeObjectURL(a.href);
+        };
+      }
+      var btnRec = document.getElementById('cv-ai-btn-rec');
+      if (btnRec){
+        btnRec.onclick = function(){
+          var blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
+          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'recording.wav'; a.click();
+          URL.revokeObjectURL(a.href);
+        };
+      }
+    } catch(err){
+      console.error('[cvAiPopulateFromButton] error:', err);
+    }
+  };
+})();
 
 
 
@@ -3725,6 +3922,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
