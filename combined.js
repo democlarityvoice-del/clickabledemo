@@ -3338,23 +3338,38 @@ document.addEventListener('click', function (e) {
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
- function cvAiPopulateModal(row, idx) {
+function cvAiPopulateModal(row, idx) {
   if (!row || typeof idx !== 'number') return;
 
-  // ✅ Rebuild the dynamic time exactly as it was rendered
-  let cursor = Date.now();
-  for (let i = 0; i < idx; i++) {
-    cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
+  // --- Build AIDate safely ---
+  let AIDate = '—';
+  try {
+    // Prefer the exact table-render math if available
+    if (typeof DATE_GAPS_MIN !== 'undefined' && typeof fmtToday === 'function') {
+      let cursor = Date.now();
+      for (let i = 0; i < idx; i++) {
+        cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
+      }
+      AIDate = fmtToday(cursor);
+    } else {
+      // Fallback 1: use the static row.date, trimmed
+      if (row.date) {
+        AIDate = String(row.date).replace(/^Today,\s*/i, '').trim();
+      }
+    }
+  } catch (err) {
+    // Fallback 2 (last resort): static row.date or em dash
+    console.debug('cvAiPopulateModal date calc fallback:', err);
+    AIDate = row.date ? String(row.date).replace(/^Today,\s*/i, '').trim() : '—';
   }
-  const AIDate = fmtToday(cursor);  // ← identical to the table rendering logic
 
-  // Local constants
+  // --- Other fields (always safe) ---
   const AIFrom = row.from || '—';
   const AITo = row.to || '—';
   const AIDuration = row.duration || '—';
-  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" or "outbound"
+  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" | "outbound" | ''
 
-  // Update the four chips
+  // --- Update CHIPS ---
   const chipWrap = document.getElementById('cv-ai-chips');
   if (chipWrap) {
     const chips = chipWrap.querySelectorAll('span');
@@ -3364,16 +3379,18 @@ document.addEventListener('click', function (e) {
     if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
   }
 
-  // Update the summary
+  // --- Update SUMMARY ---
   const summaryBox = document.getElementById('cv-ai-summary');
   if (summaryBox) {
-    summaryBox.textContent = (AIDirection === 'inbound')
-      ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
-      : (AIDirection === 'outbound')
-        ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
-        : 'No direction detected. Summary unavailable.';
+    summaryBox.textContent =
+      AIDirection === 'inbound'
+        ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
+        : AIDirection === 'outbound'
+          ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
+          : 'No direction detected. Summary unavailable.';
   }
 }
+
 
 
 
@@ -3767,6 +3784,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
