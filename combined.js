@@ -3579,172 +3579,10 @@ function cvAiEnsureModal() {
 
     const modal = cvAiEnsureModal();
     modal.style.display = 'block';
-    if (window.cvAiFillFromRow) window.cvAiFillFromRow(btn.closest('tr'));
+
 
   }, true);
 })();
-
-/* === AI Transcript: populate-only helper (no mechanics changed) === */
-window.cvAiFillFromRow = function(tr){
-  var chips   = document.getElementById('cv-ai-chips');
-  var summary = document.getElementById('cv-ai-summary');
-  var segWrap = document.getElementById('cv-ai-seglist');
-  var play    = document.getElementById('cv-ai-play');
-  var range   = document.getElementById('cv-ai-range');
-  var clock   = document.getElementById('cv-ai-clock');
-  if (!chips || !summary || !segWrap || !play || !range || !clock) return;
-
-  function makeChip(label){
-    var span = document.createElement('span');
-    span.textContent = label;
-    span.style.display = 'inline-flex';
-    span.style.alignItems = 'center';
-    span.style.gap = '6px';
-    span.style.background = '#eaf2ff';
-    span.style.color = '#1a73e8';
-    span.style.borderRadius = '12px';
-    span.style.padding = '4px 8px';
-    span.style.fontSize = '12px';
-    span.style.fontWeight = '700';
-    return span;
-  }
-  function fmt(n){
-    n = Math.max(0, Math.floor(n));
-    var m = Math.floor(n/60), s = n%60;
-    return m + ':' + (s<10 ? '0'+s : ''+s);
-  }
-  function secsFromDur(d){
-    var p = String(d||'0:00').split(':'), s = 0;
-    for(var i=0;i<p.length;i++){ s = s*60 + (Number(p[i])||0); }
-    return s;
-  }
-  function segmentsFor(type){
-    return type==='inbound'
-      ? [
-          {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
-          {t0:28, t1:32, text:'Please hold while I route your call.'},
-          {t0:32, t1:42, text:'Agent greets caller and verifies account.'},
-          {t0:42, t1:55, text:'Agent provides answer and next steps.'}
-        ]
-      : [
-          {t0:0,  t1:6,  text:'Agent greeting and purpose of call.'},
-          {t0:6,  t1:24, text:'Prospect explains needs / questions.'},
-          {t0:24, t1:40, text:'Agent outlines options and follow-up.'},
-          {t0:40, t1:58, text:'Wrap-up and thanks.'}
-        ];
-  }
-  function summaryFor(type){
-    return type==='inbound'
-      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional.'
-      : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; follow-up is optional.';
-  }
-
-  var tds = tr ? tr.getElementsByTagName('td') : [];
-  function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
-  var from = cell(1), dial = cell(3), to = cell(5), date = cell(7), dur = cell(8);
-  var type = /^Ext\.?\s*\d+/i.test(to) ? 'inbound' : 'outbound';
-
-  chips.innerHTML = '';
-  chips.appendChild(makeChip('From: ' + (from || '—')));
-  chips.appendChild(makeChip('To: '   + (to || dial || '—')));
-  chips.appendChild(makeChip('⏱ '     + (dur || '0:00')));
-  chips.appendChild(makeChip('📅 '     + (date || '—')));
-
-  summary.textContent = summaryFor(type);
-
-  var total = secsFromDur(dur);
-  range.max = String(total);
-  range.value = '0';
-  clock.textContent = '0:00';
-
-  segWrap.innerHTML = '';
-  var segs = segmentsFor(type);
-  for (var j=0;j<segs.length;j++){
-    var s = segs[j];
-    var item = document.createElement('div');
-    item.className = 'cv-ai-seg';
-    item.setAttribute('data-t', String(s.t0));
-    item.style.border = '1px solid #e5e7eb';
-    item.style.borderRadius = '10px';
-    item.style.padding = '12px';
-    item.style.margin = '10px 0';
-    item.style.cursor = 'pointer';
-
-    var rowT = document.createElement('div');
-    rowT.style.display = 'flex';
-    rowT.style.alignItems = 'center';
-    rowT.style.gap = '8px';
-    rowT.style.color = '#2563eb';
-    rowT.style.fontWeight = '700';
-
-    var dot = document.createElement('span');
-    dot.style.width = '8px';
-    dot.style.height = '8px';
-    dot.style.borderRadius = '50%';
-    dot.style.background = '#2563eb';
-    dot.style.display = 'inline-block';
-
-    var t0 = document.createElement('span'); t0.textContent = s.t0 + 's';
-    var t1 = document.createElement('span'); t1.textContent = ' - ' + s.t1 + 's';
-    t1.style.color = '#94a3b8'; t1.style.fontWeight = '600';
-
-    var body = document.createElement('div');
-    body.textContent = s.text;
-    body.style.marginTop = '8px';
-
-    rowT.appendChild(dot); rowT.appendChild(t0); rowT.appendChild(t1);
-    item.appendChild(rowT); item.appendChild(body);
-    segWrap.appendChild(item);
-  }
-
-  segWrap.onclick = function(e){
-    var n = e.target;
-    while (n && n!==segWrap){
-      if (n.className === 'cv-ai-seg'){
-        var t = Number(n.getAttribute('data-t')) || 0;
-        range.value = String(t);
-        clock.textContent = fmt(t);
-        break;
-      }
-      n = n.parentNode;
-    }
-  };
-
-  var timer = null;
-  play.onclick = function(){
-    if (timer){ clearInterval(timer); timer = null; play.textContent = 'Play'; return; }
-    play.textContent = 'Pause';
-    timer = setInterval(function(){
-      var v = Number(range.value) + 1;
-      if (v > total){ clearInterval(timer); timer=null; play.textContent='Play'; range.value='0'; clock.textContent='0:00'; return; }
-      range.value = String(v);
-      clock.textContent = fmt(v);
-    }, 1000);
-  };
-  range.oninput = function(){ clock.textContent = fmt(Number(range.value) || 0); };
-
-  var btnTxt = document.getElementById('cv-ai-btn-txt');
-  if (btnTxt){
-    btnTxt.onclick = function(){
-      var out = 'Summary:\n' + summaryFor(type) + '\n\nSegments:\n';
-      for (var k=0;k<segs.length;k++){ var ss = segs[k]; out += '['+ss.t0+'s-'+ss.t1+'s] ' + ss.text + '\n'; }
-      var blob = new Blob([out], {type:'text/plain'});
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='transcript.txt'; a.click(); URL.revokeObjectURL(a.href);
-    };
-  }
-  var btnRec = document.getElementById('cv-ai-btn-rec');
-  if (btnRec){
-    btnRec.onclick = function(){
-      var blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
-      var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download='recording.wav'; a.click(); URL.revokeObjectURL(a.href);
-    };
-  }
-};
-
-
-
-
-
 
 
 
@@ -3885,6 +3723,7 @@ window.cvAiFillFromRow = function(tr){
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
