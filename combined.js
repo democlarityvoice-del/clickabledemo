@@ -3338,15 +3338,37 @@ document.addEventListener('click', function (e) {
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
-  function cvAiPopulateModal(row) {
-  if (!row) return;
+ function cvAiPopulateModal(row, tr) {
+  if (!row || !tr) return;
 
-  // Extract data from row
+  // ✅ Pull visible rendered date from the table DOM (Cradle style)
+  const dateCell = tr.querySelector('td:nth-child(8)'); // assuming 8th col = date
+  const AIDate = (dateCell?.textContent || '').trim() || '—';
+
   const AIFrom = row.from || '—';
   const AITo = row.to || '—';
   const AIDuration = row.duration || '—';
-  const AIDate = (row.date || '').replace('Today, ', '') || '—';
-  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" or "outbound"
+  const AIDirection = (row.ctgType || '').toLowerCase(); // inbound or outbound
+
+  const chipWrap = document.getElementById('cv-ai-chips');
+  if (chipWrap) {
+    const chips = chipWrap.querySelectorAll('span');
+    if (chips[0]) chips[0].textContent = 'From: ' + AIFrom;
+    if (chips[1]) chips[1].textContent = 'To: ' + AITo;
+    if (chips[2]) chips[2].textContent = '⏱ ' + AIFrom;
+    if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
+  }
+
+  const summaryBox = document.getElementById('cv-ai-summary');
+  if (summaryBox) {
+    summaryBox.textContent = (AIDirection === 'inbound')
+      ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
+      : (AIDirection === 'outbound')
+        ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
+        : 'No direction detected. Summary unavailable.';
+  }
+}
+
 
   // --- Update CHIPS ---
   const chipWrap = document.getElementById('cv-ai-chips');
@@ -3614,7 +3636,8 @@ function cvAiEnsureModal() {
 
   const tr = btn.closest('tr');
   const idx = Array.from(tr?.parentElement?.children || []).indexOf(tr);
-  if (idx >= 0) cvAiPopulateModal(rows[idx]);
+  if (idx >= 0) cvAiPopulateModal(rows[idx], tr);
+
 
 }, true);
 
@@ -3759,6 +3782,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
