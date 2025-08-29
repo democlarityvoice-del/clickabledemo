@@ -3367,7 +3367,18 @@ function cvAiPopulateModal(row, idx) {
   const AIFrom = row.from || '—';
   const AITo = row.to || '—';
   const AIDuration = row.duration || '—';
- const AIDirection = /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(row.to || '') ? 'outbound' : 'inbound';
+  const AIDirection = row.direction || '—';
+
+const summaryBox = document.getElementById('cv-ai-summary');
+if (summaryBox) {
+  summaryBox.textContent =
+    AIDirection === 'inbound'
+      ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
+      : AIDirection === 'outbound'
+        ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
+        : 'No direction detected. Summary unavailable.';
+}
+
 
 
 
@@ -3786,6 +3797,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
