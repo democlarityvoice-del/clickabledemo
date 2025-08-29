@@ -3639,7 +3639,7 @@ function cvAiEnsureModal() {
 }
 
 
-  document.addEventListener('click', function (e) {
+document.addEventListener('click', function (e) {
   const btn = e.target.closest('button[data-action="transcript"]');
   if (!btn) return;
 
@@ -3651,16 +3651,11 @@ function cvAiEnsureModal() {
 
   const tr = btn.closest('tr');
   const idx = Array.from(tr?.parentElement?.children || []).indexOf(tr);
-  if (idx >= 0) cvAiPopulateModal(rows[idx], tr);
-
-
+  if (idx >= 0) cvAiPopulateModal(rows[idx], idx);  // ✅ FIXED LINE
 }, true);
+ 
 
 })();
-
-
-
-
 
 
 
@@ -3797,6 +3792,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
