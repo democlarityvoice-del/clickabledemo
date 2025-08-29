@@ -3367,7 +3367,9 @@ function cvAiPopulateModal(row, idx) {
   const AIFrom = row.from || '—';
   const AITo = row.to || '—';
   const AIDuration = row.duration || '—';
-  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" | "outbound" | ''
+ const AIDirection = /^\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}$/.test(row.to || '') ? 'outbound' : 'inbound';
+
+
 
   // --- Update CHIPS ---
   const chipWrap = document.getElementById('cv-ai-chips');
@@ -3784,6 +3786,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
