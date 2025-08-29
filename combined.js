@@ -3341,27 +3341,17 @@ document.addEventListener('click', function (e) {
 function cvAiPopulateModal(row, idx) {
   if (!row || typeof idx !== 'number') return;
 
-  // --- Build AIDate safely ---
-  let AIDate = '—';
-  try {
-    // Prefer the exact table-render math if available
-    if (typeof DATE_GAPS_MIN !== 'undefined' && typeof fmtToday === 'function') {
-      let cursor = Date.now();
-      for (let i = 0; i < idx; i++) {
-        cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
-      }
-      AIDate = fmtToday(cursor);
-    } else {
-      // Fallback 1: use the static row.date, trimmed
-      if (row.date) {
-        AIDate = String(row.date).replace(/^Today,\s*/i, '').trim();
-      }
-    }
-  } catch (err) {
-    // Fallback 2 (last resort): static row.date or em dash
-    console.debug('cvAiPopulateModal date calc fallback:', err);
-    AIDate = row.date ? String(row.date).replace(/^Today,\s*/i, '').trim() : '—';
+// --- Build AIDate safely ---
+let AIDate = '—';
+try {
+  if (row.date) {
+    AIDate = String(row.date).replace(/^Today,\s*/i, '').trim();
   }
+} catch (err) {
+  console.debug('cvAiPopulateModal date calc fallback:', err);
+  AIDate = '—';
+}
+
 
   // --- Other fields (always safe) ---
   const AIFrom = row.from || '—';
@@ -3782,6 +3772,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
