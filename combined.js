@@ -3392,16 +3392,6 @@ if (summaryBox) {
     if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
   }
 
-  // --- Update SUMMARY ---
-  const summaryBox = document.getElementById('cv-ai-summary');
-  if (summaryBox) {
-    summaryBox.textContent =
-      AIDirection === 'inbound'
-        ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
-        : AIDirection === 'outbound'
-          ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
-          : 'No direction detected. Summary unavailable.';
-  }
 }
 
 
@@ -3792,6 +3782,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
