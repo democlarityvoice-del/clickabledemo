@@ -3338,6 +3338,38 @@ document.addEventListener('click', function (e) {
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
+  function cvAiPopulateModal(row) {
+  if (!row) return;
+
+  // Extract data from row
+  const AIFrom = row.from || '—';
+  const AITo = row.to || '—';
+  const AIDuration = row.duration || '—';
+  const AIDate = (row.date || '').replace('Today, ', '') || '—';
+  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" or "outbound"
+
+  // --- Update CHIPS ---
+  const chipWrap = document.getElementById('cv-ai-chips');
+  if (chipWrap) {
+    const chips = chipWrap.querySelectorAll('span');
+    if (chips[0]) chips[0].textContent = 'From: ' + AIFrom;
+    if (chips[1]) chips[1].textContent = 'To: ' + AITo;
+    if (chips[2]) chips[2].textContent = '⏱ ' + AIDuration;
+    if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
+  }
+
+  // --- Update SUMMARY ---
+  const summaryBox = document.getElementById('cv-ai-summary');
+  if (summaryBox) {
+    summaryBox.textContent = (AIDirection === 'inbound')
+      ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
+      : (AIDirection === 'outbound')
+        ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
+        : 'No direction detected. Summary unavailable.';
+  }
+}
+
+
   // Create AI modal dynamically
 function cvAiEnsureModal() {
   let modal = document.getElementById('cv-ai-modal');
@@ -3571,17 +3603,21 @@ function cvAiEnsureModal() {
 
 
   document.addEventListener('click', function (e) {
-    const btn = e.target.closest('button[data-action="transcript"]');
-    if (!btn) return;
+  const btn = e.target.closest('button[data-action="transcript"]');
+  if (!btn) return;
 
-    e.preventDefault();
-    e.stopPropagation();
+  e.preventDefault();
+  e.stopPropagation();
 
-    const modal = cvAiEnsureModal();
-    modal.style.display = 'block';
+  const modal = cvAiEnsureModal();
+  modal.style.display = 'block';
 
+  const tr = btn.closest('tr');
+  const idx = Array.from(tr?.parentElement?.children || []).indexOf(tr);
+  if (idx >= 0) cvAiPopulateModal(rows[idx]);
 
-  }, true);
+}, true);
+
 })();
 
 
@@ -3723,6 +3759,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
