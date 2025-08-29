@@ -3343,16 +3343,21 @@ function cvAiPopulateModal(row, idx) {
 
 
 
-// --- Build AIDate from rendered DOM ---
+// --- Build AIDate from the rendered table cell (col 8) ---
 let AIDate = '—';
 try {
-  const trEl = document.querySelectorAll('tbody tr')[idx];
-  const cellText = trEl?.querySelectorAll('td')[4]?.textContent.trim();
-  if (cellText) {
-    AIDate = cellText.replace(/^Today,\s*/i, '').trim();
-  }
+  // Prefer the known tbody if present
+  const tbody =
+    document.getElementById('cvCallHistoryTableBody') ||
+    [...document.querySelectorAll('tbody')].sort((a,b) => b.children.length - a.children.length)[0];
+
+  const trEl   = tbody?.children?.[idx];
+  const dateTd = trEl?.children?.[7]; // 0-based index: 7 => 8th column (Date)
+  const txt    = dateTd?.textContent?.trim();
+
+  if (txt) AIDate = txt; // already formatted (e.g., "Today, 3:29 pm")
 } catch (err) {
-  console.debug('cvAiPopulateModal date fallback:', err);
+  console.debug('cvAiPopulateModal date read failed:', err);
 }
 
 
@@ -3788,6 +3793,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
