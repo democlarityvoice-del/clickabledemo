@@ -3341,8 +3341,27 @@ document.addEventListener('click', function (e) {
 function cvAiPopulateModal(row, idx) {
   if (!row || typeof idx !== 'number') return;
 
-// --- Build AIDate safely ---
+
+// --- Build AIDate from rendered string like C2G ---
 let AIDate = '—';
+try {
+  const tr = document.querySelectorAll('tr')[idx];
+  const cell = tr?.querySelector('td:nth-child(1)');
+  const rendered = cell?.textContent?.trim() || '';
+
+  const m = /Today,\s*(\d{1,2}):(\d{2})\s*(am|pm)/i.exec(rendered);
+  if (m) {
+    let d = new Date();
+    let h = +m[1], min = +m[2], ap = m[3].toLowerCase();
+    if (ap === 'pm' && h !== 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    d.setHours(h, min, 0, 0);
+
+    // Format like "3:42 PM"
+    AIDate = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  }
+} catch (err) {
+  console.debug('cvAiPopulateModal date fallback failed:', err);
 }
 
 
@@ -3777,6 +3796,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
