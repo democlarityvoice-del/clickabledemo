@@ -3338,39 +3338,23 @@ document.addEventListener('click', function (e) {
   if (document._cvAiBound) return;
   document._cvAiBound = true;
 
- function cvAiPopulateModal(row, tr) {
-  if (!row || !tr) return;
+ function cvAiPopulateModal(row, idx) {
+  if (!row || typeof idx !== 'number') return;
 
-  // ✅ Pull visible rendered date from the table DOM (Cradle style)
-  const dateCell = tr.querySelector('td:nth-child(8)'); // assuming 8th col = date
-  const AIDate = (dateCell?.textContent || '').trim() || '—';
+  // ✅ Rebuild the dynamic time exactly as it was rendered
+  let cursor = Date.now();
+  for (let i = 0; i < idx; i++) {
+    cursor -= ((DATE_GAPS_MIN[i] || 2) * 60 * 1000);
+  }
+  const AIDate = fmtToday(cursor);  // ← identical to the table rendering logic
 
+  // Local constants
   const AIFrom = row.from || '—';
   const AITo = row.to || '—';
   const AIDuration = row.duration || '—';
-  const AIDirection = (row.ctgType || '').toLowerCase(); // inbound or outbound
+  const AIDirection = (row.ctgType || '').toLowerCase(); // "inbound" or "outbound"
 
-  const chipWrap = document.getElementById('cv-ai-chips');
-  if (chipWrap) {
-    const chips = chipWrap.querySelectorAll('span');
-    if (chips[0]) chips[0].textContent = 'From: ' + AIFrom;
-    if (chips[1]) chips[1].textContent = 'To: ' + AITo;
-    if (chips[2]) chips[2].textContent = '⏱ ' + AIFrom;
-    if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
-  }
-
-  const summaryBox = document.getElementById('cv-ai-summary');
-  if (summaryBox) {
-    summaryBox.textContent = (AIDirection === 'inbound')
-      ? 'This was an inbound call where the customer reached out to speak with a representative. Key points from the call have been summarized below.'
-      : (AIDirection === 'outbound')
-        ? 'This was an outbound follow-up initiated by the agent. Review the summarized discussion and call flow below.'
-        : 'No direction detected. Summary unavailable.';
-  }
-}
-
-
-  // --- Update CHIPS ---
+  // Update the four chips
   const chipWrap = document.getElementById('cv-ai-chips');
   if (chipWrap) {
     const chips = chipWrap.querySelectorAll('span');
@@ -3380,7 +3364,7 @@ document.addEventListener('click', function (e) {
     if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
   }
 
-  // --- Update SUMMARY ---
+  // Update the summary
   const summaryBox = document.getElementById('cv-ai-summary');
   if (summaryBox) {
     summaryBox.textContent = (AIDirection === 'inbound')
@@ -3390,6 +3374,7 @@ document.addEventListener('click', function (e) {
         : 'No direction detected. Summary unavailable.';
   }
 }
+
 
 
   // Create AI modal dynamically
@@ -3782,6 +3767,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
