@@ -3583,11 +3583,11 @@ function cvAiEnsureModal() {
 })();
 
 
-// === AI Transcript placeholder renderer (no mechanics touched) ===
-(function(){
-  if (window.cvAiPopulateFromButton) return;
+/* ========= AI Transcript: safe renderer (no mechanics touched) ========= */
+;(function () {
+  if (window.cvAiPopulateFromButton) return; // don't double-bind
 
-  function chip(label){
+  function makeChip(label){
     var span = document.createElement('span');
     span.textContent = label;
     span.style.display = 'inline-flex';
@@ -3601,187 +3601,173 @@ function cvAiEnsureModal() {
     span.style.fontWeight = '700';
     return span;
   }
-  function detectType(row){
-    var to = String(row.to||'');
-    var from = String(row.from||'');
-    var dialed = String(row.dialed||'');
-    if (/^(?:ext\.?|x)\s*\d{2,4}\b/i.test(to)) return 'inbound';
-    if (/call\s*queue/i.test(to)) return 'inbound';
-    if (to.replace(/\D/g,'').length >= 10) return 'outbound';
-    if (/^\d{2,4}$/.test(from)) return 'outbound';
-    if (dialed.replace(/\D/g,'').length >= 10) return 'outbound';
-    if (from.replace(/\D/g,'').length >= 10) return 'inbound';
-    return 'inbound';
+  function fmtTime(n){
+    n = Math.max(0, Math.floor(n));
+    var m = Math.floor(n/60), s = n%60;
+    return m + ':' + (s<10 ? '0'+s : ''+s);
   }
-  function toSecs(d){
-    var parts = String(d||'0:00').split(':'), s=0;
-    for (var i=0;i<parts.length;i++) s = s*60 + (+parts[i]||0);
-    return s;
+  function detectType(toCell){
+    return /^Ext\.?\s*\d+/i.test(String(toCell||'')) ? 'inbound' : 'outbound';
   }
-  function fmt(n){ n=Math.max(0,Math.floor(n)); var m=Math.floor(n/60), s=n%60; return m+':' + (s<10?'0'+s:s); }
-  function segments(type){
-    return type==='inbound'
-      ? [{t0:0,t1:20,text:'Greeting & reason'},
-         {t0:20,t1:40,text:'Verification / context'},
-         {t0:40,t1:65,text:'Answer & next steps'}]
-      : [{t0:0,t1:10,text:'Intro & purpose'},
-         {t0:10,t1:35,text:'Needs / objections'},
-         {t0:35,t1:55,text:'Proposal & recap'}];
+  function segmentsFor(type){
+    return (type==='inbound') ? [
+      {t0:0,  t1:28, text:'Thank you for calling. How can we help today?'},
+      {t0:28, t1:32, text:'Please hold while I route your call.'},
+      {t0:32, t1:42, text:'Agent greets caller and verifies account.'},
+      {t0:42, t1:55, text:'Agent provides answer and next steps.'}
+    ] : [
+      {t0:0,  t1:6,  text:'Agent greeting and purpose of call.'},
+      {t0:6,  t1:24, text:'Prospect explains needs / questions.'},
+      {t0:24, t1:40, text:'Agent outlines options and follow-up.'},
+      {t0:40, t1:58, text:'Wrap-up and thanks.'}
+    ];
   }
-  function summary(type){
-    return type==='inbound'
-      ? 'Inbound placeholder: agent verified details, answered the question, and outlined next steps.'
-      : 'Outbound placeholder: courtesy outreach; shared info and optional follow-up.';
+  function summaryFor(type){
+    return (type==='inbound')
+      ? 'Caller reached support with a question. The agent verified details and provided guidance. No escalations were needed; follow-up is optional.'
+      : 'Agent placed a courtesy outreach. The recipient received information and next steps. No commitments were made; follow-up is optional.';
   }
 
-  window.cvAiPopulateFromButton = function(btn){
-    try{
-      var modal = document.getElementById('cv-ai-modal');
-      if (!modal) return;
+  window.cvAiPopulateFromButton = function (btn){
+    var modal   = document.getElementById('cv-ai-modal');
+    var chips   = document.getElementById('cv-ai-chips');
+    var summary = document.getElementById('cv-ai-summary');
+    var segWrap = document.getElementById('cv-ai-seglist');
+    var play    = document.getElementById('cv-ai-play');
+    var range   = document.getElementById('cv-ai-range');
+    var clock   = document.getElementById('cv-ai-clock');
 
-      // climb to row + pull cells (uses your table layout)
-      var tr = btn;
-      while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
-      var tds = tr ? tr.getElementsByTagName('td') : [];
-      function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
-      var row = { from:cell(1), dialed:cell(3), to:cell(5), date:cell(7), duration:cell(8) };
+    if (!modal) return;
 
-      var type = detectType(row);
-      var total = toSecs(row.duration);
+    // find row + cells
+    var tr = btn;
+    while (tr && tr.nodeName !== 'TR') tr = tr.parentNode;
+    var tds = tr ? tr.getElementsByTagName('td') : [];
+    function cell(i){ return (tds[i] && tds[i].textContent ? tds[i].textContent : '').trim(); }
 
-      // Chips
-      var chips = document.getElementById('cv-ai-chips');
-      if (chips){
-        chips.innerHTML = '';
-        chips.appendChild(chip('From: ' + (row.from||'—')));
-        chips.appendChild(chip('To: ' + (row.to || row.dialed || '—')));
-        chips.appendChild(chip('⏱ ' + (row.duration||'0:00')));
-        chips.appendChild(chip('📅 ' + (row.date||'—')));
+    var from = cell(1);
+    var dial = cell(3);
+    var to   = cell(5);
+    var date = cell(7);
+    var dur  = cell(8);
+
+    var type = detectType(to);
+    var chipsEl = chips;
+    if (chipsEl){
+      chipsEl.innerHTML = '';
+      chipsEl.appendChild(makeChip('From: ' + (from||'—')));
+      chipsEl.appendChild(makeChip('To: ' + (to || dial || '—')));
+      chipsEl.appendChild(makeChip('⏱ ' + (dur||'0:00')));
+      chipsEl.appendChild(makeChip('📅 ' + (date||'—')));
+    }
+    if (summary) summary.textContent = summaryFor(type);
+
+    // seconds from h:mm:ss / m:ss
+    var parts = String(dur||'0:00').split(':');
+    var secsTotal = 0; for (var i=0;i<parts.length;i++){ secsTotal = secsTotal*60 + (Number(parts[i])||0); }
+    if (range) { range.max = String(secsTotal); range.value = '0'; }
+    if (clock) clock.textContent = '0:00';
+
+    if (segWrap){
+      segWrap.innerHTML = '';
+      var segs = segmentsFor(type);
+      for (var j=0;j<segs.length;j++){
+        var s = segs[j];
+        var item = document.createElement('div');
+        item.className = 'cv-ai-seg';
+        item.setAttribute('data-t', String(s.t0));
+        item.style.border = '1px solid #e5e7eb';
+        item.style.borderRadius = '10px';
+        item.style.padding = '12px';
+        item.style.margin = '10px 0';
+        item.style.cursor = 'pointer';
+
+        var rowT = document.createElement('div');
+        rowT.style.display = 'flex';
+        rowT.style.alignItems = 'center';
+        rowT.style.gap = '8px';
+        rowT.style.color = '#2563eb';
+        rowT.style.fontWeight = '700';
+
+        var dot = document.createElement('span');
+        dot.style.width = '8px'; dot.style.height = '8px';
+        dot.style.borderRadius = '50%'; dot.style.background = '#2563eb';
+        dot.style.display = 'inline-block';
+
+        var t0 = document.createElement('span'); t0.textContent = s.t0 + 's';
+        var t1 = document.createElement('span'); t1.textContent = ' - ' + s.t1 + 's';
+        t1.style.color = '#94a3b8'; t1.style.fontWeight = '600';
+
+        var body = document.createElement('div');
+        body.textContent = s.text; body.style.marginTop = '8px';
+
+        rowT.appendChild(dot); rowT.appendChild(t0); rowT.appendChild(t1);
+        item.appendChild(rowT); item.appendChild(body);
+        segWrap.appendChild(item);
       }
 
-      // Summary
-      var sumEl = document.getElementById('cv-ai-summary');
-      if (sumEl) sumEl.textContent = summary(type);
-
-      // Controls
-      var range = document.getElementById('cv-ai-range');
-      var clock = document.getElementById('cv-ai-clock');
-      var play  = document.getElementById('cv-ai-play');
-
-      if (range){ range.max = String(total); range.value = '0'; }
-      if (clock){ clock.textContent = '0:00'; }
-
-      // Segments
-      var segWrap = document.getElementById('cv-ai-seglist');
-      if (segWrap){
-        segWrap.innerHTML = '';
-        var segs = segments(type);
-        for (var i=0;i<segs.length;i++){
-          var s = segs[i];
-          var item = document.createElement('div');
-          item.className = 'cv-ai-seg';
-          item.setAttribute('data-t', String(s.t0));
-          item.style.border = '1px solid #e5e7eb';
-          item.style.borderRadius = '10px';
-          item.style.padding = '12px';
-          item.style.margin = '10px 0';
-          item.style.cursor = 'pointer';
-
-          var rowT = document.createElement('div');
-          rowT.style.display = 'flex';
-          rowT.style.alignItems = 'center';
-          rowT.style.gap = '8px';
-          rowT.style.color = '#2563eb';
-          rowT.style.fontWeight = '700';
-
-          var dot = document.createElement('span');
-          dot.style.width='8px'; dot.style.height='8px';
-          dot.style.borderRadius='50%'; dot.style.background='#2563eb';
-          dot.style.display='inline-block';
-
-          var t0 = document.createElement('span'); t0.textContent = s.t0 + 's';
-          var t1 = document.createElement('span'); t1.textContent = ' – ' + s.t1 + 's';
-          t1.style.color = '#94a3b8'; t1.style.fontWeight = '600';
-
-          var bodyText = document.createElement('div');
-          bodyText.textContent = s.text; bodyText.style.marginTop = '8px';
-
-          rowT.appendChild(dot); rowT.appendChild(t0); rowT.appendChild(t1);
-          item.appendChild(rowT); item.appendChild(bodyText);
-          segWrap.appendChild(item);
+      // delegate click -> move clock
+      segWrap.onclick = function(ev){
+        var n = ev.target;
+        while (n && n !== segWrap){
+          if (n.className === 'cv-ai-seg'){
+            var t = Number(n.getAttribute('data-t'))||0;
+            if (range) range.value = String(t);
+            if (clock) clock.textContent = fmtTime(t);
+            break;
+          }
+          n = n.parentNode;
         }
+      };
+    }
 
-        // single handler (replaced each render)
-        segWrap.onclick = function(ev){
-          var n = ev.target;
-          while (n && n!==segWrap){
-            if (n.className==='cv-ai-seg'){
-              var t = Number(n.getAttribute('data-t'))||0;
-              if (range) range.value = String(t);
-              if (clock) clock.textContent = fmt(t);
-              break;
-            }
-            n = n.parentNode;
+    // play/pause timer (replace handlers each time)
+    var playTimer = null;
+    if (play){
+      play.onclick = function(){
+        if (!range || !clock) return;
+        if (playTimer){ clearInterval(playTimer); playTimer=null; play.textContent='Play'; return; }
+        play.textContent='Pause';
+        playTimer = setInterval(function(){
+          var v = Number(range.value)+1;
+          if (v > secsTotal){
+            clearInterval(playTimer); playTimer=null; play.textContent='Play';
+            range.value = '0'; clock.textContent = '0:00'; return;
           }
-        };
-      }
+          range.value = String(v); clock.textContent = fmtTime(v);
+        }, 1000);
+      };
+    }
 
-      // Play / pause (clear any prior timer)
-      if (modal._cvAiTimer){ clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; }
-      if (play){
-        play.textContent = 'Play';
-        play.onclick = function(){
-          if (modal._cvAiTimer){
-            clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; play.textContent='Play'; return;
-          }
-          play.textContent = 'Pause';
-          modal._cvAiTimer = setInterval(function(){
-            var v = (range ? Number(range.value) : 0) + 1;
-            if (v > total){
-              clearInterval(modal._cvAiTimer); modal._cvAiTimer = null; play.textContent='Play';
-              if (range) range.value = '0';
-              if (clock) clock.textContent = '0:00';
-              return;
-            }
-            if (range) range.value = String(v);
-            if (clock) clock.textContent = fmt(v);
-          }, 1000);
-        };
-      }
-      if (range){
-        range.oninput = function(){ if (clock) clock.textContent = fmt(Number(range.value)||0); };
-      }
-
-      // Downloads
-      var btnTxt = document.getElementById('cv-ai-btn-txt');
-      if (btnTxt){
-        btnTxt.onclick = function(){
-          var text = 'Summary:\n' + summary(type) + '\n\nSegments:\n';
-          var segs = segments(type);
-          for (var j=0;j<segs.length;j++){
-            var s = segs[j];
-            text += '['+s.t0+'s–'+s.t1+'s] ' + s.text + '\n';
-          }
-          var blob = new Blob([text], {type:'text/plain'});
-          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'transcript.txt'; a.click();
-          URL.revokeObjectURL(a.href);
-        };
-      }
-      var btnRec = document.getElementById('cv-ai-btn-rec');
-      if (btnRec){
-        btnRec.onclick = function(){
-          var blob = new Blob(['FAKE RECORDING'], {type:'application/octet-stream'});
-          var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'recording.wav'; a.click();
-          URL.revokeObjectURL(a.href);
-        };
-      }
-    } catch(err){
-      console.error('[cvAiPopulateFromButton] error:', err);
+    // fake downloads
+    var btnTxt = document.getElementById('cv-ai-btn-txt');
+    if (btnTxt){
+      btnTxt.onclick = function(){
+        var segs = segmentsFor(type);
+        var out = 'Summary:\n' + summaryFor(type) + '\n\nSegments:\n';
+        for (var k=0;k<segs.length;k++){
+          var ss = segs[k];
+          out += '['+ss.t0+'s-'+ss.t1+'s] ' + ss.text + '\n';
+        }
+        var blob = new Blob([out], { type: 'text/plain' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'transcript.txt';
+        a.click(); URL.revokeObjectURL(a.href);
+      };
+    }
+    var btnRec = document.getElementById('cv-ai-btn-rec');
+    if (btnRec){
+      btnRec.onclick = function(){
+        var blob = new Blob(['FAKE RECORDING'], { type: 'application/octet-stream' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'recording.wav';
+        a.click(); URL.revokeObjectURL(a.href);
+      };
     }
   };
 })();
-
-
 
 
 
@@ -3922,6 +3908,7 @@ function cvAiEnsureModal() {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
