@@ -369,14 +369,14 @@ function buildSrcdoc() {
 
    // -------- HOME STATS INJECTION -------- //
   function injectStatsBlock() {
-  const existingStats = document.querySelector('.usage-statistics'); // or whatever class is correct
-  if (!existingStats || document.getElementById('cv-demo-usage-stats')) return;
+  const statsTables = document.querySelector('.stats-tables');
+  if (!statsTables || document.getElementById('cv-demo-usage-stats')) return;
 
-  existingStats.style.display = 'none'; // hide original if needed
+  statsTables.style.display = 'none'; // Hide the native stats block
 
   const replacement = document.createElement('div');
   replacement.id = 'cv-demo-usage-stats';
-  replacement.className = 'custom-usage-block'; // your styling hook
+  replacement.className = 'custom-usage-block';
   replacement.innerHTML = `
     <div class="stats-section">
       <div class="stats-title">USAGE STATISTICS</div>
@@ -406,7 +406,8 @@ function buildSrcdoc() {
       </div>
     </div>
   `;
-  existingStats.parentNode.insertBefore(replacement, existingStats);
+
+  statsTables.parentNode.insertBefore(replacement, statsTables);
 }
 
 
@@ -4112,6 +4113,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
