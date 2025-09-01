@@ -3555,10 +3555,11 @@ function cvAiEnsureModal() {
   chips.style.display = 'flex';
   chips.style.flexWrap = 'wrap';
   chips.style.gap = '8px';
-  chips.appendChild(makeChip('From: —'));
-  chips.appendChild(makeChip('To: —'));
-  chips.appendChild(makeChip('⏱ —:—'));
-  chips.appendChild(makeChip('📅 —'));
+  chips.appendChild(makeChip('From: —', 0));
+  chips.appendChild(makeChip('To: —', 1));
+  chips.appendChild(makeChip('⏱ —:—', 2));
+  chips.appendChild(makeChip('📅 —', 3));
+
   leftCard.appendChild(chips);
 
   const hSummary = document.createElement('div');
@@ -3805,6 +3806,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
