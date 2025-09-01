@@ -367,8 +367,57 @@ function buildSrcdoc() {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
+   // -------- HOME STATS INJECTION -------- //
+  function injectStatsBlock() {
+  const existingStats = document.querySelector('.usage-statistics'); // or whatever class is correct
+  if (!existingStats || document.getElementById('cv-demo-usage-stats')) return;
+
+  existingStats.style.display = 'none'; // hide original if needed
+
+  const replacement = document.createElement('div');
+  replacement.id = 'cv-demo-usage-stats';
+  replacement.className = 'custom-usage-block'; // your styling hook
+  replacement.innerHTML = `
+    <div class="stats-section">
+      <div class="stats-title">USAGE STATISTICS</div>
+      <div class="stats-grid">
+        <div>37 Calls Today</div>
+        <div>263 Total Minutes Today</div>
+        <div>7 Avg. Talk Time</div>
+        <div>1 SMS Inbound</div>
+        <div>2 SMS Outbound</div>
+        <div>0 Video Meetings Today</div>
+      </div>
+      <div class="stats-title">THIS MONTH</div>
+      <div class="stats-grid">
+        <div>263 Total Minutes</div>
+        <div>0 Peak Active Calls</div>
+        <div>0 SMS Inbound</div>
+        <div>0 SMS Outbound</div>
+        <div>0 Video Meetings</div>
+      </div>
+      <div class="stats-title">PREVIOUS MONTH</div>
+      <div class="stats-grid">
+        <div>62034 Total Minutes</div>
+        <div>23 Peak Active Calls</div>
+        <div>958 SMS Inbound</div>
+        <div>892 SMS Outbound</div>
+        <div>0 Video Meetings</div>
+      </div>
+    </div>
+  `;
+  existingStats.parentNode.insertBefore(replacement, existingStats);
+}
+
+
   // -------- HOME ROUTING -------- //
-  function onHomeEnter() { setTimeout(() => waitForSlotAndInject(), 600); }
+  function onHomeEnter() {
+  setTimeout(() => {
+    waitForSlotAndInject();
+    injectStatsBlock(); // <-- add this line after iframe injection
+  }, 600);
+}
+
 
   function handleHomeRouteChange(prevHref, nextHref) {
     const wasHome = HOME_REGEX.test(prevHref);
@@ -4063,6 +4112,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
