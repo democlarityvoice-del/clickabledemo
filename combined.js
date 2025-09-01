@@ -3634,15 +3634,6 @@ function cvAiEnsureModal() {
   controls.appendChild(play);
 
 
-  const range = document.createElement('input');
-  range.id = 'cv-ai-range';
-  range.type = 'range';
-  range.min = '0';
-  range.max = '0';
-  range.value = '0';
-  range.style.flex = '1';
-  controls.appendChild(range);
-
   const listenAiIcon = document.createElement('img');
   listenAiIcon.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   listenAiIcon.alt = 'Listen';
@@ -3662,6 +3653,16 @@ function cvAiEnsureModal() {
   });
 
   controls.appendChild(listenAiIcon);
+
+
+  const range = document.createElement('input');
+  range.id = 'cv-ai-range';
+  range.type = 'range';
+  range.min = '0';
+  range.max = '0';
+  range.value = '0';
+  range.style.flex = '1';
+  controls.appendChild(range);
 
 
   // Segments
@@ -3850,27 +3851,3 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
