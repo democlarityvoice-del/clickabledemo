@@ -3392,19 +3392,51 @@ if (summaryBox) {
   }
   // ---- New: Simulated Transcript Injection ----
 
-  const fakeInbound = [
-    { start: 0.00, end: 3.42, text: "Thanks for calling Clarity Voice, how can I help you today?" },
-    { start: 3.42, end: 7.15, text: "Hi, I was calling about my account balance." },
-    { start: 7.15, end: 11.22, text: "Sure, let me pull that up for you." },
-    { start: 11.22, end: 15.00, text: "Looks like your current balance is zero." }
+  var fakeInbound = [
+    { start: 0.00,  end: 6.00,   text: "Thanks for calling Mr. Service. How can I help today?" },
+    { start: 6.10,  end: 12.00,  text: "I’m looking for an appointment this Saturday." },
+    { start: 12.10, end: 18.00,  text: "We can check that. What address should we use?" },
+    { start: 18.10, end: 24.00,  text: "456 East Elm, on the corner of Madison and Elm." },
+    { start: 24.10, end: 31.00,  text: "Got it—456 East Elm at Madison. One moment while I check availability." },
+    { start: 31.10, end: 38.00,  text: "Sure, thanks." },
+    { start: 38.10, end: 45.00,  text: "Saturday has an 8–10 a.m. window and a 1–3 p.m. window. Which do you prefer?" },
+    { start: 45.10, end: 51.00,  text: "The afternoon, 1–3 p.m., please." },
+    { start: 51.10, end: 58.00,  text: "Reserved. Did you already send pictures of the area we’ll be working on?" },
+    { start: 58.10, end: 64.00,  text: "Yes, I emailed them earlier today." },
+    { start: 64.10, end: 72.00,  text: "I see them here—thanks. The photos look clear and helpful." },
+    { start: 72.10, end: 80.00,  text: "Great, just wanted to be sure you had them." },
+    { start: 80.10, end: 88.00,  text: "Based on the pictures, our standard service should cover everything." },
+    { start: 88.10, end: 95.00,  text: "Okay, sounds good." },
+    { start: 95.10, end: 103.00, text: "You’ll receive a confirmation by text and email for Saturday, 1–3 p.m." },
+    { start: 103.10,end: 110.00, text: "I’ll watch for those." },
+    { start: 110.10,end: 116.00, text: "Any entry notes, pets, or parking details we should add?" },
+    { start: 116.10,end: 120.00, text: "No special notes. Street parking is fine. Thanks for your help." }
   ];
 
-  const fakeOutbound = [
-    { start: 0.00, end: 4.12, text: "Hi, this is Jake from Clarity Voice. Just following up." },
-    { start: 4.12, end: 7.50, text: "Oh hey Jake, yeah I got your email." },
-    { start: 7.50, end: 11.80, text: "Great! Just wanted to check if you had any questions." },
-    { start: 11.80, end: 15.00, text: "Nope, all good. Thanks!" }
+
+  var fakeOutbound = [
+    { start: 0.00,  end: 6.00,   text: "Hi there, calling to confirm tomorrow’s appointment." },
+    { start: 6.10,  end: 10.00,  text: "Great, thanks for calling." },
+    { start: 10.10, end: 16.00,  text: "We have you at 123 Main Street, just off Elm. Is that correct?" },
+    { start: 16.10, end: 21.00,  text: "Yes, that’s right." },
+    { start: 21.10, end: 28.00,  text: "Your window is 10:00 a.m. to 12:00 p.m. Does that still work?" },
+    { start: 28.10, end: 33.00,  text: "Yep, that window works." },
+    { start: 33.10, end: 40.00,  text: "Perfect. Anyone 18 or older will need to be present during the visit." },
+    { start: 40.10, end: 45.00,  text: "I’ll be here." },
+    { start: 45.10, end: 52.00,  text: "Great. Do you have pets we should plan for?" },
+    { start: 52.10, end: 57.00,  text: "One dog. I’ll put him in the backyard." },
+    { start: 57.10, end: 64.00,  text: "Thanks. Parking on the street near the front entrance is fine." },
+    { start: 64.10, end: 69.00,  text: "Street parking is available." },
+    { start: 69.10, end: 76.00,  text: "Any gate codes or access notes we should add?" },
+    { start: 76.10, end: 81.00,  text: "No codes—front door is fine." },
+    { start: 81.10, end: 90.00,  text: "You’ll get a text when the tech is on the way, including an ETA link." },
+    { start: 90.10, end: 96.00,  text: "Sounds good." },
+    { start: 96.10, end: 104.00, text: "Do you have any questions or special requests before tomorrow?" },
+    { start: 104.10,end: 109.00, text: "No, I think we’re all set." },
+    { start: 109.10,end: 116.00, text: "Perfect. If plans change, reply to the reminder or call before 8 a.m." },
+    { start: 116.10,end: 120.00, text: "Will do—thanks. See you tomorrow." }
   ];
+
 
   function parseDuration(str) {
     const [min, sec] = str.split(':').map(Number);
@@ -3958,6 +3990,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
