@@ -3869,29 +3869,9 @@ document.addEventListener('click', function (e) {
     // Existing call to populate modal
     cvAiPopulateModal(tr, idx);
   }, 1000); // <-- 1 second delay
-});
-
-
-  const modal = cvAiEnsureModal();
-  modal.style.display = 'block';
-
-  const tr = btn.closest('tr');
-  const idx = Array.from(tr?.parentElement?.children || []).indexOf(tr);
-
-  if (idx >= 0 && tr) {
-    const tds = tr.querySelectorAll('td');
-    const row = {
-      from: tds[1]?.innerText.trim() || '—',
-      to: tds[5]?.innerText.trim() || '—',
-      duration: tds[8]?.innerText.trim() || '—',
-      direction: tr.getAttribute('data-ctg')?.toLowerCase() || '—',
-      AIDate: tds[7]?.innerText.trim() || '—'  // ✅ Pull rendered time exactly like CTG
-    };
-    cvAiPopulateModal(row, idx);
-  }
+});  
 }, true);
 
- 
 
 })();
 
@@ -4030,6 +4010,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
