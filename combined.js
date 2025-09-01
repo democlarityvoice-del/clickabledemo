@@ -3467,7 +3467,7 @@ function cvAiEnsureModal() {
   btnTxt.style.padding = '6px 12px';
   btnTxt.style.border = '1px solid #e2e8f0';
   btnTxt.style.borderRadius = '6px';
-  btnTxt.style.background = '#2563eb'';   // dark slate
+  btnTxt.style.background = '#1e293b';   // dark slate
   btnTxt.style.color = '#fff';
   btnTxt.style.border = 'none';
 
@@ -3851,3 +3851,5 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
+
