@@ -3363,10 +3363,10 @@ try {
 
 
   // --- Other fields (always safe) ---
-  const AIFrom = row.from || '—';
-  const AITo = row.to || '—';
-  const AIDuration = row.duration || '—';
-  const AIDirection = row.direction || '—';
+  const AIFrom = cells[1]?.innerText.trim() || '—';      // assuming From is 2nd column
+  const AITo = cells[5]?.innerText.trim() || '—';        // assuming To is 6th column
+  const AIDuration = cells[7]?.innerText.trim() || '—';  // assuming Duration is 8th column
+  const AIDirection = cells[6]?.innerText.trim() || '—';      // assuming Date is 7th column
 
 const summaryBox = document.getElementById('cv-ai-summary');
 if (summaryBox) {
@@ -3385,10 +3385,10 @@ if (summaryBox) {
   const chipWrap = document.getElementById('cv-ai-chips');
   if (chipWrap) {
     const chips = chipWrap.querySelectorAll('span');
-    if (chips[0]) chips[0].textContent = 'From: ' + AIFrom;
-    if (chips[1]) chips[1].textContent = 'To: ' + AITo;
-    if (chips[2]) chips[2].textContent = '⏱ ' + AIDuration;
-    if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
+    if (chips[0]) chips[0].textContent = `From: ${AIFrom}`;
+    if (chips[1]) chips[1].textContent = `To: ${AITo}`;
+    if (chips[2]) chips[2].textContent = `⏱ ${AIDuration}`;
+    if (chips[3]) chips[3].textContent = `📅 ${AIDate}`;
   }
   
 // ---- New: Simulated Transcript Injection ----
@@ -4007,6 +4007,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
