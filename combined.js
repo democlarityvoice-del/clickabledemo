@@ -3386,11 +3386,10 @@ if (summaryBox) {
   const chipWrap = document.getElementById('cv-ai-chips');
   if (chipWrap) {
     const chips = chipWrap.querySelectorAll('span');
-    if (chips[0]) chips[0].textContent = `From: ${AIFrom}`;
-    if (chips[1]) chips[1].textContent = `To: ${AITo}`;
-    if (chips[2]) chips[2].textContent = `⏱ ${AIDuration}`;
-    if (chips[3]) chips[3].textContent = `📅 ${AIDate}`;
-
+    chips[0].textContent = 'From: ' + AIFrom;
+    chips[1].textContent = 'To: ' + AITo;
+    chips[2].textContent = '⏱ ' + AIDuration;
+    chips[3].textContent = '📅 ' + AIDate;
   }
   
 // ---- New: Simulated Transcript Injection ----
@@ -4009,6 +4008,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
