@@ -385,7 +385,6 @@ function injectStatsBlock(attempts = 0) {
 }
 
 
-
   // -------- HOME ROUTING -------- //
   function onHomeEnter() {
   setTimeout(() => {
@@ -4088,6 +4087,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
