@@ -71,7 +71,7 @@ function buildSrcdoc() {
   }
   .listen-btn:focus{ outline:none; }
   .listen-btn img{ width:18px; height:18px; display:block; opacity:.38; transition:opacity .2s; }
-  tr:hover .listen-btn img{ opacity:.60; }
+  tr:hover .listen-btn img{ opacity:.35; }
   .listen-btn.is-active img{ opacity:1; }
 </style>
 
@@ -4008,6 +4008,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
