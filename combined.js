@@ -3431,18 +3431,23 @@ if (summaryBox) {
   el.className = 'cv-ai-segment';
   el.dataset.start = seg.start;
 
-  // content structure: dot + text
-  el.innerHTML = `
-    <span class="cv-ai-dot" style="
-      display:inline-block;
-      width:8px;
-      height:8px;
-      border-radius:50%;
-      background:#6b7280;  /* gray by default */
-      margin-right:8px;
-    "></span>
-    <span>${seg.start.toFixed(2)}s – ${seg.text}</span>
-  `;
+
+  // ✅ build nodes safely
+  var dot = document.createElement('span');
+  dot.className = 'cv-ai-dot';
+  dot.style.display = 'inline-block';
+  dot.style.width = '8px';
+  dot.style.height = '8px';
+  dot.style.borderRadius = '50%';
+  dot.style.background = '#6b7280'; // gray by default
+  dot.style.marginRight = '8px';
+
+  var label = document.createElement('span');
+  label.textContent = seg.start.toFixed(2) + 's \u2013 ' + seg.text; // en dash
+
+  el.appendChild(dot);
+  el.appendChild(label);
+
 
   // base styling
   el.style.padding = '10px 12px';
@@ -3953,6 +3958,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
