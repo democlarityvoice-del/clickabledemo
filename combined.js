@@ -3453,10 +3453,20 @@ if (summaryBox) {
   const segList = document.getElementById('cv-ai-seglist');
   const durationDisplay = document.getElementById('cv-ai-fakeduration');
 
+  const fakeInboundSummary = `The caller from 456 East Elm inquired about availability for service this Saturday. They confirmed their location at the corner of Madison and Elm and asked whether Mr. Service had received the pictures of the site. Mr. Service verified that the images had been received and confirmed availability. The next step is to finalize the time slot and send a confirmation message.`;
+
+  const fakeOutboundSummary = `Mr. Service placed a follow-up call to confirm the customer's appointment scheduled for tomorrow. The address was confirmed as 123 Main Street, just off Elm. The representative ensured the customer had everything they needed and offered assistance if any additional support was required.`;
+
+
   if (segList && durationDisplay) {
     segList.innerHTML = '';
 
     const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
+    const summaryEl = document.getElementById('cv-ai-summary');
+    if (summaryEl) {
+      summaryEl.textContent = row.direction === 'inbound' ? fakeInboundSummary : fakeOutboundSummary;
+    }
+
 
 script.forEach(function (seg) {
   var el = document.createElement('div');
@@ -3996,6 +4006,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
