@@ -67,7 +67,7 @@ function buildSrcdoc() {
   /* “listen in” button (unchanged, just inherits the new font now) */
   .listen-btn{
     display:inline-flex; align-items:center; justify-content:center;
-    width:28px; height:28px; background:#f0f0f0; border-radius:50%; border:none; cursor:pointer;
+    width:26px; height:26px; background:#f0f0f0; border-radius:50%; border:1px solid #cfcfcf; cursor:pointer;
   }
   .listen-btn:focus{ outline:none; }
   .listen-btn img{ width:18px; height:18px; display:block; opacity:.38; transition:opacity .2s; }
@@ -4008,6 +4008,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
