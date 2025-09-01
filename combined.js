@@ -3390,6 +3390,66 @@ if (summaryBox) {
     if (chips[2]) chips[2].textContent = '⏱ ' + AIDuration;
     if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
   }
+  // ---- New: Simulated Transcript Injection ----
+
+  const fakeInbound = [
+    { start: 0.00, end: 3.42, text: "Thanks for calling Clarity Voice, how can I help you today?" },
+    { start: 3.42, end: 7.15, text: "Hi, I was calling about my account balance." },
+    { start: 7.15, end: 11.22, text: "Sure, let me pull that up for you." },
+    { start: 11.22, end: 15.00, text: "Looks like your current balance is zero." }
+  ];
+
+  const fakeOutbound = [
+    { start: 0.00, end: 4.12, text: "Hi, this is Jake from Clarity Voice. Just following up." },
+    { start: 4.12, end: 7.50, text: "Oh hey Jake, yeah I got your email." },
+    { start: 7.50, end: 11.80, text: "Great! Just wanted to check if you had any questions." },
+    { start: 11.80, end: 15.00, text: "Nope, all good. Thanks!" }
+  ];
+
+  function parseDuration(str) {
+    const [min, sec] = str.split(':').map(Number);
+    return min * 60 + sec;
+  }
+
+  function formatTime(secs) {
+    const m = Math.floor(secs / 60);
+    const s = Math.floor(secs % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  const maxSecs = parseDuration(row.duration || "2:00");
+  const segList = document.getElementById('cv-ai-seglist');
+  const durationDisplay = document.getElementById('cv-ai-fakeduration');
+
+  if (segList && durationDisplay) {
+    segList.innerHTML = '';
+
+    const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
+
+    script.forEach(seg => {
+      const el = document.createElement('div');
+      el.className = 'cv-ai-segment';
+      el.dataset.start = seg.start;
+      el.textContent = `• ${seg.start.toFixed(2)}s — ${seg.text}`;
+      el.style.padding = '6px 8px';
+      el.style.marginBottom = '4px';
+      el.style.borderRadius = '6px';
+      el.style.cursor = 'pointer';
+      el.style.transition = 'background 0.2s ease';
+      el.style.border = '1px solid transparent';
+
+      el.addEventListener('click', () => {
+        const t = Math.min(seg.start, maxSecs);
+        durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
+      });
+
+      segList.appendChild(el);
+    });
+
+    // Set initial time display
+    durationDisplay.textContent = '0:00 / ' + formatTime(maxSecs);
+  }
+
 
 }
 
@@ -3851,5 +3911,6 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
