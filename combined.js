@@ -3869,8 +3869,6 @@ document.addEventListener('click', function (e) {
     cvAiPopulateModal(tr, idx);
   }, 1000); // <-- 1 second delay
 });  
-}, true);
-
 
 })();
 
@@ -4009,6 +4007,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
