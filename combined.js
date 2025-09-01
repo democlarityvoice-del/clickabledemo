@@ -113,36 +113,6 @@ function buildSrcdoc() {
     </table>
   </div>
 
-<!-- USAGE STATISTICS BLOCK -->
-  <div class="stats-section">
-    <div class="stats-title">USAGE STATISTICS</div>
-    <div class="stats-grid">
-      <div>37 Calls Today</div>
-      <div>263 Total Minutes Today</div>
-      <div>7 Avg. Talk Time</div>
-      <div>1 SMS Inbound</div>
-      <div>2 SMS Outbound</div>
-      <div>0 Video Meetings Today</div>
-    </div>
-
-    <div class="stats-title">THIS MONTH</div>
-    <div class="stats-grid">
-      <div>263 Total Minutes</div>
-      <div>0 Peak Active Calls</div>
-      <div>0 SMS Inbound</div>
-      <div>0 SMS Outbound</div>
-      <div>0 Video Meetings</div>
-    </div>
-
-    <div class="stats-title">PREVIOUS MONTH</div>
-    <div class="stats-grid">
-      <div>62034 Total Minutes</div>
-      <div>23 Peak Active Calls</div>
-      <div>958 SMS Inbound</div>
-      <div>892 SMS Outbound</div>
-      <div>0 Video Meetings</div>
-    </div>
-  </div>  
 
 <script>
 (function () {
@@ -4113,6 +4083,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
