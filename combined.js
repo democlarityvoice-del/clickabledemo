@@ -3346,18 +3346,19 @@ function cvAiPopulateModal(row, idx) {
 // --- Build AIDate from the rendered table cell (col 8) ---
 let AIDate = '—';
 try {
-  // Prefer the known tbody if present
- const tbody =
-  document.getElementById('cvCallHistoryTableBody') ||
-  [...document.querySelectorAll('tbody')].sort((a,b) => b.children.length - a.children.length)[0];
+  const tbody =
+    document.getElementById('cvCallHistoryTableBody') ||
+    [...document.querySelectorAll('tbody')].sort((a,b) => b.children.length - a.children.length)[0];
 
-const trEl   = tbody?.children?.[idx];
-const dateTd = trEl?.children?.[7]; // 0-based: 7 = Date column
-const txt    = dateTd?.textContent?.trim();
+  const trEl   = tbody?.children?.[idx];
+  const dateTd = trEl?.children?.[7];
+  const txt    = dateTd?.textContent?.trim();
 
-if (txt) AIDate = txt;
-
+  if (txt) AIDate = txt;
+} catch(e) {
+  console.error('[AI Modal] Failed to extract AIDate:', e);
 }
+
 
 
 
@@ -3792,6 +3793,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
