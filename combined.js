@@ -3427,24 +3427,68 @@ if (summaryBox) {
     const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
 
    script.forEach(seg => {
-    const el = document.createElement('div');
-    el.className = 'cv-ai-segment';
-    el.dataset.start = seg.start;
-    el.textContent = '• ' + seg.start.toFixed(2) + 's – ' + seg.text;  // ✅ FIXED
-    el.style.padding = '6px 8px';
-    el.style.marginBottom = '4px';
-    el.style.borderRadius = '6px';
-    el.style.cursor = 'pointer';
-    el.style.transition = 'background 0.2s ease';
-    el.style.border = '1px solid transparent';
+  const el = document.createElement('div');
+  el.className = 'cv-ai-segment';
+  el.dataset.start = seg.start;
 
-    el.addEventListener('click', () => {
-      const t = Math.min(seg.start, maxSecs);
-      durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
+  // content structure: dot + text
+  el.innerHTML = `
+    <span class="cv-ai-dot" style="
+      display:inline-block;
+      width:8px;
+      height:8px;
+      border-radius:50%;
+      background:#6b7280;  /* gray by default */
+      margin-right:8px;
+    "></span>
+    <span>${seg.start.toFixed(2)}s – ${seg.text}</span>
+  `;
+
+  // base styling
+  el.style.padding = '10px 12px';
+  el.style.marginBottom = '8px';
+  el.style.borderRadius = '8px';
+  el.style.border = '1px solid #e5e7eb';
+  el.style.cursor = 'pointer';
+  el.style.background = '#fff';
+  el.style.transition = 'all 0.2s ease';
+
+  // hover effect
+  el.addEventListener('mouseenter', () => {
+    if (!el.classList.contains('active')) {
+      el.style.border = '1px solid #93c5fd'; // light blue border
+    }
+  });
+  el.addEventListener('mouseleave', () => {
+    if (!el.classList.contains('active')) {
+      el.style.border = '1px solid #e5e7eb'; // reset border
+    }
+  });
+
+  // click = active selection
+  el.addEventListener('click', () => {
+    // reset all others
+    segList.querySelectorAll('.cv-ai-segment').forEach(s => {
+      s.classList.remove('active');
+      s.style.background = '#fff';
+      s.style.border = '1px solid #e5e7eb';
+      s.querySelector('.cv-ai-dot').style.background = '#6b7280';
     });
 
-    segList.appendChild(el);
+    // activate this one
+    el.classList.add('active');
+    el.style.background = '#dbeafe'; // light blue bg
+    el.style.border = '1px solid #2563eb'; // blue border
+    el.querySelector('.cv-ai-dot').style.background = '#2563eb'; // blue dot
+
+    // update time
+    const t = Math.min(seg.start, maxSecs);
+    durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
   });
+
+  segList.appendChild(el);
+});
+
 
     // Set initial time display
     durationDisplay.textContent = '0:00 / ' + formatTime(maxSecs);
@@ -3715,14 +3759,12 @@ function cvAiEnsureModal() {
   controls.appendChild(listenAiIcon);
 
 
-  const range = document.createElement('input');
-  range.id = 'cv-ai-range';
-  range.type = 'range';
-  range.min = '0';
-  range.max = '0';
-  range.value = '0';
-  range.style.flex = '1';
-  controls.appendChild(range);
+  const fakeLine = document.createElement('div');
+  fakeLine.style.flex = '1';
+  fakeLine.style.height = '4px';
+  fakeLine.style.background = '#111'; // dark line
+  fakeLine.style.borderRadius = '2px';
+  controls.appendChild(fakeLine);
 
 
   // Segments
@@ -3911,6 +3953,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
