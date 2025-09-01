@@ -338,9 +338,18 @@ function buildSrcdoc() {
   }
 
    // -------- HOME STATS INJECTION -------- //
-function injectStatsBlock() {
+function injectStatsBlock(attempts = 0) {
   const statsWrapper = document.querySelector('.stats-tables');
   if (!statsWrapper || document.getElementById('cv-demo-usage-stats')) return;
+
+  // Wait for real content to load — spinner disappears when content arrives
+  const spinnerGone = !statsWrapper.querySelector('.spinner') &&
+                      statsWrapper.innerText.trim().length > 0;
+
+  if (!spinnerGone) {
+    if (attempts > 20) return; // stop retrying after ~5 seconds
+    return setTimeout(() => injectStatsBlock(attempts + 1), 250);
+  }
 
   statsWrapper.innerHTML = `
     <div id="cv-demo-usage-stats" class="custom-usage-block">
@@ -4079,6 +4088,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
