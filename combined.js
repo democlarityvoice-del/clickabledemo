@@ -2625,13 +2625,6 @@ function buildCallHistorySrcdoc() {
   font-weight: 500;
 }
 
-.cvctg-marker {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 6px;
-}
 
 .cvctg-icon {
   width: 30px; height: 30px;
@@ -2643,17 +2636,6 @@ function buildCallHistorySrcdoc() {
 }
 .cvctg-icon img { width: 18px; height: 18px; display:block; }
 
-.cvctg-marker::before {
-  content: '';
-  position: absolute;
-  top: 30px;         /* start below the first icon */
-  bottom: 0;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 2px;
-  background-color: #d1d5db;
-  z-index: 0;        /* ensures it's behind the icon */
-}
 
 
 /* dashed vertical path between steps */
@@ -2666,6 +2648,8 @@ function buildCallHistorySrcdoc() {
 .cvctg-step:last-child .cvctg-vert { display: none; }
 
 .cvctg-text { color: #374151; }
+
+
 
 #cv-notes-modal { position: fixed; inset: 0; z-index: 10002; } /* above CTG's 9999 */
 #cv-notes-modal .cv-modal-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,.5); }
@@ -3267,7 +3251,7 @@ document.addEventListener('click', function (e) {
         '</div>' +
         '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
           '<button class="cv-notes-cancel cv-btn">Cancel</button>' +
-          '<button class="cv-notes-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#1a73e8;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
+          '<button class="cv-notes-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
         '</div>' +
       '</div>';
 
@@ -4023,6 +4007,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
