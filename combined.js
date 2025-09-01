@@ -3363,6 +3363,7 @@ try {
 
 
   // --- Other fields (always safe) ---
+  const cells = row?.children || [];
   const AIFrom = cells[1]?.innerText.trim() || '—';      // assuming From is 2nd column
   const AITo = cells[5]?.innerText.trim() || '—';        // assuming To is 6th column
   const AIDuration = cells[7]?.innerText.trim() || '—';  // assuming Duration is 8th column
@@ -3389,6 +3390,7 @@ if (summaryBox) {
     if (chips[1]) chips[1].textContent = `To: ${AITo}`;
     if (chips[2]) chips[2].textContent = `⏱ ${AIDuration}`;
     if (chips[3]) chips[3].textContent = `📅 ${AIDate}`;
+
   }
   
 // ---- New: Simulated Transcript Injection ----
@@ -4007,6 +4009,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
