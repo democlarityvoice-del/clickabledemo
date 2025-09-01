@@ -360,15 +360,31 @@ tr:hover .listen-btn img {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
+   // -------- HOME STATS INJECTION NUMBERS ONLY -------- //
   function cvReplaceStats() {
     const replacements = {
+      // Today
       'current-active-calls': '5',
       'calls-today': '37',
       'total-minutes-today': '263',
       'avg-talkd-time': '7',
       'sms_inbound_today': '1',
       'sms_outbound_today': '2',
-      'video-meetings-today': '0'
+      'video-meetings-today': '0',
+
+      // This Month
+      'total-minutes-this-month': '263',
+      'peak_calls_this_month': '0',
+      'sms_inbound_this_month': '1',
+      'sms_outbound_this_month': '2',
+      'video_meetings_this_month': '0',
+
+      // Previous Month
+      'total-minutes-prev-month': '62034',
+      'peak_calls_prev_month': '23',
+      'sms_inbound_prev_month': '958',
+      'sms_outbound_prev_month': '892',
+      'video_meetings_prev_month': '0'
     };
 
   for (const [id, value] of Object.entries(replacements)) {
@@ -376,6 +392,7 @@ tr:hover .listen-btn img {
     if (el) el.textContent = value;
   }
 }
+
 
 
   // -------- HOME ROUTING -------- //
@@ -4081,6 +4098,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
