@@ -343,7 +343,6 @@ function buildSrcdoc() {
   function onHomeEnter() {
   setTimeout(() => {
     waitForSlotAndInject();
-    injectStatsBlock(); // <-- add this line after iframe injection
   }, 600);
 }
 
@@ -4041,6 +4040,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
