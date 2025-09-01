@@ -2640,6 +2640,19 @@ function buildCallHistorySrcdoc() {
 }
 .cvctg-icon img { width: 18px; height: 18px; display:block; }
 
+.cvctg-marker::before {
+  content: '';
+  position: absolute;
+  top: 30px;         /* start below the first icon */
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 2px;
+  background-color: #d1d5db;
+  z-index: 0;        /* ensures it's behind the icon */
+}
+
+
 /* dashed vertical path between steps */
 .cvctg-vert {
   flex: 1 1 auto;
@@ -4007,6 +4020,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
