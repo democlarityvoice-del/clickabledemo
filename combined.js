@@ -3455,7 +3455,8 @@ if (summaryBox) {
 
   const fakeInboundSummary = `The caller from 456 East Elm inquired about availability for service this Saturday. They confirmed their location at the corner of Madison and Elm and asked whether Mr. Service had received their pictures. Mr. Service confirmed receipt and reviewed them during the call.`;
 
-  const fakeOutboundSummary = `Mr. Service placed a follow-up call to confirm the customer's appointment scheduled for tomorrow. The address was confirmed as 123 Main Street, just off Elm. The recipient verified the time and confirmed they had everything needed for the appointment.`;
+  const fakeOutboundSummary = `Mr. Service placed a follow-up call to confirm the customer appointment scheduled for tomorrow. The address was confirmed as 123 Main Street, just off Elm. The recipient verified the time and confirmed they had everything needed for the appointment.`;
+
 
 
 
@@ -4021,6 +4022,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
