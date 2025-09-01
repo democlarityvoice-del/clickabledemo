@@ -3468,11 +3468,11 @@ if (summaryBox) {
   var dot = document.createElement('span');
   dot.className = 'cv-ai-dot';
   dot.style.display = 'inline-block';
-  dot.style.width = '8px';
-  dot.style.height = '8px';
+  dot.style.width = '10px';
+  dot.style.height = '10px';
   dot.style.borderRadius = '50%';
   dot.style.background = '#6b7280'; // gray by default
-  dot.style.marginRight = '8px';
+  dot.style.marginRight = '10px';
 
   var label = document.createElement('span');
   label.textContent = seg.start.toFixed(2) + 's \u2013 ' + seg.text; // en dash
@@ -3481,14 +3481,22 @@ if (summaryBox) {
   el.appendChild(label);
 
 
-  // base styling
-  el.style.padding = '10px 12px';
-  el.style.marginBottom = '8px';
-  el.style.borderRadius = '8px';
+  // base styling (bigger line, more like real life)
+  el.style.display = 'flex';
+  el.style.alignItems = 'center';
+  el.style.gap = '8px';
+
+  el.style.padding = '14px 16px';      // ✅ more padding
+  el.style.marginBottom = '10px';     // ✅ more space between rows
+  el.style.borderRadius = '10px';
   el.style.border = '1px solid #e5e7eb';
   el.style.cursor = 'pointer';
   el.style.background = '#fff';
   el.style.transition = 'all 0.2s ease';
+  el.style.fontSize = '15px';         // ✅ bump font size
+  el.style.lineHeight = '1.5';        // ✅ taller line spacing
+
+
 
   // hover effect
   el.addEventListener('mouseenter', () => {
@@ -3990,6 +3998,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
