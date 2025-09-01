@@ -3426,25 +3426,25 @@ if (summaryBox) {
 
     const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
 
-    script.forEach(seg => {
-      const el = document.createElement('div');
-      el.className = 'cv-ai-segment';
-      el.dataset.start = seg.start;
-      el.textContent = `• ${seg.start.toFixed(2)}s — ${seg.text}`;
-      el.style.padding = '6px 8px';
-      el.style.marginBottom = '4px';
-      el.style.borderRadius = '6px';
-      el.style.cursor = 'pointer';
-      el.style.transition = 'background 0.2s ease';
-      el.style.border = '1px solid transparent';
+   script.forEach(seg => {
+    const el = document.createElement('div');
+    el.className = 'cv-ai-segment';
+    el.dataset.start = seg.start;
+    el.textContent = `• ${seg.start.toFixed(2)}s – ${seg.text}`;  // ✅ FIXED
+    el.style.padding = '6px 8px';
+    el.style.marginBottom = '4px';
+    el.style.borderRadius = '6px';
+    el.style.cursor = 'pointer';
+    el.style.transition = 'background 0.2s ease';
+    el.style.border = '1px solid transparent';
 
-      el.addEventListener('click', () => {
-        const t = Math.min(seg.start, maxSecs);
-        durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
-      });
-
-      segList.appendChild(el);
+    el.addEventListener('click', () => {
+      const t = Math.min(seg.start, maxSecs);
+      durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
     });
+
+    segList.appendChild(el);
+  });
 
     // Set initial time display
     durationDisplay.textContent = '0:00 / ' + formatTime(maxSecs);
@@ -3911,6 +3911,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
