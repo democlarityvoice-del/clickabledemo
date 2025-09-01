@@ -2546,17 +2546,24 @@ function buildCallHistorySrcdoc() {
 
 .cvctg-marker { display: flex; flex-direction: column; align-items: center; }
 .cvctg-icon {
-  width: 28px; height: 28px;
-  background: #f5f5f5; border: 1px solid #ddd; border-radius: 50%;
-  display: inline-flex; align-items: center; justify-content: center;
-  padding: 5px;
+  width: 32px;
+  height: 32px;
+  padding: 6px;
 }
-.cvctg-icon img { width: 16px; height: 16px; }
+.cvctg-icon img {
+  width: 20px;
+  height: 20px;
+}
+
 
 .cvctg-vert {
-  width: 2px; flex: 1 1 auto; background: #e0e0e0;
-  margin: 6px 0 0 0; border-radius: 1px;
+  width: 2px;
+  flex: 1 1 auto;
+  background: #d8dbe0;
+  margin: 6px 0 0 0;
+  border-radius: 1px;
 }
+
 .cvctg-step:last-child .cvctg-vert { display: none; } /* no tail on last */
 .cvctg-text { color: #444; }
 
@@ -4020,6 +4027,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
