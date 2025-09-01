@@ -3458,81 +3458,78 @@ if (summaryBox) {
 
     const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
 
-   script.forEach(seg => {
-  const el = document.createElement('div');
+script.forEach(function (seg) {
+  var el = document.createElement('div');
   el.className = 'cv-ai-segment';
   el.dataset.start = seg.start;
 
-
-  // ✅ build nodes safely
-  var dot = document.createElement('span');
-  dot.className = 'cv-ai-dot';
-  dot.style.display = 'inline-block';
-  dot.style.width = '10px';
-  dot.style.height = '10px';
-  dot.style.borderRadius = '50%';
-  dot.style.background = '#6b7280'; // gray by default
-  dot.style.marginRight = '10px';
-
-  var label = document.createElement('span');
-  label.textContent = seg.start.toFixed(2) + 's \u2013 ' + seg.text; // en dash
-
-  el.appendChild(dot);
-  el.appendChild(label);
-
-
-  // base styling (bigger line, more like real life)
+  // === Container styling ===
   el.style.display = 'flex';
-  el.style.alignItems = 'center';
-  el.style.gap = '8px';
-
-  el.style.padding = '14px 16px';      // ✅ more padding
-  el.style.marginBottom = '10px';     // ✅ more space between rows
+  el.style.flexDirection = 'column';
+  el.style.padding = '14px 16px';
+  el.style.marginBottom = '10px';
   el.style.borderRadius = '10px';
   el.style.border = '1px solid #e5e7eb';
   el.style.cursor = 'pointer';
   el.style.background = '#fff';
   el.style.transition = 'all 0.2s ease';
-  el.style.fontSize = '15px';         // ✅ bump font size
-  el.style.lineHeight = '1.5';        // ✅ taller line spacing
 
+  // === Timestamp row ===
+  var ts = document.createElement('div');
+  ts.style.fontSize = '13px';
+  ts.style.fontWeight = '600';
+  ts.style.color = '#1e3a8a'; // dark blue
+  ts.style.marginBottom = '6px';
 
+  // you already store start/end in seg
+  var endTime = seg.end || seg.start + 3; // fallback if no end
+  ts.textContent = seg.start.toFixed(1) + 's – ' + endTime.toFixed(1) + 's';
 
-  // hover effect
-  el.addEventListener('mouseenter', () => {
+  // === Transcript text ===
+  var txt = document.createElement('div');
+  txt.style.fontSize = '15px';
+  txt.style.lineHeight = '1.5';
+  txt.style.color = '#111827';
+  txt.textContent = seg.text;
+
+  // assemble
+  el.appendChild(ts);
+  el.appendChild(txt);
+
+  // === Hover + Active logic ===
+  el.addEventListener('mouseenter', function () {
     if (!el.classList.contains('active')) {
-      el.style.border = '1px solid #93c5fd'; // light blue border
+      el.style.border = '1px solid #93c5fd';
     }
   });
-  el.addEventListener('mouseleave', () => {
+  el.addEventListener('mouseleave', function () {
     if (!el.classList.contains('active')) {
-      el.style.border = '1px solid #e5e7eb'; // reset border
+      el.style.border = '1px solid #e5e7eb';
     }
   });
 
-  // click = active selection
-  el.addEventListener('click', () => {
-    // reset all others
-    segList.querySelectorAll('.cv-ai-segment').forEach(s => {
-      s.classList.remove('active');
-      s.style.background = '#fff';
-      s.style.border = '1px solid #e5e7eb';
-      s.querySelector('.cv-ai-dot').style.background = '#6b7280';
-    });
+  el.addEventListener('click', function () {
+    // reset all
+    var all = segList.querySelectorAll('.cv-ai-segment');
+    for (var i = 0; i < all.length; i++) {
+      all[i].classList.remove('active');
+      all[i].style.background = '#fff';
+      all[i].style.border = '1px solid #e5e7eb';
+    }
 
-    // activate this one
+    // activate current
     el.classList.add('active');
-    el.style.background = '#dbeafe'; // light blue bg
-    el.style.border = '1px solid #2563eb'; // blue border
-    el.querySelector('.cv-ai-dot').style.background = '#2563eb'; // blue dot
+    el.style.background = '#dbeafe';
+    el.style.border = '1px solid #2563eb';
 
     // update time
-    const t = Math.min(seg.start, maxSecs);
+    var t = Math.min(seg.start, maxSecs);
     durationDisplay.textContent = formatTime(t) + ' / ' + formatTime(maxSecs);
   });
 
   segList.appendChild(el);
 });
+
 
 
     // Set initial time display
@@ -3998,6 +3995,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
