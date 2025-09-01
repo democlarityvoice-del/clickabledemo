@@ -337,52 +337,6 @@ function buildSrcdoc() {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
-   // -------- HOME STATS INJECTION -------- //
-function injectStatsBlock(attempts = 0) {
-  const statsWrapper = document.querySelector('.stats-tables');
-  if (!statsWrapper || document.getElementById('cv-demo-usage-stats')) return;
-
-  // Wait for real content to load — spinner disappears when content arrives
-  const spinnerGone = !statsWrapper.querySelector('.spinner') &&
-                      statsWrapper.innerText.trim().length > 0;
-
-  if (!spinnerGone) {
-    if (attempts > 20) return; // stop retrying after ~5 seconds
-    return setTimeout(() => injectStatsBlock(attempts + 1), 250);
-  }
-
-  statsWrapper.innerHTML = `
-    <div id="cv-demo-usage-stats" class="custom-usage-block">
-      <div class="stats-section">
-        <div class="stats-title">USAGE STATISTICS</div>
-        <div class="stats-grid">
-          <div>37 Calls Today</div>
-          <div>263 Total Minutes Today</div>
-          <div>7 Avg. Talk Time</div>
-          <div>1 SMS Inbound</div>
-          <div>2 SMS Outbound</div>
-          <div>0 Video Meetings Today</div>
-        </div>
-        <div class="stats-title">THIS MONTH</div>
-        <div class="stats-grid">
-          <div>263 Total Minutes</div>
-          <div>0 Peak Active Calls</div>
-          <div>0 SMS Inbound</div>
-          <div>0 SMS Outbound</div>
-          <div>0 Video Meetings</div>
-        </div>
-        <div class="stats-title">PREVIOUS MONTH</div>
-        <div class="stats-grid">
-          <div>62034 Total Minutes</div>
-          <div>23 Peak Active Calls</div>
-          <div>958 SMS Inbound</div>
-          <div>892 SMS Outbound</div>
-          <div>0 Video Meetings</div>
-        </div>
-      </div>
-    </div>
-  `;
-}
 
 
   // -------- HOME ROUTING -------- //
@@ -4087,6 +4041,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
