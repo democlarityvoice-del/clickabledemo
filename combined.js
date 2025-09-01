@@ -2556,15 +2556,11 @@ function buildCallHistorySrcdoc() {
 }
 
 
+
 .cvctg-vert {
-  width: 2px;
-  flex: 1 1 auto;
-  background: #d8dbe0;
-  margin: 6px 0 0 0;
-  border-radius: 1px;
+  display: none !important;
 }
 
-.cvctg-step:last-child .cvctg-vert { display: none; } /* no tail on last */
 .cvctg-text { color: #444; }
 
 /* --- Modal header/title --- */
@@ -4027,6 +4023,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
