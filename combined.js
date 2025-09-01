@@ -64,15 +64,38 @@ function buildSrcdoc() {
 
   tr:hover{ background:#f7f7f7; }
 
-  /* “listen in” button (unchanged, just inherits the new font now) */
-  .listen-btn{
-    display:inline-flex; align-items:center; justify-content:center;
-    width:26px; height:26px; background:#f0f0f0; border-radius:50%; border:1px solid #cfcfcf; cursor:pointer;
-  }
-  .listen-btn:focus{ outline:none; }
-  .listen-btn img{ width:18px; height:18px; display:block; opacity:.38; transition:opacity .2s; }
-  tr:hover .listen-btn img{ opacity:.35; }
-  .listen-btn.is-active img{ opacity:1; }
+
+/* “listen in” button */
+.listen-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  background: #f0f0f0;
+  border-radius: 50%;
+  border: 1px solid #cfcfcf;
+  cursor: pointer;
+}
+
+.listen-btn:focus {
+  outline: none;
+}
+
+.listen-btn img {
+  width: 18px;
+  height: 18px;
+  display: block;
+  opacity: 0.35; /* default faint */
+  transition: opacity 0.2s ease-in-out;
+}
+
+/* NEW hover effect for either row OR button */
+.listen-btn:hover img,
+tr:hover .listen-btn img {
+  opacity: 1;
+}
+
 
 /* --- STATS BLOCK --- */
   .stats-section {
@@ -4058,6 +4081,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
