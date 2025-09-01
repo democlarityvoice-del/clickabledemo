@@ -3507,20 +3507,32 @@ function cvAiEnsureModal() {
   body.appendChild(content);
 
   // Helper: chip
-  function makeChip(label) {
-    const span = document.createElement('span');
-    span.textContent = label;
-    span.style.display = 'inline-flex';
-    span.style.alignItems = 'center';
-    span.style.gap = '6px';
-    span.style.background = '#eaf2ff';
-    span.style.color = '#1a73e8';
-    span.style.borderRadius = '12px';
-    span.style.padding = '4px 8px';
-    span.style.fontSize = '12px';
-    span.style.fontWeight = '700';
-    return span;
-  }
+  function makeChip(label, index) {
+  const span = document.createElement('span');
+  span.textContent = label;
+  span.style.display = 'inline-flex';
+  span.style.alignItems = 'center';
+  span.style.gap = '6px';
+  span.style.borderRadius = '12px';
+  span.style.padding = '4px 8px';
+  span.style.fontSize = '12px';
+  span.style.fontWeight = '700';
+
+  // Indexed color mappings for From, To, Duration, Date
+  const styles = [
+    { bg: '#eef2ff', text: '#3730a3' }, // From: Indigo
+    { bg: '#f0fdfa', text: '#0f766e' }, // To: Teal
+    { bg: '#fffbeb', text: '#b45309' }, // Duration: Amber
+    { bg: '#f5f3ff', text: '#6b21a8' }, // Date: Purple
+  ];
+
+  const { bg, text } = styles[index] || { bg: '#eaf2ff', text: '#1a73e8' };
+  span.style.background = bg;
+  span.style.color = text;
+
+  return span;
+}
+
 
   // LEFT CARD
   const leftCard = document.createElement('div');
@@ -3793,6 +3805,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
