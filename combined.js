@@ -3430,7 +3430,7 @@ if (summaryBox) {
     const el = document.createElement('div');
     el.className = 'cv-ai-segment';
     el.dataset.start = seg.start;
-    el.textContent = `• ${seg.start.toFixed(2)}s – ${seg.text}`;  // ✅ FIXED
+    el.textContent = '• ' + seg.start.toFixed(2) + 's – ' + seg.text;  // ✅ FIXED
     el.style.padding = '6px 8px';
     el.style.marginBottom = '4px';
     el.style.borderRadius = '6px';
@@ -3911,6 +3911,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
