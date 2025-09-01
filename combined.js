@@ -73,6 +73,30 @@ function buildSrcdoc() {
   .listen-btn img{ width:18px; height:18px; display:block; opacity:.38; transition:opacity .2s; }
   tr:hover .listen-btn img{ opacity:.35; }
   .listen-btn.is-active img{ opacity:1; }
+
+/* --- STATS BLOCK --- */
+  .stats-section {
+    margin: 20px 16px 0;
+    padding-bottom: 20px;
+    border-bottom: 1px solid #e0e0e0;
+  }
+  .stats-title {
+    font-size: 13px;
+    font-weight: 600;
+    margin: 12px 0 4px;
+    color: var(--muted);
+  }
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 6px 16px;
+    font-size: 13px;
+    margin-top: 8px;
+  }
+  .stats-grid div {
+    color: var(--text-color);
+  }
+  
 </style>
 
 
@@ -88,6 +112,37 @@ function buildSrcdoc() {
       <tbody id="callsTableBody"></tbody>
     </table>
   </div>
+
+<!-- USAGE STATISTICS BLOCK -->
+  <div class="stats-section">
+    <div class="stats-title">USAGE STATISTICS</div>
+    <div class="stats-grid">
+      <div>37 Calls Today</div>
+      <div>263 Total Minutes Today</div>
+      <div>7 Avg. Talk Time</div>
+      <div>1 SMS Inbound</div>
+      <div>2 SMS Outbound</div>
+      <div>0 Video Meetings Today</div>
+    </div>
+
+    <div class="stats-title">THIS MONTH</div>
+    <div class="stats-grid">
+      <div>263 Total Minutes</div>
+      <div>0 Peak Active Calls</div>
+      <div>0 SMS Inbound</div>
+      <div>0 SMS Outbound</div>
+      <div>0 Video Meetings</div>
+    </div>
+
+    <div class="stats-title">PREVIOUS MONTH</div>
+    <div class="stats-grid">
+      <div>62034 Total Minutes</div>
+      <div>23 Peak Active Calls</div>
+      <div>958 SMS Inbound</div>
+      <div>892 SMS Outbound</div>
+      <div>0 Video Meetings</div>
+    </div>
+  </div>  
 
 <script>
 (function () {
@@ -4008,6 +4063,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
