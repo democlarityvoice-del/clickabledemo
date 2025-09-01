@@ -337,6 +337,22 @@ function buildSrcdoc() {
     setTimeout(() => waitForSlotAndInject(tries + 1), 250);
   }
 
+  function cvReplaceStats() {
+    const replacements = {
+      'current-active-calls': '5',
+      'calls-today': '37',
+      'total-minutes-today': '263',
+      'avg-talkd-time': '7',
+      'sms_inbound_today': '1',
+      'sms_outbound_today': '2',
+      'video-meetings-today': '0'
+    };
+
+  for (const [id, value] of Object.entries(replacements)) {
+    const el = document.querySelector(`#${id} .helpsy`);
+    if (el) el.textContent = value;
+  }
+}
 
 
   // -------- HOME ROUTING -------- //
@@ -4040,6 +4056,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
