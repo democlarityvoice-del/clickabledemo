@@ -3613,7 +3613,7 @@ function cvAiEnsureModal() {
   btnTxt.style.padding = '6px 12px';
   btnTxt.style.border = '1px solid #e2e8f0';
   btnTxt.style.borderRadius = '6px';
-  btnTxt.style.background = '#1e293b';   // dark slate
+  btnTxt.style.background = '#2563eb';  
   btnTxt.style.color = '#fff';
   btnTxt.style.border = 'none';
 
@@ -3639,6 +3639,7 @@ function cvAiEnsureModal() {
   closeBtn.style.border = '0';
   closeBtn.style.fontSize = '22px';
   closeBtn.style.cursor = 'pointer';
+  closeBtn.style.color = 'white';
   rightHead.appendChild(closeBtn);
 
   // Body
@@ -3995,6 +3996,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
