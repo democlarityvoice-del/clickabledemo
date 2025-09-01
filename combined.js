@@ -3848,6 +3848,20 @@ document.addEventListener('click', function (e) {
   e.preventDefault();
   e.stopPropagation();
 
+  // Delay modal opening by 1 second
+  setTimeout(() => {
+    const modal = cvAiEnsureModal();
+    modal.style.display = 'block';
+
+    const tr = btn.closest('tr');
+    const idx = Array.from(tr?.parentElement?.children || []).indexOf(tr);
+
+    // Existing call to populate modal
+    cvAiPopulateModal(tr, idx);
+  }, 1000); // <-- 1 second delay
+});
+
+
   const modal = cvAiEnsureModal();
   modal.style.display = 'block';
 
@@ -4006,6 +4020,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
