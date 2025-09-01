@@ -3430,8 +3430,10 @@ function cvAiEnsureModal() {
   header.style.display = 'flex';
   header.style.justifyContent = 'space-between';
   header.style.alignItems = 'center';
-  header.style.paddingBottom = '12px';
+  header.style.padding = '12px 20px';             // updated
   header.style.borderBottom = '1px solid #e5e7eb';
+  header.style.background = '#111827';            // ✅ NEW
+  header.style.color = '#fff';                    // ✅ NEW
   inner.appendChild(header);
 
   const leftHead = document.createElement('div');
@@ -3465,7 +3467,10 @@ function cvAiEnsureModal() {
   btnTxt.style.padding = '6px 12px';
   btnTxt.style.border = '1px solid #e2e8f0';
   btnTxt.style.borderRadius = '6px';
-  btnTxt.style.background = '#f1f5f9';
+  btnTxt.style.background = '#1e293b';   // dark slate
+  btnTxt.style.color = '#fff';
+  btnTxt.style.border = 'none';
+
   btnTxt.style.cursor = 'pointer';
   rightHead.appendChild(btnTxt);
 
@@ -3473,9 +3478,9 @@ function cvAiEnsureModal() {
   btnRec.id = 'cv-ai-btn-rec';
   btnRec.textContent = 'Download Recording';
   btnRec.style.padding = '6px 12px';
-  btnRec.style.border = '1px solid #1a73e8';
+  btnRec.style.border = 'none';
   btnRec.style.borderRadius = '6px';
-  btnRec.style.background = '#1a73e8';
+  btnRec.style.background = '#2563eb';
   btnRec.style.color = '#fff';
   btnRec.style.cursor = 'pointer';
   rightHead.appendChild(btnRec);
@@ -3590,18 +3595,65 @@ function cvAiEnsureModal() {
   controls.style.display = 'flex';
   controls.style.alignItems = 'center';
   controls.style.gap = '10px';
+  controls.style.background = '#f9fafb';              // ✅ subtle background
+  controls.style.border = '1px solid #e5e7eb';         // ✅ light border
+  controls.style.borderRadius = '8px';                 // ✅ rounded corners
+  controls.style.padding = '8px 12px';                 // ✅ spacing inside
   rightCard.appendChild(controls);
+  ;
 
+// Play button with icon
   const play = document.createElement('button');
   play.id = 'cv-ai-play';
-  play.textContent = 'Play';
-  play.style.minWidth = '60px';
+  play.style.display = 'inline-flex';
+  play.style.alignItems = 'center';
+  play.style.gap = '8px';
   play.style.padding = '6px 12px';
   play.style.border = '1px solid #cfd3d7';
   play.style.borderRadius = '6px';
   play.style.background = '#f8fafc';
   play.style.cursor = 'pointer';
+
+// Add play icon (SVG)
+  const playIcon = document.createElement('img');
+  playIcon.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg';
+  playIcon.alt = 'Play';
+  playIcon.style.width = '16px';
+  playIcon.style.height = '16px';
+  play.appendChild(playIcon);
+
+// Add placeholder duration text next to icon
+  const durationPlaceholder = document.createElement('span');
+  durationPlaceholder.id = 'cv-ai-fakeduration';
+  durationPlaceholder.textContent = '0:56'; // Placeholder to be dynamically set later
+  durationPlaceholder.style.fontWeight = '600';
+  durationPlaceholder.style.fontSize = '13px';
+  durationPlaceholder.style.color = '#111';
+  play.appendChild(durationPlaceholder);
+
   controls.appendChild(play);
+
+
+  const listenAiIcon = document.createElement('img');
+  listenAiIcon.src = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  listenAiIcon.alt = 'Listen';
+  listenAiIcon.title = 'Listen In';
+  listenAiIcon.style.width = '18px';
+  listenAiIcon.style.height = '18px';
+  listenAiIcon.style.opacity = '0.6';
+  listenAiIcon.style.marginLeft = '8px';
+  listenAiIcon.style.cursor = 'pointer';
+  listenAiIcon.style.transition = 'opacity 0.2s ease';
+
+  listenAiIcon.addEventListener('mouseenter', () => {
+    listenAiIcon.style.opacity = '1';
+  });
+  listenAiIcon.addEventListener('mouseleave', () => {
+    listenAiIcon.style.opacity = '0.6';
+  });
+
+  controls.appendChild(listenAiIcon);
+
 
   const range = document.createElement('input');
   range.id = 'cv-ai-range';
@@ -3612,13 +3664,6 @@ function cvAiEnsureModal() {
   range.style.flex = '1';
   controls.appendChild(range);
 
-  const clock = document.createElement('span');
-  clock.id = 'cv-ai-clock';
-  clock.textContent = '0:00';
-  clock.style.width = '70px';
-  clock.style.textAlign = 'right';
-  clock.style.fontWeight = '700';
-  controls.appendChild(clock);
 
   // Segments
   const segWrap = document.createElement('div');
@@ -3806,6 +3851,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
