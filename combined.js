@@ -356,11 +356,13 @@ function buildSrcdoc() {
 
 
   // -------- HOME ROUTING -------- //
-  function onHomeEnter() {
+function onHomeEnter() {
   setTimeout(() => {
     waitForSlotAndInject();
+    setTimeout(cvReplaceStats, 1000); // give stats table time to load
   }, 600);
 }
+
 
 
   function handleHomeRouteChange(prevHref, nextHref) {
@@ -4056,6 +4058,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
