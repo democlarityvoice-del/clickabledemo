@@ -3390,11 +3390,12 @@ if (summaryBox) {
     if (chips[2]) chips[2].textContent = '⏱ ' + AIDuration;
     if (chips[3]) chips[3].textContent = '📅 ' + AIDate;
   }
-  // ---- New: Simulated Transcript Injection ----
+  
+// ---- New: Simulated Transcript Injection ----
 
   var fakeInbound = [
     { start: 0.00,  end: 6.00,   text: "Thanks for calling Mr. Service. How can I help today?" },
-    { start: 6.10,  end: 12.00,  text: "I’m looking for an appointment this Saturday." },
+    { start: 6.10,  end: 12.00,  text: "Hi, this is Dan calling back. I'm looking for an appointment this Saturday." },
     { start: 12.10, end: 18.00,  text: "We can check that. What address should we use?" },
     { start: 18.10, end: 24.00,  text: "456 East Elm, on the corner of Madison and Elm." },
     { start: 24.10, end: 31.00,  text: "Got it—456 East Elm at Madison. One moment while I check availability." },
@@ -3413,9 +3414,15 @@ if (summaryBox) {
     { start: 116.10,end: 120.00, text: "No special notes. Street parking is fine. Thanks for your help." }
   ];
 
+  var fakeInboundSummary =
+    "Dan from 456 East Elm inquired about availability for service this Saturday. " +
+    "He confirmed their location at the corner of Madison and Elm and asked whether Mr. Service had received their pictures. " +
+    "Mr. Service confirmed receipt and reviewed them during the call. " +
+    "Mr. Service confirmed no special notes and that street parking is fine. The next step is the tech appointment for Saturday.";
+
 
   var fakeOutbound = [
-    { start: 0.00,  end: 6.00,   text: "Hi there, calling to confirm tomorrow’s appointment." },
+    { start: 0.00,  end: 6.00,   text: "Hi Jane. This is Mr. Service, calling to confirm tomorrow’s appointment." },
     { start: 6.10,  end: 10.00,  text: "Great, thanks for calling." },
     { start: 10.10, end: 16.00,  text: "We have you at 123 Main Street, just off Elm. Is that correct?" },
     { start: 16.10, end: 21.00,  text: "Yes, that’s right." },
@@ -3437,7 +3444,13 @@ if (summaryBox) {
     { start: 116.10,end: 120.00, text: "Will do—thanks. See you tomorrow." }
   ];
 
+var fakeOutboundSummary =
+  "Mr. Service placed a follow-up call to confirm the customer appointment for Jane is scheduled for tomorrow at 8 a.m. " +
+  "The address was confirmed as 123 Main Street, just off Elm. One dog will be put into the backyard. Street parking is available, and no codes are needed. " +
+  "Jane verified the time and confirmed they had everything needed for the appointment. " +
+  "Mr. Service confirmed the tech link reminder text and how to contact the location if plans should change.";
 
+ 
   function parseDuration(str) {
     const [min, sec] = str.split(':').map(Number);
     return min * 60 + sec;
@@ -3453,12 +3466,7 @@ if (summaryBox) {
   const segList = document.getElementById('cv-ai-seglist');
   const durationDisplay = document.getElementById('cv-ai-fakeduration');
 
-  const fakeInboundSummary = `The caller from 456 East Elm inquired about availability for service this Saturday. They confirmed their location at the corner of Madison and Elm and asked whether Mr. Service had received their pictures. Mr. Service confirmed receipt and reviewed them during the call.`;
-
-  const fakeOutboundSummary = `Mr. Service placed a follow-up call to confirm the customer appointment scheduled for tomorrow. The address was confirmed as 123 Main Street, just off Elm. The recipient verified the time and confirmed they had everything needed for the appointment.`;
-
-
-
+  
 
   if (segList && durationDisplay) {
     segList.innerHTML = '';
@@ -4022,6 +4030,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
