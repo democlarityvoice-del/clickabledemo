@@ -4118,10 +4118,9 @@ document.addEventListener('click', function (e) {
   if (window.__cvqs_installed__) return;
   window.__cvqs_installed__ = true;
 
-  const TABLE_SEL  = '#modal_stats_table';
+  const TABLE_SEL = '#modal_stats_table';
   const LINK_CLASS = 'cvqs-poc-link';
 
-  // --- Your dataset ------------------------------------------------------
   const cvqs_DATA = {
     "Main Routing": { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
     "New Sales":    { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
@@ -4129,7 +4128,6 @@ document.addEventListener('click', function (e) {
     "Billing":      { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,  AC: null, AWT: null }
   };
 
-  // Visible header text → stat code
   const cvqs_STAT_MAP = {
     'Call Volume': 'VOL',
     'Calls Offered': 'CO',
@@ -4145,7 +4143,7 @@ document.addEventListener('click', function (e) {
 
   function cvqs_linkifyCell(td, queueName, statKey, value) {
     if (value === null || value === undefined) return;
-    if (td.querySelector(`a.${LINK_CLASS}`)) return; // already linked
+    if (td.querySelector(`a.${LINK_CLASS}`)) return;
     const a = td.ownerDocument.createElement('a');
     a.href = '#';
     a.className = LINK_CLASS;
@@ -4172,37 +4170,29 @@ document.addEventListener('click', function (e) {
     return { colMap, nameIdx };
   }
 
-  function cvqs_injectAll() {
+  window.cvqsInjectAll = function () {
     const table = document.querySelector(TABLE_SEL);
     if (!table) return 0;
-
     const { colMap, nameIdx } = cvqs_buildColMap(table);
-    const keys = Object.keys(colMap);
-    if (!keys.length) return 0;
+    let count = 0;
 
-    let updated = 0;
-    table.querySelectorAll('tbody tr').forEach(tr => {
-      const tds = tr.querySelectorAll('td');
-      if (!tds.length) return;
-      const name = cvqs_norm(tds[nameIdx]?.textContent || '');
-      const row = cvqs_DATA[name];
-      if (!row) return;
+    [...table.querySelectorAll('tbody tr')].forEach(row => {
+      const cells = row.querySelectorAll('td');
+      const name = cvqs_norm(cells[nameIdx]?.textContent || '');
+      const data = cvqs_DATA[name];
+      if (!data) return;
 
-      for (const statKey of keys) {
-        const value = row[statKey];
-        if (value == null) continue;
-        const td = tds[colMap[statKey]];
-        if (!td) continue;
-        cvqs_linkifyCell(td, name, statKey, value);
-        updated++;
-      }
+      Object.entries(data).forEach(([statKey, value]) => {
+        const colIdx = colMap[statKey];
+        if (colIdx === undefined) return;
+        cvqs_linkifyCell(cells[colIdx], name, statKey, value);
+        count++;
+      });
     });
 
-    if (updated) console.debug('[CV-QS] wrote', updated, 'cell(s).');
-    return updated;
-  }
+    return count;
+  };
 
-  // Delay injection until table is stable
   function waitForStableTable(maxWaitMs = 8000) {
     return new Promise((resolve, reject) => {
       const table = document.querySelector(TABLE_SEL);
@@ -4221,18 +4211,15 @@ document.addEventListener('click', function (e) {
   }
 
   waitForStableTable().then(() => {
-    // Safe to inject after delay
     setTimeout(() => {
-      const updated = cvqs_injectAll();
+      const updated = window.cvqsInjectAll?.();
       console.debug(`[CV-QS] Injected after table stabilization: ${updated} cells`);
-    }, 500);
-  }).catch((err) => {
+    }, 1000);
+  }).catch(err => {
     console.warn('[CV-QS] Table never stabilized:', err);
   });
-
-  // Manual trigger
-  window.cvqsInjectAll = cvqs_injectAll;
 })();
+
 
 
 
