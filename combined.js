@@ -1715,7 +1715,7 @@ if (!window.__cvAgentsPanelInit) {
   }
   // Force scroll to top inside modal body after open
   setTimeout(() => {
-  root.querySelector('.cvhf-dialog').scrollTop = 0;
+    root.querySelector('.cvhf-dialog').scrollTop = 0;
   }, 0);
 
   // ---------- render helpers (axes + ticks like your screenshot) ----------
@@ -4107,6 +4107,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
