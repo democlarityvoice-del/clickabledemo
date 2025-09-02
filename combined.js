@@ -403,7 +403,6 @@ function injectFakePeakCallLines() {
   const svg = document.querySelector('#chart_div svg');
   if (!svg) return;
 
-  // Clear existing fake line graph if present
   const old = document.getElementById('cv-fake-peak-line');
   if (old) old.remove();
 
@@ -411,38 +410,18 @@ function injectFakePeakCallLines() {
   const polyline = document.createElementNS(NS, 'polyline');
   polyline.setAttribute('id', 'cv-fake-peak-line');
   polyline.setAttribute('fill', 'none');
-  polyline.setAttribute('stroke', '#3366cc');  // Match real chart blue
+  polyline.setAttribute('stroke', '#3366cc');
   polyline.setAttribute('stroke-width', '2');
 
-  // === NEW: Proper cycles grounded at bottom (y=400) ===
   const points = [
-    [0, 400],   [20, 320], [40, 260], [60, 300], [80, 400],    // Aug 21
-    [100, 400], [120, 280], [140, 220], [160, 290], [180, 400], // Aug 22
-    [200, 400], [220, 250], [240, 180], [260, 280], [280, 400], // Aug 23
-    [300, 400], [320, 260], [340, 190], [360, 270], [380, 400], // Aug 24
-    [400, 400], [420, 230], [440, 170], [460, 260], [480, 400], // Aug 25
-    [500, 400], [520, 210], [540, 150], [560, 250], [580, 400], // Aug 26
-    [600, 400] // End cap
+    [0, 400], [20, 320], [40, 260], [60, 300], [80, 400],
+    [100, 400], [120, 280], [140, 220], [160, 290], [180, 400],
+    [200, 400], [220, 250], [240, 180], [260, 280], [280, 400],
+    [300, 400], [320, 260], [340, 190], [360, 270], [380, 400],
+    [400, 400], [420, 230], [440, 170], [460, 260], [480, 400],
+    [500, 400], [520, 210], [540, 150], [560, 250], [580, 400],
+    [600, 400]
   ];
-
-  polyline.setAttribute('points', points.map(p => p.join(',')).join(' '));
-  svg.appendChild(polyline);
-}
-
-// === STEP 2: Observer to wait until chart SVG is ready ===
-const observer = new MutationObserver((mutations, obs) => {
-  const svg = document.querySelector('#chart_div svg');
-  if (svg) {
-    injectFakePeakCallLines();
-    obs.disconnect();
-  }
-});
-
-observer.observe(document.body, {
-  childList: true,
-  subtree: true
-});
-
 
   const pointStr = points.map(p => p.join(',')).join(' ');
   polyline.setAttribute('points', pointStr);
@@ -450,8 +429,6 @@ observer.observe(document.body, {
   svg.appendChild(polyline);
 }
 
-
-// === STEP 2: Observer to wait until chart SVG is ready ===
 const observer = new MutationObserver((mutations, obs) => {
   const svg = document.querySelector('#chart_div svg');
   if (svg) {
@@ -464,6 +441,7 @@ observer.observe(document.body, {
   childList: true,
   subtree: true
 });
+
 
 
   
@@ -4171,6 +4149,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
