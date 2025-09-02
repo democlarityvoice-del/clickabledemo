@@ -4109,6 +4109,87 @@ document.addEventListener('click', function (e) {
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
 
 
+// -------- 📊 Queue Details Inject -------- //
+
+const QUEUEDETAILS_REGEX = /\/portal\/stats\/queuestats\/details\/\d+$/;
+const QUEUEDETAILS_SELECTOR = 'a[href*="/portal/stats/queuestats/details/"]';
+
+function onQueueDetailsEnter() {
+  console.debug('📊 Injecting custom queue details view');
+
+  // Prevent double-injection
+  if (document.getElementById('cv-queue-details-wrapper')) return;
+
+  // Create container
+  const wrapper = document.createElement('div');
+  wrapper.id = 'cv-queue-details-wrapper';
+  wrapper.style.margin = '24px';
+  wrapper.innerHTML = `
+    <h2 style="font-size: 20px; font-weight: bold; color: #333;">Custom Queue Detail Summary</h2>
+    <div style="padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #fdfdfd; margin-top: 12px;">
+      <p><strong>Fake Metric 1:</strong> 89%</p>
+      <p><strong>Fake Metric 2:</strong> 42 calls</p>
+      <p><strong>Injected Notes:</strong> This section was safely appended without touching existing elements.</p>
+    </div>
+  `;
+
+  // Append after whatever native content we expect (e.g., a native chart or section)
+  const target = document.querySelector('.call-history-section') || document.querySelector('#content') || document.body;
+  if (target) target.appendChild(wrapper);
+}
+
+// Nav click support (if navigating from table)
+document.addEventListener('click', (e) => {
+  const el = e.target instanceof Element ? e.target : null;
+  if (el && el.closest(QUEUEDETAILS_SELECTOR)) {
+    setTimeout(onQueueDetailsEnter, 0);
+  }
+});
+
+// Initial check (if user landed directly on a details page)
+if (QUEUEDETAILS_REGEX.test(location.href)) onQueueDetailsEnter();
+
+function onQueueDetailsEnter() {
+  console.debug('📊 Injecting custom queue details view');
+
+  // Prevent double-injection
+  if (document.getElementById('cv-queue-details-wrapper')) return;
+
+  // Extract queue name from visible DOM
+  const queueNameEl = document.querySelector('h3.panel-title');
+  const queueName = queueNameEl ? queueNameEl.textContent.trim() : '';
+
+  // Real Call Volume mapping
+  const callVolumeMap = {
+    'Main Routing': 5,
+    'New Sales': 28,
+    'Existing Customer': 16,
+    'Billing': 2
+  };
+
+  // Lookup the real call volume, fallback to 1
+  const callVolume = callVolumeMap[queueName] || 1;
+
+  // Create wrapper
+  const wrapper = document.createElement('div');
+  wrapper.id = 'cv-queue-details-wrapper';
+  wrapper.style.margin = '24px';
+  wrapper.innerHTML = `
+    <h2 style="font-size: 20px; font-weight: bold; color: #333;">Custom Queue Detail Summary</h2>
+    <div style="padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #fdfdfd; margin-top: 12px;">
+      <p><strong>Call Volume:</strong> ${callVolume}</p>
+      <p><strong>Calls Handled:</strong> 1</p>
+      <p><strong>Service Level:</strong> 1%</p>
+      <p><strong>Avg. Talk Time:</strong> 00:01</p>
+      <p><strong>Avg. Wait Time:</strong> 00:01</p>
+    </div>
+  `;
+
+  // Append below native content
+  const target = document.querySelector('#content') || document.body;
+  if (target) target.appendChild(wrapper);
+}
+
 
 
 
