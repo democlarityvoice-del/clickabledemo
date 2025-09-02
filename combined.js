@@ -4114,11 +4114,19 @@ document.addEventListener('click', function (e) {
      - Skips 0s (not clickable).
      - Idempotent. Survives DataTables redraws and DOM updates.
 =========================================================================== */
+/* ===== CV Queue Stats: Mass Injection (POC, append-only) ================
+   Page: /portal/stats/queuestats/queue/
+   What it does:
+     - Fills ALL provided numbers (including 0s) for each queue.
+     - Makes every number clickable (POC alert with queue + stat).
+     - Idempotent. Survives DataTables redraws and DOM updates.
+=========================================================================== */
 (() => {
+  const ROUTE_PREFIX = '/portal/stats/queuestats/queue';
   const TABLE_SEL = '#modal_stats_table';
   const LINK_CLASS = 'cvq-poc-link';
 
-  // Final data per screenshot + notes
+  // === Your dataset (exact queue names as shown in the Name column) ======
   const CVQ_DATA = {
     "Main Routing": {
       VOL: 5,
@@ -4153,6 +4161,7 @@ document.addEventListener('click', function (e) {
       AWT: "00:00"
     }
   };
+  // =======================================================================
 
   const STAT_LABELS = {
     VOL: 'Call Volume',
@@ -4164,23 +4173,37 @@ document.addEventListener('click', function (e) {
   };
   const VALID_STATS = Object.keys(STAT_LABELS);
 
-  function formatForText(val) {
-    return String(val);
+  function timeToSeconds(v) {
+    if (typeof v !== 'string') return null;
+    const parts = v.split(':').map(s => Number(s));
+    if (parts.some(Number.isNaN)) return null;
+    if (parts.length === 2) { // mm:ss
+      const [m, s] = parts; return (m * 60) + s;
+    }
+    if (parts.length === 3) { // hh:mm:ss
+      const [h, m, s] = parts; return (h * 3600) + (m * 60) + s;
+    }
+    return null;
   }
 
-  function setSortValue(td, val) {
+  function setSortValue(td, code, val) {
+    // Numbers sort numerically; times sort by seconds; strings left alone
     const n = Number(val);
-    if (!Number.isNaN(n)) td.setAttribute('data-order', String(n));
+    if (!Number.isNaN(n)) {
+      td.setAttribute('data-order', String(n));
+      return;
+    }
+    if (code === 'ATT' || code === 'AH' || code === 'AWT') {
+      const sec = timeToSeconds(val);
+      if (sec != null) td.setAttribute('data-order', String(sec));
+    }
   }
 
   function linkifyCell(td, queueName, code, value) {
-    const isZero = (value === 0 || value === '0' || value === '00:00');
-    if (isZero) return; // Don't overwrite or link zero cells
-
     const a = document.createElement('a');
     a.href = '#';
     a.className = LINK_CLASS;
-    a.textContent = formatForText(value);
+    a.textContent = String(value);
     a.style.fontWeight = 'bold';
     a.style.textDecoration = 'underline';
     a.style.cursor = 'pointer';
@@ -4189,7 +4212,7 @@ document.addEventListener('click', function (e) {
       alert(`TEST ${queueName} — ${STAT_LABELS[code] || code}`);
     });
     td.replaceChildren(a);
-    setSortValue(td, value);
+    setSortValue(td, code, value);
   }
 
   function injectAll(data) {
@@ -4201,18 +4224,22 @@ document.addEventListener('click', function (e) {
       const tds = tr.querySelectorAll('td');
       if (!tds.length) return;
 
+      // Typical layout per your screenshots: 3rd <td> is the Name cell.
       const name = (tds[2]?.textContent || '').trim();
-      if (!name || !data[name]) return;
+      const rowData = data[name];
+      if (!rowData) return;
 
       tr.querySelectorAll('td.stat-td').forEach(td => {
+        // Class contains the stat code as "queue-CO", "queue-ATT", etc.
         const m = td.className.match(/\bqueue-([A-Z]+)\b/);
         if (!m) return;
         const code = m[1];
         if (!VALID_STATS.includes(code)) return;
 
-        const value = data[name][code];
-        if (value == null || value === 0 || value === '00:00') return;
+        const value = rowData[code];
+        if (value === undefined) return;
 
+        // Skip if we've already linked it
         if (td.querySelector(`a.${LINK_CLASS}`)) return;
 
         linkifyCell(td, name, code, value);
@@ -4231,6 +4258,7 @@ document.addEventListener('click', function (e) {
       if (injectAll(CVQ_DATA) > 0 || tries >= max) clearInterval(timer);
     }, 200);
 
+    // Re-apply on DataTables redraws if present
     try {
       const $ = window.jQuery;
       if ($ && $.fn && $.fn.DataTable) {
@@ -4238,10 +4266,14 @@ document.addEventListener('click', function (e) {
       }
     } catch (_) {}
 
+    // Fallback: observe tbody changes
     const tb = document.querySelector(`${TABLE_SEL} tbody`);
-    if (tb) new MutationObserver(() => injectAll(CVQ_DATA))
-      .observe(tb, { childList: true, subtree: true });
+    if (tb) {
+      new MutationObserver(() => injectAll(CVQ_DATA))
+        .observe(tb, { childList: true, subtree: true });
+    }
 
+    // Optional manual trigger for console
     window.cvqInjectAll = () => injectAll(CVQ_DATA);
   }
 
@@ -4251,6 +4283,8 @@ document.addEventListener('click', function (e) {
     init();
   }
 })();
+
+
 
 
 
