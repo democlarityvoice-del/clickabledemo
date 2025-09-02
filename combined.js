@@ -4113,113 +4113,205 @@ document.addEventListener('click', function (e) {
    Scope:   Only runs in a document that contains #modal_stats_table.
    Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
 ======================================================================= */
+/* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
 (() => {
-  // Run once per document
-  if (window.__cvqs_installed__) return;
-  window.__cvqs_installed__ = true;
+  if (window.__cvqs_auto_installed__) return;
+  window.__cvqs_auto_installed__ = true;
 
-  const TABLE_SEL = '#modal_stats_table';
   const LINK_CLASS = 'cvqs-poc-link';
+  const STATS_TABLE_ID = '#modal_stats_table'; // used if present; not required
+  const MAX_SCAN_TRIES = 20;
 
-  const cvqs_DATA = {
-    "Main Routing": { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
-    "New Sales":    { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
-    "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2, AWT: "4:49" },
-    "Billing":      { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,  AC: null, AWT: null }
+  // ---- YOUR DATA --------------------------------------------------------
+  const CVQ_DATA = {
+    "Main Routing":      { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "New Sales":         { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
+    "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2,    AWT: "4:49" },
+    "Billing":           { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,   AC: null, AWT: null }
   };
+  const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
-  const cvqs_STAT_MAP = {
+  // header text -> stat code (include synonyms seen on Demo)
+  const HEADER_TO_STAT = {
     'Call Volume': 'VOL',
     'Calls Offered': 'CO',
+    'Calls Handled': 'CO',               // demo header
     'Avg. Talk Time': 'ATT',
+    'Average Talk Time': 'ATT',
     'Avg. Hold Time': 'AH',
     'Abandoned Calls': 'AC',
-    'Avg. Wait Time': 'AWT'
+    'Avg. Wait Time': 'AWT',
+    'Average Wait Time': 'AWT'
   };
 
-  function cvqs_norm(s) {
-    return (s || '').replace(/\s+/g, ' ').trim();
+  // ---------------- helpers ----------------
+  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
+  const LOG = (...a) => console.debug('[CV-QS]', ...a);
+
+  function collectDocs(root, out = []) {
+    out.push(root);
+    root.querySelectorAll('iframe').forEach(f => {
+      try { if (f.contentDocument) collectDocs(f.contentDocument, out); } catch (_) {}
+    });
+    return out;
   }
 
-  function cvqs_linkifyCell(td, queueName, statKey, value) {
-    if (value === null || value === undefined) return;
+  function candidateTables(doc) {
+    const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
+    if (direct.length) return direct;
+
+    // Heuristic: tables that have headers like call volume / wait time, etc.
+    return Array.from(doc.querySelectorAll('table')).filter(t => {
+      const ths = Array.from(t.querySelectorAll('thead th'));
+      const labels = ths.map(th => norm(th.textContent));
+      return labels.some(l => /call volume|calls handled|calls offered|wait time|talk time|abandon/i.test(l));
+    });
+  }
+
+  function mapHeaders(table) {
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const colMap = {}; // {VOL: idx, CO: idx, ...}
+    ths.forEach((th, i) => {
+      const label = norm(th.textContent);
+      const code = HEADER_TO_STAT[label];
+      if (code) colMap[code] = i;
+    });
+
+    // NAME column: prefer exact "Name"; otherwise, guess by which column
+    // matches the most of your queue names in the first few rows
+    let nameIdx = ths.findIndex(th => /^name$/i.test(norm(th.textContent)));
+    if (nameIdx < 0) {
+      const rows = Array.from(table.tBodies[0]?.rows || []).slice(0, 12);
+      const counts = ths.map((_, idx) => {
+        let hits = 0;
+        rows.forEach(r => {
+          const txt = norm(r.cells[idx]?.textContent);
+          if (QUEUE_NAMES.includes(txt)) hits++;
+        });
+        return hits;
+      });
+      nameIdx = counts.indexOf(Math.max(...counts));
+      if (nameIdx < 0) nameIdx = 1; // fallback
+    }
+    return { colMap, nameIdx };
+  }
+
+  function timeToSeconds(v) {
+    if (typeof v !== 'string') return null;
+    const p = v.split(':').map(Number);
+    if (p.some(Number.isNaN)) return null;
+    if (p.length === 2) { const [m,s]=p; return m*60+s; }
+    if (p.length === 3) { const [h,m,s]=p; return h*3600+m*60+s; }
+    return null;
+  }
+
+  function setSort(td, code, v) {
+    const n = Number(v);
+    if (!Number.isNaN(n)) { td.setAttribute('data-order', String(n)); return; }
+    if (code === 'ATT' || code === 'AH' || code === 'AWT') {
+      const s = timeToSeconds(v);
+      if (s != null) td.setAttribute('data-order', String(s));
+    }
+  }
+
+  function linkify(td, queue, code, v) {
+    if (v == null) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return;
     const a = td.ownerDocument.createElement('a');
     a.href = '#';
     a.className = LINK_CLASS;
-    a.textContent = String(value);
+    a.textContent = String(v);
     a.style.fontWeight = 'bold';
     a.style.textDecoration = 'underline';
     a.style.cursor = 'pointer';
-    a.addEventListener('click', (e) => {
+    a.addEventListener('click', e => {
       e.preventDefault();
-      td.ownerDocument.defaultView.alert(`TEST ${queueName} — ${statKey}`);
+      td.ownerDocument.defaultView.alert(`TEST ${queue} — ${code}`);
     });
     td.replaceChildren(a);
+    setSort(td, code, v);
   }
 
-  function cvqs_buildColMap(table) {
-    const ths = [...table.querySelectorAll('thead th')];
-    const colMap = {};
-    ths.forEach((th, idx) => {
-      const key = cvqs_STAT_MAP[cvqs_norm(th.textContent)];
-      if (key) colMap[key] = idx;
-    });
-    let nameIdx = ths.findIndex(th => /(name|queue)/i.test(th.textContent));
-    if (nameIdx < 0) nameIdx = 2;
-    return { colMap, nameIdx };
-  }
+  function injectTable(doc, table) {
+    const { colMap, nameIdx } = mapHeaders(table);
+    const statCodes = Object.keys(colMap);
+    if (!statCodes.length) return 0;
 
-  window.cvqsInjectAll = function () {
-    const table = document.querySelector(TABLE_SEL);
-    if (!table) return 0;
-    const { colMap, nameIdx } = cvqs_buildColMap(table);
-    let count = 0;
-
-    [...table.querySelectorAll('tbody tr')].forEach(row => {
-      const cells = row.querySelectorAll('td');
-      const name = cvqs_norm(cells[nameIdx]?.textContent || '');
-      const data = cvqs_DATA[name];
+    let wrote = 0;
+    Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
+      const name = norm(tr.cells[nameIdx]?.textContent);
+      const data = CVQ_DATA[name];
       if (!data) return;
 
-      Object.entries(data).forEach(([statKey, value]) => {
-        const colIdx = colMap[statKey];
-        if (colIdx === undefined) return;
-        cvqs_linkifyCell(cells[colIdx], name, statKey, value);
-        count++;
+      statCodes.forEach(code => {
+        const td = tr.cells[colMap[code]];
+        if (!td) return;
+        const val = data[code];
+        if (val == null) return;
+        linkify(td, name, code, val);
+        wrote++;
       });
     });
-
-    return count;
-  };
-
-  function waitForStableTable(maxWaitMs = 8000) {
-    return new Promise((resolve, reject) => {
-      const table = document.querySelector(TABLE_SEL);
-      const deadline = Date.now() + maxWaitMs;
-      if (!table) return reject('No stats table found');
-
-      const interval = setInterval(() => {
-        const rowCount = table.querySelectorAll('tbody tr').length;
-        const ready = rowCount > 1;
-        if (ready || Date.now() > deadline) {
-          clearInterval(interval);
-          resolve(table);
-        }
-      }, 300);
-    });
+    return wrote;
   }
 
-  waitForStableTable().then(() => {
-    setTimeout(() => {
-      const updated = window.cvqsInjectAll?.();
-      console.debug(`[CV-QS] Injected after table stabilization: ${updated} cells`);
-    }, 1000);
-  }).catch(err => {
-    console.warn('[CV-QS] Table never stabilized:', err);
-  });
-})();
+  function attach(doc, table) {
+    const apply = () => {
+      const n = injectTable(doc, table);
+      if (n) LOG('wrote', n, 'cell(s) in', doc.defaultView?.location?.href || '(doc)');
+    };
 
+    // Wait until row count settles a bit
+    let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
+    const t = doc.defaultView.setInterval(() => {
+      tries++;
+      const rows = table.tBodies[0]?.rows.length || 0;
+      if (rows !== last) { last = rows; lastChange = Date.now(); }
+      if (Date.now() - lastChange > calmMs || tries > 40) {
+        doc.defaultView.clearInterval(t);
+        apply();
+      }
+    }, 150);
+
+    // Redraws
+    try {
+      const $ = doc.defaultView.jQuery;
+      if ($ && $.fn && $.fn.DataTable) {
+        $(table).on('draw.dt', apply);
+      }
+    } catch (_) {}
+
+    // DOM changes
+    const tb = table.tBodies[0];
+    if (tb) new doc.defaultView.MutationObserver(apply)
+      .observe(tb, { childList: true, subtree: true });
+
+    // Manual trigger
+    doc.defaultView.cvqsForce = apply;
+  }
+
+  function boot() {
+    const docs = collectDocs(document);
+    LOG('scanning', docs.length, 'document(s)…');
+    let attached = 0;
+
+    docs.forEach(doc => {
+      const tables = candidateTables(doc);
+      if (!tables.length) return;
+      tables.forEach(tbl => { attach(doc, tbl); attached++; });
+    });
+
+    if (!attached) LOG('no candidate tables found (yet)');
+  }
+
+  boot();
+  let tries = 0;
+  const again = setInterval(() => {
+    tries++;
+    boot();
+    if (tries >= MAX_SCAN_TRIES) clearInterval(again);
+  }, 350);
+})();
 
 
 
