@@ -373,18 +373,18 @@ tr:hover .listen-btn img {
       'video-meetings-today': '0',
 
       // This Month
-     'total-min-current': '263',
-     'peak-active-current': '0',
-     'sms_inbound_current': '1',
-     'sms_outbound_current': '2',
-     'video_meetings_current': '0',
+     'total-min-current': '752',
+     'peak-active-current': '25',
+     'sms_inbound_current': '122',
+     'sms_outbound_current': '282',
+     'video_meetings_current': '15',
 
      // Previous Month
      'total-min-last': '62034',
-     'peak-active-last': '23',
+     'peak-active-last': '29',
      'sms_inbound_last': '958',
      'sms_outbound_last': '892',
-     'video_meetings_last': '0'
+     'video_meetings_last': '23'
    };
 
   for (const [id, value] of Object.entries(replacements)) {
@@ -4103,6 +4103,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
