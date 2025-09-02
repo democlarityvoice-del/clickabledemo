@@ -4112,124 +4112,128 @@ document.addEventListener('click', function (e) {
    Status: 100% working. Uses column indexes, not class names.
    Safe:   No global side effects. Reruns on redraws and updates.
 =========================================================================== */
+/* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
+   Purpose: Replace cells with clickable POC links using header mapping.
+   Scope:   Only runs in a document that contains #modal_stats_table.
+   Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
+======================================================================= */
 (() => {
-  const ROUTE_PREFIX = '/portal/stats/queuestats/queue';
-  const TABLE_SEL = '#modal_stats_table';
-  const LINK_CLASS = 'cvq-poc-link';
+  // Run once per document
+  if (window.__cvqs_installed__) return;
+  window.__cvqs_installed__ = true;
 
-  // === Data to inject: replace these as needed ===
-  const CVQ_DATA = {
-    'Main Routing':       { VOL: 5,  CO: 5,  ATT: '2:26', AH: '0:10', AC: 0,  AWT: '1:45' },
-    'New Sales':          { VOL: 28, CO: 28, ATT: '5:22', AH: '0:04', AC: 1,  AWT: '2:10' },
-    'Existing Customer':  { VOL: 16, CO: 16, ATT: '9:12', AH: '0:11', AC: 2,  AWT: '4:49' },
-    'Billing':            { VOL: 2,  CO: 1,  ATT: '1:21', AH: '0:00', AC: 0,  AWT: '0:00' }
+  const TABLE_SEL  = '#modal_stats_table';
+  const LINK_CLASS = 'cvqs-poc-link';
+
+  // --- Your dataset ------------------------------------------------------
+  const cvqs_DATA = {
+    "Main Routing": { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "New Sales":    { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
+    "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2, AWT: "4:49" },
+    "Billing":      { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,  AC: null, AWT: null }
   };
 
-  const COLUMNS = {
-    VOL: 3,
-    CO: 4,
-    ATT: 5,
-    AH: 6,
-    AC: 7,
-    AWT: 8
+  // Visible header text → stat code
+  const cvqs_STAT_MAP = {
+    'Call Volume': 'VOL',
+    'Calls Offered': 'CO',
+    'Avg. Talk Time': 'ATT',
+    'Avg. Hold Time': 'AH',
+    'Abandoned Calls': 'AC',
+    'Avg. Wait Time': 'AWT'
   };
 
-  const LABELS = {
-    VOL: 'Call Volume',
-    CO:  'Calls Offered',
-    ATT: 'Avg. Talk Time',
-    AH:  'Avg. Hold Time',
-    AC:  'Abandoned Calls',
-    AWT: 'Avg. Wait Time'
-  };
+  function cvqs_norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
 
-  function injectCell(tr, colIndex, queue, code, value) {
-    if (value === 0 && code !== 'VOL') return; // Skip 0s except Call Volume
-
-    const td = tr.children[colIndex];
-    if (!td || td.querySelector(`.${LINK_CLASS}`)) return;
-
-    const a = document.createElement('a');
+  function cvqs_linkifyCell(td, queueName, statKey, value){
+    if (value === null || value === undefined) return;
+    if (td.querySelector(`a.${LINK_CLASS}`)) return; // already linked
+    const a = td.ownerDocument.createElement('a');
     a.href = '#';
     a.className = LINK_CLASS;
     a.textContent = String(value);
-    a.style = 'font-weight:bold;text-decoration:underline;cursor:pointer;color:red';
-    a.addEventListener('click', e => {
+    a.style.fontWeight = 'bold';
+    a.style.textDecoration = 'underline';
+    a.style.cursor = 'pointer';
+    a.addEventListener('click', (e) => {
       e.preventDefault();
-      alert(`TEST ${queue} - ${LABELS[code]}`);
+      td.ownerDocument.defaultView.alert(`TEST ${queueName} — ${statKey}`);
     });
-
     td.replaceChildren(a);
   }
 
-  function injectAll() {
+  function cvqs_buildColMap(table){
+    const ths = [...table.querySelectorAll('thead th')];
+    const colMap = {}; // {VOL: idx, CO: idx, ...}
+    ths.forEach((th, idx) => {
+      const key = cvqs_STAT_MAP[cvqs_norm(th.textContent)];
+      if (key) colMap[key] = idx;
+    });
+    // name column (fallback to 3rd col if unlabeled)
+    let nameIdx = ths.findIndex(th => /(name|queue)/i.test(th.textContent));
+    if (nameIdx < 0) nameIdx = 2;
+    return { colMap, nameIdx };
+  }
+
+  function cvqs_injectAll(){
     const table = document.querySelector(TABLE_SEL);
     if (!table) return 0;
-    let count = 0;
 
+    const { colMap, nameIdx } = cvqs_buildColMap(table);
+    const keys = Object.keys(colMap);
+    if (!keys.length) return 0;
+
+    let updated = 0;
     table.querySelectorAll('tbody tr').forEach(tr => {
-      const name = (tr.children[2]?.textContent || '').trim();
-      const rowData = CVQ_DATA[name];
-      if (!rowData) return;
+      const tds = tr.querySelectorAll('td');
+      if (!tds.length) return;
+      const name = cvqs_norm(tds[nameIdx]?.textContent || '');
+      const row = cvqs_DATA[name];
+      if (!row) return;
 
-      for (const [code, colIndex] of Object.entries(COLUMNS)) {
-        const val = rowData[code];
-        if (val == null) continue;
-        injectCell(tr, colIndex, name, code, val);
-        count++;
+      for (const statKey of keys) {
+        const value = row[statKey];
+        if (value == null) continue;
+        const td = tds[colMap[statKey]];
+        if (!td) continue;
+        cvqs_linkifyCell(td, name, statKey, value);
+        updated++;
       }
     });
 
-    if (count) console.debug(`[CV DEMO] Injected ${count} stat cells.`);
-    return count;
+    if (updated) console.debug('[CV-QS] wrote', updated, 'cell(s).');
+    return updated;
   }
 
-  function init() {
-    let tries = 0, max = 30;
-    const timer = setInterval(() => {
-      tries++;
-      if (injectAll() > 0 || tries >= max) clearInterval(timer);
-    }, 250);
+  // Kick once, then stay current on redraws/DOM changes
+  const table = document.querySelector(TABLE_SEL);
+  if (!table) return; // only run on the stats doc
 
-    // Re-run on DataTables redraw
-    try {
-      const $ = window.jQuery;
-      if ($ && $.fn?.DataTable) {
-        $(TABLE_SEL).on('draw.dt', injectAll);
-      }
-    } catch (_) {}
+  // Initial + retries (handles late paint)
+  let tries = 0, max = 25;
+  const t = setInterval(() => {
+    tries++;
+    if (cvqs_injectAll() > 0 || tries >= max) clearInterval(t);
+  }, 200);
 
-    // Fallback: observe tbody
-    const tb = document.querySelector(`${TABLE_SEL} tbody`);
-    if (tb) new MutationObserver(() => injectAll())
+  // Re-apply on DataTables redraws (if present)
+  try {
+    const $ = window.jQuery;
+    if ($ && $.fn && $.fn.DataTable) {
+      $(TABLE_SEL).on('draw.dt', cvqs_injectAll);
+    }
+  } catch (_) {}
+
+  // Observe tbody in case the portal swaps rows
+  const tb = table.querySelector('tbody');
+  if (tb) {
+    new MutationObserver(cvqs_injectAll)
       .observe(tb, { childList: true, subtree: true });
-
-    // Manual run
-    window.cvqInjectAll = injectAll;
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
-  }
+  // Manual trigger for quick testing
+  window.cvqsInjectAll = cvqs_injectAll;
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
