@@ -4129,6 +4129,16 @@ document.addEventListener('click', function (e) {
     "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2,    AWT: "4:49" },
     "Billing":           { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,   AC: null, AWT: null }
   };
+  const CALL_DETAILS = {
+  "Main Routing": [
+    { callTime:"Today, 11:22 am", callerName:"JR Knight", callerNumber:"248-555-0144", DNIS:"248-436-3443", timeInQueue:"3:49", agentExtension:"206", agentPhone:"206", agentName:"Mark Sanchez", agentTime:"8:35", agentRelease:"Term: Bye", queueReleaseReason:"Connect" },
+    { callTime:"Today, 09:29 am", callerName:"Tanya Roberts", callerNumber:"313-555-3443", DNIS:"248-436-3443", timeInQueue:"3:47", agentExtension:"206", agentPhone:"206", agentName:"Mark Sanchez", agentTime:"0:57", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" },
+    { callTime:"Today, 10:23 am", callerName:"Monica Alvarez", callerNumber:"(989) 555-0113", DNIS:"248-436-3443", timeInQueue:"2:49", agentExtension:"200", agentPhone:"200", agentName:"Mike Johnson", agentTime:"1:52", agentRelease:"Term: Bye", queueReleaseReason:"Connect" },
+    { callTime:"Today, 08:08 am", callerName:"Coco LaBelle", callerNumber:"(989) 555-0672", DNIS:"248-436-3443", timeInQueue:"0:22", agentExtension:"201", agentPhone:"201", agentName:"Cathy Thomas", agentTime:"5:55", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" },
+    { callTime:"Today, 1:46 pm", callerName:"Tucker Jones", callerNumber:"(989) 555-0128", DNIS:"248-436-3443", timeInQueue:"6:17", agentExtension:"201", agentPhone:"201", agentName:"Cathy Thomas", agentTime:"1:28", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" }
+  ]
+};
+
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
   // header text -> stat code (include synonyms seen on Demo)
@@ -4178,7 +4188,7 @@ document.addEventListener('click', function (e) {
     });
 
     // NAME column: prefer exact "Name"; otherwise, guess by which column
-    // matches the most of your queue names in the first few rows
+    
     let nameIdx = ths.findIndex(th => /^name$/i.test(norm(th.textContent)));
     if (nameIdx < 0) {
       const rows = Array.from(table.tBodies[0]?.rows || []).slice(0, 12);
@@ -4226,8 +4236,53 @@ document.addEventListener('click', function (e) {
     a.style.cursor = 'pointer';
     a.addEventListener('click', e => {
       e.preventDefault();
-      td.ownerDocument.defaultView.alert(`TEST ${queue} — ${code}`);
+      const calls = CALL_DETAILS[queue];
+      if (!calls?.length) {
+        td.ownerDocument.defaultView.alert(`No call data available for ${queue}`);
+        return;
+      }
+
+      const doc = td.ownerDocument;
+      const modal = doc.createElement('div');
+      modal.style.cssText = `
+        position:fixed;top:10%;left:10%;width:80%;height:80%;
+        background:white;border:2px solid black;padding:12px;
+        overflow:auto;z-index:99999;font-family:sans-serif;
+     `;
+
+     const closeBtn = doc.createElement('button');
+     closeBtn.textContent = 'Close';
+     closeBtn.style = 'position:absolute;top:5px;right:10px;';
+     closeBtn.onclick = () => modal.remove();
+     modal.appendChild(closeBtn);
+
+     const table = doc.createElement('table');
+     table.style = 'width:100%;border-collapse:collapse;margin-top:10px;';
+     const headers = ["callTime","callerName","callerNumber","DNIS","timeInQueue","agentExtension","agentPhone","agentName","agentTime","agentRelease","queueReleaseReason"];
+     const tr = doc.createElement('tr');
+     headers.forEach(h => {
+      const th = doc.createElement('th');
+      th.textContent = h;
+      th.style = 'border:1px solid #ccc;padding:4px;background:#f0f0f0;text-align:left;';
+      tr.appendChild(th);
+   });
+  table.appendChild(tr);
+
+  calls.forEach(call => {
+    const row = doc.createElement('tr');
+    headers.forEach(h => {
+      const cell = doc.createElement('td');
+      cell.textContent = call[h] || '';
+      cell.style = 'border:1px solid #ccc;padding:4px;';
+      row.appendChild(cell);
     });
+    table.appendChild(row);
+  });
+
+  modal.appendChild(table);
+  doc.body.appendChild(modal);
+});
+
     td.replaceChildren(a);
     setSort(td, code, v);
   }
@@ -4312,6 +4367,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
