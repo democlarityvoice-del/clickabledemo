@@ -4106,6 +4106,152 @@ document.addEventListener('click', function (e) {
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
 
 
+/* ===== CV Queue Stats: Mass Injection (POC, append-only) ================
+   Page: /portal/stats/queuestats/queue/
+   What it does:
+     - Fills numbers for any queues you provide.
+     - Makes each number clickable (POC alert with queue + stat).
+     - Skips 0s (not clickable).
+     - Idempotent. Survives DataTables redraws and DOM updates.
+=========================================================================== */
+(() => {
+  const TABLE_SEL = '#modal_stats_table';
+  const LINK_CLASS = 'cvq-poc-link';
+
+  // Final data per screenshot + notes
+  const CVQ_DATA = {
+    "Main Routing": {
+      VOL: 5,
+      CO: 5,
+      ATT: "2:26",
+      AH: "0:10",
+      AC: 0,
+      AWT: "1:45"
+    },
+    "New Sales": {
+      VOL: 28,
+      CO: 28,
+      ATT: "5:22",
+      AH: "0:04",
+      AC: 1,
+      AWT: "2:10"
+    },
+    "Existing Customer": {
+      VOL: 16,
+      CO: 16,
+      ATT: "9:12",
+      AH: "0:11",
+      AC: 2,
+      AWT: "4:49"
+    },
+    "Billing": {
+      VOL: 2,
+      CO: 1,
+      ATT: "1:21",
+      AH: "00:00",
+      AC: 0,
+      AWT: "00:00"
+    }
+  };
+
+  const STAT_LABELS = {
+    VOL: 'Call Volume',
+    CO:  'Calls Offered',
+    ATT: 'Avg. Talk Time',
+    AH:  'Avg. Hold Time',
+    AC:  'Abandoned Calls',
+    AWT: 'Avg. Wait Time'
+  };
+  const VALID_STATS = Object.keys(STAT_LABELS);
+
+  function formatForText(val) {
+    return String(val);
+  }
+
+  function setSortValue(td, val) {
+    const n = Number(val);
+    if (!Number.isNaN(n)) td.setAttribute('data-order', String(n));
+  }
+
+  function linkifyCell(td, queueName, code, value) {
+    const isZero = (value === 0 || value === '0' || value === '00:00');
+    if (isZero) return; // Don't overwrite or link zero cells
+
+    const a = document.createElement('a');
+    a.href = '#';
+    a.className = LINK_CLASS;
+    a.textContent = formatForText(value);
+    a.style.fontWeight = 'bold';
+    a.style.textDecoration = 'underline';
+    a.style.cursor = 'pointer';
+    a.addEventListener('click', (e) => {
+      e.preventDefault();
+      alert(`TEST ${queueName} — ${STAT_LABELS[code] || code}`);
+    });
+    td.replaceChildren(a);
+    setSortValue(td, value);
+  }
+
+  function injectAll(data) {
+    const table = document.querySelector(TABLE_SEL);
+    if (!table) return 0;
+    let written = 0;
+
+    table.querySelectorAll('tbody tr').forEach(tr => {
+      const tds = tr.querySelectorAll('td');
+      if (!tds.length) return;
+
+      const name = (tds[2]?.textContent || '').trim();
+      if (!name || !data[name]) return;
+
+      tr.querySelectorAll('td.stat-td').forEach(td => {
+        const m = td.className.match(/\bqueue-([A-Z]+)\b/);
+        if (!m) return;
+        const code = m[1];
+        if (!VALID_STATS.includes(code)) return;
+
+        const value = data[name][code];
+        if (value == null || value === 0 || value === '00:00') return;
+
+        if (td.querySelector(`a.${LINK_CLASS}`)) return;
+
+        linkifyCell(td, name, code, value);
+        written++;
+      });
+    });
+
+    if (written) console.debug(`[CV] QueueStats POC: wrote ${written} cell(s).`);
+    return written;
+  }
+
+  function init() {
+    let tries = 0, max = 30;
+    const timer = setInterval(() => {
+      tries++;
+      if (injectAll(CVQ_DATA) > 0 || tries >= max) clearInterval(timer);
+    }, 200);
+
+    try {
+      const $ = window.jQuery;
+      if ($ && $.fn && $.fn.DataTable) {
+        $(TABLE_SEL).on('draw.dt', () => injectAll(CVQ_DATA));
+      }
+    } catch (_) {}
+
+    const tb = document.querySelector(`${TABLE_SEL} tbody`);
+    if (tb) new MutationObserver(() => injectAll(CVQ_DATA))
+      .observe(tb, { childList: true, subtree: true });
+
+    window.cvqInjectAll = () => injectAll(CVQ_DATA);
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+
 
 
 
