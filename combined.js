@@ -4114,38 +4114,31 @@ document.addEventListener('click', function (e) {
    Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
 ======================================================================= */
 /* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
+
+/* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal) ===== */
 (() => {
   if (window.__cvqs_auto_installed__) return;
   window.__cvqs_auto_installed__ = true;
 
   const LINK_CLASS = 'cvqs-poc-link';
-  const STATS_TABLE_ID = '#modal_stats_table'; // used if present; not required
+  const STATS_TABLE_ID = '#modal_stats_table';
   const MAX_SCAN_TRIES = 20;
 
-  // ---- YOUR DATA --------------------------------------------------------
-  const CVQ_DATA = {
-    "Main Routing":      { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
-    "New Sales":         { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
-    "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2,    AWT: "4:49" },
-    "Billing":           { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,   AC: null, AWT: null }
-  };
-  const CALL_DETAILS = {
-  "Main Routing": [
-    { callTime:"Today, 11:22 am", callerName:"JR Knight", callerNumber:"248-555-0144", DNIS:"248-436-3443", timeInQueue:"3:49", agentExtension:"206", agentPhone:"206", agentName:"Mark Sanchez", agentTime:"8:35", agentRelease:"Term: Bye", queueReleaseReason:"Connect" },
-    { callTime:"Today, 09:29 am", callerName:"Tanya Roberts", callerNumber:"313-555-3443", DNIS:"248-436-3443", timeInQueue:"3:47", agentExtension:"206", agentPhone:"206", agentName:"Mark Sanchez", agentTime:"0:57", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" },
-    { callTime:"Today, 10:23 am", callerName:"Monica Alvarez", callerNumber:"(989) 555-0113", DNIS:"248-436-3443", timeInQueue:"2:49", agentExtension:"200", agentPhone:"200", agentName:"Mike Johnson", agentTime:"1:52", agentRelease:"Term: Bye", queueReleaseReason:"Connect" },
-    { callTime:"Today, 08:08 am", callerName:"Coco LaBelle", callerNumber:"(989) 555-0672", DNIS:"248-436-3443", timeInQueue:"0:22", agentExtension:"201", agentPhone:"201", agentName:"Cathy Thomas", agentTime:"5:55", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" },
-    { callTime:"Today, 1:46 pm", callerName:"Tucker Jones", callerNumber:"(989) 555-0128", DNIS:"248-436-3443", timeInQueue:"6:17", agentExtension:"201", agentPhone:"201", agentName:"Cathy Thomas", agentTime:"1:28", agentRelease:"Orig: Bye", queueReleaseReason:"Connect" }
-  ]
-};
+  const queueRepDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const queueRepListen = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const queueRepCradle = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const queueRepNotes = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
 
+  const CVQ_DATA = {
+    "Main Routing": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+  };
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
-  // header text -> stat code (include synonyms seen on Demo)
   const HEADER_TO_STAT = {
     'Call Volume': 'VOL',
     'Calls Offered': 'CO',
-    'Calls Handled': 'CO',               // demo header
+    'Calls Handled': 'CO',
     'Avg. Talk Time': 'ATT',
     'Average Talk Time': 'ATT',
     'Avg. Hold Time': 'AH',
@@ -4154,7 +4147,14 @@ document.addEventListener('click', function (e) {
     'Average Wait Time': 'AWT'
   };
 
-  // ---------------- helpers ----------------
+  const STAT_DESCRIPTIONS = {
+    VOL: 'Number of calls originating through a Call Queue.\nIncludes answered calls, abandoned calls, forwards, and voicemail.',
+    CO: 'Number of calls answered by agent originating through a Call Queue.',
+    AH: 'Average time a caller spends on hold with an agent.\nExcludes waiting time in the Call Queue.',
+    AC: 'Number of calls that abandoned the queue before being offered to an agent.',
+    AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
+  };
+
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
@@ -4169,8 +4169,6 @@ document.addEventListener('click', function (e) {
   function candidateTables(doc) {
     const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
     if (direct.length) return direct;
-
-    // Heuristic: tables that have headers like call volume / wait time, etc.
     return Array.from(doc.querySelectorAll('table')).filter(t => {
       const ths = Array.from(t.querySelectorAll('thead th'));
       const labels = ths.map(th => norm(th.textContent));
@@ -4180,15 +4178,12 @@ document.addEventListener('click', function (e) {
 
   function mapHeaders(table) {
     const ths = Array.from(table.querySelectorAll('thead th'));
-    const colMap = {}; // {VOL: idx, CO: idx, ...}
+    const colMap = {};
     ths.forEach((th, i) => {
       const label = norm(th.textContent);
       const code = HEADER_TO_STAT[label];
       if (code) colMap[code] = i;
     });
-
-    // NAME column: prefer exact "Name"; otherwise, guess by which column
-    
     let nameIdx = ths.findIndex(th => /^name$/i.test(norm(th.textContent)));
     if (nameIdx < 0) {
       const rows = Array.from(table.tBodies[0]?.rows || []).slice(0, 12);
@@ -4201,7 +4196,7 @@ document.addEventListener('click', function (e) {
         return hits;
       });
       nameIdx = counts.indexOf(Math.max(...counts));
-      if (nameIdx < 0) nameIdx = 1; // fallback
+      if (nameIdx < 0) nameIdx = 1;
     }
     return { colMap, nameIdx };
   }
@@ -4224,6 +4219,17 @@ document.addEventListener('click', function (e) {
     }
   }
 
+  function injectIcons(tr) {
+    const td = document.createElement('td');
+    td.innerHTML = `
+      <img src="${queueRepDownload}" title="Download" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepListen}" title="Listen" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepCradle}" title="Cradle to Grave" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepNotes}" title="Edit Notes" style="cursor:pointer;width:16px">
+    `;
+    tr.appendChild(td);
+  }
+
   function linkify(td, queue, code, v) {
     if (v == null) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return;
@@ -4236,68 +4242,47 @@ document.addEventListener('click', function (e) {
     a.style.cursor = 'pointer';
     a.addEventListener('click', e => {
       e.preventDefault();
-      const calls = CALL_DETAILS[queue];
-      if (!calls?.length) {
-        td.ownerDocument.defaultView.alert(`No call data available for ${queue}`);
-        return;
-      }
-
-      const doc = td.ownerDocument;
-      const modal = doc.createElement('div');
-      modal.style.cssText = `
-        position:fixed;top:10%;left:10%;width:80%;height:80%;
-        background:white;border:2px solid black;padding:12px;
-        overflow:auto;z-index:99999;font-family:sans-serif;
-     `;
-
-     const closeBtn = doc.createElement('button');
-     closeBtn.textContent = 'Close';
-     closeBtn.style = 'position:absolute;top:5px;right:10px;';
-     closeBtn.onclick = () => modal.remove();
-     modal.appendChild(closeBtn);
-
-     const table = doc.createElement('table');
-     table.style = 'width:100%;border-collapse:collapse;margin-top:10px;';
-     const headers = ["callTime","callerName","callerNumber","DNIS","timeInQueue","agentExtension","agentPhone","agentName","agentTime","agentRelease","queueReleaseReason"];
-     const tr = doc.createElement('tr');
-     headers.forEach(h => {
-      const th = doc.createElement('th');
-      th.textContent = h;
-      th.style = 'border:1px solid #ccc;padding:4px;background:#f0f0f0;text-align:left;';
-      tr.appendChild(th);
-   });
-  table.appendChild(tr);
-
-  calls.forEach(call => {
-    const row = doc.createElement('tr');
-    headers.forEach(h => {
-      const cell = doc.createElement('td');
-      cell.textContent = call[h] || '';
-      cell.style = 'border:1px solid #ccc;padding:4px;';
-      row.appendChild(cell);
+      openQueueModal(queue, code);
     });
-    table.appendChild(row);
-  });
-
-  modal.appendChild(table);
-  doc.body.appendChild(modal);
-});
-
     td.replaceChildren(a);
     setSort(td, code, v);
+  }
+
+  function openQueueModal(queue, code) {
+    const modal = document.createElement('div');
+    modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
+    modal.innerHTML = `
+      <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
+      <h2 style="margin-top:0;color:#004a9b">${queue} (300) Call Volume</h2>
+      <div style="margin:10px 0;">
+        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:white;color:#004a9b">
+            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>09/01/2025 8:08 am</td><td>DOBBS TERESA</td><td>16788732633</td><td>(800) 676-3995</td><td>00:38</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:31</td><td>Term: Bye</td><td>Connect</td></tr>
+          <tr><td>09/01/2025 8:15 am</td><td>MR APPLIANCE</td><td>17183139198</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:38</td><td>Orig: Bye</td><td>Connect</td></tr>
+          <tr><td>09/01/2025 8:48 am</td><td>WIRELESS CALLER</td><td>13016131380</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>09:22</td><td>Term: Bye</td><td>Connect</td></tr>
+        </tbody>
+      </table>
+    `;
+    modal.querySelectorAll('tbody tr').forEach(injectIcons);
+    document.body.appendChild(modal);
   }
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
     const statCodes = Object.keys(colMap);
     if (!statCodes.length) return 0;
-
     let wrote = 0;
     Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
       const name = norm(tr.cells[nameIdx]?.textContent);
       const data = CVQ_DATA[name];
       if (!data) return;
-
       statCodes.forEach(code => {
         const td = tr.cells[colMap[code]];
         if (!td) return;
@@ -4315,8 +4300,6 @@ document.addEventListener('click', function (e) {
       const n = injectTable(doc, table);
       if (n) LOG('wrote', n, 'cell(s) in', doc.defaultView?.location?.href || '(doc)');
     };
-
-    // Wait until row count settles a bit
     let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
     const t = doc.defaultView.setInterval(() => {
       tries++;
@@ -4328,7 +4311,6 @@ document.addEventListener('click', function (e) {
       }
     }, 150);
 
-    // Redraws
     try {
       const $ = doc.defaultView.jQuery;
       if ($ && $.fn && $.fn.DataTable) {
@@ -4336,12 +4318,10 @@ document.addEventListener('click', function (e) {
       }
     } catch (_) {}
 
-    // DOM changes
     const tb = table.tBodies[0];
     if (tb) new doc.defaultView.MutationObserver(apply)
       .observe(tb, { childList: true, subtree: true });
 
-    // Manual trigger
     doc.defaultView.cvqsForce = apply;
   }
 
@@ -4349,13 +4329,11 @@ document.addEventListener('click', function (e) {
     const docs = collectDocs(document);
     LOG('scanning', docs.length, 'document(s)…');
     let attached = 0;
-
     docs.forEach(doc => {
       const tables = candidateTables(doc);
       if (!tables.length) return;
       tables.forEach(tbl => { attach(doc, tbl); attached++; });
     });
-
     if (!attached) LOG('no candidate tables found (yet)');
   }
 
@@ -4367,6 +4345,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
