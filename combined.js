@@ -4276,12 +4276,12 @@ const statDescHtml = descRaw
     modal.innerHTML = `
       <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
       <h2 style="margin-top:0;margin-bottom:10px;color:#000;font-size:20px;">
-        ${queue} (300) ${statTitle}
+        ${esc(queue)} (300) ${esc(statTitle)}
         <span class="popover-stats ${code}"
-            title="${statTitle}"
-            data-title="${statTitle}"
-            data-content="${(STAT_DESCRIPTIONS[code]||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\.\s/,'.</p><p>') ? `<p>${(STAT_DESCRIPTIONS[code]||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\.\s/,'.</p><p>')}</p>` : ''}"
-            data-original-title="${statTitle}">
+            title="${esc(statTitle)}"
+            data-title="${esc(statTitle)}"
+            data-content="${statDescHtml}"
+            data-original-title="${esc(statTitle)}">
           <i class="icon-info-sign"></i>
         </span>
       </h2>
@@ -4392,6 +4392,7 @@ try {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
