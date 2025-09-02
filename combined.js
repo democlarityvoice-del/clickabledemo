@@ -4120,41 +4120,6 @@ function onQueueDetailsEnter() {
   // Prevent double-injection
   if (document.getElementById('cv-queue-details-wrapper')) return;
 
-  // Create container
-  const wrapper = document.createElement('div');
-  wrapper.id = 'cv-queue-details-wrapper';
-  wrapper.style.margin = '24px';
-  wrapper.innerHTML = `
-    <h2 style="font-size: 20px; font-weight: bold; color: #333;">Custom Queue Detail Summary</h2>
-    <div style="padding: 12px; border: 1px solid #ccc; border-radius: 6px; background: #fdfdfd; margin-top: 12px;">
-      <p><strong>Fake Metric 1:</strong> 89%</p>
-      <p><strong>Fake Metric 2:</strong> 42 calls</p>
-      <p><strong>Injected Notes:</strong> This section was safely appended without touching existing elements.</p>
-    </div>
-  `;
-
-  // Append after whatever native content we expect (e.g., a native chart or section)
-  const target = document.querySelector('.call-history-section') || document.querySelector('#content') || document.body;
-  if (target) target.appendChild(wrapper);
-}
-
-// Nav click support (if navigating from table)
-document.addEventListener('click', (e) => {
-  const el = e.target instanceof Element ? e.target : null;
-  if (el && el.closest(QUEUEDETAILS_SELECTOR)) {
-    setTimeout(onQueueDetailsEnter, 0);
-  }
-});
-
-// Initial check (if user landed directly on a details page)
-if (QUEUEDETAILS_REGEX.test(location.href)) onQueueDetailsEnter();
-
-function onQueueDetailsEnter() {
-  console.debug('📊 Injecting custom queue details view');
-
-  // Prevent double-injection
-  if (document.getElementById('cv-queue-details-wrapper')) return;
-
   // Extract queue name from visible DOM
   const queueNameEl = document.querySelector('h3.panel-title');
   const queueName = queueNameEl ? queueNameEl.textContent.trim() : '';
@@ -4185,10 +4150,24 @@ function onQueueDetailsEnter() {
     </div>
   `;
 
-  // Append below native content
+  // Append below the known container
   const target = document.querySelector('#content') || document.body;
   if (target) target.appendChild(wrapper);
 }
+
+// Nav click support
+document.addEventListener('click', (e) => {
+  const el = e.target instanceof Element ? e.target : null;
+  if (el && el.closest(QUEUEDETAILS_SELECTOR)) {
+    setTimeout(onQueueDetailsEnter, 0);
+  }
+});
+
+// Initial load support
+if (QUEUEDETAILS_REGEX.test(location.href)) {
+  onQueueDetailsEnter();
+}
+
 
 
 
