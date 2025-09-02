@@ -4106,101 +4106,91 @@ document.addEventListener('click', function (e) {
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
 
 
-/* ===== CV Queue Stats: Mass Injection (POC, append-only) ================
-   Page: /portal/stats/queuestats/queue/
-   What it does:
-     - Fills numbers for any queues you provide.
-     - Makes each number clickable (POC alert with queue + stat).
-     - Skips 0s (not clickable).
-     - Idempotent. Survives DataTables redraws and DOM updates.
-=========================================================================== */
-/* ===== CV Queue Stats: Mass Injection (POC, append-only) ================
-   Page: /portal/stats/queuestats/queue/
-   What it does:
-     - Fills ALL provided numbers (including 0s) for each queue.
-     - Makes every number clickable (POC alert with queue + stat).
-     - Idempotent. Survives DataTables redraws and DOM updates.
-=========================================================================== */
+
+/* == CV Queue Stats: Routed + Iframe-aware Mass Injection (append-only) ==
+   Targets: /portal/stats/queuestats/queue/  (top or same-origin iframe)
+   Behavior: injects numbers from CVQ_DATA, makes them clickable (POC alert)
+   Notes:    idempotent, observers for redraws/updates, safe unique prefix
+========================================================================= */
 (() => {
   const ROUTE_PREFIX = '/portal/stats/queuestats/queue';
-  const TABLE_SEL = '#modal_stats_table';
-  const LINK_CLASS = 'cvq-poc-link';
+  const TABLE_SEL    = '#modal_stats_table';
+  const LINK_CLASS   = 'cvqs-poc-link';
+  const INCLUDE_ZEROS = true; // set to false to skip linking 0 / "00:00"
 
-  // === Your dataset (exact queue names as shown in the Name column) ======
+  // ---- Your dataset (exact queue names) --------------------------------
   const CVQ_DATA = {
-    "Main Routing": {
-      VOL: 5,
-      CO: 5,
-      ATT: "2:26",
-      AH: "0:10",
-      AC: 0,
-      AWT: "1:45"
-    },
-    "New Sales": {
-      VOL: 28,
-      CO: 28,
-      ATT: "5:22",
-      AH: "0:04",
-      AC: 1,
-      AWT: "2:10"
-    },
-    "Existing Customer": {
-      VOL: 16,
-      CO: 16,
-      ATT: "9:12",
-      AH: "0:11",
-      AC: 2,
-      AWT: "4:49"
-    },
-    "Billing": {
-      VOL: 2,
-      CO: 1,
-      ATT: "1:21",
-      AH: "00:00",
-      AC: 0,
-      AWT: "00:00"
+    "Main Routing": { VOL: 5,  CO: 5,  ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "New Sales":    { VOL: 28, CO: 28, ATT: "5:22", AH: "0:04", AC: 1,    AWT: "2:10" },
+    "Existing Customer": { VOL: 16, CO: 16, ATT: "9:12", AH: "0:11", AC: 2, AWT: "4:49" },
+    "Billing":      { VOL: 2,  CO: 1,  ATT: "1:21", AH: null,  AC: null, AWT: null }
+  };
+
+  // Header -> stat code map (relies on visible column headers)
+  const STAT_MAP = {
+    'Call Volume': 'VOL',
+    'Calls Offered': 'CO',
+    'Avg. Talk Time': 'ATT',
+    'Avg. Hold Time': 'AH',
+    'Abandoned Calls': 'AC',
+    'Avg. Wait Time': 'AWT'
+  };
+  const VALID_STATS = Object.values(STAT_MAP);
+  const LOGP = '[CV-QS]';
+
+  function cvqsNorm(s) { return (s || '').replace(/\s+/g, ' ').trim(); }
+
+  // Discover target document (current doc if already on route, else same-origin iframes)
+  function cvqsFindDocs(rootDoc) {
+    const list = [];
+    function walk(doc) {
+      try {
+        const p = doc.defaultView?.location?.pathname || '';
+        const looksRight = p.startsWith(ROUTE_PREFIX) || !!doc.querySelector(TABLE_SEL);
+        if (looksRight) list.push(doc);
+      } catch (_) {}
+      const iframes = doc.querySelectorAll('iframe');
+      for (const f of iframes) {
+        try {
+          const idoc = f.contentDocument;
+          if (idoc && idoc.defaultView) walk(idoc);
+        } catch (_) { /* cross-origin */ }
+      }
     }
-  };
-  // =======================================================================
+    walk(rootDoc);
+    return list.length ? list : [rootDoc]; // fallback: at least top doc
+  }
 
-  const STAT_LABELS = {
-    VOL: 'Call Volume',
-    CO:  'Calls Offered',
-    ATT: 'Avg. Talk Time',
-    AH:  'Avg. Hold Time',
-    AC:  'Abandoned Calls',
-    AWT: 'Avg. Wait Time'
-  };
-  const VALID_STATS = Object.keys(STAT_LABELS);
+  function cvqsShouldLink(code, value) {
+    if (value == null) return false;
+    if (INCLUDE_ZEROS) return true;
+    if (typeof value === 'number') return value !== 0;
+    const s = String(value).trim();
+    if (s === '0' || s === '0.0' || s === '00:00' || s === '0:00') return false;
+    return s.length > 0;
+  }
 
-  function timeToSeconds(v) {
+  function cvqsTimeToSeconds(v) {
     if (typeof v !== 'string') return null;
-    const parts = v.split(':').map(s => Number(s));
+    const parts = v.split(':').map(Number);
     if (parts.some(Number.isNaN)) return null;
-    if (parts.length === 2) { // mm:ss
-      const [m, s] = parts; return (m * 60) + s;
-    }
-    if (parts.length === 3) { // hh:mm:ss
-      const [h, m, s] = parts; return (h * 3600) + (m * 60) + s;
-    }
+    if (parts.length === 2) { const [m,s] = parts; return (m*60)+s; }
+    if (parts.length === 3) { const [h,m,s] = parts; return (h*3600)+(m*60)+s; }
     return null;
   }
 
-  function setSortValue(td, code, val) {
-    // Numbers sort numerically; times sort by seconds; strings left alone
+  function cvqsSetSortValue(td, code, val) {
     const n = Number(val);
-    if (!Number.isNaN(n)) {
-      td.setAttribute('data-order', String(n));
-      return;
-    }
+    if (!Number.isNaN(n)) { td.setAttribute('data-order', String(n)); return; }
     if (code === 'ATT' || code === 'AH' || code === 'AWT') {
-      const sec = timeToSeconds(val);
+      const sec = cvqsTimeToSeconds(val);
       if (sec != null) td.setAttribute('data-order', String(sec));
     }
   }
 
-  function linkifyCell(td, queueName, code, value) {
-    const a = document.createElement('a');
+  function cvqsLinkifyCell(doc, td, queueName, statKey, value) {
+    if (!cvqsShouldLink(statKey, value)) return;
+    const a = doc.createElement('a');
     a.href = '#';
     a.className = LINK_CLASS;
     a.textContent = String(value);
@@ -4209,80 +4199,122 @@ document.addEventListener('click', function (e) {
     a.style.cursor = 'pointer';
     a.addEventListener('click', (e) => {
       e.preventDefault();
-      alert(`TEST ${queueName} — ${STAT_LABELS[code] || code}`);
+      doc.defaultView.alert(`TEST ${queueName} — ${statKey}`);
     });
     td.replaceChildren(a);
-    setSortValue(td, code, value);
+    cvqsSetSortValue(td, statKey, value);
   }
 
-  function injectAll(data) {
-    const table = document.querySelector(TABLE_SEL);
-    if (!table) return 0;
-    let written = 0;
+  function cvqsBuildColMap(table) {
+    const ths = [...table.querySelectorAll('thead th')];
+    const colMap = {}; // {VOL: idx, CO: idx, ...}
+    ths.forEach((th, idx) => {
+      const label = cvqsNorm(th.textContent);
+      const statKey = STAT_MAP[label];
+      if (statKey) colMap[statKey] = idx;
+    });
+    // Also find name column if present
+    let nameIdx = ths.findIndex(th => /(name|queue)/i.test(th.textContent));
+    if (nameIdx < 0) nameIdx = 2; // fallback seen in your DOM
+    return { colMap, nameIdx };
+  }
 
+  function cvqsInjectAll(doc) {
+    const table = doc.querySelector(TABLE_SEL);
+    if (!table) return 0;
+
+    const { colMap, nameIdx } = cvqsBuildColMap(table);
+    const keys = Object.keys(colMap);
+    if (!keys.length) return 0;
+
+    let updated = 0;
     table.querySelectorAll('tbody tr').forEach(tr => {
       const tds = tr.querySelectorAll('td');
       if (!tds.length) return;
+      const name = cvqsNorm(tds[nameIdx]?.textContent || '');
+      const stats = CVQ_DATA[name];
+      if (!stats) return;
 
-      // Typical layout per your screenshots: 3rd <td> is the Name cell.
-      const name = (tds[2]?.textContent || '').trim();
-      const rowData = data[name];
-      if (!rowData) return;
-
-      tr.querySelectorAll('td.stat-td').forEach(td => {
-        // Class contains the stat code as "queue-CO", "queue-ATT", etc.
-        const m = td.className.match(/\bqueue-([A-Z]+)\b/);
-        if (!m) return;
-        const code = m[1];
-        if (!VALID_STATS.includes(code)) return;
-
-        const value = rowData[code];
-        if (value === undefined) return;
-
-        // Skip if we've already linked it
-        if (td.querySelector(`a.${LINK_CLASS}`)) return;
-
-        linkifyCell(td, name, code, value);
-        written++;
-      });
-    });
-
-    if (written) console.debug(`[CV] QueueStats POC: wrote ${written} cell(s).`);
-    return written;
-  }
-
-  function init() {
-    let tries = 0, max = 30;
-    const timer = setInterval(() => {
-      tries++;
-      if (injectAll(CVQ_DATA) > 0 || tries >= max) clearInterval(timer);
-    }, 200);
-
-    // Re-apply on DataTables redraws if present
-    try {
-      const $ = window.jQuery;
-      if ($ && $.fn && $.fn.DataTable) {
-        $(TABLE_SEL).on('draw.dt', () => injectAll(CVQ_DATA));
+      for (const statKey of keys) {
+        const colIndex = colMap[statKey];
+        const td = tds[colIndex];
+        if (!td) continue;
+        // Skip if already linked
+        if (td.querySelector(`a.${LINK_CLASS}`)) continue;
+        const value = stats[statKey];
+        if (value == null) continue;
+        cvqsLinkifyCell(doc, td, name, statKey, value);
+        updated++;
       }
-    } catch (_) {}
+    });
+    if (updated) console.debug(`${LOGP} wrote ${updated} cell(s).`);
+    return updated;
+  }
 
-    // Fallback: observe tbody changes
-    const tb = document.querySelector(`${TABLE_SEL} tbody`);
-    if (tb) {
-      new MutationObserver(() => injectAll(CVQ_DATA))
-        .observe(tb, { childList: true, subtree: true });
+  const seenDocs = new WeakSet();
+
+  function cvqsInitForDoc(doc) {
+    if (seenDocs.has(doc)) return;
+    seenDocs.add(doc);
+
+    const start = () => {
+      // initial tries in case DataTables paints late
+      let tries = 0, max = 30;
+      const timer = doc.defaultView.setInterval(() => {
+        tries++;
+        if (cvqsInjectAll(doc) > 0 || tries >= max) doc.defaultView.clearInterval(timer);
+      }, 200);
+
+      // hook DataTables redraws, if present
+      try {
+        const $ = doc.defaultView.jQuery;
+        if ($ && $.fn && $.fn.DataTable) {
+          $(TABLE_SEL, doc).on('draw.dt', () => cvqsInjectAll(doc));
+        }
+      } catch (_) {}
+
+      // observe tbody for dynamic changes
+      const tb = doc.querySelector(`${TABLE_SEL} tbody`);
+      if (tb) {
+        new doc.defaultView.MutationObserver(() => cvqsInjectAll(doc))
+          .observe(tb, { childList: true, subtree: true });
+      }
+
+      // optional manual trigger
+      doc.defaultView.cvqsForce = () => cvqsInjectAll(doc);
+    };
+
+    if (doc.readyState === 'loading') {
+      doc.addEventListener('DOMContentLoaded', start, { once: true });
+    } else {
+      start();
     }
-
-    // Optional manual trigger for console
-    window.cvqInjectAll = () => injectAll(CVQ_DATA);
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    init();
+  function cvqsBoot() {
+    // route guard (top or iframes)
+    const onRoute = location.pathname.startsWith(ROUTE_PREFIX) || !!document.querySelector(TABLE_SEL);
+    if (!onRoute) {
+      // scan same-origin iframes for the route/table
+      const docs = cvqsFindDocs(document);
+      docs.forEach(cvqsInitForDoc);
+    } else {
+      cvqsInitForDoc(document);
+      // also scan same-origin iframes—some portals embed the table in a frame
+      cvqsFindDocs(document).forEach(cvqsInitForDoc);
+    }
   }
+
+  // Run now and retry briefly (in case iframe mounts later)
+  cvqsBoot();
+  let boots = 0, maxBoots = 20;
+  const bootTimer = setInterval(() => {
+    cvqsBoot();
+    if (++boots >= maxBoots) clearInterval(bootTimer);
+  }, 300);
 })();
+
+
 
 
 
