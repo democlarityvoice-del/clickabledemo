@@ -397,47 +397,52 @@ tr:hover .listen-btn img {
   }
 }
 
+// === Calls Graph STEP 1: Function to draw the fake lines ===
 function injectFakePeakCallLines() {
   const svg = document.querySelector('#chart_div svg');
   if (!svg) return;
 
-  // Find the clip-path group used by the graph line
-  const targetGroup = Array.from(svg.querySelectorAll('g'))
-    .find(g => g.getAttribute('clip-path')?.includes('RENDERER_ID'));
+  // Remove old ones if re-running
+  const oldGroup = document.getElementById('cv-fake-peak-lines');
+  if (oldGroup) oldGroup.remove();
 
-  if (!targetGroup) {
-    console.warn("Couldn't find chart plot group.");
-    return;
-  }
+  const NS = "http://www.w3.org/2000/svg";
+  const fakeGroup = document.createElementNS(NS, 'g');
+  fakeGroup.setAttribute('id', 'cv-fake-peak-lines');
 
-  // Prevent double-injection
-  if (svg.querySelector('#cv-fake-call-lines')) return;
+  // 👇 Define your fake line x-positions here
+  const xPositions = [40, 150, 260]; // adjust to match the actual tick marks
 
-  const fakeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
-  fakeGroup.setAttribute("id", "cv-fake-call-lines");
-
-  // Example: 7 days of fake lines. You can expand this.
-  const spacing = 50.75; // Approximate distance between each tick (adjust as needed)
-  const baseX = 7; // Left offset (based on your rect x="7")
-  const dates = 7; // number of fake days
-
-  for (let i = 0; i < dates; i++) {
-    const x = baseX + i * spacing;
-    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
-    line.setAttribute("x1", x);
-    line.setAttribute("y1", 30); // top of graph area
-    line.setAttribute("x2", x);
-    line.setAttribute("y2", 430); // bottom of graph area
-    line.setAttribute("stroke", i === 1 ? "#0b5cad" : "#0b5cad");
-    line.setAttribute("stroke-width", i === 1 ? "2.5" : "1");
-    line.setAttribute("opacity", i === 1 ? "1" : "0.4");
+  xPositions.forEach(x => {
+    const line = document.createElementNS(NS, 'line');
+    line.setAttribute('x1', x);
+    line.setAttribute('x2', x);
+    line.setAttribute('y1', 0);
+    line.setAttribute('y2', 406);  // chart height
+    line.setAttribute('stroke', '#e57027');
+    line.setAttribute('stroke-width', '2');
     fakeGroup.appendChild(line);
-  }
+  });
 
-  targetGroup.appendChild(fakeGroup);
+  svg.appendChild(fakeGroup);
 }
 
+// === STEP 2: Observer to wait until chart SVG is ready ===
+const observer = new MutationObserver((mutations, obs) => {
+  const svg = document.querySelector('#chart_div svg');
+  if (svg) {
+    injectFakePeakCallLines();
+    obs.disconnect();
+  }
+});
 
+observer.observe(document.body, {
+  childList: true,
+  subtree: true
+});
+
+
+  
 
   // -------- HOME ROUTING -------- //
 function onHomeEnter() {
@@ -4142,6 +4147,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
