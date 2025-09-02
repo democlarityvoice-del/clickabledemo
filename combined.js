@@ -4162,10 +4162,10 @@ function openQueueModal(queue, code) {
   const statInfo = STAT_DESCRIPTIONS[code] || "";
 
   const modal = document.createElement("div");
-  modal.style = `
-    position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;
-    padding:20px;z-index:9999;border:none;font-family:sans-serif;overflow:auto;
-  `;
+  modal.style.cssText = `
+     position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;
+     padding:20px;z-index:9999;border:none;font-family:sans-serif;overflow:auto;
+   `;
   modal.innerHTML = `
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
       <button style="font-weight:bold" onclick="this.closest('div').parentNode.remove()">Back</button>
@@ -4286,6 +4286,83 @@ function openQueueModal(queue, code) {
     doc.defaultView.cvqsForce = apply;
   }
 
+  /* --- Minimal safety shims (only used if your originals are missing) --- */
+const LOG = (...args) =>
+  (window.LOG && typeof window.LOG === 'function')
+    ? window.LOG(...args)
+    : console.log('[cvqs]', ...args);
+
+function _norm(s){ return (s||'').replace(/\s+/g,' ').trim(); } // local use for shims
+
+if (typeof window.collectDocs !== 'function') {
+  window.collectDocs = (root) => {
+    const out = [root];
+    document.querySelectorAll('iframe').forEach(f => {
+      try { if (f.contentDocument) out.push(f.contentDocument); } catch (_) {}
+    });
+    return out;
+  };
+}
+
+if (typeof window.candidateTables !== 'function') {
+  window.candidateTables = (doc) => {
+    const direct = Array.from(doc.querySelectorAll('#modal_stats_table'));
+    if (direct.length) return direct;
+    return Array.from(doc.querySelectorAll('table')).filter(t => {
+      const head = t.tHead?.rows?.[0];
+      if (!head) return false;
+      const headers = Array.from(head.cells).map(th => _norm(th.textContent).toUpperCase());
+      const hasQueue = headers.some(h => /QUEUE/.test(h));
+      const hasStat = headers.some(h => /(VOLUME|OFFERED|ABANDON|WAIT|HOLD|TALK)/.test(h));
+      return hasQueue && hasStat;
+    });
+  };
+}
+
+if (typeof window.mapHeaders !== 'function') {
+  window.mapHeaders = (table) => {
+    const head = table.tHead?.rows?.[0] || table.rows?.[0];
+    const colMap = {};
+    let nameIdx = -1;
+    if (!head) return { colMap, nameIdx };
+    const codes = {
+      VOL: /^(VOL|CALL ?VOLUME)/i,
+      CO: /^(CO|CALLS ?OFFERED)/i,
+      AH: /^(AH|AVG\.?\s*HOLD)/i,
+      AC: /^(AC|ABANDON)/i,
+      AWT: /^(AWT|AVG\.?\s*WAIT)/i,
+      ATT: /^(ATT|AVG\.?\s*TALK)/i,
+    };
+    Array.from(head.cells).forEach((th, idx) => {
+      const txt = _norm(th.textContent);
+      const up  = txt.toUpperCase();
+      if (nameIdx < 0 && /(QUEUE|NAME)/i.test(txt)) nameIdx = idx;
+      for (const [code, re] of Object.entries(codes)) {
+        if (re.test(up)) colMap[code] = idx;
+      }
+    });
+    if (nameIdx < 0) nameIdx = 0; // fallback to first column
+    return { colMap, nameIdx };
+  };
+}
+
+if (typeof window.linkify !== 'function') {
+  window.linkify = (td, queueName, code, val) => {
+    if (!td) return;
+    td.innerHTML = `<a href="#" data-q="${queueName}" data-code="${code}">${val}</a>`;
+    const a = td.querySelector('a');
+    a.addEventListener('click', (e) => { e.preventDefault(); openQueueModal(queueName, code); });
+  };
+}
+
+/* --- tiny guard so a missing name column never mis-indexes --- */
+const _injectTableOrig = injectTable;
+injectTable = function(doc, table){
+  const { colMap, nameIdx } = mapHeaders(table);
+  if (nameIdx == null || nameIdx < 0) return 0;
+  return _injectTableOrig(doc, table);
+};
+
   function boot() {
     const docs = collectDocs(document);
     LOG('scanning', docs.length, 'document(s)…');
@@ -4306,6 +4383,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
