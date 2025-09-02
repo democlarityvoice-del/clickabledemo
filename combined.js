@@ -4236,26 +4236,33 @@ document.addEventListener('click', function (e) {
     document.body.appendChild(modal);
   }
 
-  function injectTable(doc, table) {
-    const { colMap, nameIdx } = mapHeaders(table);
-    const statCodes = Object.keys(colMap);
-    if (!statCodes.length) return 0;
-    let wrote = 0;
-    Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
-      const name = norm(tr.cells[nameIdx]?.textContent);
-      const data = CVQ_DATA[name];
-      if (!data) return;
-      statCodes.forEach(code => {
-        const td = tr.cells[colMap[code]];
-        if (!td) return;
-        const val = data[code];
-        if (val == null) return;
-        linkify(td, name, code, val);
-        wrote++;
-      });
+function injectTable(doc, table) {
+  const { colMap, nameIdx, queueIdx } = mapHeaders(table);
+  const statCodes = Object.keys(colMap);
+  if (!statCodes.length) return 0;
+  let wrote = 0;
+
+  Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
+    const nameVal  = nameIdx  >= 0 ? norm(tr.cells[nameIdx]?.textContent)  : null;
+    const queueVal = queueIdx >= 0 ? norm(tr.cells[queueIdx]?.textContent) : null;
+
+    // Try name first, then queue number
+    const data = CVQ_DATA[nameVal] || CVQ_DATA[queueVal];
+    if (!data) return;
+
+    statCodes.forEach(code => {
+      const td = tr.cells[colMap[code]];
+      if (!td) return;
+      const val = data[code];
+      if (val == null) return;
+      linkify(td, nameVal || queueVal, code, val);
+      wrote++;
     });
-    return wrote;
-  }
+  });
+
+  return wrote;
+}
+
 
   function attach(doc, table) {
     // prevent duplicate bindings on the same table
@@ -4325,31 +4332,37 @@ document.addEventListener('click', function (e) {
   }
 
   if (typeof window.mapHeaders !== 'function') {
-    window.mapHeaders = (table) => {
-      const head = table.tHead?.rows?.[0] || table.rows?.[0];
-      const colMap = {};
-      let nameIdx = -1;
-      if (!head) return { colMap, nameIdx };
-      const codes = {
-        VOL: /^(VOL|CALL ?VOLUME)/i,
-        CO:  /^(CO|CALLS ?OFFERED)/i,
-        AH:  /^(AH|AVG\.?\s*HOLD)/i,
-        AC:  /^(AC|ABANDON)/i,
-        AWT: /^(AWT|AVG\.?\s*WAIT)/i,
-        ATT: /^(ATT|AVG\.?\s*TALK)/i,
-      };
-      Array.from(head.cells).forEach((th, idx) => {
-        const txt = _norm(th.textContent);
-        const up  = txt.toUpperCase();
-        if (nameIdx < 0 && /^NAME$/i.test(up)) nameIdx = idx;
-        for (const [code, re] of Object.entries(codes)) {
-          if (re.test(up)) colMap[code] = idx;
-        }
-      });
-      if (nameIdx < 0) nameIdx = 0; // fallback to first column
-      return { colMap, nameIdx };
+  window.mapHeaders = (table) => {
+    const head = table.tHead?.rows?.[0] || table.rows?.[0];
+    const colMap = {};
+    let nameIdx = -1, queueIdx = -1;
+    if (!head) return { colMap, nameIdx, queueIdx };
+
+    const codeTests = {
+      VOL: [/^VOL$/i, /^(CALL\s*)?VOLUME$/i],
+      CO:  [/^CO$/i, /^(CALLS\s*)?OFFERED$/i],
+      AH:  [/^AH$/i, /^AVG\.?\s*HOLD/i],
+      AC:  [/^AC$/i, /ABANDON/i],
+      AWT: [/^AWT$/i, /^AVG\.?\s*WAIT/i],
+      ATT: [/^ATT$/i, /^AVG\.?\s*TALK/i],
     };
-  }
+
+    Array.from(head.cells).forEach((th, idx) => {
+      const txt = (th.textContent || '').replace(/\s+/g,' ').trim();
+      const up  = txt.toUpperCase();
+
+      if (nameIdx  < 0 && /^NAME$/i.test(up))   nameIdx = idx;
+      if (queueIdx < 0 && /^QUEUE$/i.test(up)) queueIdx = idx;
+
+      for (const [code, tests] of Object.entries(codeTests)) {
+        if (tests.some(re => re.test(up))) colMap[code] = idx;
+      }
+    });
+
+    return { colMap, nameIdx, queueIdx };
+  };
+}
+
 
   if (typeof window.linkify !== 'function') {
     window.linkify = (td, queueName, code, val) => {
@@ -4388,6 +4401,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
