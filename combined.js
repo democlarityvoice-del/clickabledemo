@@ -412,42 +412,19 @@ function injectFakePeakCallLines() {
   polyline.setAttribute('stroke', '#3366cc');
   polyline.setAttribute('stroke-width', '2');
 
-  // Simulate smoother real-world peak activity across 7 days
+  // Grounded cycles – each starts and ends at y=400 (baseline)
   const points = [
-    [20, 360],
-    [40, 280],
-    [60, 180],
-    [80, 240],
-    [100, 340],
-
-    [140, 320],
-
-    [180, 260],
-    [200, 140],
-    [220, 220],
-    [240, 300],
-    [260, 360],
-
-    [300, 320],
-    [320, 160],
-    [340, 100],
-    [360, 240],
-    [380, 300],
-
-    [420, 280],
-    [440, 200],
-    [460, 120],
-    [480, 180],
-    [500, 260],
-    [520, 320],
-
-    [560, 300],
-    [580, 160],
-    [600, 100],
-    [620, 200],
-    [640, 280],
+    [0, 400], [20, 320], [40, 260], [60, 300], [80, 400],    // Aug 21
+    [100, 400], [120, 280], [140, 220], [160, 290], [180, 400],  // Aug 22-23
+    [200, 400], [220, 250], [240, 180], [260, 280], [280, 400],  // Aug 24
+    [300, 400], [320, 260], [340, 190], [360, 270], [380, 400],  // Aug 25
+    [400, 400], [420, 230], [440, 170], [460, 260], [480, 400],  // Aug 26
+    [500, 400], [520, 210], [540, 150], [560, 250], [580, 400],  // Aug 27
   ];
 
+  polyline.setAttribute('points', points.map(p => p.join(',')).join(' '));
+  svg.appendChild(polyline);
+}
 
 
   const pointStr = points.map(p => p.join(',')).join(' ');
@@ -4177,6 +4154,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
