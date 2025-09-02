@@ -1803,8 +1803,9 @@ if (!window.__cvAgentsPanelInit) {
   document.addEventListener('click', function(e){
     var root = document.getElementById('cv-agents-panel'); if (!root) return;
     var btn = e.target && e.target.closest &&
-      e.target.closest('#cv-agents-panel .cv-tool[title="Stats"], #cv-agents-panel .cv-tool-stats, #cv-agents-panel [data-tool="stats"]');
+      e.target.closest('.cv-tool[title="Stats"], .cv-tool-stats, [data-tool="stats"]');
     if (!btn || !root.contains(btn)) return;
+
 
     var row = btn.closest('.cv-row'); if (!row) return;
     var label = (row.querySelector('.cv-name') && row.querySelector('.cv-name').textContent) || '';
@@ -4102,6 +4103,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
