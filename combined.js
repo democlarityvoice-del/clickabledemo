@@ -373,25 +373,30 @@ tr:hover .listen-btn img {
       'video-meetings-today': '0',
 
       // This Month
-      'total-minutes-this-month': '263',
-      'peak_calls_this_month': '0',
-      'sms_inbound_this_month': '1',
-      'sms_outbound_this_month': '2',
-      'video_meetings_this_month': '0',
+     'total-min-current': '263',
+     'peak-active-current': '0',
+     'sms_inbound_current': '1',
+     'sms_outbound_current': '2',
+     'video_meetings_current': '0',
 
-      // Previous Month
-      'total-minutes-prev-month': '62034',
-      'peak_calls_prev_month': '23',
-      'sms_inbound_prev_month': '958',
-      'sms_outbound_prev_month': '892',
-      'video_meetings_prev_month': '0'
-    };
+     // Previous Month
+     'total-min-last': '62034',
+     'peak-active-last': '23',
+     'sms_inbound_last': '958',
+     'sms_outbound_last': '892',
+     'video_meetings_last': '0'
+   };
 
   for (const [id, value] of Object.entries(replacements)) {
     const el = document.querySelector(`#${id} .helpsy`);
-    if (el) el.textContent = value;
+    if (el) {
+      el.textContent = value;
+    } else {
+      console.warn('Missing stat element:', id);
+    }
   }
 }
+
 
 
 
@@ -4098,6 +4103,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
