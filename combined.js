@@ -397,6 +397,45 @@ tr:hover .listen-btn img {
   }
 }
 
+function injectFakePeakCallLines() {
+  const svg = document.querySelector('#chart_div svg');
+  if (!svg) return;
+
+  // Find the clip-path group used by the graph line
+  const targetGroup = Array.from(svg.querySelectorAll('g'))
+    .find(g => g.getAttribute('clip-path')?.includes('RENDERER_ID'));
+
+  if (!targetGroup) {
+    console.warn("Couldn't find chart plot group.");
+    return;
+  }
+
+  // Prevent double-injection
+  if (svg.querySelector('#cv-fake-call-lines')) return;
+
+  const fakeGroup = document.createElementNS("http://www.w3.org/2000/svg", "g");
+  fakeGroup.setAttribute("id", "cv-fake-call-lines");
+
+  // Example: 7 days of fake lines. You can expand this.
+  const spacing = 50.75; // Approximate distance between each tick (adjust as needed)
+  const baseX = 7; // Left offset (based on your rect x="7")
+  const dates = 7; // number of fake days
+
+  for (let i = 0; i < dates; i++) {
+    const x = baseX + i * spacing;
+    const line = document.createElementNS("http://www.w3.org/2000/svg", "line");
+    line.setAttribute("x1", x);
+    line.setAttribute("y1", 30); // top of graph area
+    line.setAttribute("x2", x);
+    line.setAttribute("y2", 430); // bottom of graph area
+    line.setAttribute("stroke", i === 1 ? "#0b5cad" : "#0b5cad");
+    line.setAttribute("stroke-width", i === 1 ? "2.5" : "1");
+    line.setAttribute("opacity", i === 1 ? "1" : "0.4");
+    fakeGroup.appendChild(line);
+  }
+
+  targetGroup.appendChild(fakeGroup);
+}
 
 
 
@@ -4103,6 +4142,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
