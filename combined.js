@@ -402,7 +402,6 @@ function injectFakePeakCallLines() {
   const svg = document.querySelector('#chart_div svg');
   if (!svg) return;
 
-  // Clear existing fake line graph if present
   const old = document.getElementById('cv-fake-peak-line');
   if (old) old.remove();
 
@@ -410,27 +409,30 @@ function injectFakePeakCallLines() {
   const polyline = document.createElementNS(NS, 'polyline');
   polyline.setAttribute('id', 'cv-fake-peak-line');
   polyline.setAttribute('fill', 'none');
-  polyline.setAttribute('stroke', '#3366cc');  // Match real chart blue
+  polyline.setAttribute('stroke', '#3366cc');
   polyline.setAttribute('stroke-width', '2');
 
-  // Sample fake data points (x, y) — adjust as needed
-  // Lower y = higher value (0 is top, 406 is bottom)
+  // Simulate smoother real-world peak activity across 7 days
   const points = [
-    [30, 390],
-    [70, 360],
-    [110, 310],
-    [150, 250],
-    [190, 290],
-    [230, 340],
-    [270, 400],
+    [10, 390],   // low start
+    [50, 310],
+    [90, 220],   // peak
+    [130, 270],
+    [170, 350],
+    [210, 400],  // dip
+    [250, 280],
+    [290, 190],  // peak again
+    [330, 260],
+    [370, 320],
+    [410, 390]   // end
   ];
 
-  // Convert to SVG format "x1,y1 x2,y2 ..."
   const pointStr = points.map(p => p.join(',')).join(' ');
   polyline.setAttribute('points', pointStr);
 
   svg.appendChild(polyline);
 }
+
 
 // === STEP 2: Observer to wait until chart SVG is ready ===
 const observer = new MutationObserver((mutations, obs) => {
@@ -4152,6 +4154,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
