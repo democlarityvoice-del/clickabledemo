@@ -4230,6 +4230,28 @@ document.addEventListener('click', function (e) {
     tr.appendChild(td);
   }
 
+  // ---- derive display title + tooltip HTML (uses your existing constants) ----
+const headerSpan =
+  document.querySelector(`th .popover-stats.${code}, .popover-stats.${code}`);
+
+const statTitle =
+  // prefer whatever the table header already carries
+  (headerSpan && (headerSpan.getAttribute('data-title') || headerSpan.getAttribute('title'))) ||
+  // fallback: reverse-lookup from HEADER_TO_STAT
+  (window.HEADER_TO_STAT && Object.keys(HEADER_TO_STAT).find(k => HEADER_TO_STAT[k] === code)) ||
+  // last resort: the code itself
+  (code || 'Stat');
+
+const esc = s => String(s)
+  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+const descRaw = (window.STAT_DESCRIPTIONS && window.STAT_DESCRIPTIONS[code]) || '';
+const statDescHtml = descRaw
+  ? `<p>${esc(descRaw).replace(/\n/g,' ').replace(/\.\s/,'.</p><p>')}</p>`
+  : '';
+
+
   function linkify(td, queue, code, v) {
     if (v == null) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return;
@@ -4370,6 +4392,7 @@ try {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
