@@ -4216,9 +4216,6 @@ document.addEventListener('click', function (e) {
     document.body.appendChild(modal);
   }
 
-  // Keep the rest of your script the same — attach, injectTable, etc.
-  // Assume openQueueModal is called correctly when clicking stats.
-})();
 
 
   function injectTable(doc, table) {
@@ -4292,6 +4289,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
