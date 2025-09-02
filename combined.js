@@ -402,29 +402,34 @@ function injectFakePeakCallLines() {
   const svg = document.querySelector('#chart_div svg');
   if (!svg) return;
 
-  // Remove old ones if re-running
-  const oldGroup = document.getElementById('cv-fake-peak-lines');
-  if (oldGroup) oldGroup.remove();
+  // Clear existing fake line graph if present
+  const old = document.getElementById('cv-fake-peak-line');
+  if (old) old.remove();
 
   const NS = "http://www.w3.org/2000/svg";
-  const fakeGroup = document.createElementNS(NS, 'g');
-  fakeGroup.setAttribute('id', 'cv-fake-peak-lines');
+  const polyline = document.createElementNS(NS, 'polyline');
+  polyline.setAttribute('id', 'cv-fake-peak-line');
+  polyline.setAttribute('fill', 'none');
+  polyline.setAttribute('stroke', '#3366cc');  // Match real chart blue
+  polyline.setAttribute('stroke-width', '2');
 
-  // 👇 Define your fake line x-positions here
-  const xPositions = [40, 150, 260]; // adjust to match the actual tick marks
+  // Sample fake data points (x, y) — adjust as needed
+  // Lower y = higher value (0 is top, 406 is bottom)
+  const points = [
+    [30, 390],
+    [70, 360],
+    [110, 310],
+    [150, 250],
+    [190, 290],
+    [230, 340],
+    [270, 400],
+  ];
 
-  xPositions.forEach(x => {
-    const line = document.createElementNS(NS, 'line');
-    line.setAttribute('x1', x);
-    line.setAttribute('x2', x);
-    line.setAttribute('y1', 0);
-    line.setAttribute('y2', 406);  // chart height
-    line.setAttribute('stroke', '#e57027');
-    line.setAttribute('stroke-width', '2');
-    fakeGroup.appendChild(line);
-  });
+  // Convert to SVG format "x1,y1 x2,y2 ..."
+  const pointStr = points.map(p => p.join(',')).join(' ');
+  polyline.setAttribute('points', pointStr);
 
-  svg.appendChild(fakeGroup);
+  svg.appendChild(polyline);
 }
 
 // === STEP 2: Observer to wait until chart SVG is ready ===
@@ -4147,6 +4152,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
