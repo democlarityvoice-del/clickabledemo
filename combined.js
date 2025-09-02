@@ -4235,9 +4235,7 @@ function openQueueModal(queue, code) {
   document.body.appendChild(modal);
 }
 
-
-
-  function injectTable(doc, table) {
+ function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
     const statCodes = Object.keys(colMap);
     if (!statCodes.length) return 0;
@@ -4308,6 +4306,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
