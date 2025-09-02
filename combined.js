@@ -4108,14 +4108,7 @@ document.addEventListener('click', function (e) {
 
 
 
-/* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
-   Purpose: Replace cells with clickable POC links using header mapping.
-   Scope:   Only runs in a document that contains #modal_stats_table.
-   Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
-======================================================================= */
-/* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
-
-/* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal) ===== */
+/* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal with full fidelity) ===== */
 (() => {
   if (window.__cvqs_auto_installed__) return;
   window.__cvqs_auto_installed__ = true;
@@ -4130,149 +4123,103 @@ document.addEventListener('click', function (e) {
   const queueRepNotes = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
 
-  const CVQ_DATA = {
-    "Main Routing": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
-  };
-  const QUEUE_NAMES = Object.keys(CVQ_DATA);
-
-  const HEADER_TO_STAT = {
-    'Call Volume': 'VOL',
-    'Calls Offered': 'CO',
-    'Calls Handled': 'CO',
-    'Avg. Talk Time': 'ATT',
-    'Average Talk Time': 'ATT',
-    'Avg. Hold Time': 'AH',
-    'Abandoned Calls': 'AC',
-    'Avg. Wait Time': 'AWT',
-    'Average Wait Time': 'AWT'
-  };
-
   const STAT_DESCRIPTIONS = {
-    VOL: 'Number of calls originating through a Call Queue.\nIncludes answered calls, abandoned calls, forwards, and voicemail.',
+    VOL: 'Number of calls originating through a Call Queue. Includes answered calls, abandoned calls, forwards, and voicemail.',
     CO: 'Number of calls answered by agent originating through a Call Queue.',
-    AH: 'Average time a caller spends on hold with an agent.\nExcludes waiting time in the Call Queue.',
+    AH: 'Average time a caller spends on hold with an agent. Excludes waiting time in the Call Queue.',
     AC: 'Number of calls that abandoned the queue before being offered to an agent.',
     AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
   };
 
+  const CVQ_DATA = {
+    "Main Routing": {
+      VOL: 5,
+      CALLS: [
+        { callTime: "Today, 08:02 am", callerName: "Ruby Foster", callerNumber: "(248) 555-0102", DNIS: "248-436-3443", timeInQueue: "00:38", agentExtension: "206", agentPhone: "206", agentName: "Jill Peters", agentTime: "0:56", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:12 am", callerName: "Lucas Grant", callerNumber: "(734) 555-0194", DNIS: "248-436-3443", timeInQueue: "00:28", agentExtension: "209", agentPhone: "209", agentName: "Paul D'Angelo", agentTime: "01:32", agentRelease: "Term: Hung up", queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:33 am", callerName: "Karen Patel", callerNumber: "(517) 555-0138", DNIS: "248-436-3443", timeInQueue: "00:11", agentExtension: "210", agentPhone: "210", agentName: "Rachel Ford", agentTime: "02:10", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:44 am", callerName: "Mark Young", callerNumber: "(313) 555-0116", DNIS: "248-436-3443", timeInQueue: "00:59", agentExtension: "212", agentPhone: "212", agentName: "Nancy Hill", agentTime: "01:07", agentRelease: "Term: Hung up", queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:58 am", callerName: "Ashley Li", callerNumber: "(810) 555-0169", DNIS: "248-436-3443", timeInQueue: "00:21", agentExtension: "215", agentPhone: "215", agentName: "Oscar Nguyen", agentTime: "03:44", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" }
+      ]
+    }
+  };
+
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
-  const LOG = (...a) => console.debug('[CV-QS]', ...a);
-
-  function collectDocs(root, out = []) {
-    out.push(root);
-    root.querySelectorAll('iframe').forEach(f => {
-      try { if (f.contentDocument) collectDocs(f.contentDocument, out); } catch (_) {}
-    });
-    return out;
-  }
-
-  function candidateTables(doc) {
-    const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
-    if (direct.length) return direct;
-    return Array.from(doc.querySelectorAll('table')).filter(t => {
-      const ths = Array.from(t.querySelectorAll('thead th'));
-      const labels = ths.map(th => norm(th.textContent));
-      return labels.some(l => /call volume|calls handled|calls offered|wait time|talk time|abandon/i.test(l));
-    });
-  }
-
-  function mapHeaders(table) {
-    const ths = Array.from(table.querySelectorAll('thead th'));
-    const colMap = {};
-    ths.forEach((th, i) => {
-      const label = norm(th.textContent);
-      const code = HEADER_TO_STAT[label];
-      if (code) colMap[code] = i;
-    });
-    let nameIdx = ths.findIndex(th => /^name$/i.test(norm(th.textContent)));
-    if (nameIdx < 0) {
-      const rows = Array.from(table.tBodies[0]?.rows || []).slice(0, 12);
-      const counts = ths.map((_, idx) => {
-        let hits = 0;
-        rows.forEach(r => {
-          const txt = norm(r.cells[idx]?.textContent);
-          if (QUEUE_NAMES.includes(txt)) hits++;
-        });
-        return hits;
-      });
-      nameIdx = counts.indexOf(Math.max(...counts));
-      if (nameIdx < 0) nameIdx = 1;
-    }
-    return { colMap, nameIdx };
-  }
-
-  function timeToSeconds(v) {
-    if (typeof v !== 'string') return null;
-    const p = v.split(':').map(Number);
-    if (p.some(Number.isNaN)) return null;
-    if (p.length === 2) { const [m,s]=p; return m*60+s; }
-    if (p.length === 3) { const [h,m,s]=p; return h*3600+m*60+s; }
-    return null;
-  }
-
-  function setSort(td, code, v) {
-    const n = Number(v);
-    if (!Number.isNaN(n)) { td.setAttribute('data-order', String(n)); return; }
-    if (code === 'ATT' || code === 'AH' || code === 'AWT') {
-      const s = timeToSeconds(v);
-      if (s != null) td.setAttribute('data-order', String(s));
-    }
-  }
-
-  function injectIcons(tr) {
-    const td = document.createElement('td');
-    td.innerHTML = `
-      <img src="${queueRepDownload}" title="Download" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepListen}" title="Listen" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepCradle}" title="Cradle to Grave" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepNotes}" title="Edit Notes" style="cursor:pointer;width:16px">
-    `;
-    tr.appendChild(td);
-  }
-
-  function linkify(td, queue, code, v) {
-    if (v == null) return;
-    if (td.querySelector(`a.${LINK_CLASS}`)) return;
-    const a = td.ownerDocument.createElement('a');
-    a.href = '#';
-    a.className = LINK_CLASS;
-    a.textContent = String(v);
-    a.style.fontWeight = 'bold';
-    a.style.textDecoration = 'underline';
-    a.style.cursor = 'pointer';
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      openQueueModal(queue, code);
-    });
-    td.replaceChildren(a);
-    setSort(td, code, v);
-  }
 
   function openQueueModal(queue, code) {
+    const qData = CVQ_DATA[queue];
+    const calls = qData?.CALLS || [];
+    const title = code === 'VOL' ? 'Call Volume' : code;
     const modal = document.createElement('div');
-    modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
+    modal.style = `
+      position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;
+      padding:20px;z-index:9999;border:none;font-family:sans-serif;overflow:auto;
+    `;
     modal.innerHTML = `
-      <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
-      <h2 style="margin-top:0;color:#004a9b">${queue} (300) Call Volume</h2>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+        <button style="font-weight:bold" onclick="this.closest('div').parentNode.remove()">Back</button>
+        <div>
+          <button style="margin-right:10px">Print</button>
+          <button>Download</button>
+        </div>
+      </div>
+      <h2 style="margin-top:0;margin-bottom:10px;color:black;font-size:20px;">
+        ${queue} (300) ${title} <span title="${STAT_DESCRIPTIONS[code] || ''}" style="cursor:help;font-size:16px;margin-left:5px;">&#9432;</span>
+      </h2>
       <div style="margin:10px 0;">
-        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+        <input placeholder="Search calls" style="padding:6px 8px;width:200px;border:1px solid #ccc;border-radius:4px">
+        <span style="display:inline-block;width:20px;height:20px;background:#eee;padding:2px;border-radius:4px;vertical-align:middle;margin-left:5px">
+          <img src="${magnifyIcon}" style="width:16px;vertical-align:middle">
+        </span>
       </div>
       <table style="width:100%;border-collapse:collapse">
         <thead>
-          <tr style="background:white;color:#004a9b">
-            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+          <tr style="background:white;color:#004a9b;text-align:left">
+            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th>
+            <th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th>
+            <th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>09/01/2025 8:08 am</td><td>DOBBS TERESA</td><td>16788732633</td><td>(800) 676-3995</td><td>00:38</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:31</td><td>Term: Bye</td><td>Connect</td></tr>
-          <tr><td>09/01/2025 8:15 am</td><td>MR APPLIANCE</td><td>17183139198</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:38</td><td>Orig: Bye</td><td>Connect</td></tr>
-          <tr><td>09/01/2025 8:48 am</td><td>WIRELESS CALLER</td><td>13016131380</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>09:22</td><td>Term: Bye</td><td>Connect</td></tr>
+          ${calls.map(row => `
+            <tr>
+              <td>${row.callTime}</td>
+              <td>${row.callerName}</td>
+              <td>${row.callerNumber}</td>
+              <td>${row.DNIS}</td>
+              <td>${row.timeInQueue}</td>
+              <td>${row.agentExtension}</td>
+              <td>${row.agentPhone}</td>
+              <td>${row.agentName}</td>
+              <td>${row.agentTime}</td>
+              <td>${row.agentRelease}</td>
+              <td>${row.queueReleaseReason}</td>
+              <td>
+                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Download">
+                  <img src="${queueRepDownload}" style="width:14px;margin:4px">
+                </span>
+                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Listen">
+                  <img src="${queueRepListen}" style="width:14px;margin:4px">
+                </span>
+                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Cradle to Grave">
+                  <img src="${queueRepCradle}" style="width:14px;margin:4px">
+                </span>
+                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;cursor:pointer" title="Edit Notes">
+                  <img src="${queueRepNotes}" style="width:14px;margin:4px">
+                </span>
+              </td>
+            </tr>
+          `).join('')}
         </tbody>
       </table>
     `;
-    modal.querySelectorAll('tbody tr').forEach(injectIcons);
     document.body.appendChild(modal);
   }
+
+  // Keep the rest of your script the same — attach, injectTable, etc.
+  // Assume openQueueModal is called correctly when clicking stats.
+})();
+
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4345,6 +4292,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
