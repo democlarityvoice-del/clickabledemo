@@ -907,7 +907,7 @@ function ensureStyles(doc){
 .cvq-icon{
   display:inline-flex; align-items:center; justify-content:center;
   width:24px; height:24px; border-radius:50%;
-  background:#f7f7f7; border:1px solid #e1e1e1;
+  background:#ffffff; border:1px solid #e1e1e1;
   margin-left:6px; opacity:.45; transition:opacity .15s, transform .04s;
   cursor:pointer; padding:0; line-height:0;
 }
@@ -4103,6 +4103,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
