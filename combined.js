@@ -4146,75 +4146,94 @@ document.addEventListener('click', function (e) {
 
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
 
-  function openQueueModal(queue, code) {
-    const qData = CVQ_DATA[queue];
-    const calls = qData?.CALLS || [];
-    const title = code === 'VOL' ? 'Call Volume' : code;
-    const modal = document.createElement('div');
-    modal.style = `
-      position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;
-      padding:20px;z-index:9999;border:none;font-family:sans-serif;overflow:auto;
-    `;
-    modal.innerHTML = `
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-        <button style="font-weight:bold" onclick="this.closest('div').parentNode.remove()">Back</button>
-        <div>
-          <button style="margin-right:10px">Print</button>
-          <button>Download</button>
-        </div>
+  /* ==== CV Queue Stats: modal patch with real data + all 10 fixes (Main Routing only) ===== */
+function openQueueModal(queue, code) {
+  const qData = CVQ_DATA[queue];
+  const calls = qData?.CALLS || [];
+  const titleMap = {
+    VOL: "Call Volume",
+    CO: "Calls Offered",
+    AH: "Avg. Hold Time",
+    AC: "Abandoned Calls",
+    AWT: "Avg. Wait Time",
+    ATT: "Avg. Talk Time"
+  };
+  const statTitle = titleMap[code] || code;
+  const statInfo = STAT_DESCRIPTIONS[code] || "";
+
+  const modal = document.createElement("div");
+  modal.style = `
+    position:fixed;top:0;left:0;width:100vw;height:100vh;background:white;
+    padding:20px;z-index:9999;border:none;font-family:sans-serif;overflow:auto;
+  `;
+  modal.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+      <button style="font-weight:bold" onclick="this.closest('div').parentNode.remove()">Back</button>
+      <div>
+        <button style="margin-right:10px">Print</button>
+        <button>Download</button>
       </div>
-      <h2 style="margin-top:0;margin-bottom:10px;color:black;font-size:20px;">
-        ${queue} (300) ${title} <span title="${STAT_DESCRIPTIONS[code] || ''}" style="cursor:help;font-size:16px;margin-left:5px;">&#9432;</span>
-      </h2>
-      <div style="margin:10px 0;">
-        <input placeholder="Search calls" style="padding:6px 8px;width:200px;border:1px solid #ccc;border-radius:4px">
-        <span style="display:inline-block;width:20px;height:20px;background:#eee;padding:2px;border-radius:4px;vertical-align:middle;margin-left:5px">
-          <img src="${magnifyIcon}" style="width:16px;vertical-align:middle">
-        </span>
-      </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:white;color:#004a9b;text-align:left">
-            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th>
-            <th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th>
-            <th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+    </div>
+    <h2 style="margin-top:0;margin-bottom:10px;color:black;font-size:20px;">
+      ${queue} (300) ${statTitle}
+      <span title="${statInfo}" style="cursor:help;font-size:16px;margin-left:5px;">&#9432;</span>
+    </h2>
+    <div style="margin:10px 0;display:flex;align-items:center">
+      <input placeholder="Search calls" style="padding:6px 8px;width:200px;border:1px solid #ccc;border-radius:4px">
+      <span style="display:inline-block;width:28px;height:28px;background:#eee;padding:4px;border-radius:4px;margin-left:8px">
+        <img src="${magnifyIcon}" style="width:16px;height:16px">
+      </span>
+    </div>
+    <table style="width:100%;border-collapse:collapse;table-layout:fixed">
+      <thead>
+        <tr style="background:white;color:#004a9b;text-align:left">
+          <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+          <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th>
+          <th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${calls.map(row => `
+          <tr>
+            <td>${row.callTime}</td>
+            <td>${row.callerName}</td>
+            <td>${row.callerNumber}</td>
+            <td>${row.DNIS}</td>
+            <td>${row.timeInQueue}</td>
+            <td>${row.agentExtension}</td>
+            <td>${row.agentPhone}</td>
+            <td>${row.agentName}</td>
+            <td>${row.agentTime}</td>
+            <td>${row.agentRelease}</td>
+            <td>${row.queueReleaseReason}</td>
+            <td>
+              <span title="Download" style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer;transition:opacity 0.3s">
+                <img src="${queueRepDownload}" style="width:14px;margin:6px">
+              </span>
+              <span title="Listen" style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer;transition:opacity 0.3s">
+                <img src="${queueRepListen}" style="width:14px;margin:6px">
+              </span>
+              <span title="Cradle to Grave" style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer;transition:opacity 0.3s">
+                <img src="${queueRepCradle}" style="width:14px;margin:6px">
+              </span>
+              <span title="Edit Notes" style="display:inline-block;width:26px;height:26px;border-radius:50%;background:#ccc;opacity:0.7;cursor:pointer;transition:opacity 0.3s">
+                <img src="${queueRepNotes}" style="width:14px;margin:6px">
+              </span>
+            </td>
           </tr>
-        </thead>
-        <tbody>
-          ${calls.map(row => `
-            <tr>
-              <td>${row.callTime}</td>
-              <td>${row.callerName}</td>
-              <td>${row.callerNumber}</td>
-              <td>${row.DNIS}</td>
-              <td>${row.timeInQueue}</td>
-              <td>${row.agentExtension}</td>
-              <td>${row.agentPhone}</td>
-              <td>${row.agentName}</td>
-              <td>${row.agentTime}</td>
-              <td>${row.agentRelease}</td>
-              <td>${row.queueReleaseReason}</td>
-              <td>
-                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Download">
-                  <img src="${queueRepDownload}" style="width:14px;margin:4px">
-                </span>
-                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Listen">
-                  <img src="${queueRepListen}" style="width:14px;margin:4px">
-                </span>
-                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;margin-right:4px;cursor:pointer" title="Cradle to Grave">
-                  <img src="${queueRepCradle}" style="width:14px;margin:4px">
-                </span>
-                <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:#ccc;opacity:0.7;cursor:pointer" title="Edit Notes">
-                  <img src="${queueRepNotes}" style="width:14px;margin:4px">
-                </span>
-              </td>
-            </tr>
-          `).join('')}
-        </tbody>
-      </table>
-    `;
-    document.body.appendChild(modal);
-  }
+        `).join("")}
+      </tbody>
+    </table>
+  `;
+
+  // Add hover effects for icons
+  modal.querySelectorAll('span[title]').forEach(icon => {
+    icon.addEventListener('mouseover', () => icon.style.opacity = '1');
+    icon.addEventListener('mouseout', () => icon.style.opacity = '0.7');
+  });
+
+  document.body.appendChild(modal);
+}
 
 
 
@@ -4289,6 +4308,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
