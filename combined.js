@@ -4230,28 +4230,6 @@ document.addEventListener('click', function (e) {
     tr.appendChild(td);
   }
 
-  // ---- derive display title + tooltip HTML (uses your existing constants) ----
-const headerSpan =
-  document.querySelector(`th .popover-stats.${code}, .popover-stats.${code}`);
-
-const statTitle =
-  // prefer whatever the table header already carries
-  (headerSpan && (headerSpan.getAttribute('data-title') || headerSpan.getAttribute('title'))) ||
-  // fallback: reverse-lookup from HEADER_TO_STAT
-  (window.HEADER_TO_STAT && Object.keys(HEADER_TO_STAT).find(k => HEADER_TO_STAT[k] === code)) ||
-  // last resort: the code itself
-  (code || 'Stat');
-
-const esc = s => String(s)
-  .replace(/&/g,'&amp;').replace(/</g,'&lt;')
-  .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-
-const descRaw = (window.STAT_DESCRIPTIONS && window.STAT_DESCRIPTIONS[code]) || '';
-const statDescHtml = descRaw
-  ? `<p>${esc(descRaw).replace(/\n/g,' ').replace(/\.\s/,'.</p><p>')}</p>`
-  : '';
-
-
   function linkify(td, queue, code, v) {
     if (v == null) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return;
@@ -4275,16 +4253,7 @@ const statDescHtml = descRaw
     modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
     modal.innerHTML = `
       <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
-      <h2 style="margin-top:0;margin-bottom:10px;color:#000;font-size:20px;">
-        ${esc(queue)} (300) ${esc(statTitle)}
-        <span class="popover-stats ${code}"
-            title="${esc(statTitle)}"
-            data-title="${esc(statTitle)}"
-            data-content="${statDescHtml}"
-            data-original-title="${esc(statTitle)}">
-          <i class="icon-info-sign"></i>
-        </span>
-      </h2>
+      <h2 style="margin-top:0;color:#000000">${queue} (300) Call Volume</h2>
       <div style="margin:10px 0;">
         <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
       </div>
@@ -4304,22 +4273,6 @@ const statDescHtml = descRaw
     modal.querySelectorAll('tbody tr').forEach(injectIcons);
     document.body.appendChild(modal);
   }
-
-  // Init Clarity/Bootstrap popover exactly like header tooltips
-try {
-  var $ = window.jQuery || document.defaultView.jQuery;
-  if ($ && $.fn && $.fn.popover) {
-    $(modal).find('.popover-stats').popover({
-      container: modal,        // keeps it over the modal
-      html: true,              // allow <p> split above
-      placement: 'top',
-      trigger: 'hover focus',
-      title: function(){ return $(this).data('title'); },
-      content: function(){ return $(this).data('content'); }
-    });
-  }
-} catch (e) { /* silent if Bootstrap is absent */ }
-
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4392,8 +4345,4 @@ try {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
-
-
-
-
 
