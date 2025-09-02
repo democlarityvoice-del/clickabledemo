@@ -4109,9 +4109,10 @@ document.addEventListener('click', function (e) {
 
 
 /* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal with full fidelity) ===== */
-(() => {
+;(() => {
   if (window.__cvqs_auto_installed__) return;
   window.__cvqs_auto_installed__ = true;
+
 
   const LINK_CLASS = 'cvqs-poc-link';
   const STATS_TABLE_ID = '#modal_stats_table';
@@ -4427,6 +4428,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
