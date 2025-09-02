@@ -4341,7 +4341,7 @@ document.addEventListener('click', function (e) {
       Array.from(head.cells).forEach((th, idx) => {
         const txt = _norm(th.textContent);
         const up  = txt.toUpperCase();
-        if (nameIdx < 0 && /(QUEUE|NAME)/i.test(txt)) nameIdx = idx;
+        if (nameIdx < 0 && /^NAME$/i.test(up)) nameIdx = idx;
         for (const [code, re] of Object.entries(codes)) {
           if (re.test(up)) colMap[code] = idx;
         }
@@ -4388,6 +4388,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
