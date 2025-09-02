@@ -4146,18 +4146,124 @@ document.addEventListener('click', function (e) {
 
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
 
-  /* ==== CV Queue Stats: modal patch with real data + all 10 fixes (Main Routing only) ===== */
+;/* ==== CV Queue Stats: robust auto-discovery injector (Main Routing modal, safe-namespaced) ===== */
+;(() => {
+  if (window.__cvqs_auto_installed__) return;
+  window.__cvqs_auto_installed__ = true;
+
+  // --- constants ---
+  const MAX_SCAN_TRIES = 20;
+  const STATS_TABLE_ID = '#modal_stats_table';
+
+  const queueRepDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const queueRepListen   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const queueRepCradle   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const queueRepNotes    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const magnifyIcon      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+  const STAT_DESCRIPTIONS = {
+    VOL: 'Number of calls originating through a Call Queue. Includes answered calls, abandoned calls, forwards, and voicemail.',
+    CO:  'Number of calls answered by agent originating through a Call Queue.',
+    AH:  'Average time a caller spends on hold with an agent. Excludes waiting time in the Call Queue.',
+    AC:  'Number of calls that abandoned the queue before being offered to an agent.',
+    AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
+  };
+
+  // --- your dataset (unchanged) ---
+  const CVQ_DATA = {
+    "Main Routing": {
+      VOL: 5,
+      CALLS: [
+        { callTime: "Today, 08:02 am", callerName: "Ruby Foster",  callerNumber: "(248) 555-0102", DNIS: "248-436-3443", timeInQueue: "00:38", agentExtension: "206", agentPhone: "206", agentName: "Jill Peters",   agentTime: "0:56",  agentRelease: "Orig: Bye",    queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:12 am", callerName: "Lucas Grant",  callerNumber: "(734) 555-0194", DNIS: "248-436-3443", timeInQueue: "00:28", agentExtension: "209", agentPhone: "209", agentName: "Paul D'Angelo", agentTime: "01:32", agentRelease: "Term: Hung up",  queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:33 am", callerName: "Karen Patel",  callerNumber: "(517) 555-0138", DNIS: "248-436-3443", timeInQueue: "00:11", agentExtension: "210", agentPhone: "210", agentName: "Rachel Ford",  agentTime: "02:10", agentRelease: "Orig: Bye",    queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:44 am", callerName: "Mark Young",   callerNumber: "(313) 555-0116", DNIS: "248-436-3443", timeInQueue: "00:59", agentExtension: "212", agentPhone: "212", agentName: "Nancy Hill",  agentTime: "01:07", agentRelease: "Term: Hung up",  queueReleaseReason: "Connect" },
+        { callTime: "Today, 08:58 am", callerName: "Ashley Li",    callerNumber: "(810) 555-0169", DNIS: "248-436-3443", timeInQueue: "00:21", agentExtension: "215", agentPhone: "215", agentName: "Oscar Nguyen", agentTime: "03:44", agentRelease: "Orig: Bye",    queueReleaseReason: "Connect" }
+      ]
+    }
+  };
+
+  // optional aliases so you can match by queue number or name
+  const CVQ_ALIASES = {
+    '300': 'Main Routing',
+    'MAIN ROUTING': 'Main Routing'
+  };
+
+  // --- utilities (namespaced) ---
+  const cvqsNorm = s => (s || '').replace(/\s+/g, ' ').trim();
+  const cvqsLog  = (...args) => console.log('[cvqs]', ...args);
+
+  const cvqsCollectDocs = (root) => {
+    const out = [root || document];
+    (root || document).querySelectorAll('iframe').forEach(f => {
+      try { if (f.contentDocument) out.push(f.contentDocument); } catch (_) {}
+    });
+    return out;
+  };
+
+  const cvqsPickHeadRow = (t) => t.tHead?.rows?.[t.tHead.rows.length - 1] || t.rows?.[0];
+
+  const cvqsCandidateTables = (doc) => {
+    // Prefer explicit ID if present
+    const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
+    if (direct.length) return direct;
+
+    // Otherwise, look for a table with NAME or QUEUE + at least one stat column header
+    return Array.from(doc.querySelectorAll('table')).filter(t => {
+      const head = cvqsPickHeadRow(t);
+      if (!head) return false;
+      const headers = Array.from(head.cells).map(th => cvqsNorm(th.textContent).toUpperCase());
+      const hasName  = headers.includes('NAME');
+      const hasQueue = headers.includes('QUEUE');
+      const hasStat  = headers.some(h =>
+        /^(VOL|CO|AH|AC|AWT|ATT)$/.test(h) ||
+        /(CALL VOLUME|CALLS OFFERED|AVG.*HOLD|AVG.*WAIT|AVG.*TALK|ABANDON)/.test(h)
+      );
+      return (hasName || hasQueue) && hasStat;
+    });
+  };
+
+  const cvqsMapHeaders = (table) => {
+    const head = cvqsPickHeadRow(table);
+    const colMap = {};
+    let nameIdx = -1, queueIdx = -1;
+    if (!head) return { colMap, nameIdx, queueIdx };
+
+    const codeTests = {
+      VOL: [/^VOL$/i, /^(CALL\s*)?VOLUME$/i],
+      CO:  [/^CO$/i,  /^(CALLS\s*)?OFFERED$/i],
+      AH:  [/^AH$/i,  /^AVG\.?\s*HOLD/i],
+      AC:  [/^AC$/i,  /ABANDON/i],
+      AWT: [/^AWT$/i, /^AVG\.?\s*WAIT/i],
+      ATT: [/^ATT$/i, /^AVG\.?\s*TALK/i],
+    };
+
+    Array.from(head.cells).forEach((th, idx) => {
+      const up = cvqsNorm(th.textContent).toUpperCase();
+      if (nameIdx  < 0 && /^NAME$/.test(up))  nameIdx  = idx;
+      if (queueIdx < 0 && /^QUEUE$/.test(up)) queueIdx = idx;
+      for (const [code, tests] of Object.entries(codeTests)) {
+        if (tests.some(re => re.test(up))) colMap[code] = idx;
+      }
+    });
+
+    if (nameIdx  < 0 && queueIdx >= 0) nameIdx = queueIdx; // fallback to queue column
+    if (nameIdx  < 0) nameIdx = 0;                         // last resort
+    return { colMap, nameIdx, queueIdx };
+  };
+
+  const cvqsLinkify = (td, queueKey, code, val) => {
+    if (!td) return;
+    td.innerHTML = `<a href="#" data-q="${queueKey}" data-code="${code}">${val}</a>`;
+    const a = td.querySelector('a');
+    a.addEventListener('click', (e) => { e.preventDefault(); openQueueModal(queueKey, code); });
+  };
+
+  // --- modal (unchanged except cssText + hover scoping) ---
   function openQueueModal(queue, code) {
     const qData = CVQ_DATA[queue];
     const calls = qData?.CALLS || [];
-    const titleMap = {
-      VOL: "Call Volume",
-      CO:  "Calls Offered",
-      AH:  "Avg. Hold Time",
-      AC:  "Abandoned Calls",
-      AWT: "Avg. Wait Time",
-      ATT: "Avg. Talk Time"
-    };
+    const titleMap = { VOL:"Call Volume", CO:"Calls Offered", AH:"Avg. Hold Time", AC:"Abandoned Calls", AWT:"Avg. Wait Time", ATT:"Avg. Talk Time" };
     const statTitle = titleMap[code] || code;
     const statInfo  = STAT_DESCRIPTIONS[code] || "";
 
@@ -4226,9 +4332,9 @@ document.addEventListener('click', function (e) {
       </table>
     `;
 
-    // Hover effects for action icons only (avoid dimming the header info icon)
+    // hover only for action icons (avoid header info icon)
     modal.querySelectorAll('td span[title]').forEach(icon => {
-      const originalOpacity = icon.style.opacity; // "0.7" from inline style
+      const originalOpacity = icon.style.opacity;
       icon.addEventListener('mouseover', () => { icon.style.opacity = '1'; });
       icon.addEventListener('mouseout',  () => { if (originalOpacity) icon.style.opacity = originalOpacity; });
     });
@@ -4236,171 +4342,128 @@ document.addEventListener('click', function (e) {
     document.body.appendChild(modal);
   }
 
-function injectTable(doc, table) {
-  const { colMap, nameIdx, queueIdx } = mapHeaders(table);
-  const statCodes = Object.keys(colMap);
-  if (!statCodes.length) return 0;
-  let wrote = 0;
+  // --- injector (now using namespaced helpers) ---
+  function injectTable(doc, table) {
+    const { colMap, nameIdx, queueIdx } = cvqsMapHeaders(table);
+    const statCodes = Object.keys(colMap);
+    if (!statCodes.length) return 0;
 
-  Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
-    const nameVal  = nameIdx  >= 0 ? norm(tr.cells[nameIdx]?.textContent)  : null;
-    const queueVal = queueIdx >= 0 ? norm(tr.cells[queueIdx]?.textContent) : null;
+    let wrote = 0;
+    const rows = Array.from(table.tBodies[0]?.rows || []);
+    rows.forEach(tr => {
+      const rawName  = nameIdx  >= 0 ? tr.cells[nameIdx]?.textContent  : '';
+      const rawQueue = queueIdx >= 0 ? tr.cells[queueIdx]?.textContent : '';
+      const name  = cvqsNorm(rawName);
+      const queue = cvqsNorm(rawQueue);
 
-    // Try name first, then queue number
-    const data = CVQ_DATA[nameVal] || CVQ_DATA[queueVal];
-    if (!data) return;
+      // Resolve data key by Name or Queue (with aliases)
+      let key = null;
+      if (CVQ_DATA[name]) key = name;
+      else if (CVQ_ALIASES[name?.toUpperCase?.()]) key = CVQ_ALIASES[name.toUpperCase()];
+      else if (CVQ_ALIASES[queue]) key = CVQ_ALIASES[queue];
+      else if (CVQ_DATA[queue]) key = queue;
 
-    statCodes.forEach(code => {
-      const td = tr.cells[colMap[code]];
-      if (!td) return;
-      const val = data[code];
-      if (val == null) return;
-      linkify(td, nameVal || queueVal, code, val);
-      wrote++;
+      const data = key ? CVQ_DATA[key] : null;
+      if (!data) return;
+
+      statCodes.forEach(code => {
+        const td = tr.cells[colMap[code]];
+        if (!td) return;
+        const val = data[code];
+        if (val == null) return;
+        cvqsLinkify(td, key, code, val);
+        wrote++;
+      });
     });
-  });
-
-  return wrote;
-}
-
+    return wrote;
+  }
 
   function attach(doc, table) {
-    // prevent duplicate bindings on the same table
     if (table.dataset.cvqsBound) return;
     table.dataset.cvqsBound = '1';
 
     const apply = () => {
-      const n = injectTable(doc, table);
-      if (n) LOG('wrote', n, 'cell(s) in', doc.defaultView?.location?.href || '(doc)');
+      try {
+        const n = injectTable(doc, table);
+        if (n) cvqsLog('wrote', n, 'cell(s) in', doc.defaultView?.location?.href || '(doc)');
+      } catch (e) {
+        console.error('[cvqs] apply error:', e);
+      }
     };
+
     let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
     const t = doc.defaultView.setInterval(() => {
-      tries++;
-      const rows = table.tBodies[0]?.rows.length || 0;
-      if (rows !== last) { last = rows; lastChange = Date.now(); }
-      if (Date.now() - lastChange > calmMs || tries > 40) {
+      try {
+        tries++;
+        const rows = table.tBodies[0]?.rows.length || 0;
+        if (rows !== last) { last = rows; lastChange = Date.now(); }
+        if (Date.now() - lastChange > calmMs || tries > 40) {
+          doc.defaultView.clearInterval(t);
+          apply();
+        }
+      } catch (e) {
         doc.defaultView.clearInterval(t);
-        apply();
+        console.error('[cvqs] interval error:', e);
       }
     }, 150);
 
+    // DataTables redraw hook (safe)
     try {
       const $ = doc.defaultView.jQuery;
-      if ($ && $.fn && $.fn.DataTable) {
-        $(table).on('draw.dt', apply);
-      }
+      if ($ && $.fn && $.fn.DataTable) $(table).on('draw.dt', apply);
     } catch (_) {}
 
     const tb = table.tBodies[0];
-    if (tb) new doc.defaultView.MutationObserver(apply)
-      .observe(tb, { childList: true, subtree: true });
+    if (tb) new doc.defaultView.MutationObserver(apply).observe(tb, { childList: true, subtree: true });
 
     doc.defaultView.cvqsForce = apply;
   }
 
-  /* --- Minimal safety shims (only used if your originals are missing) --- */
-  const LOG = (...args) =>
-    (window.LOG && typeof window.LOG === 'function')
-      ? window.LOG(...args)
-      : console.log('[cvqs]', ...args);
-
-  function _norm(s){ return (s||'').replace(/\s+/g,' ').trim(); } // local use for shims
-
-  if (typeof window.collectDocs !== 'function') {
-    window.collectDocs = (root) => {
-      const out = [root];
-      (root || document).querySelectorAll('iframe').forEach(f => {
-        try { if (f.contentDocument) out.push(f.contentDocument); } catch (_) {}
-      });
-      return out;
-    };
-  }
-
-  if (typeof window.candidateTables !== 'function') {
-    window.candidateTables = (doc) => {
-      const direct = Array.from(doc.querySelectorAll('#modal_stats_table'));
-      if (direct.length) return direct;
-      return Array.from(doc.querySelectorAll('table')).filter(t => {
-        const head = t.tHead?.rows?.[0];
-        if (!head) return false;
-        const headers = Array.from(head.cells).map(th => _norm(th.textContent).toUpperCase());
-        const hasQueue = headers.some(h => /QUEUE/.test(h));
-        const hasStat  = headers.some(h => /(VOLUME|OFFERED|ABANDON|WAIT|HOLD|TALK)/.test(h));
-        return hasQueue && hasStat;
-      });
-    };
-  }
-
-  if (typeof window.mapHeaders !== 'function') {
-  window.mapHeaders = (table) => {
-    const head = table.tHead?.rows?.[0] || table.rows?.[0];
-    const colMap = {};
-    let nameIdx = -1, queueIdx = -1;
-    if (!head) return { colMap, nameIdx, queueIdx };
-
-    const codeTests = {
-      VOL: [/^VOL$/i, /^(CALL\s*)?VOLUME$/i],
-      CO:  [/^CO$/i, /^(CALLS\s*)?OFFERED$/i],
-      AH:  [/^AH$/i, /^AVG\.?\s*HOLD/i],
-      AC:  [/^AC$/i, /ABANDON/i],
-      AWT: [/^AWT$/i, /^AVG\.?\s*WAIT/i],
-      ATT: [/^ATT$/i, /^AVG\.?\s*TALK/i],
-    };
-
-    Array.from(head.cells).forEach((th, idx) => {
-      const txt = (th.textContent || '').replace(/\s+/g,' ').trim();
-      const up  = txt.toUpperCase();
-
-      if (nameIdx  < 0 && /^NAME$/i.test(up))   nameIdx = idx;
-      if (queueIdx < 0 && /^QUEUE$/i.test(up)) queueIdx = idx;
-
-      for (const [code, tests] of Object.entries(codeTests)) {
-        if (tests.some(re => re.test(up))) colMap[code] = idx;
-      }
-    });
-
-    return { colMap, nameIdx, queueIdx };
-  };
-}
-
-
-  if (typeof window.linkify !== 'function') {
-    window.linkify = (td, queueName, code, val) => {
-      if (!td) return;
-      td.innerHTML = `<a href="#" data-q="${queueName}" data-code="${code}">${val}</a>`;
-      const a = td.querySelector('a');
-      a.addEventListener('click', (e) => { e.preventDefault(); openQueueModal(queueName, code); });
-    };
-  }
-
-  /* --- tiny guard so a missing name column never mis-indexes --- */
-  const _injectTableOrig = injectTable;
-  injectTable = function(doc, table){
-    const { colMap, nameIdx } = mapHeaders(table);
-    if (nameIdx == null || nameIdx < 0) return 0;
-    return _injectTableOrig(doc, table);
-  };
-
   function boot() {
-    const docs = collectDocs(document);
-    LOG('scanning', docs.length, 'document(s)…');
-    let attached = 0;
-    docs.forEach(doc => {
-      const tables = candidateTables(doc);
-      if (!tables.length) return;
-      tables.forEach(tbl => { attach(doc, tbl); attached++; });
-    });
-    if (!attached) LOG('no candidate tables found (yet)');
+    try {
+      const docs = cvqsCollectDocs(document);
+      cvqsLog('scanning', docs.length, 'document(s)…');
+      let attached = 0;
+      docs.forEach(doc => {
+        const tables = cvqsCandidateTables(doc);
+        if (!tables.length) return;
+        tables.forEach(tbl => { attach(doc, tbl); attached++; });
+      });
+      if (!attached) cvqsLog('no candidate tables found (yet)');
+    } catch (e) {
+      console.error('[cvqs] boot error:', e);
+    }
   }
 
-  boot();
-  let tries = 0;
-  const again = setInterval(() => {
-    tries++;
+
+// Wait for #modal_stats_table to fully load, then run boot()
+const waitForTable = setInterval(() => {
+  const table = document.querySelector('#modal_stats_table');
+  if (!table || !table.tBodies?.length) return;
+
+  clearInterval(waitForTable);
+
+  try {
     boot();
-    if (tries >= MAX_SCAN_TRIES) clearInterval(again);
-  }, 350);
+
+    // Start rescans (unchanged)
+    let tries = 0;
+    const again = setInterval(() => {
+      tries++;
+      boot();
+      if (tries >= MAX_SCAN_TRIES) clearInterval(again);
+    }, 350);
+  } catch (e) {
+    console.error('[cvqs] failed after waiting for table:', e);
+  }
+}, 300);
+
+// Failsafe timeout in case table never appears
+setTimeout(() => clearInterval(waitForTable), 10000);
+
 })();
+
+
 
 
 
