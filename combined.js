@@ -413,19 +413,37 @@ function injectFakePeakCallLines() {
   polyline.setAttribute('stroke-width', '2');
 
   // Simulate smoother real-world peak activity across 7 days
-  const points = [
-    [10, 390],   // low start
-    [50, 310],
-    [90, 220],   // peak
-    [130, 270],
-    [170, 350],
-    [210, 400],  // dip
-    [250, 280],
-    [290, 190],  // peak again
-    [330, 260],
-    [370, 320],
-    [410, 390]   // end
-  ];
+ const points = [
+  [30, 370],   // Aug 21
+  [50, 310],
+  [70, 270],
+  [90, 340],
+
+  [130, 400],  // Aug 22 (intentional dip below spike)
+
+  [170, 320],  // Aug 23
+  [190, 240],
+  [210, 290],
+  [230, 360],
+
+  [270, 380],  // Aug 24
+  [290, 300],
+  [310, 210],
+  [330, 280],
+
+  [370, 400],  // Aug 25 (slower day)
+
+  [410, 310],  // Aug 26
+  [430, 190],
+  [450, 220],
+  [470, 300],
+
+  [510, 370],  // Aug 27
+  [530, 250],
+  [550, 190],
+  [570, 260],
+  [590, 310],
+];
 
   const pointStr = points.map(p => p.join(',')).join(' ');
   polyline.setAttribute('points', pointStr);
@@ -4154,6 +4172,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
