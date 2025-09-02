@@ -4113,46 +4113,6 @@ document.addEventListener('click', function (e) {
   if (window.__cvqs_auto_installed__) return;
   window.__cvqs_auto_installed__ = true;
 
-
-  const LINK_CLASS = 'cvqs-poc-link';
-  const STATS_TABLE_ID = '#modal_stats_table';
-  const MAX_SCAN_TRIES = 20;
-
-  const queueRepDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
-  const queueRepListen = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
-  const queueRepCradle = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
-  const queueRepNotes = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
-
-  const STAT_DESCRIPTIONS = {
-    VOL: 'Number of calls originating through a Call Queue. Includes answered calls, abandoned calls, forwards, and voicemail.',
-    CO: 'Number of calls answered by agent originating through a Call Queue.',
-    AH: 'Average time a caller spends on hold with an agent. Excludes waiting time in the Call Queue.',
-    AC: 'Number of calls that abandoned the queue before being offered to an agent.',
-    AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
-  };
-
-  const CVQ_DATA = {
-    "Main Routing": {
-      VOL: 5,
-      CALLS: [
-        { callTime: "Today, 08:02 am", callerName: "Ruby Foster", callerNumber: "(248) 555-0102", DNIS: "248-436-3443", timeInQueue: "00:38", agentExtension: "206", agentPhone: "206", agentName: "Jill Peters", agentTime: "0:56", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" },
-        { callTime: "Today, 08:12 am", callerName: "Lucas Grant", callerNumber: "(734) 555-0194", DNIS: "248-436-3443", timeInQueue: "00:28", agentExtension: "209", agentPhone: "209", agentName: "Paul D'Angelo", agentTime: "01:32", agentRelease: "Term: Hung up", queueReleaseReason: "Connect" },
-        { callTime: "Today, 08:33 am", callerName: "Karen Patel", callerNumber: "(517) 555-0138", DNIS: "248-436-3443", timeInQueue: "00:11", agentExtension: "210", agentPhone: "210", agentName: "Rachel Ford", agentTime: "02:10", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" },
-        { callTime: "Today, 08:44 am", callerName: "Mark Young", callerNumber: "(313) 555-0116", DNIS: "248-436-3443", timeInQueue: "00:59", agentExtension: "212", agentPhone: "212", agentName: "Nancy Hill", agentTime: "01:07", agentRelease: "Term: Hung up", queueReleaseReason: "Connect" },
-        { callTime: "Today, 08:58 am", callerName: "Ashley Li", callerNumber: "(810) 555-0169", DNIS: "248-436-3443", timeInQueue: "00:21", agentExtension: "215", agentPhone: "215", agentName: "Oscar Nguyen", agentTime: "03:44", agentRelease: "Orig: Bye", queueReleaseReason: "Connect" }
-      ]
-    }
-  };
-
-  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
-
-
-/* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal with full fidelity) ===== */
-;(() => {
-  if (window.__cvqs_auto_installed__) return;
-  window.__cvqs_auto_installed__ = true;
-
   const LINK_CLASS = 'cvqs-poc-link';
   const STATS_TABLE_ID = '#modal_stats_table';
   const MAX_SCAN_TRIES = 20;
@@ -4428,6 +4388,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
