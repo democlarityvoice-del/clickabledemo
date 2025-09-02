@@ -4107,11 +4107,7 @@ document.addEventListener('click', function (e) {
 
 
 
-/* ===== CV Queue Stats: Final Demo Overlay Injection ====================
-   Purpose: Injects fake stats into queue table (Clarity demo overlay).
-   Status: 100% working. Uses column indexes, not class names.
-   Safe:   No global side effects. Reruns on redraws and updates.
-=========================================================================== */
+
 /* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
    Purpose: Replace cells with clickable POC links using header mapping.
    Scope:   Only runs in a document that contains #modal_stats_table.
@@ -4143,9 +4139,11 @@ document.addEventListener('click', function (e) {
     'Avg. Wait Time': 'AWT'
   };
 
-  function cvqs_norm(s){ return (s||'').replace(/\s+/g,' ').trim(); }
+  function cvqs_norm(s) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
 
-  function cvqs_linkifyCell(td, queueName, statKey, value){
+  function cvqs_linkifyCell(td, queueName, statKey, value) {
     if (value === null || value === undefined) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return; // already linked
     const a = td.ownerDocument.createElement('a');
@@ -4162,20 +4160,19 @@ document.addEventListener('click', function (e) {
     td.replaceChildren(a);
   }
 
-  function cvqs_buildColMap(table){
+  function cvqs_buildColMap(table) {
     const ths = [...table.querySelectorAll('thead th')];
-    const colMap = {}; // {VOL: idx, CO: idx, ...}
+    const colMap = {};
     ths.forEach((th, idx) => {
       const key = cvqs_STAT_MAP[cvqs_norm(th.textContent)];
       if (key) colMap[key] = idx;
     });
-    // name column (fallback to 3rd col if unlabeled)
     let nameIdx = ths.findIndex(th => /(name|queue)/i.test(th.textContent));
     if (nameIdx < 0) nameIdx = 2;
     return { colMap, nameIdx };
   }
 
-  function cvqs_injectAll(){
+  function cvqs_injectAll() {
     const table = document.querySelector(TABLE_SEL);
     if (!table) return 0;
 
@@ -4205,35 +4202,39 @@ document.addEventListener('click', function (e) {
     return updated;
   }
 
-  // Kick once, then stay current on redraws/DOM changes
-  const table = document.querySelector(TABLE_SEL);
-  if (!table) return; // only run on the stats doc
+  // Delay injection until table is stable
+  function waitForStableTable(maxWaitMs = 8000) {
+    return new Promise((resolve, reject) => {
+      const table = document.querySelector(TABLE_SEL);
+      const deadline = Date.now() + maxWaitMs;
+      if (!table) return reject('No stats table found');
 
-  // Initial + retries (handles late paint)
-  let tries = 0, max = 25;
-  const t = setInterval(() => {
-    tries++;
-    if (cvqs_injectAll() > 0 || tries >= max) clearInterval(t);
-  }, 200);
-
-  // Re-apply on DataTables redraws (if present)
-  try {
-    const $ = window.jQuery;
-    if ($ && $.fn && $.fn.DataTable) {
-      $(TABLE_SEL).on('draw.dt', cvqs_injectAll);
-    }
-  } catch (_) {}
-
-  // Observe tbody in case the portal swaps rows
-  const tb = table.querySelector('tbody');
-  if (tb) {
-    new MutationObserver(cvqs_injectAll)
-      .observe(tb, { childList: true, subtree: true });
+      const interval = setInterval(() => {
+        const rowCount = table.querySelectorAll('tbody tr').length;
+        const ready = rowCount > 1;
+        if (ready || Date.now() > deadline) {
+          clearInterval(interval);
+          resolve(table);
+        }
+      }, 300);
+    });
   }
 
-  // Manual trigger for quick testing
+  waitForStableTable().then(() => {
+    // Safe to inject after delay
+    setTimeout(() => {
+      const updated = cvqs_injectAll();
+      console.debug(`[CV-QS] Injected after table stabilization: ${updated} cells`);
+    }, 500);
+  }).catch((err) => {
+    console.warn('[CV-QS] Table never stabilized:', err);
+  });
+
+  // Manual trigger
   window.cvqsInjectAll = cvqs_injectAll;
 })();
+
+
 
 
 
