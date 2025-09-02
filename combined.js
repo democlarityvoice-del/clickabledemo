@@ -1713,6 +1713,10 @@ if (!window.__cvAgentsPanelInit) {
     root.querySelector('.cvhf-bd').innerHTML = bodyHTML || '';
     root.classList.add('is-open');
   }
+  // Force scroll to top inside modal body after open
+  setTimeout(() => {
+  root.querySelector('.cvhf-dialog').scrollTop = 0;
+  }, 0);
 
   // ---------- render helpers (axes + ticks like your screenshot) ----------
   function barSVG(values, axisMax, w, h, gap){
@@ -4103,6 +4107,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
