@@ -1707,8 +1707,8 @@ if (!window.__cvAgentsPanelInit) {
   }
 
   function openModal(title, bodyHTML){
-    var parts = (document);
-    var root  = parts.root;
+    var parts = ensureModal();  // ✅ call the function that returns .root
+    var root = parts.root;
     root.querySelector('.cvhf-ttl').textContent = title || '';
     root.querySelector('.cvhf-bd').innerHTML = bodyHTML || '';
     root.classList.add('is-open');
@@ -4103,6 +4103,7 @@ document.addEventListener('click', function (e) {
   })();
 
 } // -------- ✅ Closes window.__cvCallHistoryInit -------- //
+
 
 
 
