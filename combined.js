@@ -4253,7 +4253,16 @@ document.addEventListener('click', function (e) {
     modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
     modal.innerHTML = `
       <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
-      <h2 style="margin-top:0;color:#004a9b">${queue} (300) Call Volume</h2>
+      <h2 style="margin-top:0;margin-bottom:10px;color:#000;font-size:20px;">
+        ${queue} (300) ${statTitle}
+        <span class="popover-stats ${code}"
+            title="${statTitle}"
+            data-title="${statTitle}"
+            data-content="${(STAT_DESCRIPTIONS[code]||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\.\s/,'.</p><p>') ? `<p>${(STAT_DESCRIPTIONS[code]||'').replace(/"/g,'&quot;').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\.\s/,'.</p><p>')}</p>` : ''}"
+            data-original-title="${statTitle}">
+          <i class="icon-info-sign"></i>
+        </span>
+      </h2>
       <div style="margin:10px 0;">
         <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
       </div>
@@ -4273,6 +4282,22 @@ document.addEventListener('click', function (e) {
     modal.querySelectorAll('tbody tr').forEach(injectIcons);
     document.body.appendChild(modal);
   }
+
+  // Init Clarity/Bootstrap popover exactly like header tooltips
+try {
+  var $ = window.jQuery || document.defaultView.jQuery;
+  if ($ && $.fn && $.fn.popover) {
+    $(modal).find('.popover-stats').popover({
+      container: modal,        // keeps it over the modal
+      html: true,              // allow <p> split above
+      placement: 'top',
+      trigger: 'hover focus',
+      title: function(){ return $(this).data('title'); },
+      content: function(){ return $(this).data('content'); }
+    });
+  }
+} catch (e) { /* silent if Bootstrap is absent */ }
+
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4345,5 +4370,6 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
