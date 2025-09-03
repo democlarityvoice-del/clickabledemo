@@ -4255,6 +4255,8 @@ document.addEventListener('click', function (e) {
     border-radius: 0;
     height: auto;
     max-height: none;
+    min-height: 500px; /* or match your iframe height */
+    padding-bottom: 40px;
     font-family: sans-serif;
   `;
 
@@ -4414,6 +4416,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
