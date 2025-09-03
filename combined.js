@@ -3656,8 +3656,6 @@ script.forEach(function (seg) {
 }
 
 
-
-
   // Create AI modal dynamically
 function cvAiEnsureModal() {
   let modal = document.getElementById('cv-ai-modal');
@@ -4108,13 +4106,6 @@ document.addEventListener('click', function (e) {
 
 
 
-/* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
-   Purpose: Replace cells with clickable POC links using header mapping.
-   Scope:   Only runs in a document that contains #modal_stats_table.
-   Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
-======================================================================= */
-/* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
-
 /* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal) ===== */
 (() => {
   if (window.__cvqs_auto_installed__) return;
@@ -4222,10 +4213,18 @@ document.addEventListener('click', function (e) {
   function injectIcons(tr) {
     const td = document.createElement('td');
     td.innerHTML = `
-      <img src="${queueRepDownload}" title="Download" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepListen}" title="Listen" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepCradle}" title="Cradle to Grave" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepNotes}" title="Edit Notes" style="cursor:pointer;width:16px">
+      <span class="icon-circle" title="Download">
+        <img src="${queueRepDownload}" alt="Download">
+      </span>
+      <span class="icon-circle" title="Listen">
+        <img src="${queueRepListen}" alt="Listen">
+      </span>
+      <span class="icon-circle" title="Cradle to Grave">
+        <img src="${queueRepCradle}" alt="Cradle to Grave">
+      </span>
+      <span class="icon-circle" title="Edit Notes">
+        <img src="${queueRepNotes}" alt="Edit Notes">
+      </span>
     `;
     tr.appendChild(td);
   }
@@ -4249,30 +4248,110 @@ document.addEventListener('click', function (e) {
   }
 
   function openQueueModal(queue, code) {
-    const modal = document.createElement('div');
-    modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
-    modal.innerHTML = `
-      <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
-      <h2 style="margin-top:0;color:#000000">${queue} (300) Call Volume</h2>
-      <div style="margin:10px 0;">
-        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
-      </div>
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr style="background:white;color:#004a9b">
-            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr><td>09/01/2025 8:08 am</td><td>DOBBS TERESA</td><td>16788732633</td><td>(800) 676-3995</td><td>00:38</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:31</td><td>Term: Bye</td><td>Connect</td></tr>
-          <tr><td>09/01/2025 8:15 am</td><td>MR APPLIANCE</td><td>17183139198</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:38</td><td>Orig: Bye</td><td>Connect</td></tr>
-          <tr><td>09/01/2025 8:48 am</td><td>WIRELESS CALLER</td><td>13016131380</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>09:22</td><td>Term: Bye</td><td>Connect</td></tr>
-        </tbody>
-      </table>
-    `;
-    modal.querySelectorAll('tbody tr').forEach(injectIcons);
-    document.body.appendChild(modal);
+  const modal = document.createElement('div');
+  modal.id = 'cvqs-inline-modal';
+  modal.style = `
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    padding: 20px;
+    z-index: 10;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    height: auto;
+    max-height: none;
+    min-height: 500px; /* or match your iframe height */
+    padding-bottom: 40px;
+    font-family: sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <style>
+      .cvqs-call-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        table-layout: fixed;
+      }
+
+      .cvqs-call-table thead th {
+        background: white;
+        color: #004a9b;
+        text-align: left;
+        padding: 6px 8px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+      }
+
+      .cvqs-call-table tbody td {
+        padding: 6px 8px;
+        border-right: 1px solid #eee;
+        border-left: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
+
+      .cvqs-call-table tbody tr:hover {
+        background-color: #f3f3f3;
+        cursor: default;
+      }
+
+      .cvqs-call-table td:last-child {
+        white-space: nowrap;
+        text-align: center;
+      }
+
+      .cvqs-call-table img {
+        vertical-align: middle;
+      }
+    </style>
+
+    <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
+    <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
+      ${queue} Call Volume
+    </h2>
+    <div style="margin:10px 0;">
+      <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
+      <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+    </div>
+    <table class="cvqs-call-table">
+      <thead>
+        <tr>
+          <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+          <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+          <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+          <th>Queue Release Reason</th><th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td></tr>
+        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td></tr>
+        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td></tr>
+        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td></tr>
+        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td></tr>
+      </tbody>
+    </table>
+  `;
+
+  // Inject icons
+  modal.querySelectorAll('tbody tr').forEach(injectIcons);
+
+  // Append inside container if possible
+  const container = document.querySelector('#modal-body-reports');
+  if (container) {
+    container.style.position = 'relative';
+    container.appendChild(modal);
+  } else {
+    document.body.appendChild(modal); // fallback
   }
+}
+
+ 
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4345,3 +4424,12 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
+
+
+
+
+
+
+
+
