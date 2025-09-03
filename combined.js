@@ -4280,6 +4280,9 @@ function injectIcons(tr) {
 
 function openQueueModal(queue, code) {
   const modal = document.createElement('div');
+  const queueNumberMatch = queue.match(/\((\d+)\)/);
+  const queueNumber = queueNumberMatch ? queueNumberMatch[1] : '';
+  const queueNameOnly = queue.replace(/\s*\(\d+\)/, '');
   modal.id = 'cvqs-inline-modal';
   modal.style = `
     position: absolute;
@@ -4391,7 +4394,7 @@ function openQueueModal(queue, code) {
       <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
     </div>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
-      ${queue} ${getStatTitle(code)}
+      ${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}
     </h2>
     <div style="margin:10px 0;">
       <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
@@ -4547,6 +4550,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
