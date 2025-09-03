@@ -4303,7 +4303,7 @@ document.addEventListener('click', function (e) {
 
     <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
-      ${queue} (${queueCode}) Call Volume
+      ${queue} Call Volume
     </h2>
     <div style="margin:10px 0;">
       <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
@@ -4414,6 +4414,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
