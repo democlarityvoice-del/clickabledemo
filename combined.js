@@ -4349,6 +4349,23 @@ function openQueueModal(queue, code) {
         display: none !important;
       }
 
+      /* SCORCHED EARTH METHOD */
+      #cvqs-inline-modal .caret,
+      #cvqs-inline-modal .dropdown-toggle::after,
+      #cvqs-inline-modal [data-toggle="dropdown"]::after,
+      #cvqs-inline-modal [data-bs-toggle="dropdown"]::after {
+       content: none !important;
+       display: none !important;
+       border: none !important;
+       background: none !important;
+       box-shadow: none !important;
+       width: 0 !important;
+       height: 0 !important;
+       margin: 0 !important;
+      padding: 0 !important;
+    }
+
+
       /* Image baseline alignment */
       .cvqs-call-table img {
         vertical-align: middle;
@@ -4528,6 +4545,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
