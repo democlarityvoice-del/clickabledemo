@@ -4302,9 +4302,14 @@ document.addEventListener('click', function (e) {
       }
 
       .cvqs-call-table td:last-child {
-        white-space: nowrap;
+        white-space: normal;
         text-align: center;
+        padding-top: 6px;
+        padding-bottom: 6px;
+        background: white; /* Safety */
+        position: relative; /* Needed to control z-indexed children */
       }
+
 
       .cvqs-call-table img {
         vertical-align: middle;
@@ -4318,12 +4323,13 @@ document.addEventListener('click', function (e) {
         height: 24px;
         border-radius: 50%;
         background-color: #ffffff;
-        border: 1px solid #dcdcdc;
-        z-index: 2; /* Ensure above any dropdown */
-        overflow: hidden; /* Cut off bleed from background elements */
-        margin-right: 6px;
+        margin: 3px;
         opacity: .45;
-        transition: opacity .15s, transform .04s;        
+        transition: opacity .15s, transform .04s;
+        overflow: hidden;
+        z-index: 5;
+        position: relative;
+        box-shadow: 0 0 0 1px #ccc;;        
       }
 
       .icon-circle:hover {
@@ -4451,6 +4457,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
