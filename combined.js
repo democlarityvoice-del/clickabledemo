@@ -4205,14 +4205,6 @@ document.addEventListener('click', function (e) {
     return titles[code] || code;
   }
 
-  function timeToSeconds(v) {
-    if (typeof v !== 'string') return null;
-    const p = v.split(':').map(Number);
-    if (p.some(Number.isNaN)) return null;
-    if (p.length === 2) { const [m,s]=p; return m*60+s; }
-    if (p.length === 3) { const [h,m,s]=p; return h*3600+m*60+s; }
-    return null;
-  }
 
   function setSort(td, code, v) {
     const n = Number(v);
@@ -4270,12 +4262,6 @@ function injectIcons(tr) {
     </span>
   `;
 
-  // Strip attributes that 3rd-party tooltips hook onto
-  td.querySelectorAll('[title],[data-original-title]').forEach(el => {
-    el.removeAttribute('title');
-    el.removeAttribute('data-original-title');
-  });
-}
 
 
 function openQueueModal(queue, code) {
@@ -4431,26 +4417,11 @@ function openQueueModal(queue, code) {
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
 
-  // hard-disable any 3rd-party tooltip plugin that hijacks [title]
-  (function disable3rdPartyTooltips(root) {
-    // remove attributes that trigger Bootstrap/jQuery tooltips
-    root.querySelectorAll('[title],[data-original-title]').forEach(el => {
-      el.removeAttribute('title');
-      el.removeAttribute('data-original-title');
-    });
-    try {
-      const $ = window.jQuery || root.ownerDocument.defaultView.jQuery;
-      if ($ && $.fn && $.fn.tooltip) {
-        $(root).find('.icon-circle').tooltip('dispose');
-      }
-    } catch (e) {}
-  })(modal);
 
   insertDateRange(queue, code);
 }
 
 
- 
 
   function insertDateRange(queue, code) {
   const now = new Date();
@@ -4550,6 +4521,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
