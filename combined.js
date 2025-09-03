@@ -3656,8 +3656,6 @@ script.forEach(function (seg) {
 }
 
 
-
-
   // Create AI modal dynamically
 function cvAiEnsureModal() {
   let modal = document.getElementById('cv-ai-modal');
@@ -4258,11 +4256,11 @@ document.addEventListener('click', function (e) {
         color: #004a9b;
         text-align: left;
         padding: 6px 8px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
         border-bottom: 1px solid #ccc;
       }
-       .cvqs-call-table thead th:last-child {
-         border-right: none;
-      }
+      
       .cvqs-call-table tbody td {
         padding: 6px 8px;
         border-right: 1px solid #ccc;
@@ -4386,6 +4384,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
