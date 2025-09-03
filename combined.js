@@ -3656,6 +3656,8 @@ script.forEach(function (seg) {
 }
 
 
+
+
   // Create AI modal dynamically
 function cvAiEnsureModal() {
   let modal = document.getElementById('cv-ai-modal');
@@ -4106,6 +4108,13 @@ document.addEventListener('click', function (e) {
 
 
 
+/* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
+   Purpose: Replace cells with clickable POC links using header mapping.
+   Scope:   Only runs in a document that contains #modal_stats_table.
+   Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
+======================================================================= */
+/* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
+
 /* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal) ===== */
 (() => {
   if (window.__cvqs_auto_installed__) return;
@@ -4122,12 +4131,8 @@ document.addEventListener('click', function (e) {
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
 
   const CVQ_DATA = {
-    "Main Routing":     { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
-    "New Sales":        { VOL: 21, CO: 10, ATT: "3:14", AH: "0:00", AC: null, AWT: "2:12" },
-    "Existing Customer":{ VOL: 5, CO: 5, ATT: "1:38", AH: "0:05", AC: null, AWT: "1:01" },
-    "Billing":          { VOL: 3, CO: 3, ATT: "2:00", AH: "0:00", AC: null, AWT: "1:33" },
+    "Main Routing": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
   };
-
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
   const HEADER_TO_STAT = {
@@ -4152,7 +4157,6 @@ document.addEventListener('click', function (e) {
 
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
-
 
   function collectDocs(root, out = []) {
     out.push(root);
@@ -4197,25 +4201,14 @@ document.addEventListener('click', function (e) {
     return { colMap, nameIdx };
   }
 
-  function getStatTitle(code) {
-    const titles = {
-      VOL: 'Call Volume',
-      CO: 'Calls Handled',
-      ATT: 'Average Talk Time',
-      AH: 'Average Hold Time',
-      AC: 'Abandoned Calls',
-      AWT: 'Average Wait Time'
-    };
-    return titles[code] || code;
-  }
-
-  function timeToSeconds(t) {
-    const parts = t.split(':').map(Number);
-    if (parts.length === 2) return parts[0] * 60 + parts[1];
-    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  function timeToSeconds(v) {
+    if (typeof v !== 'string') return null;
+    const p = v.split(':').map(Number);
+    if (p.some(Number.isNaN)) return null;
+    if (p.length === 2) { const [m,s]=p; return m*60+s; }
+    if (p.length === 3) { const [h,m,s]=p; return h*3600+m*60+s; }
     return null;
   }
-
 
   function setSort(td, code, v) {
     const n = Number(v);
@@ -4226,389 +4219,60 @@ document.addEventListener('click', function (e) {
     }
   }
 
-  function linkify(td, queue, code, v) {
-  if (v == null) return;
-  if (td.querySelector(`a.${LINK_CLASS}`)) return;
-
-  const a = td.ownerDocument.createElement('a');
-  a.href = '#';
-  a.className = LINK_CLASS;
-  a.textContent = String(v);
-  a.style.fontWeight = 'bold';
-  a.style.textDecoration = 'underline';
-  a.style.cursor = 'pointer';
-
-  a.addEventListener('click', e => {
-    e.preventDefault();
-    openQueueModal(queue, code);
-  });
-
-  td.replaceChildren(a);
-  setSort(td, code, v);
-}
-
-// ==== REPLACE BOTH FUNCTIONS WITH THIS VERSION ====
-
-function injectIcons(tr) {
-  // Use the pre-allocated action cell; fallback to create if missing
-  let td = tr.querySelector('td.cvqs-action-cell');
-  if (!td) {
-    td = document.createElement('td');
-    td.className = 'cvqs-action-cell';
+  function injectIcons(tr) {
+    const td = document.createElement('td');
+    td.innerHTML = `
+      <img src="${queueRepDownload}" title="Download" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepListen}" title="Listen" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepCradle}" title="Cradle to Grave" style="cursor:pointer;width:16px;margin-right:6px">
+      <img src="${queueRepNotes}" title="Edit Notes" style="cursor:pointer;width:16px">
+    `;
     tr.appendChild(td);
   }
 
-  td.innerHTML = `
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Download" data-icon="download">
-      <img src="${queueRepDownload}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Listen" data-icon="listen">
-      <img src="${queueRepListen}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Cradle to Grave" data-icon="cradle">
-      <img src="${queueRepCradle}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Edit Notes" data-icon="notes">
-      <img src="${queueRepNotes}" alt="">
-    </span>
-  `;
-}
-
-
-function openQueueModal(queue, code) {
-  const modal = document.createElement('div');
-  const fullMatch = queue.match(/^(.+?)\s*\((\d+)\)$/);
-  const queueNameOnly = fullMatch ? fullMatch[1].trim() : queue;
-  const queueNumber = fullMatch ? fullMatch[2] : '';
-  modal.id = 'cvqs-inline-modal';
-  modal.style = `
-    position: absolute;
-    top: 0; left: 0; right: 0;
-    background: white;
-    padding: 20px 20px 40px 20px;
-    z-index: 10;
-    border: none; box-shadow: none; border-radius: 0;
-    height: auto; max-height: none; min-height: 500px;
-    font-family: sans-serif;
-  `;
-// ==== queueNotesPopover (anchored dropdown, unique IDs) ====
-const QN_REASONS = {
-  'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
-  'Outbound Sales': ['Cold Call', 'Follow-up']
-};
-
-function openQueueNotesPopover(anchorEl, initial) {
-  // remove any existing popover
-  document.getElementById('queue-notes-popover')?.remove();
-
-  // build container
-  const pop = document.createElement('div');
-  pop.id = 'queue-notes-popover';
-  pop.setAttribute('role', 'dialog');
-  pop.setAttribute('aria-label', 'Queue Notes');
-  Object.assign(pop.style, {
-    position: 'fixed',            // anchor to viewport
-    top: '0px',
-    left: '0px',
-    width: '340px',
-    maxWidth: '92vw',
-    background: '#fff',
-    border: '1px solid #cfd3d7',
-    borderRadius: '8px',
-    boxShadow: '0 8px 24px rgba(0,0,0,.18)',
-    zIndex: '2147483647',         // above everything
-    padding: '12px',
-    visibility: 'hidden'          // position first, then show
-  });
-
-  // content (unique element IDs)
-  pop.innerHTML = `
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-      <strong style="font-size:14px">Notes</strong>
-      <button id="qn2-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;line-height:1">&times;</button>
-    </div>
-    <div style="display:grid;grid-template-columns:100px 1fr;gap:10px 12px;align-items:center">
-      <label for="qn2-disposition" style="justify-self:end;font-weight:600">Disposition</label>
-      <select id="qn2-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
-        <option value="">Select a Disposition</option>
-        <option>Inbound Sales</option>
-        <option>Outbound Sales</option>
-      </select>
-
-
-      <label for="qn2-reason" style="justify-self:end;font-weight:600">Reason</label>
-      <select id="qn2-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
-        <option value="">Select a Disposition First</option>
-      </select>
-
-      <label for="qn2-text" style="justify-self:end;font-weight:600">Notes</label>
-      <textarea id="qn2-text" rows="4" style="width:100%;padding:2px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
-    </div>
-    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
-      <button id="qn2-cancel" class="cv-btn">Cancel</button>
-      <button id="qn2-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>
-    </div>
-  `;
-
-  // add to DOM to measure
-  document.body.appendChild(pop);
-
-  // init values
-  const dispSel = pop.querySelector('#qn2-disposition');
-  const reasonSel = pop.querySelector('#qn2-reason');
-  const txt = pop.querySelector('#qn2-text');
-
-  function populateReasons(disp) {
-    reasonSel.innerHTML = '';
-    const opts = QN_REASONS[disp] || [];
-    if (!opts.length) {
-      reasonSel.innerHTML = '<option value="">Select a Disposition First</option>';
-      return;
-    }
-    opts.forEach((label, i) => {
-      const o = document.createElement('option');
-      o.value = label;
-      o.textContent = label;
-      if (i === 0) o.selected = true;
-      reasonSel.appendChild(o);
+  function linkify(td, queue, code, v) {
+    if (v == null) return;
+    if (td.querySelector(`a.${LINK_CLASS}`)) return;
+    const a = td.ownerDocument.createElement('a');
+    a.href = '#';
+    a.className = LINK_CLASS;
+    a.textContent = String(v);
+    a.style.fontWeight = 'bold';
+    a.style.textDecoration = 'underline';
+    a.style.cursor = 'pointer';
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      openQueueModal(queue, code);
     });
+    td.replaceChildren(a);
+    setSort(td, code, v);
   }
 
-  const dispInit = (initial && initial.disposition) || 'Inbound Sales';
-  dispSel.value = dispInit;
-  populateReasons(dispInit);
-  txt.value = (initial && initial.notes) || '';
-  dispSel.onchange = () => populateReasons(dispSel.value);
-
-  // position near the icon (below/right when possible, otherwise flip)
-  // position near the icon but keep it inside the queue modal bounds
-const iconRect = anchorEl.getBoundingClientRect();
-const modalEl  = document.getElementById('cvqs-inline-modal');
-const box = modalEl
-  ? modalEl.getBoundingClientRect()
-  : { left: 8, top: 8, right: window.innerWidth - 8, bottom: window.innerHeight - 8 };
-
-const gap = 8;
-
-// measure after it's in the DOM
-const rect = pop.getBoundingClientRect();
-const pw = rect.width;
-const ph = rect.height;
-
-// Horizontal: prefer right of the icon; if no room, tuck to the LEFT of the icon
-let left = (iconRect.right + gap + pw <= box.right)
-  ? iconRect.right + gap
-  : iconRect.right - pw;
-
-// Vertical: prefer below; if no room, flip above
-let top = (iconRect.bottom + gap + ph <= box.bottom)
-  ? iconRect.bottom + gap
-  : iconRect.top - ph - gap;
-
-// Clamp to the modal’s box so it never bleeds out
-left = Math.min(Math.max(left, box.left + gap), box.right - pw - gap);
-top  = Math.min(Math.max(top,  box.top  + gap), box.bottom - ph - gap);
-
-pop.style.left = `${left}px`;
-pop.style.top  = `${top}px`;
-pop.style.visibility = 'visible';
-
-
-  // close helpers
-  const close = () => {
-    document.removeEventListener('click', onDocClick, true);
-    document.removeEventListener('keydown', onKeyDown, true);
-    pop.remove();
-  };
-  const onDocClick = (e) => {
-    if (pop.contains(e.target) || anchorEl.contains(e.target)) return;
-    close();
-  };
-  const onKeyDown = (e) => { if (e.key === 'Escape') close(); };
-
-  document.addEventListener('click', onDocClick, true);
-  document.addEventListener('keydown', onKeyDown, true);
-
-  // buttons
-  pop.querySelector('#qn2-close').addEventListener('click', close);
-  pop.querySelector('#qn2-cancel').addEventListener('click', close);
-  pop.querySelector('#qn2-save').addEventListener('click', () => {
-    const payload = {
-      disposition: dispSel.value || '',
-      reason:      reasonSel.value || '',
-      notes:       txt.value || ''
-    };
-    console.log('[queueNotesPopover] Saved', payload);
-    close();
-  });
-}
-// ==== /queueNotesPopover ====
-
-// ===== /continue modal =====
-
-  modal.innerHTML = `
-    <style>      
-
-      .cvqs-call-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: sans-serif;
-        font-size: 13px;
-        border: 1px solid #ccc;
-        table-layout: auto; /* was: fixed */
-      }
-
-      /* Header cells */
-      .cvqs-call-table thead th {
-        background: white;
-        color: #004a9b;
-        text-align: left;
-        padding: 6px 8px;
-        border-left: 1px solid #ccc;
-        border-right: 1px solid #ccc;
-        border-bottom: 1px solid #ccc;
-      }
-
-      /* Body cells */
-      .cvqs-call-table tbody td {
-        padding: 6px 8px;
-        border-right: 1px solid #eee;
-        border-left: 1px solid #eee;
-        border-bottom: 1px solid #eee;
-      }
-
-      /* Action cell (real cell, not :last-child) */
-      .cvqs-call-table td.cvqs-action-cell {
-        white-space: nowrap;
-        text-align: center;
-        padding: 6px 8px;
-        position: relative;
-        background: inherit; /* let row hover/zebra show through */
-      }
-
-      /* Ensure the action cell also shows row hover */
-      .cvqs-call-table tbody tr:hover td.cvqs-action-cell {
-        background-color: #f3f3f3;
-      }
-      
-
-      /* Image baseline alignment */
-      .cvqs-call-table img {
-        vertical-align: middle;
-      }
-
-      /* Icon buttons */
-      .icon-circle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background-color: #ffffff;
-        margin: 3px;
-        opacity: .55;
-        transition: opacity .15s, transform .04s, background-color .15s;
-        overflow: hidden;
-        box-shadow: 0 0 0 1px #ccc;
-        cursor: pointer;
-      }
-
-      .icon-circle:hover {
-        background-color: #cccccc;
-        opacity: 1;
-      }
-
-      .icon-circle img {
-        width: 14px;
-        height: 14px;
-        pointer-events: none;
-      }
-    </style>
-
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-      <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
-    </div>
-    <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
-      ${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}
-    </h2>
-    <div style="margin:10px 0;">
-      <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
-      <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px" alt="">
-    </div>
-    <table class="cvqs-call-table">
-      <thead>
-        <tr>
-          <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
-          <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
-          <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
-          <th>Queue Release Reason</th><th></th> <!-- keep this blank TH -->
-        </tr>
-      </thead>
-      <tbody>
-        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-      </tbody>
-    </table>
-  `;
-
-  // add to DOM
-  const container = document.querySelector('#modal-body-reports');
-  if (container) {
-    container.style.position = 'relative';
-    container.appendChild(modal);
-  } else {
+  function openQueueModal(queue, code) {
+    const modal = document.createElement('div');
+    modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
+    modal.innerHTML = `
+      <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
+      <h2 style="margin-top:0;color:#000000">${queue} (300) Call Volume</h2>
+      <div style="margin:10px 0;">
+        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+      </div>
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr style="background:white;color:#004a9b">
+            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>09/01/2025 8:08 am</td><td>DOBBS TERESA</td><td>16788732633</td><td>(800) 676-3995</td><td>00:38</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:31</td><td>Term: Bye</td><td>Connect</td></tr>
+          <tr><td>09/01/2025 8:15 am</td><td>MR APPLIANCE</td><td>17183139198</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>03:38</td><td>Orig: Bye</td><td>Connect</td></tr>
+          <tr><td>09/01/2025 8:48 am</td><td>WIRELESS CALLER</td><td>13016131380</td><td>(800) 676-3995</td><td>00:09</td><td>266</td><td>266p</td><td>Jez Cajeda</td><td>09:22</td><td>Term: Bye</td><td>Connect</td></tr>
+        </tbody>
+      </table>
+    `;
+    modal.querySelectorAll('tbody tr').forEach(injectIcons);
     document.body.appendChild(modal);
   }
-
-  // inject icons into each row
-  modal.querySelectorAll('tbody tr').forEach(injectIcons);
-// Open the anchored popover when the Notes icon is clicked
-modal.addEventListener('click', (e) => {
-  const btn = e.target.closest('.icon-circle[data-icon="notes"]');
-  if (!btn) return;
-
-  e.preventDefault();
-  e.stopPropagation();
-
-  // (Optional) infer disposition from row later; default to Inbound Sales
-  openQueueNotesPopover(btn, { disposition: 'Inbound Sales', notes: '' });
-});
-
-
-  insertDateRange(queue, code);
-}
-
-
-  function insertDateRange(queue, code) {
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-
-  const formatDate = (date) => {
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const yyyy = date.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
-  };
-
-  const rangeText = `${formatDate(yesterday)} 12:00 am to ${formatDate(now)} 11:59 pm`;
-
-  const rangeDiv = document.createElement('div');
-  rangeDiv.textContent = rangeText;
-  rangeDiv.style.margin = '8px 0 10px 0';
-  rangeDiv.style.fontSize = '13px';
-  rangeDiv.style.color = '#555';
-
-  const title = document.querySelector('#cvqs-inline-modal h2'); // Or however your title is rendered
-  if (title) {
-    title.insertAdjacentElement('afterend', rangeDiv);
-  }
-}
- 
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4681,5 +4345,3 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
-
-
