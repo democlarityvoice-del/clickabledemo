@@ -4193,6 +4193,18 @@ document.addEventListener('click', function (e) {
     return { colMap, nameIdx };
   }
 
+  function getStatTitle(code) {
+    const titles = {
+      VOL: 'Call Volume',
+      CO: 'Calls Handled',
+      ATT: 'Average Talk Time',
+      AH: 'Average Hold Time',
+      AC: 'Abandoned Calls',
+      AWT: 'Average Wait Time'
+    };
+    return titles[code] || code;
+  }
+
   function timeToSeconds(v) {
     if (typeof v !== 'string') return null;
     const p = v.split(':').map(Number);
@@ -4368,9 +4380,11 @@ function openQueueModal(queue, code) {
       }
     </style>
 
-    <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+      <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
+    </div>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
-      ${queue} Call Volume
+      ${queue} ${getStatTitle(code)}
     </h2>
     <div style="margin:10px 0;">
       <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
@@ -4526,6 +4540,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
