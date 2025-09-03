@@ -4211,6 +4211,27 @@ document.addEventListener('click', function (e) {
     }
   }
 
+  function linkify(td, queue, code, v) {
+  if (v == null) return;
+  if (td.querySelector(`a.${LINK_CLASS}`)) return;
+
+  const a = td.ownerDocument.createElement('a');
+  a.href = '#';
+  a.className = LINK_CLASS;
+  a.textContent = String(v);
+  a.style.fontWeight = 'bold';
+  a.style.textDecoration = 'underline';
+  a.style.cursor = 'pointer';
+
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    openQueueModal(queue, code);
+  });
+
+  td.replaceChildren(a);
+  setSort(td, code, v);
+}
+
 // ==== REPLACE BOTH FUNCTIONS WITH THIS VERSION ====
 
 function injectIcons(tr) {
@@ -4505,6 +4526,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
