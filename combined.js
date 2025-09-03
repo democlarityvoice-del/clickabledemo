@@ -4287,10 +4287,102 @@ function openQueueModal(queue, code) {
     height: auto; max-height: none; min-height: 500px;
     font-family: sans-serif;
   `;
+// ===== queueNotesModal (self-contained, unique IDs) =====
+function ensureQueueNotesModal () {
+  let modal = document.getElementById('queue-notes-modal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'queue-notes-modal';
+  modal.style.display = 'none';
+  modal.innerHTML =
+    '<div class="cv-modal-backdrop"></div>' +
+    '<div class="cv-modal">' +
+      '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;">' +
+        '<span style="font-weight:700;font-size:16px">Notes</span>' +
+        '<button class="qn-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
+      '</div>' +
+      '<div class="cv-modal-body" style="padding:16px">' +
+        '<div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;align-items:center">' +
+          '<label for="qn-disposition" style="justify-self:end;font-weight:600">Disposition</label>' +
+          '<select id="qn-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+            '<option value="">Select a Disposition</option>' +
+            '<option>Inbound Sales</option>' +
+            '<option>Outbound Sales</option>' +
+          '</select>' +
+          '<label for="qn-reason" style="justify-self:end;font-weight:600">Reason</label>' +
+          '<select id="qn-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
+            '<option value="">Select a Disposition First</option>' +
+          '</select>' +
+          '<label for="qn-text" style="justify-self:end;font-weight:600">Notes</label>' +
+          '<textarea id="qn-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
+        '</div>' +
+      '</div>' +
+      '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
+        '<button class="qn-cancel cv-btn">Cancel</button>' +
+        '<button class="qn-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
+      '</div>' +
+    '</div>';
+
+  document.body.appendChild(modal);
+
+  function close(){ modal.remove(); }
+  modal.querySelector('.cv-modal-backdrop').addEventListener('click', close);
+  modal.querySelector('.qn-close').addEventListener('click', close);
+  modal.querySelector('.qn-cancel').addEventListener('click', close);
+  modal.querySelector('.qn-save').addEventListener('click', function(){
+    const disposition = document.getElementById('qn-disposition').value || '';
+    const reason      = document.getElementById('qn-reason').value || '';
+    const notes       = document.getElementById('qn-text').value || '';
+    console.log('[queueNotesModal] Saved', { disposition, reason, notes });
+    close();
+  });
+
+  return modal;
+}
+
+// disposition -> reasons (unique map inside queue modal scope)
+const QN_REASONS = {
+  'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
+  'Outbound Sales': ['Cold Call', 'Follow-up']
+};
+
+function qnPopulateReasons(disp){
+  const sel = document.getElementById('qn-reason');
+  if (!sel) return;
+  sel.innerHTML = '';
+  const opts = QN_REASONS[disp] || [];
+  if (!opts.length){
+    sel.innerHTML = '<option value="">Select a Disposition First</option>';
+    return;
+  }
+  opts.forEach((label, i) => {
+    const o = document.createElement('option');
+    o.value = label;
+    o.textContent = label;
+    if (i === 0) o.selected = true;
+    sel.appendChild(o);
+  });
+}
+
+function openQueueNotesModal(initial){
+  const modal = ensureQueueNotesModal();
+  modal.style.display = 'block';
+
+  const dispSel = document.getElementById('qn-disposition');
+  const txt     = document.getElementById('qn-text');
+
+  const dispInit = (initial && initial.disposition) || 'Inbound Sales';
+  dispSel.value = dispInit;
+  qnPopulateReasons(dispInit);
+  txt.value = (initial && initial.notes) || '';
+
+  dispSel.onchange = () => qnPopulateReasons(dispSel.value);
+}
+// ===== /queueNotesModal =====
 
   modal.innerHTML = `
-    <style>
-      /* ==== CV Queue Stats modal table (icons column fix) ==== */
+    <style>      
 
       .cvqs-call-table {
         width: 100%;
@@ -4409,6 +4501,24 @@ function openQueueModal(queue, code) {
 
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
+// Wire the "Edit Notes" icon (data-icon="notes") inside this modal only
+modal.addEventListener('click', (e) => {
+  const btn = e.target.closest('.icon-circle[data-icon="notes"]');
+  if (!btn) return;
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Optionally infer disposition from the row; default to Inbound
+  const tr  = btn.closest('tr');
+  const tds = tr ? tr.querySelectorAll('td') : [];
+  const initial = {
+    disposition: 'Inbound Sales',  // keep simple; adjust if you later add direction flags
+    notes: ''
+  };
+
+  openQueueNotesModal(initial);
+});
 
 
   insertDateRange(queue, code);
@@ -4514,6 +4624,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
