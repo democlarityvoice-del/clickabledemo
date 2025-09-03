@@ -4108,13 +4108,6 @@ document.addEventListener('click', function (e) {
 
 
 
-/* == CV Queue Stats: header-mapped injector (append-only, idempotent) ==
-   Purpose: Replace cells with clickable POC links using header mapping.
-   Scope:   Only runs in a document that contains #modal_stats_table.
-   Notes:   All symbols are prefixed with cvqs_* to avoid collisions.
-======================================================================= */
-/* ==== CV Queue Stats: robust auto-discovery injector (append-only) ===== */
-
 /* ==== CV Queue Stats: robust auto-discovery injector (patched for Main Routing modal) ===== */
 (() => {
   if (window.__cvqs_auto_installed__) return;
@@ -4252,29 +4245,64 @@ document.addEventListener('click', function (e) {
     const modal = document.createElement('div');
     modal.style = 'position:fixed;top:10%;left:10%;right:10%;background:white;padding:20px;z-index:9999;border:2px solid black;border-radius:8px;box-shadow:0 0 20px #0007;font-family:sans-serif;';
     modal.innerHTML = `
+      <style>
+        .cvqs-call-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 13px;
+      }
+      .cvqs-call-table thead th {
+        background: white;
+        color: #004a9b;
+        text-align: left;
+        padding: 6px 8px;
+        border-bottom: 1px solid #ccc;
+      }
+      .cvqs-call-table tbody td {
+        padding: 6px 8px;
+        border-bottom: 1px solid #eee;
+      }
+      .cvqs-call-table tbody tr:hover {
+        background-color: #f3f3f3;
+        cursor: default;
+      }
+      .cvqs-call-table td:last-child {
+        white-space: nowrap;
+        text-align: center;
+      }
+      .cvqs-call-table img {
+        vertical-align: middle;
+      }
+      </style>
+
       <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
       <h2 style="margin-top:0;color:#000000">${queue} (300) Call Volume</h2>
       <div style="margin:10px 0;">
-        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+        <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
+        <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
       </div>
-      <table style="width:100%;border-collapse:collapse">
+
+      <!-- ✅ Updated class here -->
+      <table class="cvqs-call-table">
         <thead>
-          <tr style="background:white;color:#004a9b">
-            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th><th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th><th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th><th>Queue Release Reason</th><th></th>
+          <tr>
+            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+            <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+            <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+            <th>Queue Release Reason</th><th></th>
           </tr>
         </thead>
         <tbody>
-          <tbody>
-            <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td></tr>
-            <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td></tr>
-            <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td></tr>
-            <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td></tr>
-            <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td></tr>
-          </tbody>
-
-        </tbody>
+          <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td></tr>
+          <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td></tr>
+          <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td></tr>
+          <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td></tr>
+          <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td></tr>
+         </tbody>
       </table>
     `;
+
     modal.querySelectorAll('tbody tr').forEach(injectIcons);
     document.body.appendChild(modal);
   }
@@ -4350,5 +4378,6 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
