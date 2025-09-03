@@ -4149,6 +4149,8 @@ document.addEventListener('click', function (e) {
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
+  insertDateRange(queue, code);
+
   function collectDocs(root, out = []) {
     out.push(root);
     root.querySelectorAll('iframe').forEach(f => {
@@ -4384,6 +4386,31 @@ document.addEventListener('click', function (e) {
   }
 }
 
+  function insertDateRange(queue, code) {
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  const formatDate = (date) => {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  };
+
+  const rangeText = `${formatDate(yesterday)} 12:00 am to ${formatDate(now)} 11:59 pm`;
+
+  const rangeDiv = document.createElement('div');
+  rangeDiv.textContent = rangeText;
+  rangeDiv.style.margin = '8px 0 10px 0';
+  rangeDiv.style.fontSize = '13px';
+  rangeDiv.style.color = '#555';
+
+  const title = document.querySelector('#cvqs-inline-modal h2'); // Or however your title is rendered
+  if (title) {
+    title.insertAdjacentElement('afterend', rangeDiv);
+  }
+}
  
 
   function injectTable(doc, table) {
@@ -4457,6 +4484,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
