@@ -4380,19 +4380,38 @@ function openQueueNotesPopover(anchorEl, initial) {
   dispSel.onchange = () => populateReasons(dispSel.value);
 
   // position near the icon (below/right when possible, otherwise flip)
-  const r = anchorEl.getBoundingClientRect();
-  const gap = 8;
-  const popRect = pop.getBoundingClientRect(); // initial size
-  let left = Math.min(Math.max(r.left, 8), window.innerWidth - popRect.width - 8);
-  let top  = r.bottom + gap;
+  // position near the icon but keep it inside the queue modal bounds
+const iconRect = anchorEl.getBoundingClientRect();
+const modalEl  = document.getElementById('cvqs-inline-modal');
+const box = modalEl
+  ? modalEl.getBoundingClientRect()
+  : { left: 8, top: 8, right: window.innerWidth - 8, bottom: window.innerHeight - 8 };
 
-  if (top + popRect.height + 8 > window.innerHeight) {
-    top = Math.max(r.top - popRect.height - gap, 8); // place above if not enough room
-  }
+const gap = 8;
 
-  pop.style.left = `${left}px`;
-  pop.style.top  = `${top}px`;
-  pop.style.visibility = 'visible';
+// measure after it's in the DOM
+const rect = pop.getBoundingClientRect();
+const pw = rect.width;
+const ph = rect.height;
+
+// Horizontal: prefer right of the icon; if no room, tuck to the LEFT of the icon
+let left = (iconRect.right + gap + pw <= box.right)
+  ? iconRect.right + gap
+  : iconRect.right - pw;
+
+// Vertical: prefer below; if no room, flip above
+let top = (iconRect.bottom + gap + ph <= box.bottom)
+  ? iconRect.bottom + gap
+  : iconRect.top - ph - gap;
+
+// Clamp to the modal’s box so it never bleeds out
+left = Math.min(Math.max(left, box.left + gap), box.right - pw - gap);
+top  = Math.min(Math.max(top,  box.top  + gap), box.bottom - ph - gap);
+
+pop.style.left = `${left}px`;
+pop.style.top  = `${top}px`;
+pop.style.visibility = 'visible';
+
 
   // close helpers
   const close = () => {
@@ -4661,6 +4680,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
