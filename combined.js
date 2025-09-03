@@ -4211,159 +4211,149 @@ document.addEventListener('click', function (e) {
     }
   }
 
-  function injectIcons(tr) {
-    const td = document.createElement('td');
-    td.className = 'cvqs-action-cell'; // <— new
-    td.innerHTML = `
-      <span class="icon-circle" title="Download">
-        <img src="${queueRepDownload}" alt="Download">
-      </span>
-      <span class="icon-circle" title="Listen">
-        <img src="${queueRepListen}" alt="Listen">
-      </span>
-      <span class="icon-circle" title="Cradle to Grave">
-        <img src="${queueRepCradle}" alt="Cradle to Grave">
-      </span>
-      <span class="icon-circle" title="Edit Notes">
-        <img src="${queueRepNotes}" alt="Edit Notes">
-      </span>
-    `;
-    tr.appendChild(td);
-  }
+// ==== REPLACE BOTH FUNCTIONS WITH THIS VERSION ====
 
-  window.injectIcons = injectIcons;
+function injectIcons(tr) {
+  const td = document.createElement('td');
+  td.className = 'cvqs-action-cell';
+  td.innerHTML = `
+    <span role="button" tabindex="0" class="icon-circle" aria-label="Download" data-icon="download">
+      <img src="${queueRepDownload}" alt="Download">
+    </span>
+    <span role="button" tabindex="0" class="icon-circle" aria-label="Listen" data-icon="listen">
+      <img src="${queueRepListen}" alt="Listen">
+    </span>
+    <span role="button" tabindex="0" class="icon-circle" aria-label="Cradle to Grave" data-icon="cradle">
+      <img src="${queueRepCradle}" alt="Cradle to Grave">
+    </span>
+    <span role="button" tabindex="0" class="icon-circle" aria-label="Edit Notes" data-icon="notes">
+      <img src="${queueRepNotes}" alt="Edit Notes">
+    </span>
+  `;
+  // strip any leftover tooltip hooks just in case
+  td.querySelectorAll('[title],[data-original-title]').forEach(el => {
+    el.removeAttribute('title');
+    el.removeAttribute('data-original-title');
+  });
+  tr.appendChild(td);
+}
 
-  
-  function linkify(td, queue, code, v) {
-    if (v == null) return;
-    if (td.querySelector(`a.${LINK_CLASS}`)) return;
-    const a = td.ownerDocument.createElement('a');
-    a.href = '#';
-    a.className = LINK_CLASS;
-    a.textContent = String(v);
-    a.style.fontWeight = 'bold';
-    a.style.textDecoration = 'underline';
-    a.style.cursor = 'pointer';
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      openQueueModal(queue, code);
-    });
-    td.replaceChildren(a);
-    setSort(td, code, v);
-  }
-
-  function openQueueModal(queue, code) {
+function openQueueModal(queue, code) {
   const modal = document.createElement('div');
   modal.id = 'cvqs-inline-modal';
   modal.style = `
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
+    top: 0; left: 0; right: 0;
     background: white;
-    padding: 20px;
+    padding: 20px 20px 40px 20px;
     z-index: 10;
-    border: none;
-    box-shadow: none;
-    border-radius: 0;
-    height: auto;
-    max-height: none;
-    min-height: 500px; /* or match your iframe height */
-    padding-bottom: 40px;
+    border: none; box-shadow: none; border-radius: 0;
+    height: auto; max-height: none; min-height: 500px;
     font-family: sans-serif;
   `;
 
   modal.innerHTML = `
     <style>
+      /* ==== CV Queue Stats modal table (icons column fix) ==== */
 
-/* Action cell (make sure your injector sets class="cvqs-action-cell") */
-.cvqs-call-table td.cvqs-action-cell {
-  white-space: nowrap;
-  text-align: center;
-  padding: 6px 8px;
-  position: relative;
-  background: inherit; /* let row hover/zebra show through */
-}
+      .cvqs-call-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        table-layout: fixed;
+      }
 
-/* Header cells */
-.cvqs-call-table thead th {
-  background: white;
-  color: #004a9b;
-  text-align: left;
-  padding: 6px 8px;
-  border-left: 1px solid #ccc;
-  border-right: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-}
+      /* Header cells */
+      .cvqs-call-table thead th {
+        background: white;
+        color: #004a9b;
+        text-align: left;
+        padding: 6px 8px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+      }
 
-/* Body cells */
-.cvqs-call-table tbody td {
-  padding: 6px 8px;
-  border-right: 1px solid #eee;
-  border-left: 1px solid #eee;
-  border-bottom: 1px solid #eee;
-}
+      /* Body cells */
+      .cvqs-call-table tbody td {
+        padding: 6px 8px;
+        border-right: 1px solid #eee;
+        border-left: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
 
-/* Ensure the action cell also shows row hover */
-.cvqs-call-table tbody tr:hover td.cvqs-action-cell {
-  background-color: #f3f3f3;
-}
+      /* Action cell (real cell, not :last-child) */
+      .cvqs-call-table td.cvqs-action-cell {
+        white-space: nowrap;
+        text-align: center;
+        padding: 6px 8px;
+        position: relative;
+        background: inherit; /* let row hover/zebra show through */
+      }
 
-/* Remove stray caret/triangle decorations some themes add */
-.cvqs-call-table td.cvqs-action-cell::before,
-.cvqs-call-table td.cvqs-action-cell::after,
-.cvqs-call-table .icon-circle::before,
-.cvqs-call-table .icon-circle::after {
-  content: none !important;
-  border: 0 !important;
-  box-shadow: none !important;
-}
+      /* Ensure the action cell also shows row hover */
+      .cvqs-call-table tbody tr:hover td.cvqs-action-cell {
+        background-color: #f3f3f3;
+      }
 
-/* Image baseline alignment */
-.cvqs-call-table img {
-  vertical-align: middle;
-}
+      /* Remove any global caret/triangle or tooltip arrows leaking in */
+      .cvqs-call-table td.cvqs-action-cell::before,
+      .cvqs-call-table td.cvqs-action-cell::after,
+      .cvqs-call-table .icon-circle::before,
+      .cvqs-call-table .icon-circle::after,
+      .cvqs-call-table td.cvqs-action-cell .caret,
+      .cvqs-call-table td.cvqs-action-cell .dropdown-toggle::after,
+      .cvqs-call-table td.cvqs-action-cell [data-toggle="dropdown"]::after,
+      .cvqs-call-table td.cvqs-action-cell [data-bs-toggle="dropdown"]::after {
+        content: none !important;
+        border: 0 !important;
+        box-shadow: none !important;
+        display: none !important;
+      }
 
-/* Icon buttons */
-.icon-circle {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background-color: #ffffff;
-  margin: 3px;
-  opacity: .45;
-  transition: opacity .15s, transform .04s, background-color .15s;
-  overflow: hidden;
-  /* no z-index needed; let row highlight paint normally */
-  box-shadow: 0 0 0 1px #ccc;
-}
+      /* Image baseline alignment */
+      .cvqs-call-table img {
+        vertical-align: middle;
+      }
 
-.icon-circle:hover {
-  background-color: #cccccc;
-  cursor: pointer;
-  opacity: .85;
-}
+      /* Icon buttons */
+      .icon-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #ffffff;
+        margin: 3px;
+        opacity: .45;
+        transition: opacity .15s, transform .04s, background-color .15s;
+        overflow: hidden;
+        box-shadow: 0 0 0 1px #ccc;
+        cursor: pointer;
+      }
 
-.icon-circle img {
-  width: 14px;
-  height: 14px;
-  pointer-events: none;
-}
+      .icon-circle:hover {
+        background-color: #cccccc;
+        opacity: .85;
+      }
 
+      .icon-circle img {
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+      }
     </style>
 
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-      <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
-    </div>
+    <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
       ${queue} Call Volume
     </h2>
     <div style="margin:10px 0;">
       <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
-      <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
+      <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px" alt="">
     </div>
     <table class="cvqs-call-table">
       <thead>
@@ -4384,19 +4374,36 @@ document.addEventListener('click', function (e) {
     </table>
   `;
 
-  // Inject icons
-  modal.querySelectorAll('tbody tr').forEach(injectIcons);
-
-  // Append inside container if possible
+  // add to DOM
   const container = document.querySelector('#modal-body-reports');
   if (container) {
     container.style.position = 'relative';
     container.appendChild(modal);
   } else {
-    document.body.appendChild(modal); // fallback
+    document.body.appendChild(modal);
   }
-    insertDateRange(queue, code);
+
+  // inject icons into each row
+  modal.querySelectorAll('tbody tr').forEach(injectIcons);
+
+  // hard-disable any 3rd-party tooltip plugin that hijacks [title]
+  (function disable3rdPartyTooltips(root) {
+    // remove attributes that trigger Bootstrap/jQuery tooltips
+    root.querySelectorAll('[title],[data-original-title]').forEach(el => {
+      el.removeAttribute('title');
+      el.removeAttribute('data-original-title');
+    });
+    try {
+      const $ = window.jQuery || root.ownerDocument.defaultView.jQuery;
+      if ($ && $.fn && $.fn.tooltip) {
+        $(root).find('.icon-circle').tooltip('dispose');
+      }
+    } catch (e) {}
+  })(modal);
+
+  insertDateRange(queue, code);
 }
+
 
  
 
@@ -4498,6 +4505,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
