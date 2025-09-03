@@ -4309,6 +4309,29 @@ document.addEventListener('click', function (e) {
       .cvqs-call-table img {
         vertical-align: middle;
       }
+
+      .icon-circle {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #eeeeee;
+        margin-right: 6px;
+        transition: background-color 0.2s ease;
+      }
+
+      .icon-circle:hover {
+        background-color: #cccccc;
+        cursor: pointer;
+      }
+
+      .icon-circle img {
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+      }
     </style>
 
     <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
@@ -4424,6 +4447,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
