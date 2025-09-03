@@ -4350,7 +4350,7 @@ function openQueueModal(queue, code) {
         border-radius: 50%;
         background-color: #ffffff;
         margin: 3px;
-        opacity: .45;
+        opacity: .55;
         transition: opacity .15s, transform .04s, background-color .15s;
         overflow: hidden;
         box-shadow: 0 0 0 1px #ccc;
@@ -4359,7 +4359,7 @@ function openQueueModal(queue, code) {
 
       .icon-circle:hover {
         background-color: #cccccc;
-        opacity: .85;
+        opacity: 1;
       }
 
       .icon-circle img {
@@ -4514,6 +4514,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
