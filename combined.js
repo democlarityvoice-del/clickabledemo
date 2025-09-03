@@ -4317,9 +4317,10 @@ document.addEventListener('click', function (e) {
         width: 24px;
         height: 24px;
         border-radius: 50%;
-        background-color: #eeeeee;
+        background-color: #ffffff;
         margin-right: 6px;
-        transition: background-color 0.2s ease;
+        opacity: .45;
+        transition: opacity .15s, transform .04s;        
       }
 
       .icon-circle:hover {
@@ -4447,6 +4448,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
