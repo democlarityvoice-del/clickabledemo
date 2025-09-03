@@ -4348,7 +4348,9 @@ document.addEventListener('click', function (e) {
       }
     </style>
 
-    <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+      <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
+    </div>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
       ${queue} Call Volume
     </h2>
@@ -4489,6 +4491,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
