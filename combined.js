@@ -4149,7 +4149,6 @@ document.addEventListener('click', function (e) {
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
-  insertDateRange(queue, code);
 
   function collectDocs(root, out = []) {
     out.push(root);
@@ -4384,7 +4383,10 @@ document.addEventListener('click', function (e) {
   } else {
     document.body.appendChild(modal); // fallback
   }
+    insertDateRange(queue, code);
 }
+
+ 
 
   function insertDateRange(queue, code) {
   const now = new Date();
@@ -4484,6 +4486,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
