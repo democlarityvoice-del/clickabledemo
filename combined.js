@@ -4247,11 +4247,12 @@ document.addEventListener('click', function (e) {
     modal.innerHTML = `
       <style>
         .cvqs-call-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: sans-serif;
-        font-size: 13px;
-      }
+         width: 100%;
+         border-collapse: collapse;
+         font-family: sans-serif;
+         font-size: 13px;
+         border: 1px solid #ccc;
+       }
       .cvqs-call-table thead th {
         background: white;
         color: #004a9b;
@@ -4259,9 +4260,16 @@ document.addEventListener('click', function (e) {
         padding: 6px 8px;
         border-bottom: 1px solid #ccc;
       }
+       .cvqs-call-table thead th:last-child {
+         border-right: none;
+      }
       .cvqs-call-table tbody td {
         padding: 6px 8px;
+        border-right: 1px solid #ccc;
         border-bottom: 1px solid #eee;
+      }
+        .cvqs-call-table tbody td:last-child {
+          border-right: none;
       }
       .cvqs-call-table tbody tr:hover {
         background-color: #f3f3f3;
@@ -4378,6 +4386,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
