@@ -4287,99 +4287,140 @@ function openQueueModal(queue, code) {
     height: auto; max-height: none; min-height: 500px;
     font-family: sans-serif;
   `;
-// ===== queueNotesModal (self-contained, unique IDs) =====
-function ensureQueueNotesModal () {
-  let modal = document.getElementById('queue-notes-modal');
-  if (modal) return modal;
-
-  modal = document.createElement('div');
-  modal.id = 'queue-notes-modal';
-  modal.style.display = 'none';
-  modal.innerHTML =
-    '<div class="cv-modal-backdrop"></div>' +
-    '<div class="cv-modal">' +
-      '<div class="cv-modal-header" style="display:flex;justify-content:space-between;align-items:center;">' +
-        '<span style="font-weight:700;font-size:16px">Notes</span>' +
-        '<button class="qn-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer">&times;</button>' +
-      '</div>' +
-      '<div class="cv-modal-body" style="padding:16px">' +
-        '<div style="display:grid;grid-template-columns:140px 1fr;gap:10px 16px;align-items:center">' +
-          '<label for="qn-disposition" style="justify-self:end;font-weight:600">Disposition</label>' +
-          '<select id="qn-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
-            '<option value="">Select a Disposition</option>' +
-            '<option>Inbound Sales</option>' +
-            '<option>Outbound Sales</option>' +
-          '</select>' +
-          '<label for="qn-reason" style="justify-self:end;font-weight:600">Reason</label>' +
-          '<select id="qn-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">' +
-            '<option value="">Select a Disposition First</option>' +
-          '</select>' +
-          '<label for="qn-text" style="justify-self:end;font-weight:600">Notes</label>' +
-          '<textarea id="qn-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
-        '</div>' +
-      '</div>' +
-      '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
-        '<button class="qn-cancel cv-btn">Cancel</button>' +
-        '<button class="qn-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>' +
-      '</div>' +
-    '</div>';
-
-  document.body.appendChild(modal);
-
-  function close(){ modal.remove(); }
-  modal.querySelector('.cv-modal-backdrop').addEventListener('click', close);
-  modal.querySelector('.qn-close').addEventListener('click', close);
-  modal.querySelector('.qn-cancel').addEventListener('click', close);
-  modal.querySelector('.qn-save').addEventListener('click', function(){
-    const disposition = document.getElementById('qn-disposition').value || '';
-    const reason      = document.getElementById('qn-reason').value || '';
-    const notes       = document.getElementById('qn-text').value || '';
-    console.log('[queueNotesModal] Saved', { disposition, reason, notes });
-    close();
-  });
-
-  return modal;
-}
-
-// disposition -> reasons (unique map inside queue modal scope)
+// ==== queueNotesPopover (anchored dropdown, unique IDs) ====
 const QN_REASONS = {
   'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
   'Outbound Sales': ['Cold Call', 'Follow-up']
 };
 
-function qnPopulateReasons(disp){
-  const sel = document.getElementById('qn-reason');
-  if (!sel) return;
-  sel.innerHTML = '';
-  const opts = QN_REASONS[disp] || [];
-  if (!opts.length){
-    sel.innerHTML = '<option value="">Select a Disposition First</option>';
-    return;
-  }
-  opts.forEach((label, i) => {
-    const o = document.createElement('option');
-    o.value = label;
-    o.textContent = label;
-    if (i === 0) o.selected = true;
-    sel.appendChild(o);
+function openQueueNotesPopover(anchorEl, initial) {
+  // remove any existing popover
+  document.getElementById('queue-notes-popover')?.remove();
+
+  // build container
+  const pop = document.createElement('div');
+  pop.id = 'queue-notes-popover';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', 'Queue Notes');
+  Object.assign(pop.style, {
+    position: 'fixed',            // anchor to viewport
+    top: '0px',
+    left: '0px',
+    width: '340px',
+    maxWidth: '92vw',
+    background: '#fff',
+    border: '1px solid #cfd3d7',
+    borderRadius: '8px',
+    boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+    zIndex: '2147483647',         // above everything
+    padding: '12px',
+    visibility: 'hidden'          // position first, then show
   });
-}
 
-function openQueueNotesModal(initial){
-  const modal = ensureQueueNotesModal();
-  modal.style.display = 'block';
+  // content (unique element IDs)
+  pop.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:14px">Notes</strong>
+      <button id="qn2-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;line-height:1">&times;</button>
+    </div>
+    <div style="display:grid;grid-template-columns:120px 1fr;gap:10px 12px;align-items:center">
+      <label for="qn2-disposition" style="justify-self:end;font-weight:600">Disposition</label>
+      <select id="qn2-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+        <option value="">Select a Disposition</option>
+        <option>Inbound Sales</option>
+        <option>Outbound Sales</option>
+      </select>
 
-  const dispSel = document.getElementById('qn-disposition');
-  const txt     = document.getElementById('qn-text');
+      <label for="qn2-reason" style="justify-self:end;font-weight:600">Reason</label>
+      <select id="qn2-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+        <option value="">Select a Disposition First</option>
+      </select>
+
+      <label for="qn2-text" style="justify-self:end;font-weight:600">Notes</label>
+      <textarea id="qn2-text" rows="4" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button id="qn2-cancel" class="cv-btn">Cancel</button>
+      <button id="qn2-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>
+    </div>
+  `;
+
+  // add to DOM to measure
+  document.body.appendChild(pop);
+
+  // init values
+  const dispSel = pop.querySelector('#qn2-disposition');
+  const reasonSel = pop.querySelector('#qn2-reason');
+  const txt = pop.querySelector('#qn2-text');
+
+  function populateReasons(disp) {
+    reasonSel.innerHTML = '';
+    const opts = QN_REASONS[disp] || [];
+    if (!opts.length) {
+      reasonSel.innerHTML = '<option value="">Select a Disposition First</option>';
+      return;
+    }
+    opts.forEach((label, i) => {
+      const o = document.createElement('option');
+      o.value = label;
+      o.textContent = label;
+      if (i === 0) o.selected = true;
+      reasonSel.appendChild(o);
+    });
+  }
 
   const dispInit = (initial && initial.disposition) || 'Inbound Sales';
   dispSel.value = dispInit;
-  qnPopulateReasons(dispInit);
+  populateReasons(dispInit);
   txt.value = (initial && initial.notes) || '';
+  dispSel.onchange = () => populateReasons(dispSel.value);
 
-  dispSel.onchange = () => qnPopulateReasons(dispSel.value);
+  // position near the icon (below/right when possible, otherwise flip)
+  const r = anchorEl.getBoundingClientRect();
+  const gap = 8;
+  const popRect = pop.getBoundingClientRect(); // initial size
+  let left = Math.min(Math.max(r.left, 8), window.innerWidth - popRect.width - 8);
+  let top  = r.bottom + gap;
+
+  if (top + popRect.height + 8 > window.innerHeight) {
+    top = Math.max(r.top - popRect.height - gap, 8); // place above if not enough room
+  }
+
+  pop.style.left = `${left}px`;
+  pop.style.top  = `${top}px`;
+  pop.style.visibility = 'visible';
+
+  // close helpers
+  const close = () => {
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onKeyDown, true);
+    pop.remove();
+  };
+  const onDocClick = (e) => {
+    if (pop.contains(e.target) || anchorEl.contains(e.target)) return;
+    close();
+  };
+  const onKeyDown = (e) => { if (e.key === 'Escape') close(); };
+
+  document.addEventListener('click', onDocClick, true);
+  document.addEventListener('keydown', onKeyDown, true);
+
+  // buttons
+  pop.querySelector('#qn2-close').addEventListener('click', close);
+  pop.querySelector('#qn2-cancel').addEventListener('click', close);
+  pop.querySelector('#qn2-save').addEventListener('click', () => {
+    const payload = {
+      disposition: dispSel.value || '',
+      reason:      reasonSel.value || '',
+      notes:       txt.value || ''
+    };
+    console.log('[queueNotesPopover] Saved', payload);
+    close();
+  });
 }
-// ===== /queueNotesModal =====
+// ==== /queueNotesPopover ====
+
+// ===== /continue modal =====
 
   modal.innerHTML = `
     <style>      
@@ -4501,7 +4542,7 @@ function openQueueNotesModal(initial){
 
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
-// Wire the "Edit Notes" icon (data-icon="notes") inside this modal only
+// Open the anchored popover when the Notes icon is clicked
 modal.addEventListener('click', (e) => {
   const btn = e.target.closest('.icon-circle[data-icon="notes"]');
   if (!btn) return;
@@ -4509,21 +4550,13 @@ modal.addEventListener('click', (e) => {
   e.preventDefault();
   e.stopPropagation();
 
-  // Optionally infer disposition from the row; default to Inbound
-  const tr  = btn.closest('tr');
-  const tds = tr ? tr.querySelectorAll('td') : [];
-  const initial = {
-    disposition: 'Inbound Sales',  // keep simple; adjust if you later add direction flags
-    notes: ''
-  };
-
-  openQueueNotesModal(initial);
+  // (Optional) infer disposition from row later; default to Inbound Sales
+  openQueueNotesPopover(btn, { disposition: 'Inbound Sales', notes: '' });
 });
 
 
   insertDateRange(queue, code);
 }
-
 
 
   function insertDateRange(queue, code) {
@@ -4624,6 +4657,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
