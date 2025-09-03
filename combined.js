@@ -4327,7 +4327,7 @@ function openQueueNotesPopover(anchorEl, initial) {
       <strong style="font-size:14px">Notes</strong>
       <button id="qn2-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;line-height:1">&times;</button>
     </div>
-    <div style="display:grid;grid-template-columns:120px 1fr;gap:10px 12px;align-items:center">
+    display:grid;grid-template-columns:120px minmax(0, 1fr);gap:10px 12px;align-items:center">
       <label for="qn2-disposition" style="justify-self:end;font-weight:600">Disposition</label>
       <select id="qn2-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
         <option value="">Select a Disposition</option>
@@ -4680,6 +4680,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
