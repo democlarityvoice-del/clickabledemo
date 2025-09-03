@@ -4318,6 +4318,9 @@ document.addEventListener('click', function (e) {
         height: 24px;
         border-radius: 50%;
         background-color: #ffffff;
+        border: 1px solid #dcdcdc;
+        z-index: 2; /* Ensure above any dropdown */
+        overflow: hidden; /* Cut off bleed from background elements */
         margin-right: 6px;
         opacity: .45;
         transition: opacity .15s, transform .04s;        
@@ -4448,6 +4451,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
