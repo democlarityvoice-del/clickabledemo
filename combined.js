@@ -4122,8 +4122,12 @@ document.addEventListener('click', function (e) {
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
 
   const CVQ_DATA = {
-    "Main Routing": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "Main Routing":     { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "New Sales":        { VOL: 3, CO: 3, ATT: "3:14", AH: "0:00", AC: null, AWT: "2:12" },
+    "Existing Customer":{ VOL: 4, CO: 4, ATT: "1:38", AH: "0:05", AC: null, AWT: "1:01" },
+    "Billing":          { VOL: 3, CO: 3, ATT: "2:00", AH: "0:00", AC: null, AWT: "1:33" },
   };
+
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
   const HEADER_TO_STAT = {
@@ -4273,9 +4277,9 @@ function injectIcons(tr) {
 
 function openQueueModal(queue, code) {
   const modal = document.createElement('div');
-  const queueNumberMatch = queue.match(/\((\d+)\)/);
-  const queueNumber = queueNumberMatch ? queueNumberMatch[1] : '';
-  const queueNameOnly = queue.replace(/\s*\(\d+\)/, '');
+  const fullMatch = queue.match(/^(.+?)\s*\((\d+)\)$/);
+  const queueNameOnly = fullMatch ? fullMatch[1].trim() : queue;
+  const queueNumber = fullMatch ? fullMatch[2] : '';
   modal.id = 'cvqs-inline-modal';
   modal.style = `
     position: absolute;
@@ -4657,6 +4661,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
