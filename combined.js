@@ -4213,6 +4213,7 @@ document.addEventListener('click', function (e) {
 
   function injectIcons(tr) {
     const td = document.createElement('td');
+    td.className = 'cvqs-action-cell'; // <— new
     td.innerHTML = `
       <span class="icon-circle" title="Download">
         <img src="${queueRepDownload}" alt="Download">
@@ -4274,78 +4275,84 @@ document.addEventListener('click', function (e) {
 
   modal.innerHTML = `
     <style>
-      .cvqs-call-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: sans-serif;
-        font-size: 13px;
-        border: 1px solid #ccc;
-        table-layout: fixed;
-      }
 
-      .cvqs-call-table thead th {
-        background: white;
-        color: #004a9b;
-        text-align: left;
-        padding: 6px 8px;
-        border-left: 1px solid #ccc;
-        border-right: 1px solid #ccc;
-        border-bottom: 1px solid #ccc;
-      }
+/* Action cell (make sure your injector sets class="cvqs-action-cell") */
+.cvqs-call-table td.cvqs-action-cell {
+  white-space: nowrap;
+  text-align: center;
+  padding: 6px 8px;
+  position: relative;
+  background: inherit; /* let row hover/zebra show through */
+}
 
-      .cvqs-call-table tbody td {
-        padding: 6px 8px;
-        border-right: 1px solid #eee;
-        border-left: 1px solid #eee;
-        border-bottom: 1px solid #eee;
-      }
+/* Header cells */
+.cvqs-call-table thead th {
+  background: white;
+  color: #004a9b;
+  text-align: left;
+  padding: 6px 8px;
+  border-left: 1px solid #ccc;
+  border-right: 1px solid #ccc;
+  border-bottom: 1px solid #ccc;
+}
 
-      .cvqs-call-table tbody tr:hover {
-        background-color: #f3f3f3;
-        cursor: default;
-      }
+/* Body cells */
+.cvqs-call-table tbody td {
+  padding: 6px 8px;
+  border-right: 1px solid #eee;
+  border-left: 1px solid #eee;
+  border-bottom: 1px solid #eee;
+}
 
-      .cvqs-call-table td:last-child {
-        white-space: normal;
-        text-align: center;
-        padding-top: 6px;
-        padding-bottom: 6px;
-        background: white; /* Safety */
-        position: relative; /* Needed to control z-indexed children */
-      }
+/* Ensure the action cell also shows row hover */
+.cvqs-call-table tbody tr:hover td.cvqs-action-cell {
+  background-color: #f3f3f3;
+}
 
+/* Remove stray caret/triangle decorations some themes add */
+.cvqs-call-table td.cvqs-action-cell::before,
+.cvqs-call-table td.cvqs-action-cell::after,
+.cvqs-call-table .icon-circle::before,
+.cvqs-call-table .icon-circle::after {
+  content: none !important;
+  border: 0 !important;
+  box-shadow: none !important;
+}
 
-      .cvqs-call-table img {
-        vertical-align: middle;
-      }
+/* Image baseline alignment */
+.cvqs-call-table img {
+  vertical-align: middle;
+}
 
-      .icon-circle {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        border-radius: 50%;
-        background-color: #ffffff;
-        margin: 3px;
-        opacity: .45;
-        transition: opacity .15s, transform .04s;
-        overflow: hidden;
-        z-index: 5;
-        position: relative;
-        box-shadow: 0 0 0 1px #ccc;;        
-      }
+/* Icon buttons */
+.icon-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #ffffff;
+  margin: 3px;
+  opacity: .45;
+  transition: opacity .15s, transform .04s, background-color .15s;
+  overflow: hidden;
+  /* no z-index needed; let row highlight paint normally */
+  box-shadow: 0 0 0 1px #ccc;
+}
 
-      .icon-circle:hover {
-        background-color: #cccccc;
-        cursor: pointer;
-      }
+.icon-circle:hover {
+  background-color: #cccccc;
+  cursor: pointer;
+  opacity: .85;
+}
 
-      .icon-circle img {
-        width: 14px;
-        height: 14px;
-        pointer-events: none;
-      }
+.icon-circle img {
+  width: 14px;
+  height: 14px;
+  pointer-events: none;
+}
+
     </style>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -4491,6 +4498,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
