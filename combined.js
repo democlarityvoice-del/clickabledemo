@@ -4230,6 +4230,9 @@ document.addEventListener('click', function (e) {
     tr.appendChild(td);
   }
 
+  window.injectIcons = injectIcons;
+
+  
   function linkify(td, queue, code, v) {
     if (v == null) return;
     if (td.querySelector(`a.${LINK_CLASS}`)) return;
@@ -4486,6 +4489,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
