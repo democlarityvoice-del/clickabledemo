@@ -4442,7 +4442,7 @@ function openQueueNotesPopover(anchorEl, initial) {
   txt.value = (initial && initial.notes) || '';
   dispSel.onchange = () => populateReasons(dispSel.value);
 
-  // position near the icon (below/right when possible, otherwise flip)
+
   // position near the icon but keep it inside the queue modal bounds
 const iconRect = anchorEl.getBoundingClientRect();
 const modalEl  = document.getElementById('cvqs-inline-modal');
@@ -4673,7 +4673,7 @@ modal.addEventListener('click', (e) => {
   if (title) {
     title.insertAdjacentElement('afterend', rangeDiv);
   }
-}
+
  
 
   function injectTable(doc, table) {
@@ -4747,6 +4747,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
