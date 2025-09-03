@@ -4333,38 +4333,7 @@ function openQueueModal(queue, code) {
       .cvqs-call-table tbody tr:hover td.cvqs-action-cell {
         background-color: #f3f3f3;
       }
-
-      /* Remove any global caret/triangle or tooltip arrows leaking in */
-      .cvqs-call-table td.cvqs-action-cell::before,
-      .cvqs-call-table td.cvqs-action-cell::after,
-      .cvqs-call-table .icon-circle::before,
-      .cvqs-call-table .icon-circle::after,
-      .cvqs-call-table td.cvqs-action-cell .caret,
-      .cvqs-call-table td.cvqs-action-cell .dropdown-toggle::after,
-      .cvqs-call-table td.cvqs-action-cell [data-toggle="dropdown"]::after,
-      .cvqs-call-table td.cvqs-action-cell [data-bs-toggle="dropdown"]::after {
-        content: none !important;
-        border: 0 !important;
-        box-shadow: none !important;
-        display: none !important;
-      }
-
-      /* SCORCHED EARTH METHOD */
-      #cvqs-inline-modal .caret,
-      #cvqs-inline-modal .dropdown-toggle::after,
-      #cvqs-inline-modal [data-toggle="dropdown"]::after,
-      #cvqs-inline-modal [data-bs-toggle="dropdown"]::after {
-       content: none !important;
-       display: none !important;
-       border: none !important;
-       background: none !important;
-       box-shadow: none !important;
-       width: 0 !important;
-       height: 0 !important;
-       margin: 0 !important;
-      padding: 0 !important;
-    }
-
+      
 
       /* Image baseline alignment */
       .cvqs-call-table img {
@@ -4545,6 +4514,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
