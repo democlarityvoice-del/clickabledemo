@@ -4213,10 +4213,18 @@ document.addEventListener('click', function (e) {
   function injectIcons(tr) {
     const td = document.createElement('td');
     td.innerHTML = `
-      <img src="${queueRepDownload}" title="Download" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepListen}" title="Listen" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepCradle}" title="Cradle to Grave" style="cursor:pointer;width:16px;margin-right:6px">
-      <img src="${queueRepNotes}" title="Edit Notes" style="cursor:pointer;width:16px">
+      <span class="icon-circle" title="Download">
+        <img src="${queueRepDownload}" alt="Download">
+      </span>
+      <span class="icon-circle" title="Listen">
+        <img src="${queueRepListen}" alt="Listen">
+      </span>
+      <span class="icon-circle" title="Cradle to Grave">
+        <img src="${queueRepCradle}" alt="Cradle to Grave">
+      </span>
+      <span class="icon-circle" title="Edit Notes">
+        <img src="${queueRepNotes}" alt="Edit Notes">
+      </span>
     `;
     tr.appendChild(td);
   }
@@ -4416,6 +4424,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
