@@ -4122,7 +4122,7 @@ document.addEventListener('click', function (e) {
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
 
   const CVQ_DATA = {
-    "Main Routing (300) ": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
+    "Main Routing": { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
   };
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
@@ -4521,6 +4521,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
