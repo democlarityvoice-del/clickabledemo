@@ -4247,29 +4247,36 @@ document.addEventListener('click', function (e) {
 // ==== REPLACE BOTH FUNCTIONS WITH THIS VERSION ====
 
 function injectIcons(tr) {
-  const td = document.createElement('td');
-  td.className = 'cvqs-action-cell';
+  // Use the pre-allocated action cell; fallback to create if missing
+  let td = tr.querySelector('td.cvqs-action-cell');
+  if (!td) {
+    td = document.createElement('td');
+    td.className = 'cvqs-action-cell';
+    tr.appendChild(td);
+  }
+
   td.innerHTML = `
     <span role="button" tabindex="0" class="icon-circle" aria-label="Download" data-icon="download">
-      <img src="${queueRepDownload}" alt="Download">
+      <img src="${queueRepDownload}" alt="">
     </span>
     <span role="button" tabindex="0" class="icon-circle" aria-label="Listen" data-icon="listen">
-      <img src="${queueRepListen}" alt="Listen">
+      <img src="${queueRepListen}" alt="">
     </span>
     <span role="button" tabindex="0" class="icon-circle" aria-label="Cradle to Grave" data-icon="cradle">
-      <img src="${queueRepCradle}" alt="Cradle to Grave">
+      <img src="${queueRepCradle}" alt="">
     </span>
     <span role="button" tabindex="0" class="icon-circle" aria-label="Edit Notes" data-icon="notes">
-      <img src="${queueRepNotes}" alt="Edit Notes">
+      <img src="${queueRepNotes}" alt="">
     </span>
   `;
-  // strip any leftover tooltip hooks just in case
+
+  // Strip attributes that 3rd-party tooltips hook onto
   td.querySelectorAll('[title],[data-original-title]').forEach(el => {
     el.removeAttribute('title');
     el.removeAttribute('data-original-title');
   });
-  tr.appendChild(td);
 }
+
 
 function openQueueModal(queue, code) {
   const modal = document.createElement('div');
@@ -4295,7 +4302,7 @@ function openQueueModal(queue, code) {
         font-family: sans-serif;
         font-size: 13px;
         border: 1px solid #ccc;
-        table-layout: fixed;
+        table-layout: auto; /* was: fixed */
       }
 
       /* Header cells */
@@ -4396,15 +4403,15 @@ function openQueueModal(queue, code) {
           <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
           <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
           <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
-          <th>Queue Release Reason</th><th></th>
+          <th>Queue Release Reason</th><th></th> <!-- keep this blank TH -->
         </tr>
       </thead>
       <tbody>
-        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td></tr>
-        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td></tr>
-        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td></tr>
-        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td></tr>
-        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td></tr>
+        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
       </tbody>
     </table>
   `;
@@ -4540,6 +4547,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
