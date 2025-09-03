@@ -4205,6 +4205,13 @@ document.addEventListener('click', function (e) {
     return titles[code] || code;
   }
 
+  function timeToSeconds(t) {
+    const parts = t.split(':').map(Number);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return null;
+  }
+
 
   function setSort(td, code, v) {
     const n = Number(v);
@@ -4521,6 +4528,7 @@ function openQueueModal(queue, code) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
