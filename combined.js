@@ -4250,9 +4250,11 @@ document.addEventListener('click', function (e) {
     background: white;
     padding: 20px;
     z-index: 10;
-    border: 2px solid black;
-    border-radius: 8px;
-    box-shadow: 0 0 20px #0007;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
+    height: auto;
+    max-height: none;
     font-family: sans-serif;
   `;
 
@@ -4300,7 +4302,9 @@ document.addEventListener('click', function (e) {
     </style>
 
     <button style="float:right;font-weight:bold" onclick="this.closest('div').remove()">Back</button>
-    <h2 style="margin-top:0;color:#000000">${queue} (300) Call Volume</h2>
+    <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
+      ${queue} (${queueCode}) Call Volume
+    </h2>
     <div style="margin:10px 0;">
       <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
       <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px">
@@ -4410,6 +4414,7 @@ document.addEventListener('click', function (e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
