@@ -4123,8 +4123,8 @@ document.addEventListener('click', function (e) {
 
   const CVQ_DATA = {
     "Main Routing":     { VOL: 5, CO: 5, ATT: "2:26", AH: "0:10", AC: null, AWT: "1:45" },
-    "New Sales":        { VOL: 3, CO: 3, ATT: "3:14", AH: "0:00", AC: null, AWT: "2:12" },
-    "Existing Customer":{ VOL: 4, CO: 4, ATT: "1:38", AH: "0:05", AC: null, AWT: "1:01" },
+    "New Sales":        { VOL: 21, CO: 10, ATT: "3:14", AH: "0:00", AC: null, AWT: "2:12" },
+    "Existing Customer":{ VOL: 5, CO: 5, ATT: "1:38", AH: "0:05", AC: null, AWT: "1:01" },
     "Billing":          { VOL: 3, CO: 3, ATT: "2:00", AH: "0:00", AC: null, AWT: "1:33" },
   };
 
@@ -4680,6 +4680,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
