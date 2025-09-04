@@ -4246,15 +4246,46 @@ document.addEventListener('click', function (e) {
   a.style.textDecoration = 'underline';
   a.style.cursor = 'pointer';
 
-  a.addEventListener('click', e => {
+a.addEventListener('click', e => {
   e.preventDefault();
 
   const row = td.closest('tr');
-  const queueNumber = row.cells[0]?.textContent.trim(); // assumes 1st column = queue number
-  const queueNameOnly = row.cells[1]?.textContent.trim(); // assumes 2nd column = queue name
+
+  // Normalize helper already in your codebase
+  const getTxt = el => (el ? norm(el.textContent) : '');
+
+  // 1) Try to read from the clicked row's cells
+  const cells = Array.from(row?.cells || []);
+  const cellTexts = cells.map(c => getTxt(c));
+
+  // Heuristics: number is a cell of only digits (3+), name matches known queues
+  const numIdx  = cellTexts.findIndex(t => /^\d{3,}$/.test(t));
+  const nameIdx = cellTexts.findIndex(t => QUEUE_NAMES.includes(t));
+
+  let queueNumber   = numIdx  >= 0 ? cellTexts[numIdx]  : '';
+  let queueNameOnly = nameIdx >= 0 ? cellTexts[nameIdx] : (queue || '').trim();
+
+  // 2) If number still missing, try to parse "Name (123)" if that’s what `queue` is
+  if (!queueNumber && /\(\d+\)/.test(queue || '')) {
+    const m = (queue || '').match(/^(.+?)\s*\((\d+)\)\s*$/);
+    if (m) {
+      queueNameOnly = m[1].trim();
+      queueNumber   = m[2];
+    }
+  }
+
+  // 3) If number still missing, fall back to the map
+  if (!queueNumber && queueNameOnly) {
+    queueNumber = (QUEUE_NUMBERS && QUEUE_NUMBERS[queueNameOnly]) || '';
+  }
+
+  // Debug so you can see exactly what's happening
+  console.log('[CVQS click]',
+    { rowTexts: cellTexts, numIdx, nameIdx, queue, queueNameOnly, queueNumber, code });
 
   openQueueModal(queueNameOnly, queueNumber, code);
 });
+;
 
 
   td.replaceChildren(a);
@@ -4698,6 +4729,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
