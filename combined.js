@@ -4259,16 +4259,16 @@ function injectIcons(tr) {
   }
 
   td.innerHTML = `
-  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Download" data-icon="download">
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Download" title="Download" data-icon="download">
     <img src="${queueRepDownload}" alt="">
   </span>
-  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" data-icon="listen">
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" title="Listen" data-icon="listen">
     <img src="${queueRepListen}" alt="">
   </span>
-  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" data-icon="cradle">
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" title="Cradle to Grave" data-icon="cradle">
     <img src="${queueRepCradle}" alt="">
   </span>
-  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" data-icon="notes">
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" title="Edit Notes" data-icon="notes">
     <img src="${queueRepNotes}" alt="">
   </span>
 `;
@@ -4687,6 +4687,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
