@@ -4259,19 +4259,20 @@ function injectIcons(tr) {
   }
 
   td.innerHTML = `
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Download" data-icon="download">
-      <img src="${queueRepDownload}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Listen" data-icon="listen">
-      <img src="${queueRepListen}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Cradle to Grave" data-icon="cradle">
-      <img src="${queueRepCradle}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="icon-circle" aria-label="Edit Notes" data-icon="notes">
-      <img src="${queueRepNotes}" alt="">
-    </span>
-  `;
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Download" data-icon="download">
+    <img src="${queueRepDownload}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" data-icon="listen">
+    <img src="${queueRepListen}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" data-icon="cradle">
+    <img src="${queueRepCradle}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" data-icon="notes">
+    <img src="${queueRepNotes}" alt="">
+  </span>
+`;
+
 }
 
 
@@ -4497,8 +4498,8 @@ pop.style.visibility = 'visible';
         vertical-align: middle;
       }
 
-      /* Icon buttons */
-      .icon-circle {
+      /* Icon buttons (Clarity-style hover-fade) */
+      .cvqs-icon-btn {
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -4507,21 +4508,27 @@ pop.style.visibility = 'visible';
         border-radius: 50%;
         background-color: #ffffff;
         margin: 3px;
-        opacity: 1;
-        transition: opacity .15s, transform .04s, background-color .15s;
+        border: 1px solid #dcdcdc;
         overflow: hidden;
         cursor: pointer;
       }
 
-      .icon-circle:hover {
-        background-color: #cccccc;
-        opacity: 1;
+      .cvqs-icon-btn:focus {
+        outline: none;
       }
 
-      .icon-circle img {
+      .cvqs-icon-btn img {
         width: 14px;
         height: 14px;
         pointer-events: none;
+        opacity: 0.35;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      /* On hover: icon brightens, not the button */
+      .cvqs-icon-btn:hover img,
+      tr:hover .cvqs-icon-btn img {
+        opacity: 1;
       }
     </style>
 
@@ -4680,6 +4687,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
