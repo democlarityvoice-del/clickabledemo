@@ -4575,7 +4575,7 @@ pop.style.visibility = 'visible';
     </style>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
-      <button style="font-weight:bold;" onclick="this.closest('div').remove()">Back</button>
+      <button id="cvqs-back-btn" style="font-weight:bold;">Back</button>
     </div>
     <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
       ${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}
@@ -4611,6 +4611,12 @@ pop.style.visibility = 'visible';
   } else {
     document.body.appendChild(modal);
   }
+
+  const backBtn = modal.querySelector('#cvqs-back-btn');
+  backBtn.addEventListener('click', () => {
+    console.log('[CVQS] Back button clicked - closing modal');
+    modal.remove(); // Cleanly removes entire modal
+  });
 
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
@@ -4729,6 +4735,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
