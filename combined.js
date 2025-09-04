@@ -4247,9 +4247,15 @@ document.addEventListener('click', function (e) {
   a.style.cursor = 'pointer';
 
   a.addEventListener('click', e => {
-    e.preventDefault();
-    openQueueModal(queue, code);
-  });
+  e.preventDefault();
+
+  const row = td.closest('tr');
+  const queueNumber = row.cells[0]?.textContent.trim(); // assumes 1st column = queue number
+  const queueNameOnly = row.cells[1]?.textContent.trim(); // assumes 2nd column = queue name
+
+  openQueueModal(queueNameOnly, queueNumber, code);
+});
+
 
   td.replaceChildren(a);
   setSort(td, code, v);
@@ -4284,11 +4290,8 @@ function injectIcons(tr) {
 }
 
 
-function openQueueModal(queue, code) {
-  const modal = document.createElement('div');
-  const fullMatch = queue.match(/^(.+?)\s*\((\d+)\)$/);
-  const queueNameOnly = fullMatch ? fullMatch[1].trim() : queue;
-  const queueNumber = fullMatch ? fullMatch[2] : '';
+function openQueueModal(queueNameOnly, queueNumber, code) {
+  const modal = document.createElement('div');  
   modal.id = 'cvqs-inline-modal';
   modal.style = `
     position: absolute;
@@ -4695,6 +4698,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
