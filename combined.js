@@ -4158,9 +4158,60 @@ document.addEventListener('click', function (e) {
     AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
   };
 
+// Per-queue rows (by queue NUMBER). Existing Customer = 302
+const CVQS_QUEUE_ROWS_BY_NUM = {
+  "302": [
+    `<tr><td>Today, 2:21 pm</td><td>Mia Torres</td><td>(734) 555-0112</td><td>248-436-3451</td><td>0:48</td><td>211</td><td>211</td><td>Hannah Lee</td><td>3:02</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+    `<tr><td>Today, 2:17 pm</td><td>Ethan Brooks</td><td>(586) 555-0128</td><td>248-436-3456</td><td>1:36</td><td>204</td><td>204</td><td>Chris Taylor</td><td>1:44</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+    `<tr><td>Today, 2:09 pm</td><td>Nora Park</td><td>(517) 555-0143</td><td>(313) 995-9080</td><td>2:05</td><td>208</td><td>208</td><td>Sophia Nguyen</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+    `<tr><td>Today, 1:57 pm</td><td>Isaac Rivera</td><td>(248) 555-0174</td><td>248-436-3448</td><td>0:55</td><td>212</td><td>212</td><td>Daniel Price</td><td>2:27</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+    `<tr><td>Today, 1:46 pm</td><td>Lila Bennett</td><td>(947) 555-0191</td><td>248-436-3442</td><td>3:09</td><td>203</td><td>203</td><td>Avery Scott</td><td>4:33</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
+  ]
+};
+
+// Optional name fallback (keeps single source of truth)
+const CVQS_QUEUE_ROWS_BY_NAME = {
+  "Existing Customer": CVQS_QUEUE_ROWS_BY_NUM["302"]
+};
+
+// Your current default five rows for everyone else
+const CVQS_DEFAULT_ROWS = [
+  `<tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
+];
+
+
+  
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
+  const keyNorm = s => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
+
+function getRowsForQueue(queueNameOnly, queueNumber) {
+  if (queueNumber && CVQS_QUEUE_ROWS_BY_NUM[queueNumber]) {
+    return CVQS_QUEUE_ROWS_BY_NUM[queueNumber].join('');
+  }
+  const hit = Object.keys(CVQS_QUEUE_ROWS_BY_NAME)
+    .find(k => keyNorm(k) === keyNorm(queueNameOnly));
+  return hit ? CVQS_QUEUE_ROWS_BY_NAME[hit].join('') : CVQS_DEFAULT_ROWS.join('');
+}
+
+
+function getRowsForQueue(queueNameOnly, queueNumber) {
+  // Prefer number (unique + stable)
+  if (queueNumber && CVQS_QUEUE_ROWS_BY_NUM[queueNumber]) {
+    return CVQS_QUEUE_ROWS_BY_NUM[queueNumber].join('');
+  }
+  // Fallback to normalized name
+  const byName = CVQS_QUEUE_ROWS_BY_NAME;
+  const hit = Object.keys(byName).find(k => keyNorm(k) === keyNorm(queueNameOnly));
+  return hit ? byName[hit].join('') : CVQS_DEFAULT_ROWS.join('');
+}
+
+  
 
   function collectDocs(root, out = []) {
     out.push(root);
@@ -4488,6 +4539,7 @@ pop.style.visibility = 'visible';
 // ==== /queueNotesPopover ====
 
 // ===== /continue modal =====
+const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
 
   modal.innerHTML = `
     <style>      
@@ -4594,11 +4646,7 @@ pop.style.visibility = 'visible';
         </tr>
       </thead>
       <tbody>
-        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
-        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        ${rowsForQueue}
       </tbody>
     </table>
   `;
@@ -4735,6 +4783,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
