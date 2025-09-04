@@ -4153,68 +4153,6 @@ document.addEventListener('click', function (e) {
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
-  const CALLS_BY_QUEUE = {
-  "Main Routing": [
-    { callTime: "Today, 2:13 pm", callerName: "Ruby Foster",  callerNumber: "(248) 555-0102", dnis: "248-436-3443", timeInQueue: "1:22", ext: "206", phone: "206", agent: "Mark Sanchez", agentTime: "14:28", agentRelease: "Orig: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 2:06 pm", callerName: "Leo Knight",   callerNumber: "(313) 555-0106", dnis: "248-436-3449", timeInQueue: "2:49", ext: "206", phone: "206", agent: "Mark Sanchez", agentTime: "0:59",  agentRelease: "Term: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 1:58 pm", callerName: "Ava Chen",     callerNumber: "(313) 555-0151", dnis: "248-436-3443", timeInQueue: "1:01", ext: "205", phone: "205", agent: "Alex Roberts", agentTime: "5:22", agentRelease: "Orig: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 1:54 pm", callerName: "Zoe Miller",   callerNumber: "(248) 555-0165", dnis: "(313) 995-9080", timeInQueue: "3:47", ext: "207", phone: "207", agent: "John Smith",   agentTime: "3:16", agentRelease: "Orig: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 1:50 pm", callerName: "Raj Patel",    callerNumber: "(810) 555-0187", dnis: "(313) 995-9080", timeInQueue: "4:24", ext: "210", phone: "210", agent: "Jessica Brown", agentTime: "5:51", agentRelease: "Term: Bye", queueRelease: "Connect" },
-  ],
-
-  // Existing Customer duplicates Main Routing
-  "Existing Customer": null, // we’ll compute as a clone at runtime
-
-  // Billing: exactly 3 calls
-  "Billing": [
-    { callTime: "Today, 3:01 pm", callerName: "Emily Wright",  callerNumber: "(248) 555-0190", dnis: "(313) 995-9090", timeInQueue: "2:05", ext: "211", phone: "211", agent: "Michael Green", agentTime: "4:30", agentRelease: "Orig: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 2:47 pm", callerName: "Carlos Rivera", callerNumber: "(248) 555-0201", dnis: "(313) 995-9090", timeInQueue: "1:15", ext: "212", phone: "212", agent: "Susan White",   agentTime: "2:42", agentRelease: "Term: Bye", queueRelease: "Connect" },
-    { callTime: "Today, 2:30 pm", callerName: "Anna Lopez",    callerNumber: "(248) 555-0215", dnis: "(313) 995-9090", timeInQueue: "3:10", ext: "213", phone: "213", agent: "Tom Harris",    agentTime: "5:03", agentRelease: "Orig: Bye", queueRelease: "Connect" },
-  ],
-
-  // New Sales: you’ll paste the big list later
-  "New Sales": [
-    // TODO: paste your big New Sales list here (each entry like the others)
-  ],
-};
-
-// build Existing Customer as a copy of Main Routing (no duplication by hand)
-if (!CALLS_BY_QUEUE["Existing Customer"]) {
-  CALLS_BY_QUEUE["Existing Customer"] = [...CALLS_BY_QUEUE["Main Routing"]];
-}
-
-  function htmlEscape(s='') {
-  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-function renderCallRow(r) {
-  return `
-    <tr>
-      <td>${htmlEscape(r.callTime)}</td>
-      <td>${htmlEscape(r.callerName)}</td>
-      <td>${htmlEscape(r.callerNumber)}</td>
-      <td>${htmlEscape(r.dnis)}</td>
-      <td>${htmlEscape(r.timeInQueue)}</td>
-      <td>${htmlEscape(r.ext)}</td>
-      <td>${htmlEscape(r.phone)}</td>
-      <td>${htmlEscape(r.agent)}</td>
-      <td>${htmlEscape(r.agentTime)}</td>
-      <td>${htmlEscape(r.agentRelease)}</td>
-      <td>${htmlEscape(r.queueRelease)}</td>
-      <td class="cvqs-action-cell"></td>
-    </tr>`;
-}
-
-function rowsForQueue(queueNameOnly) {
-  const all = CALLS_BY_QUEUE[queueNameOnly] || [];
-  // If you want to cap to the VOL number in CVQ_DATA, uncomment next two lines:
-  // const cap = CVQ_DATA[queueNameOnly]?.VOL;
-  // const use = Number.isFinite(cap) ? all.slice(0, cap) : all;
-  const use = all; // show all calls provided for that queue
-  return use.map(renderCallRow).join('');
-}
-
-
 
   function collectDocs(root, out = []) {
     out.push(root);
@@ -4404,7 +4342,7 @@ function openQueueNotesPopover(anchorEl, initial) {
       </select>
 
       <label for="qn2-text" style="justify-self:end;font-weight:600">Notes</label>
-      <textarea id="qn2-text" rows="4" style="width:100%;padding:4px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+      <textarea id="qn2-text" rows="4" style="width:100%;padding:6px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
       <button id="qn2-cancel" class="cv-btn">Cancel</button>
@@ -4442,7 +4380,7 @@ function openQueueNotesPopover(anchorEl, initial) {
   txt.value = (initial && initial.notes) || '';
   dispSel.onchange = () => populateReasons(dispSel.value);
 
-
+  // position near the icon (below/right when possible, otherwise flip)
   // position near the icon but keep it inside the queue modal bounds
 const iconRect = anchorEl.getBoundingClientRect();
 const modalEl  = document.getElementById('cvqs-inline-modal');
@@ -4607,7 +4545,13 @@ pop.style.visibility = 'visible';
           <th>Queue Release Reason</th><th></th> <!-- keep this blank TH -->
         </tr>
       </thead>
-      <tbody id="cvqs-tbody"></tbody>
+      <tbody>
+        <tr><td>Today, 2:13 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3443</td><td>1:22</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>14:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 2:06 pm</td><td>Leo Knight</td><td>(313) 555-0106</td><td>248-436-3449</td><td>2:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:59</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:58 pm</td><td>Ava Chen</td><td>(313) 555-0151</td><td>248-436-3443</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>5:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:54 pm</td><td>Zoe Miller</td><td>(248) 555-0165</td><td>(313) 995-9080</td><td>3:47</td><td>207</td><td>207</td><td>John Smith</td><td>3:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+        <tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td> <!-- ADD THIS CELL --></tr>
+      </tbody>
     </table>
   `;
 
@@ -4620,19 +4564,8 @@ pop.style.visibility = 'visible';
     document.body.appendChild(modal);
   }
 
-  // populate rows for the selected queue
-const tbody = modal.querySelector('#cvqs-tbody');
-if (tbody) {
-  tbody.innerHTML = rowsForQueue(queueNameOnly);
-}
-
-// then inject icons into each row (your existing function)
-modal.querySelectorAll('tbody tr').forEach(injectIcons);
-
-// (keep) insert the date range after the title
-insertDateRange(queue, code);
-
-
+  // inject icons into each row
+  modal.querySelectorAll('tbody tr').forEach(injectIcons);
 // Open the anchored popover when the Notes icon is clicked
 modal.addEventListener('click', (e) => {
   const btn = e.target.closest('.icon-circle[data-icon="notes"]');
@@ -4646,7 +4579,8 @@ modal.addEventListener('click', (e) => {
 });
 
 
-
+  insertDateRange(queue, code);
+}
 
 
   function insertDateRange(queue, code) {
@@ -4673,7 +4607,7 @@ modal.addEventListener('click', (e) => {
   if (title) {
     title.insertAdjacentElement('afterend', rangeDiv);
   }
-
+}
  
 
   function injectTable(doc, table) {
@@ -4747,4 +4681,9 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
+
+
+
+
 
