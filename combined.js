@@ -4130,6 +4130,14 @@ document.addEventListener('click', function (e) {
 
   const QUEUE_NAMES = Object.keys(CVQ_DATA);
 
+  const QUEUE_NUMBERS = {
+  "Main Routing": "300",
+  "New Sales": "301",
+  "Existing Customer": "302",
+  "Billing": "303"
+ };
+
+
   const HEADER_TO_STAT = {
     'Call Volume': 'VOL',
     'Calls Offered': 'CO',
@@ -4687,6 +4695,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
