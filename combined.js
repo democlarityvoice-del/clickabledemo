@@ -4138,8 +4138,9 @@ document.addEventListener('click', function (e) {
  };
 
   // maps must exist before you assign into them
-  const CVQS_QUEUE_ROWS_BY_NUM  = {};
-  const CVQS_QUEUE_ROWS_BY_NAME = {};
+const CVQS_QUEUE_ROWS_BY_NUM  = CVQS_QUEUE_ROWS_BY_NUM  || {};
+const CVQS_QUEUE_ROWS_BY_NAME = CVQS_QUEUE_ROWS_BY_NAME || {};
+const keyNorm = s => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
 
 
   const HEADER_TO_STAT = {
@@ -4163,10 +4164,6 @@ document.addEventListener('click', function (e) {
   };
 
 
-// make sure these exist once, above:
-const CVQS_QUEUE_ROWS_BY_NUM  = CVQS_QUEUE_ROWS_BY_NUM  || {};
-const CVQS_QUEUE_ROWS_BY_NAME = CVQS_QUEUE_ROWS_BY_NAME || {};
-const keyNorm = s => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
 
 // --- Existing Customer (by number: 302) ---
 CVQS_QUEUE_ROWS_BY_NUM["302"] = [
@@ -4176,7 +4173,7 @@ CVQS_QUEUE_ROWS_BY_NUM["302"] = [
   `<tr><td>Today, 1:35 pm</td><td>Jack Burton</td><td>(517) 555-0148</td><td>(313) 995-9080</td><td>0:42</td><td>202</td><td>202</td><td>Jake Lee</td><td>7:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
   `<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
 ];
-CVQS_QUEUE_ROWS_BY_NAME[keyNorm("Existing Customer")] = CVQS_QUEUE_ROWS_BY_NUM["302"];
+CVQS_QUEUE_ROWS_BY_NAME[("Existing Customer")] = CVQS_QUEUE_ROWS_BY_NUM["302"];
 
 // --- Billing (by number: 303; change if needed) ---
 CVQS_QUEUE_ROWS_BY_NUM["303"] = [
@@ -4184,7 +4181,7 @@ CVQS_QUEUE_ROWS_BY_NUM["303"] = [
   `<tr><td>Today, 11:41 am</td><td>Elizabeth Li</td><td>(313) 555-8471</td><td>(313) 995-9080</td><td>1:23</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>2:17</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
   `<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>(313) 555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
 ];
-CVQS_QUEUE_ROWS_BY_NAME[keyNorm("Billing")] = CVQS_QUEUE_ROWS_BY_NUM["303"];
+CVQS_QUEUE_ROWS_BY_NAME[("Billing")] = CVQS_QUEUE_ROWS_BY_NUM["303"];
 
 // --- New Sales (assumed number: 301; change if needed) ---
 CVQS_QUEUE_ROWS_BY_NUM["301"] = [
@@ -4231,8 +4228,6 @@ const CVQS_DEFAULT_ROWS = [
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
   const LOG = (...a) => console.debug('[CV-QS]', ...a);
 
-  const keyNorm = s => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
-
 
 function getRowsForQueue(queueNameOnly, queueNumber) {
   const numKey = queueNumber == null ? '' : String(queueNumber).trim();
@@ -4248,7 +4243,6 @@ function getRowsForQueue(queueNameOnly, queueNumber) {
   const hit = Object.keys(CVQS_QUEUE_ROWS_BY_NAME).find(k => keyNorm(k) === nameKey);
   return hit ? CVQS_QUEUE_ROWS_BY_NAME[hit].join('') : CVQS_DEFAULT_ROWS.join('');
 }
-
 
   
 
@@ -4845,6 +4839,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
