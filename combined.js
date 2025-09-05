@@ -4660,6 +4660,34 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
     document.body.appendChild(modal);
   }
 
+  insertDateRange(modal);
+
+  // helper
+function insertDateRange(modalEl) {
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  const formatDate = (date) => {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  };
+
+  const rangeText = `${formatDate(yesterday)} 12:00 am to ${formatDate(now)} 11:59 pm`;
+
+  const rangeDiv = document.createElement('div');
+  rangeDiv.textContent = rangeText;
+  rangeDiv.style.margin = '8px 0 10px 0';
+  rangeDiv.style.fontSize = '13px';
+  rangeDiv.style.color = '#555';
+
+  // Scope to this modal (no global query)
+  const title = modalEl.querySelector('h2');
+  if (title) title.insertAdjacentElement('afterend', rangeDiv);
+}
+
   const backBtn = modal.querySelector('#cvqs-back-btn');
   backBtn.addEventListener('click', () => {
     console.log('[CVQS] Back button clicked - closing modal');
@@ -4669,31 +4697,9 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
 
-  // ✅ 1) Re-inject action icons into every .cvqs-action-cell
- function injectIcons(tr) {
-  const td = tr.querySelector('td.cvqs-action-cell');
-  if (!td) return;
+  
 
-  // Prevent duplicates if re-running
-  if (td.querySelector('.cvqs-icon-btn')) return;
-
-  td.innerHTML = `
-    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="download" data-tooltip="Download">
-      <img src="${queueRepDownload}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="listen" data-tooltip="Listen">
-      <img src="${queueRepListen}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="cradle" data-tooltip="Cradle to Grave">
-      <img src="${queueRepCradle}" alt="">
-    </span>
-    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="notes" data-tooltip="Edit Notes">
-      <img src="${queueRepNotes}" alt="">
-    </span>
-  `;
-}
-
-  // ✅ 2) Event delegation so Notes (and others) always work after HTML swaps
+  //  Event delegation so Notes (and others) always work after HTML swaps
   modal.addEventListener('click', (e) => {
     const btn = e.target.closest('.cvqs-icon-btn[data-icon]');
     if (!btn || !modal.contains(btn)) return;
@@ -4727,49 +4733,7 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
   });
 }
 
-  // Open the anchored popover when the Notes icon is clicked
-modal.addEventListener('click', (e) => {
-  const btn = e.target.closest('.icon-circle[data-icon="notes"]');
-  if (!btn) return;
 
-  e.preventDefault();
-  e.stopPropagation();
-
-  // (Optional) infer disposition from row later; default to Inbound Sales
-  openQueueNotesPopover(btn, { disposition: 'Inbound Sales', notes: '' });
-});
-
-
-  insertDateRange(queue, code);
-}
-
-
-  function insertDateRange(queue, code) {
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-
-  const formatDate = (date) => {
-    const mm = String(date.getMonth() + 1).padStart(2, '0');
-    const dd = String(date.getDate()).padStart(2, '0');
-    const yyyy = date.getFullYear();
-    return `${mm}/${dd}/${yyyy}`;
-  };
-
-  const rangeText = `${formatDate(yesterday)} 12:00 am to ${formatDate(now)} 11:59 pm`;
-
-  const rangeDiv = document.createElement('div');
-  rangeDiv.textContent = rangeText;
-  rangeDiv.style.margin = '8px 0 10px 0';
-  rangeDiv.style.fontSize = '13px';
-  rangeDiv.style.color = '#555';
-
-  const title = document.querySelector('#cvqs-inline-modal h2'); // Or however your title is rendered
-  if (title) {
-    title.insertAdjacentElement('afterend', rangeDiv);
-  }
-}
- 
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -4842,6 +4806,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
