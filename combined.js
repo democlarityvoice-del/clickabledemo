@@ -4158,21 +4158,28 @@ document.addEventListener('click', function (e) {
     AWT: 'Average number of seconds a caller spent in the selected queue before being dispatched to an agent. If none selected, total for all queues will be displayed.'
   };
 
-// Per-queue rows (by queue NUMBER). Existing Customer = 302
-const CVQS_QUEUE_ROWS_BY_NUM = {
-  "302": [
-    `<tr><td>Today, 2:21 pm</td><td>Mia Torres</td><td>(734) 555-0112</td><td>248-436-3451</td><td>0:48</td><td>211</td><td>211</td><td>Hannah Lee</td><td>3:02</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
-    `<tr><td>Today, 2:17 pm</td><td>Ethan Brooks</td><td>(586) 555-0128</td><td>248-436-3456</td><td>1:36</td><td>204</td><td>204</td><td>Chris Taylor</td><td>1:44</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
-    `<tr><td>Today, 2:09 pm</td><td>Nora Park</td><td>(517) 555-0143</td><td>(313) 995-9080</td><td>2:05</td><td>208</td><td>208</td><td>Sophia Nguyen</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
-    `<tr><td>Today, 1:57 pm</td><td>Isaac Rivera</td><td>(248) 555-0174</td><td>248-436-3448</td><td>0:55</td><td>212</td><td>212</td><td>Daniel Price</td><td>2:27</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
-    `<tr><td>Today, 1:46 pm</td><td>Lila Bennett</td><td>(947) 555-0191</td><td>248-436-3442</td><td>3:09</td><td>203</td><td>203</td><td>Avery Scott</td><td>4:33</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
-  ]
-};
+// --- Existing Customer (by number: 302) ---
+CVQS_QUEUE_ROWS_BY_NUM["302"] = [
+  `<tr><td>Today, 1:46 pm</td><td>Tucker Jones</td><td>(989) 555-0128</td><td>248-436-3443</td><td>6:17</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>1:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:41 pm</td><td>Liam Nguyen</td><td>(810) 555-0100</td><td>248-436-3449</td><td>5:29</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:06</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:37 pm</td><td>Maya Brooks</td><td>(517) 555-0126</td><td>248-436-3449</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>2:05</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:35 pm</td><td>Jack Burton</td><td>(517) 555-0148</td><td>(313) 995-9080</td><td>0:42</td><td>202</td><td>202</td><td>Jake Lee</td><td>7:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
+];
 
-// Optional name fallback (keeps single source of truth)
-const CVQS_QUEUE_ROWS_BY_NAME = {
-  "Existing Customer": CVQS_QUEUE_ROWS_BY_NUM["302"]
-};
+// Mirror by name (fallback, keeps single source of truth)
+CVQS_QUEUE_ROWS_BY_NAME["Existing Customer"] = CVQS_QUEUE_ROWS_BY_NUM["302"];
+  
+
+// --- Billing (keyed by NAME for now; add BY_NUM later if you want) ---
+CVQS_QUEUE_ROWS_BY_NAME["Billing"] = [
+  `<tr><td>Today, 1:30 pm</td><td>Chloe Bennet</td><td>(313) 555-0120</td><td>248-436-3443</td><td>5:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 11:41 am</td><td>Elizabeth Li</td><td>(313) 555-8471</td><td>(313) 995-9080</td><td>1:23</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>2:17</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>(313) 555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
+];
+
+  // Optional: name fallback → keeps single source of truth
+CVQS_QUEUE_ROWS_BY_NAME["Billing"] = CVQS_QUEUE_ROWS_BY_NUM["303"];
 
 // Your current default five rows for everyone else
 const CVQS_DEFAULT_ROWS = [
@@ -4183,6 +4190,17 @@ const CVQS_DEFAULT_ROWS = [
   `<tr><td>Today, 1:50 pm</td><td>Raj Patel</td><td>(810) 555-0187</td><td>(313) 995-9080</td><td>4:24</td><td>210</td><td>210</td><td>Jessica Brown</td><td>5:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`
 ];
 
+// Billing = 303 (adjust if your Billing number is different)
+CVQS_QUEUE_ROWS_BY_NUM["303"] = [
+  `<tr><td>Today, 2:28 pm</td><td>Noah James</td><td>(248) 555-0123</td><td>248-436-3442</td><td>1:13</td><td>214</td><td>214</td><td>Lauren King</td><td>4:02</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 2:19 pm</td><td>Camila Ortiz</td><td>(734) 555-0148</td><td>248-436-3445</td><td>0:57</td><td>209</td><td>209</td><td>Ryan Cooper</td><td>2:51</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 2:05 pm</td><td>Owen Patel</td><td>(586) 555-0162</td><td>(313) 995-9080</td><td>2:41</td><td>213</td><td>213</td><td>Sara Ahmed</td><td>6:33</td><td>Orig: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  `<tr><td>Today, 1:59 pm</td><td>Harper Green</td><td>(947) 555-0179</td><td>248-436-3447</td><td>1:08</td><td>205</td><td>205</td><td>Daniel Price</td><td>3:11</td><td>Term: Bye</td><td>Connect</td><td class="cvqs-action-cell"></td></tr>`,
+  
+];
+
+// Optional: name fallback → keeps single source of truth
+CVQS_QUEUE_ROWS_BY_NAME["Billing"] = CVQS_QUEUE_ROWS_BY_NUM["303"];
 
   
   const norm = s => (s || '').replace(/\s+/g, ' ').trim();
@@ -4806,6 +4824,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
