@@ -4138,8 +4138,12 @@ document.addEventListener('click', function (e) {
  };
 
   // maps must exist before you assign into them
-const CVQS_QUEUE_ROWS_BY_NUM  = CVQS_QUEUE_ROWS_BY_NUM  || {};
-const CVQS_QUEUE_ROWS_BY_NAME = CVQS_QUEUE_ROWS_BY_NAME || {};
+// create (or reuse) the globals safely, then alias for local use
+window.CVQS_QUEUE_ROWS_BY_NUM  = window.CVQS_QUEUE_ROWS_BY_NUM  || {};
+window.CVQS_QUEUE_ROWS_BY_NAME = window.CVQS_QUEUE_ROWS_BY_NAME || {};
+const CVQS_QUEUE_ROWS_BY_NUM  = window.CVQS_QUEUE_ROWS_BY_NUM;
+const CVQS_QUEUE_ROWS_BY_NAME = window.CVQS_QUEUE_ROWS_BY_NAME;
+
 const keyNorm = s => (s || '').replace(/\s+/g,' ').trim().toLowerCase();
 
 
@@ -4839,6 +4843,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
