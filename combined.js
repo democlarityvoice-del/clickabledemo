@@ -4422,6 +4422,9 @@ function openQueueModal(queueNameOnly, queueNumber, code) {
     height: auto; max-height: none; min-height: 500px;
     font-family: sans-serif;
   `;
+  // INSERT THESE TWO LINES
+modal.style.maxHeight = 'calc(100vh - 32px)';
+modal.style.overflow  = 'auto';
 // ==== queueNotesPopover (anchored dropdown, unique IDs) ====
 const QN_REASONS = {
   'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
@@ -4843,6 +4846,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
