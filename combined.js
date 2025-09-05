@@ -4668,7 +4668,66 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
 
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
-// Open the anchored popover when the Notes icon is clicked
+
+  // ✅ 1) Re-inject action icons into every .cvqs-action-cell
+ function injectIcons(tr) {
+  const td = tr.querySelector('td.cvqs-action-cell');
+  if (!td) return;
+
+  // Prevent duplicates if re-running
+  if (td.querySelector('.cvqs-icon-btn')) return;
+
+  td.innerHTML = `
+    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="download" data-tooltip="Download">
+      <img src="${queueRepDownload}" alt="">
+    </span>
+    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="listen" data-tooltip="Listen">
+      <img src="${queueRepListen}" alt="">
+    </span>
+    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="cradle" data-tooltip="Cradle to Grave">
+      <img src="${queueRepCradle}" alt="">
+    </span>
+    <span role="button" tabindex="0" class="cvqs-icon-btn has-tooltip" data-icon="notes" data-tooltip="Edit Notes">
+      <img src="${queueRepNotes}" alt="">
+    </span>
+  `;
+}
+
+  // ✅ 2) Event delegation so Notes (and others) always work after HTML swaps
+  modal.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cvqs-icon-btn[data-icon]');
+    if (!btn || !modal.contains(btn)) return;
+
+    const kind = btn.dataset.icon;
+    if (kind === 'notes') {
+      // uses your existing function defined above in this scope
+      openQueueNotesPopover(btn);
+      return;
+    }
+    if (kind === 'download') {
+      // no-op or your download action
+      return;
+    }
+    if (kind === 'listen') {
+      // no-op or your listen action
+      return;
+    }
+    if (kind === 'cradle') {
+      // no-op or your cradle-to-grave action
+      return;
+    }
+  });
+
+  // (Optional) keyboard: make Space/Enter activate the buttons
+  modal.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvqs-icon-btn[data-icon]')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
+}
+
+  // Open the anchored popover when the Notes icon is clicked
 modal.addEventListener('click', (e) => {
   const btn = e.target.closest('.icon-circle[data-icon="notes"]');
   if (!btn) return;
@@ -4783,6 +4842,7 @@ modal.addEventListener('click', (e) => {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
