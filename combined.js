@@ -302,7 +302,7 @@ tr:hover .listen-btn img {
 
 
   // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
-  function removeHome() {
+function removeHome() {
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
@@ -321,6 +321,64 @@ tr:hover .listen-btn img {
   }
 }
 
+function generateFakeCallGraphData(count = 30) {
+  const data = [];
+  for (let i = 0; i < count; i++) {
+    const calls = Math.floor(Math.random() * 19); // 0–18
+    data.push({ x: i, y: calls });
+  }
+  return data;
+}
+
+function buildCallGraphSVG(dataPoints) {
+  const width = 623, height = 433;
+  const padding = { top: 10, right: 30, bottom: 30, left: 30 };
+  const innerW = width - padding.left - padding.right;
+  const innerH = height - padding.top - padding.bottom;
+  const yMax = 18;
+
+  const xStep = innerW / (dataPoints.length - 1);
+  const yScale = y => innerH - (y / yMax) * innerH;
+
+  const path = dataPoints.map((pt, i) => {
+    const x = padding.left + i * xStep;
+    const y = padding.top + yScale(pt.y);
+    return `${i === 0 ? 'M' : 'L'}${x},${y}`;
+  }).join(' ');
+
+  const circles = dataPoints.map((pt, i) => {
+    const x = padding.left + i * xStep;
+    const y = padding.top + yScale(pt.y);
+    return `<circle cx="${x}" cy="${y}" r="4" fill="#3366cc">
+      <title>${pt.y}</title>
+    </circle>`;
+  }).join('');
+
+  const grid = [];
+
+// Horizontal lines (Y axis ticks)
+for (let i = 0; i <= yMax; i += 2) {
+  const y = padding.top + yScale(i);
+  grid.push(`<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#ccc" stroke-width="1" />`);
+}
+
+// 🔥 Vertical lines (X axis ticks)
+for (let i = 0; i < dataPoints.length; i++) {
+  const x = padding.left + i * xStep;
+  grid.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="#eee" stroke-width="1" />`);
+}
+
+
+  return `
+    <svg width="${width}" height="${height}" style="background:white;">
+      <g>${grid.join('')}</g>
+      <path d="${path}" fill="none" stroke="#3366cc" stroke-width="2"/>
+      <g>${circles}</g>
+    </svg>
+  `;
+}
+
+  
 
 
   // -------- INJECT HOME -------- //
@@ -350,30 +408,18 @@ tr:hover .listen-btn img {
   graphIframe.id = 'cv-demo-graph-iframe';
   graphIframe.style.cssText = 'border:none;width:100%;display:block;margin-top:12px;height:500px;';
   graphIframe.setAttribute('scrolling', 'no');
-  graphIframe.srcdoc = `
+  graphIframe.onload = () => {
+  const doc = graphIframe.contentWindow.document;
+  doc.open();
+  doc.write(`
     <!doctype html>
-    <html><head><meta charset="utf-8">
-    <style>
-      body {
-        margin: 0;
-        font: 13px/1.428 "Helvetica Neue", Helvetica, Arial, sans-serif;
-        color: #333;
-        background: #fff;
-      }
-      .graph-replacement {
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        height: 500px;
-        border: 2px solid red;
-        font-size: 20px;
-        font-weight: bold;
-      }
-    </style>
-    </head><body>
-      <div class="graph-replacement">Leave me ALONE!</div>
+    <html><head><style>body{margin:0;}</style></head><body>
+      ${buildCallGraphSVG(generateFakeCallGraphData())}
     </body></html>
-  `;
+  `);
+  doc.close();
+};
+
 
   if (anchor && anchor.parentNode) {
     anchor.style.display = 'none';
@@ -4885,6 +4931,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
