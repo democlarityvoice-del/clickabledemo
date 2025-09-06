@@ -306,10 +306,6 @@ function removeHome() {
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-  const chartDiv = document.getElementById("chart_div");
-  if (chartDiv && chartDiv.parentNode) {
-    chartDiv.parentNode.removeChild(chartDiv);
-  }
 
   const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
@@ -378,17 +374,29 @@ for (let i = 0; i < dataPoints.length; i++) {
   `;
 }
 
-  
+ function replaceChartWithDemoGraph(iframe) {
+  const tryReplace = () => {
+    const chartSpot = document.getElementById("chart_div");
+    if (chartSpot && chartSpot.parentNode) {
+      chartSpot.parentNode.insertBefore(iframe, chartSpot);
+      chartSpot.remove();
+    } else {
+      // Retry on next animation frame
+      requestAnimationFrame(tryReplace);
+    }
+  };
+  tryReplace();
+}
+ 
 
-
-  // -------- INJECT HOME -------- //
- function injectHome() {
+// -------- INJECT HOME -------- //
+function injectHome() {
   if (document.getElementById(IFRAME_ID)) return;
 
   const slot = document.querySelector(SLOT_SELECTOR);
   if (!slot) return;
 
-  function findAnchor(el){
+  function findAnchor(el) {
     const preferred = el.querySelector('.table-container.scrollable-small');
     if (preferred) return preferred;
     if (el.firstElementChild) return el.firstElementChild;
@@ -401,7 +409,7 @@ for (let i = 0; i < dataPoints.length; i++) {
   const iframe = document.createElement('iframe');
   iframe.id = IFRAME_ID;
   iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-  iframe.setAttribute('scrolling','yes');
+  iframe.setAttribute('scrolling', 'yes');
   iframe.srcdoc = buildSrcdoc();
 
   const graphIframe = document.createElement('iframe');
@@ -409,29 +417,32 @@ for (let i = 0; i < dataPoints.length; i++) {
   graphIframe.style.cssText = 'border:none;width:100%;display:block;margin-top:12px;height:500px;';
   graphIframe.setAttribute('scrolling', 'no');
   graphIframe.onload = () => {
-  const doc = graphIframe.contentWindow.document;
-  doc.open();
-  doc.write(`
-    <!doctype html>
-    <html><head><style>body{margin:0;}</style></head><body>
-      ${buildCallGraphSVG(generateFakeCallGraphData())}
-    </body></html>
-  `);
-  doc.close();
-};
-
+    const doc = graphIframe.contentWindow.document;
+    doc.open();
+    doc.write(`
+      <!doctype html>
+      <html><head><style>body{margin:0;}</style></head><body>
+        ${buildCallGraphSVG(generateFakeCallGraphData())}
+      </body></html>
+    `);
+    doc.close();
+  };
 
   if (anchor && anchor.parentNode) {
     anchor.style.display = 'none';
-    anchor.setAttribute('data-cv-demo-hidden','1');
+    anchor.setAttribute('data-cv-demo-hidden', '1');
 
     anchor.parentNode.insertBefore(iframe, anchor);
-    iframe.parentNode.insertBefore(graphIframe, iframe.nextSibling);
+    slot.appendChild(graphIframe);
   } else {
     slot.appendChild(iframe);
     slot.appendChild(graphIframe);
   }
+
+  replaceChartWithDemoGraph(graphIframe); // ✅ safe final placement
 }
+
+
 
 
   // -------- WAIT HOME AND INJECT -------- //
@@ -4931,6 +4942,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
