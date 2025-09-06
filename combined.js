@@ -427,7 +427,7 @@ function buildCallGraphSVG(dataPoints){
   `;
 
   return `
-  <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="background:white;width:100%;height:100%;">
+ <svg width="${width}" height="${height}" style="background:white;display:block;" xmlns="http://www.w3.org/2000/svg">
     <style>${css}</style>
     <g>${grid.join('')}</g>
     <g>${yLabels.join('')}</g>
@@ -4993,6 +4993,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
