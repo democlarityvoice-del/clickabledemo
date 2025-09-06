@@ -341,7 +341,7 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
 
 // Build SVG: 623x350, grids, right-side Y labels, peaks-only hover dots with tooltip
 function buildCallGraphSVG(dataPoints){
-  const width = 623, height = 350;
+  const width = 634, height = 406;
   const pad = { top: 10, right: 40, bottom: 28, left: 28 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
@@ -4997,6 +4997,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
