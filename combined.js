@@ -434,23 +434,44 @@ function buildCallGraphSVG(dataPoints){
 }
 
 
-
 // -------- INJECT HOME -------- //
 function injectHome() {
   if (document.getElementById(IFRAME_ID)) return;
+  waitForNativeChart();
+}
 
+let waitForChartAttempts = 0;
+function waitForNativeChart() {
   const slot = document.querySelector(SLOT_SELECTOR);
   if (!slot) return;
 
-  function findAnchor(el) {
-    const preferred = el.querySelector('.table-container.scrollable-small');
-    if (preferred) return preferred;
-    if (el.firstElementChild) return el.firstElementChild;
-    let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-    return n || null;
-  }
-
   const anchor = findAnchor(slot);
+  const chart = slot.querySelector('.table-container.scrollable-small');
+
+  if (chart) {
+    chart.style.display = 'none';
+    chart.setAttribute('data-cv-demo-hidden', '1');
+    insertDemoIframes(anchor);
+  } else if (waitForChartAttempts < 25) {
+    waitForChartAttempts++;
+    setTimeout(waitForNativeChart, 100);
+  } else {
+    insertDemoIframes(anchor);
+  }
+}
+
+function findAnchor(el) {
+  const preferred = el.querySelector('.table-container.scrollable-small');
+  if (preferred) return preferred;
+  if (el.firstElementChild) return el.firstElementChild;
+  let n = el.firstChild;
+  while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+  return n || null;
+}
+
+function insertDemoIframes(anchor) {
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
 
   const iframe = document.createElement('iframe');
   iframe.id = IFRAME_ID;
@@ -477,7 +498,6 @@ function injectHome() {
   if (anchor && anchor.parentNode) {
     anchor.style.display = 'none';
     anchor.setAttribute('data-cv-demo-hidden', '1');
-
     anchor.parentNode.insertBefore(iframe, anchor);
     slot.appendChild(graphIframe);
   } else {
@@ -485,17 +505,9 @@ function injectHome() {
     slot.appendChild(graphIframe);
   }
 
-  setTimeout(() => {
-  const chart = document.querySelector('.table-container.scrollable-small');
-  if (chart && !chart.hasAttribute('data-cv-demo-hidden')) {
-    chart.style.display = 'none';
-    chart.setAttribute('data-cv-demo-hidden', '1');
-  }
-}, 500);
-
-  
-  replaceChartWithDemoGraph(graphIframe); // ✅ safe final placement
+  replaceChartWithDemoGraph(graphIframe);
 }
+
 
 
 
@@ -4997,6 +5009,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
