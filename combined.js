@@ -299,23 +299,26 @@ tr:hover .listen-btn img {
 </body></html>`;
 }
 
+  // -------- HELPER-------- //
+function replaceChartWithDemoGraph(iframe) {
+  const tryReplace = () => {
+    const chartSpot = document.getElementById("chart_div");
+    if (chartSpot && chartSpot.parentNode) {
+      chartSpot.parentNode.insertBefore(iframe, chartSpot);
+      chartSpot.remove();
+    } else {
+      requestAnimationFrame(tryReplace);
+    }
+  };
+  tryReplace();
+}
 
 
 // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
 function removeHome() {
-  // Remove main demo iframe
   const ifr = document.getElementById(IFRAME_ID);
-  if (ifr && ifr.parentNode) {
-    ifr.parentNode.removeChild(ifr);
-  }
+  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-  // Remove graph iframe
-  const graph = document.getElementById('cv-demo-graph-iframe');
-  if (graph && graph.parentNode) {
-    graph.parentNode.removeChild(graph);
-  }
-
-  // Restore hidden native chart
   const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
     const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
@@ -325,6 +328,8 @@ function removeHome() {
     }
   }
 }
+
+
 
 
   // --- date helpers ---
@@ -447,41 +452,19 @@ function buildCallGraphSVG(dataPoints){
 // -------- INJECT HOME -------- //
 function injectHome() {
   if (document.getElementById(IFRAME_ID)) return;
-  waitForNativeChart();
-}
 
-let waitForChartAttempts = 0;
-function waitForNativeChart() {
   const slot = document.querySelector(SLOT_SELECTOR);
   if (!slot) return;
+
+  function findAnchor(el) {
+    const preferred = el.querySelector('.table-container.scrollable-small');
+    if (preferred) return preferred;
+    if (el.firstElementChild) return el.firstElementChild;
+    let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+    return n || null;
+  }
 
   const anchor = findAnchor(slot);
-  const chart = slot.querySelector('.table-container.scrollable-small');
-
-  if (chart) {
-    chart.style.display = 'none';
-    chart.setAttribute('data-cv-demo-hidden', '1');
-    insertDemoIframes(anchor);
-  } else if (waitForChartAttempts < 25) {
-    waitForChartAttempts++;
-    setTimeout(waitForNativeChart, 100);
-  } else {
-    insertDemoIframes(anchor);
-  }
-}
-
-function findAnchor(el) {
-  const preferred = el.querySelector('.table-container.scrollable-small');
-  if (preferred) return preferred;
-  if (el.firstElementChild) return el.firstElementChild;
-  let n = el.firstChild;
-  while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-  return n || null;
-}
-
-function insertDemoIframes(anchor) {
-  const slot = document.querySelector(SLOT_SELECTOR);
-  if (!slot) return;
 
   const iframe = document.createElement('iframe');
   iframe.id = IFRAME_ID;
@@ -517,6 +500,7 @@ function insertDemoIframes(anchor) {
 
   replaceChartWithDemoGraph(graphIframe);
 }
+
 
 
 
@@ -5019,6 +5003,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
