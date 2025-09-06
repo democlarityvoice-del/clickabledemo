@@ -395,7 +395,8 @@ function buildCallGraphSVG(dataPoints){
     const bias = (frac - 0.5) * 12; // nudge outer labels
     const xx = pad.left + frac * innerW + bias;
     const labelDate = addDays(start, d);
-    xLabels.push(`<text x="${xx}" y="${height - 6}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
+    // Patch: raise Y labels up to keep inside viewBox
+    xLabels.push(`<text x="${xx}" y="${height - 10}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
   }
 
   const peakIdx = [];
@@ -4993,6 +4994,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
