@@ -327,52 +327,56 @@ function generateFakeCallGraphData(count = 30) {
 }
 
 function buildCallGraphSVG(dataPoints) {
-  const width = 623, height = 433;
-  const padding = { top: 10, right: 30, bottom: 30, left: 30 };
+  const width = 623, height = 350;
+  const padding = { top: 10, right: 20, bottom: 30, left: 35 };
   const innerW = width - padding.left - padding.right;
   const innerH = height - padding.top - padding.bottom;
   const yMax = 18;
 
   const xStep = innerW / (dataPoints.length - 1);
-  const yScale = y => innerH - (y / yMax) * innerH;
+  const yScale = y => (1 - pt.y / yMax) * innerH;
 
   const path = dataPoints.map((pt, i) => {
     const x = padding.left + i * xStep;
-    const y = padding.top + yScale(pt.y);
+    const y = padding.top + (1 - pt.y / yMax) * innerH;
     return `${i === 0 ? 'M' : 'L'}${x},${y}`;
   }).join(' ');
 
   const circles = dataPoints.map((pt, i) => {
     const x = padding.left + i * xStep;
-    const y = padding.top + yScale(pt.y);
-    return `<circle cx="${x}" cy="${y}" r="4" fill="#3366cc">
-      <title>${pt.y}</title>
-    </circle>`;
+    const y = padding.top + (1 - pt.y / yMax) * innerH;
+    return `
+      <g>
+        <circle cx="${x}" cy="${y}" r="4" fill="#3366cc" />
+        <title>${pt.y}</title>
+      </g>
+    `;
   }).join('');
 
   const grid = [];
+  const yLabels = [];
 
-// Horizontal lines (Y axis ticks)
-for (let i = 0; i <= yMax; i += 2) {
-  const y = padding.top + yScale(i);
-  grid.push(`<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#ccc" stroke-width="1" />`);
-}
+  for (let i = 0; i <= yMax; i += 2) {
+    const y = padding.top + (1 - i / yMax) * innerH;
+    grid.push(`<line x1="${padding.left}" y1="${y}" x2="${width - padding.right}" y2="${y}" stroke="#ccc" stroke-width="1"/>`);
+    yLabels.push(`<text x="4" y="${y + 4}" font-size="11" fill="#999" text-anchor="start">${i}</text>`);
+  }
 
-// 🔥 Vertical lines (X axis ticks)
-for (let i = 0; i < dataPoints.length; i++) {
-  const x = padding.left + i * xStep;
-  grid.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="#eee" stroke-width="1" />`);
-}
-
+  for (let i = 0; i < dataPoints.length; i++) {
+    const x = padding.left + i * xStep;
+    grid.push(`<line x1="${x}" y1="${padding.top}" x2="${x}" y2="${height - padding.bottom}" stroke="#eee" stroke-width="1"/>`);
+  }
 
   return `
     <svg width="${width}" height="${height}" style="background:white;">
       <g>${grid.join('')}</g>
+      <g>${yLabels.join('')}</g>
       <path d="${path}" fill="none" stroke="#3366cc" stroke-width="2"/>
       <g>${circles}</g>
     </svg>
   `;
 }
+
 
  function replaceChartWithDemoGraph(iframe) {
   const tryReplace = () => {
@@ -4942,6 +4946,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
