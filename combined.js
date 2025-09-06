@@ -2529,7 +2529,7 @@ function buildCallHistorySrcdoc() {
   html, body{
     width:100%;
     margin:0;
-    overflow-x:hidden;
+    overflow-x:auto; /* allow a horizontal scrollbar if needed */
     font: 13px/1.428 var(--font-stack);
     color: var(--text-color);
     -webkit-font-smoothing: antialiased;
@@ -4846,6 +4846,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
