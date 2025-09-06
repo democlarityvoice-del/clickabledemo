@@ -301,12 +301,21 @@ tr:hover .listen-btn img {
 
 
 
-  // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
+// -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
 function removeHome() {
+  // Remove main demo iframe
   const ifr = document.getElementById(IFRAME_ID);
-  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+  if (ifr && ifr.parentNode) {
+    ifr.parentNode.removeChild(ifr);
+  }
 
+  // Remove graph iframe
+  const graph = document.getElementById('cv-demo-graph-iframe');
+  if (graph && graph.parentNode) {
+    graph.parentNode.removeChild(graph);
+  }
 
+  // Restore hidden native chart
   const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
     const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
@@ -316,6 +325,7 @@ function removeHome() {
     }
   }
 }
+
 
   // --- date helpers ---
 function fmtMMMDDYYYY(d){
@@ -5009,6 +5019,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
