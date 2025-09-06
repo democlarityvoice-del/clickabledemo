@@ -357,67 +357,57 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
 // Build SVG: 623x350, grids, right-side Y labels, peaks-only hover dots with tooltip
 function buildCallGraphSVG(dataPoints){
   const width = 634, height = 406;
-  const pad = { top: 10, right: 40, bottom: 28, left: 28 };
+  const pad = { top: 10, right: 10, bottom: 32, left: 10 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const yMax = 18;
 
-  // time range: today - 10d .. today
   const today = new Date(); today.setHours(0,0,0,0);
   const start = addDays(today, -10);
   const daySpan = 10;
 
-  // x & y mapping
   const xStep = innerW / (dataPoints.length - 1);
-  const yPx   = v => pad.top + (1 - v / yMax) * innerH;
-  const xPx   = i => pad.left + i * xStep;
+  const yPx = v => pad.top + (1 - v / yMax) * innerH;
+  const xPx = i => pad.left + i * xStep;
 
-  // main path
-  const pathD = dataPoints.map((pt,i)=>`${i?'L':'M'}${xPx(i)},${yPx(pt.y)}`).join(' ');
+  const pathD = dataPoints.map((pt, i) => `${i ? 'L' : 'M'}${xPx(i)},${yPx(pt.y)}`).join(' ');
 
-  // gridlines
   const grid = [];
-  // horizontal (0..18 step 2)
-  for (let y=0; y<=yMax; y+=2){
+  for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
-    grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width-pad.right}" y2="${yy}" stroke="#ccc" stroke-width="1"/>`);
+    grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#ccc" stroke-width="1"/>`);
   }
-  // vertical: every 6th point so it looks like day/hour ticks
-  const vStep = Math.max(1, Math.round(dataPoints.length/12));
-  for (let i=0;i<dataPoints.length;i+=vStep){
+  const vStep = Math.max(1, Math.round(dataPoints.length / 12));
+  for (let i = 0; i < dataPoints.length; i += vStep) {
     const xx = xPx(i);
-    grid.push(`<line x1="${xx}" y1="${pad.top}" x2="${xx}" y2="${height-pad.bottom}" stroke="#eee" stroke-width="1"/>`);
+    grid.push(`<line x1="${xx}" y1="${pad.top}" x2="${xx}" y2="${height - pad.bottom}" stroke="#eee" stroke-width="1"/>`);
   }
 
-  // right-side Y-axis labels
   const yLabels = [];
-  for (let y=0;y<=yMax;y+=2){
+  for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
-    yLabels.push(`<text x="${width-pad.right+6}" y="${yy+4}" font-size="11" fill="#666">${y}</text>`);
+    yLabels.push(`<text x="${width - pad.right + 6}" y="${yy + 4}" font-size="11" fill="#666">${y}</text>`);
   }
 
-  // bottom X-axis labels: every 2 days from start to today
   const xLabels = [];
-  for (let d=0; d<=daySpan; d+=2){
-    const frac = d/daySpan;              // 0..1 across span
-    const xx = pad.left + frac*innerW;
+  for (let d = 0; d <= daySpan; d += 2) {
+    const frac = d / daySpan;
+    const bias = (frac - 0.5) * 12; // nudge outer labels
+    const xx = pad.left + frac * innerW + bias;
     const labelDate = addDays(start, d);
-    xLabels.push(`<text x="${xx}" y="${height-6}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
+    xLabels.push(`<text x="${xx}" y="${height - 6}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
   }
 
-  // peaks detection (strict local maxima)
   const peakIdx = [];
-  for (let i=1;i<dataPoints.length-1;i++){
-    const a=dataPoints[i-1].y, b=dataPoints[i].y, c=dataPoints[i+1].y;
-    if (b>=a && b>=c && (b>a || b>c)) peakIdx.push(i);
+  for (let i = 1; i < dataPoints.length - 1; i++) {
+    const a = dataPoints[i - 1].y, b = dataPoints[i].y, c = dataPoints[i + 1].y;
+    if (b >= a && b >= c && (b > a || b > c)) peakIdx.push(i);
   }
 
-  // peaks with hover-only dots + tooltip (date + calls)
-  // date for a peak is mapped from its x position to the 10-day window (rounded to nearest day)
-  const peaks = peakIdx.map(i=>{
+  const peaks = peakIdx.map(i => {
     const x = xPx(i), y = yPx(dataPoints[i].y);
-    const frac = i/(dataPoints.length-1);
-    const dayOffset = Math.round(frac*daySpan);
+    const frac = i / (dataPoints.length - 1);
+    const dayOffset = Math.round(frac * daySpan);
     const d = addDays(start, dayOffset);
     const label = `${fmtMMMDDYYYY(d)} · ${dataPoints[i].y}`;
     return `
@@ -425,20 +415,19 @@ function buildCallGraphSVG(dataPoints){
         <rect x="-8" y="-8" width="16" height="16" fill="transparent"></rect>
         <circle r="0" fill="#3366cc"></circle>
         <g class="tip" transform="translate(8,-10)" opacity="0">
-          <rect x="0" y="-16" rx="3" ry="3" width="${8 + label.length*6}" height="18" fill="white" stroke="#bbb"></rect>
+          <rect x="0" y="-16" rx="3" ry="3" width="${8 + label.length * 6}" height="18" fill="white" stroke="#bbb"></rect>
           <text x="6" y="-3" font-size="11" fill="#333">${label}</text>
         </g>
       </g>`;
   }).join('');
 
-  // styles: show dot + tooltip on hover
   const css = `
     .peak:hover circle { r:5; }
     .peak:hover .tip { opacity:1; }
   `;
 
   return `
-  <svg width="${width}" height="${height}" style="background:white;">
+  <svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none" style="background:white;width:100%;height:100%;">
     <style>${css}</style>
     <g>${grid.join('')}</g>
     <g>${yLabels.join('')}</g>
@@ -447,6 +436,7 @@ function buildCallGraphSVG(dataPoints){
     <g>${xLabels.join('')}</g>
   </svg>`;
 }
+
 
 
 // -------- INJECT HOME -------- //
@@ -5003,6 +4993,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
