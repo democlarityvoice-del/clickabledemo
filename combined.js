@@ -386,7 +386,7 @@ function buildCallGraphSVG(dataPoints){
   const yLabels = [];
   for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
-    yLabels.push(`<text x="${width - pad.right + 6}" y="${yy + 4}" font-size="11" fill="#666">${y}</text>`);
+    yLabels.push(`<text x="${width - pad.right - 6}" y="${yy + 4}" text-anchor="end" font-size="11" fill="#666">${y}</text>`);
   }
 
   const xLabels = [];
@@ -4993,6 +4993,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
