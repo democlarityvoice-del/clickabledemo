@@ -2042,12 +2042,12 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' thead th:nth-child(1), #',ROOT_ID,' tbody td:nth-child(1){width:72px}',
         '#',ROOT_ID,' thead th:nth-child(3), #',ROOT_ID,' tbody td:nth-child(3){width:148px}',
         '#',ROOT_ID,' thead th:nth-child(4), #',ROOT_ID,' tbody td:nth-child(4){width:64px;text-align:center}',
-        '#',ROOT_ID,' thead th:nth-child(5), #',ROOT_ID,' tbody td:nth-child(5){width:86px}',
+        '#',ROOT_ID,' thead th:nth-child(5), #',ROOT_ID,' tbody td:nth-child(5){width:110px}',
         '#',ROOT_ID,' thead th:nth-child(2), #',ROOT_ID,' tbody td:nth-child(2){white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
 
         /* inputs & buttons */
         '#',ROOT_ID,' select{height:28px;font:600 13px/1 Arial}',
-        '#',ROOT_ID,' input[type="number"], #',ROOT_ID,' select{max-width:72px}',
+        '#',ROOT_ID,' input[type="number"], #',ROOT_ID,' select{max-width:96px}',
         '#',ROOT_ID,' .btn{padding:7px 12px;border-radius:8px;border:1px solid #d9d9d9;background:#fff;cursor:pointer;font:600 13px/1 Arial}',
         '#',ROOT_ID,' .btn.primary{background:#0b84ff;border-color:#0b84ff;color:#fff}',
         '#',ROOT_ID,' .btn:focus{outline:2px solid #0b84ff33;outline-offset:2px}',
@@ -4846,6 +4846,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
