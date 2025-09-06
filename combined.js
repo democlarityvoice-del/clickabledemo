@@ -377,6 +377,7 @@ function buildCallGraphSVG(dataPoints){
     const yy = yPx(y);
     grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#ccc" stroke-width="1"/>`);
   }
+
   const vStep = Math.max(1, Math.round(dataPoints.length / 12));
   for (let i = 0; i < dataPoints.length; i += vStep) {
     const xx = xPx(i);
@@ -392,10 +393,9 @@ function buildCallGraphSVG(dataPoints){
   const xLabels = [];
   for (let d = 0; d <= daySpan; d += 2) {
     const frac = d / daySpan;
-    const bias = (frac - 0.5) * 12; // nudge outer labels
+    const bias = (frac - 0.5) * (width / 42);  // scaled bias for 650px
     const xx = pad.left + frac * innerW + bias;
     const labelDate = addDays(start, d);
-    // Patch: raise Y labels up to keep inside viewBox
     xLabels.push(`<text x="${xx}" y="${height - 10}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
   }
 
@@ -428,7 +428,7 @@ function buildCallGraphSVG(dataPoints){
   `;
 
   return `
- <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background:white; display:block;">
+  <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background:white; display:block;">
     <style>${css}</style>
     <g>${grid.join('')}</g>
     <g>${yLabels.join('')}</g>
@@ -437,6 +437,7 @@ function buildCallGraphSVG(dataPoints){
     <g>${xLabels.join('')}</g>
   </svg>`;
 }
+
 
 
 
@@ -4994,6 +4995,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
