@@ -301,20 +301,26 @@ tr:hover .listen-btn img {
 
 
 
-  // -------- REMOVE HOME -------- //
+  // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
   function removeHome() {
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+
+  const chartDiv = document.getElementById("chart_div");
+  if (chartDiv && chartDiv.parentNode) {
+    chartDiv.parentNode.removeChild(chartDiv);
+  }
 
   const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
     const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
     if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-      hidden.style.display = '';                // <-- FIXED
+      hidden.style.display = '';
       hidden.removeAttribute('data-cv-demo-hidden');
     }
   }
 }
+
 
 
   // -------- INJECT HOME -------- //
@@ -346,6 +352,57 @@ tr:hover .listen-btn img {
 
   if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
   else slot.appendChild(iframe);
+}
+
+  const iframe = document.createElement('iframe');
+iframe.id = IFRAME_ID;
+iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+iframe.setAttribute('scrolling','yes');
+iframe.srcdoc = buildSrcdoc();
+
+// NEW graph iframe
+const graphIframe = document.createElement('iframe');
+graphIframe.id = 'cv-demo-graph-iframe';
+graphIframe.style.cssText = 'border:none;width:100%;display:block;margin-top:12px;height:500px;';
+graphIframe.setAttribute('scrolling', 'no');
+graphIframe.srcdoc = `
+  <!doctype html>
+  <html><head><meta charset="utf-8">
+  <style>
+    body {
+      margin: 0;
+      font: 13px/1.428 "Helvetica Neue", Helvetica, Arial, sans-serif;
+      color: #333;
+      background: #fff;
+    }
+    .graph-replacement {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 500px;
+      border: 2px solid red;
+      font-size: 20px;
+      font-weight: bold;
+    }
+  </style>
+  </head><body>
+    <div class="graph-replacement">Leave me ALONE!</div>
+  </body></html>
+`;
+
+if (anchor && anchor.parentNode) {
+  anchor.style.display = 'none';
+  anchor.setAttribute('data-cv-demo-hidden','1');
+
+  // Insert calls iframe where anchor is
+  anchor.parentNode.insertBefore(iframe, anchor);
+
+  // Insert graph iframe AFTER calls iframe
+  iframe.parentNode.insertBefore(graphIframe, iframe.nextSibling);
+} else {
+  // Fallback if no anchor — just dump both into the slot
+  slot.appendChild(iframe);
+  slot.appendChild(graphIframe);
 }
 
 
@@ -4846,6 +4903,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
