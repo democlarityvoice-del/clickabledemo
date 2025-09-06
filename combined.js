@@ -485,6 +485,15 @@ function injectHome() {
     slot.appendChild(graphIframe);
   }
 
+  setTimeout(() => {
+  const chart = document.querySelector('.table-container.scrollable-small');
+  if (chart && !chart.hasAttribute('data-cv-demo-hidden')) {
+    chart.style.display = 'none';
+    chart.setAttribute('data-cv-demo-hidden', '1');
+  }
+}, 500);
+
+  
   replaceChartWithDemoGraph(graphIframe); // ✅ safe final placement
 }
 
@@ -4988,6 +4997,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
