@@ -428,7 +428,9 @@ function buildCallGraphSVG(dataPoints){
     const frac = i / (dataPoints.length - 1);
     const dayOffset = Math.round(frac * daySpan);
     const d = addDays(start, dayOffset);
-    const label = `${fmtShort(d)} · ${dataPoints[i].y}`;
+    const count = dataPoints[i].y;
+    const label = `${fmtShort(d)} - ${count} call${count === 1 ? '' : 's'}`;
+
     return `
       <g class="peak" transform="translate(${x},${y})">
         <rect x="-8" y="-8" width="16" height="16" fill="transparent"></rect>
@@ -5060,6 +5062,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
