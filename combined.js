@@ -300,6 +300,125 @@ tr:hover .listen-btn img {
 }
 
 
+// ===== DEMO BANNER (header) =====
+(() => {
+  const BANNER_ID = 'cv-demo-banner-top';
+  const STYLE_ID  = 'cv-demo-banner-style-top';
+
+  // find the document that actually owns the real header
+  function findHeaderDoc(win) {
+    try {
+      const d = win.document;
+      if (d.querySelector('#header') && d.querySelector('#header-logo') && d.querySelector('#header-user')) return d;
+    } catch (_) {}
+    for (let i = 0; i < win.frames.length; i++) {
+      const found = findHeaderDoc(win.frames[i]);
+      if (found) return found;
+    }
+    return null;
+  }
+
+  function mountDemoBannerInHeader() {
+    const doc = findHeaderDoc(window.top) || findHeaderDoc(window);
+    if (!doc) return;
+
+    // already mounted? bail
+    if (doc.getElementById(BANNER_ID)) return;
+
+    const header = doc.querySelector('#header');
+    const logo   = doc.querySelector('#header-logo');
+    const right  = doc.querySelector('#header-user');
+    if (!header || !logo || !right) return;
+
+    // styles (once)
+    if (!doc.getElementById(STYLE_ID)) {
+      const st = doc.createElement('style');
+      st.id = STYLE_ID;
+      st.textContent = `
+        #${BANNER_ID}{
+          position:absolute; display:flex; align-items:center; gap:8px; white-space:nowrap; z-index:1000;
+          background:#fff; color:#333; border:1px solid #d7dbe2; border-radius:8px; padding:4px 8px;
+          box-shadow:0 1px 2px rgba(0,0,0,.05); font:12px/1.2 "Helvetica Neue", Helvetica, Arial, sans-serif;
+          transform-origin:center center;
+        }
+        #${BANNER_ID} .cv-title{ font-weight:700; color:#2b6cb0 }
+        #${BANNER_ID} button{
+          font-size:12px; line-height:1; padding:4px 8px; border:1px solid #c8ccd4; border-radius:6px;
+          background:linear-gradient(#fff,#f4f4f4); cursor:pointer
+        }
+        #${BANNER_ID} button:hover{ background:#f8f8f8 }
+      `;
+      doc.head.appendChild(st);
+    }
+
+    // header must be positioned
+    if (doc.defaultView.getComputedStyle(header).position === 'static') header.style.position = 'relative';
+
+    // build banner
+    const banner = doc.createElement('div');
+    banner.id = BANNER_ID;
+    banner.innerHTML = `
+      <span class="cv-title">Demo Mode:</span>
+      <span>Some updates may not reflect outside of Live Mode.</span>
+      <button type="button" id="cv-demo-refresh-top">Refresh Demo</button>
+    `;
+    header.appendChild(banner);
+
+    // button action: hard refresh with cache bust
+    banner.querySelector('#cv-demo-refresh-top').onclick = () => {
+      const url = new doc.defaultView.URL(doc.defaultView.location.href);
+      url.searchParams.set('demo-refresh', Date.now().toString());
+      doc.defaultView.location.replace(url.toString());
+    };
+
+    // placement: center between logo & right cluster; autoscale to fit
+    function place() {
+      const hRect = header.getBoundingClientRect();
+      const lRect = logo.getBoundingClientRect();
+      const rRect = right.getBoundingClientRect();
+
+      const pad = 8;
+      const gapLeft  = lRect.right + pad;
+      const gapRight = rRect.left  - pad;
+      const gapWidth = Math.max(0, gapRight - gapLeft);
+
+      const midX = (gapLeft + gapRight) / 2 - hRect.left;
+      const midY = (rRect.top + rRect.bottom) / 2 - hRect.top;
+
+      banner.style.left = `${midX}px`;
+      banner.style.top  = `${midY}px`;
+      banner.style.transform = 'translate(-50%,-50%) scale(1)';
+
+      requestAnimationFrame(() => {
+        const need = banner.offsetWidth;
+        const have = gapWidth - 2;
+        const scale = have > 0 ? Math.min(1, Math.max(0.6, have / need)) : 0.6; // min 60%
+        banner.style.transform = `translate(-50%,-50%) scale(${scale})`;
+      });
+    }
+
+    place();
+    doc.defaultView.addEventListener('resize', place);
+    // keep a handle for teardown
+    doc.defaultView.__cvDemoPlace = place;
+  }
+
+  function unmountDemoBannerInHeader() {
+    const doc = findHeaderDoc(window.top) || findHeaderDoc(window);
+    if (!doc) return;
+    doc.getElementById(BANNER_ID)?.remove();
+    // leave the style in place if you plan to mount across pages; remove if you prefer:
+    // doc.getElementById(STYLE_ID)?.remove();
+    if (doc.defaultView.__cvDemoPlace) {
+      doc.defaultView.removeEventListener('resize', doc.defaultView.__cvDemoPlace);
+      delete doc.defaultView.__cvDemoPlace;
+    }
+  }
+
+  // expose for your page scripts
+  window.mountDemoBannerInHeader   = mountDemoBannerInHeader;
+  window.unmountDemoBannerInHeader = unmountDemoBannerInHeader;
+})();
 
 
 
@@ -494,6 +613,11 @@ function waitForChartThenReplace(timeoutMs = 45000) {
   tryRun();
 }
 
+
+  // Only on Home for now:
+if (/\/portal\/home\b/.test(location.pathname)) {
+  mountDemoBannerInHeader();
+}
 
 // Replace and LOCK the chart slot so native redraws can’t overwrite it
 function replaceHomeCallGraph(host) {
@@ -5062,6 +5186,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
