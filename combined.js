@@ -361,56 +361,25 @@ function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x;
 function generateFakeCallGraphData(count = 60, yMax = 18){
   const pts = [];
   let y = Math.random()*4; // start gentle
-  for (let i=0;i<count;i++){
-    // small random walk + occasional spike
-    y += (Math.random()-0.5)*2;
-    if (Math.random()<0.07) y += 6 + Math.random()*6;
-    if (Math.random()<0.05) y -= 4;
+  for (let i = 0; i < count; i++) {
+    y += (Math.random() - 0.5) * 2;
+    if (Math.random() < 0.07) y += 6 + Math.random() * 6;
+    if (Math.random() < 0.05) y -= 4;
     y = Math.max(0, Math.min(yMax, y));
     pts.push({ x: i, y: Math.round(y) });
   }
   return pts;
 }
 
-  function (host) {
-  if (!host) return;
-
-
-  // neutralize size locks on this slot only
-  host.style.height = 'auto';
-  host.style.minHeight = '0';
-
-  const parent = host.closest('.chart-container');
-  if (parent) parent.classList.add('cv-demo-graph');
-
-  // attribute-scoped CSS for this card only
-  let st = document.getElementById('cv-demo-graph-style');
-  if (!st) {
-    st = document.createElement('style');
-    st.id = 'cv-demo-graph-style';
-    st.textContent = `
-      .cv-demo-graph::before, .cv-demo-graph::after { display:none !important; content:none !important; }
-      .cv-demo-graph #chart_div svg { display:block; width:100%; height:auto; }
-    `;
-    document.head.appendChild(st);
-  }
-
-  // replace only the contents of #chart_div
-  while (host.firstChild) host.removeChild(host.firstChild);
-  host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
-}
-
-
 // Build SVG: responsive (width:100% / height:auto), grids, right-side Y labels
 function buildCallGraphSVG(dataPoints){
-  // Canvas "design size" only for viewBox; NOT enforced as fixed pixels
-  const width = 650, height = 350;                    // ↓ shorter design height
-  const pad = { top: 30, right: 12, bottom: 36, left: 30 }; // a bit more left pad for path/clip
+  const width = 650, height = 350;
+  const pad = { top: 30, right: 12, bottom: 36, left: 30 };
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const yMax = 18;
 
-  const today = new Date(); today.setHours(0,0,0,0);
+  const today = new Date(); today.setHours(0, 0, 0, 0);
   const start = addDays(today, -10);
   const daySpan = 10;
 
@@ -420,39 +389,34 @@ function buildCallGraphSVG(dataPoints){
 
   const pathD = dataPoints.map((pt, i) => `${i ? 'L' : 'M'}${xPx(i)},${yPx(pt.y)}`).join(' ');
 
-  // horizontal grid
   const grid = [];
   for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
     grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#e3e6ea" stroke-width="1"/>`);
   }
 
-  // light vertical guides (sparse)
   const vStep = Math.max(1, Math.round(dataPoints.length / 12));
   for (let i = 0; i < dataPoints.length; i += vStep) {
     const xx = xPx(i);
     grid.push(`<line x1="${xx}" y1="${pad.top}" x2="${xx}" y2="${height - pad.bottom}" stroke="#f1f3f5" stroke-width="1"/>`);
   }
 
-  // right-side Y labels
   const yLabels = [];
   for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
     yLabels.push(`<text x="${width - pad.right - 6}" y="${yy + 4}" text-anchor="end" font-size="11" fill="#666">${y}</text>`);
   }
 
-  // X labels: SHORT and SPARSE (no bias; avoids overlap at ~650px)
   const xLabels = [];
-  const steps = 6; // ~6–7 ticks fits this slot
-  const fmtShort = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); // "Sep 6"
+  const steps = 6;
+  const fmtShort = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   for (let i = 0; i <= steps; i++) {
     const frac = i / steps;
-    const xx = pad.left + frac * innerW;             // ← no width-based bias
+    const xx = pad.left + frac * innerW;
     const labelDate = addDays(start, Math.round(frac * daySpan));
     xLabels.push(`<text x="${xx}" y="${height - 10}" font-size="11" fill="#777" text-anchor="middle">${fmtShort(labelDate)}</text>`);
   }
 
-  // peaks (unchanged logic; hover to reveal)
   const peakIdx = [];
   for (let i = 1; i < dataPoints.length - 1; i++) {
     const a = dataPoints[i - 1].y, b = dataPoints[i].y, c = dataPoints[i + 1].y;
@@ -481,9 +445,6 @@ function buildCallGraphSVG(dataPoints){
     .peak:hover .tip { opacity:1; }
   `;
 
-  // CRITICAL CHANGES:
-  // - viewBox only; no fixed height attr
-  // - style uses width:100%; height:auto (so it fits the slot and scales)
   return `
   <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; background:white; display:block;">
     <style>${css}</style>
@@ -495,33 +456,19 @@ function buildCallGraphSVG(dataPoints){
   </svg>`;
 }
 
-function waitForChartThenReplace(timeoutMs = 45000) {
-  const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
-  const t0 = Date.now();
-  (function tick(){
-    const host = document.querySelector(SEL);
-    const ready = host && host.offsetWidth > 0 && host.offsetHeight > 0;
-    if (ready) { 
-      replaceHomeCallGraph(host); // ✅ FIXED
-      return; 
-    }
-    if (Date.now() - t0 > timeoutMs) { 
-      console.warn('Timed out waiting for chart slot'); 
-      return; 
-    }
-    requestAnimationFrame(tick);
-  })();
-}
+// Replace the native Google chart IN PLACE (no second iframe, no duplication)
+function replaceHomeCallGraph(host) {
+  if (!host) {
+    host = document.querySelector('#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div');
+    if (!host) return;
+  }
 
-
-  // neutralize size locks on this slot only
   host.style.height = 'auto';
   host.style.minHeight = '0';
 
   const parent = host.closest('.chart-container');
   if (parent) parent.classList.add('cv-demo-graph');
 
-  // attribute-scoped CSS for this card only
   let st = document.getElementById('cv-demo-graph-style');
   if (!st) {
     st = document.createElement('style');
@@ -533,9 +480,27 @@ function waitForChartThenReplace(timeoutMs = 45000) {
     document.head.appendChild(st);
   }
 
-  // replace only the contents of #chart_div
   while (host.firstChild) host.removeChild(host.firstChild);
   host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
+}
+
+// Wait for the native chart to load before replacing
+function waitForChartThenReplace(timeoutMs = 45000) {
+  const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
+  const t0 = Date.now();
+  (function tick(){
+    const host = document.querySelector(SEL);
+    const ready = host && host.offsetWidth > 0 && host.offsetHeight > 0;
+    if (ready) {
+      replaceHomeCallGraph(host);
+      return;
+    }
+    if (Date.now() - t0 > timeoutMs) {
+      console.warn('[CV-DEMO] Timed out waiting for chart slot');
+      return;
+    }
+    requestAnimationFrame(tick);
+  })();
 }
 
 // Safe DOM-ready boot
@@ -544,7 +509,6 @@ if (document.readyState === 'loading') {
 } else {
   waitForChartThenReplace();
 }
-
 
   
 
@@ -5045,6 +5009,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
