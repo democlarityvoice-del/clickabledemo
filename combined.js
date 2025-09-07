@@ -538,7 +538,13 @@ function waitForChartThenReplace(timeoutMs = 45000) {
   host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
 }
 
-waitForChartThenReplace();
+// Safe DOM-ready boot
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', waitForChartThenReplace);
+} else {
+  waitForChartThenReplace();
+}
+
 
   
 
@@ -5039,6 +5045,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
