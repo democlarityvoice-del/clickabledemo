@@ -301,24 +301,24 @@ tr:hover .listen-btn img {
 
 
 
-// -------- REMOVE NATIVE ACTIVE CALLS-------- //
-function removeHome() {
-  // Unhide the anchor if we hid it earlier
+
+
+  // -------- REMOVE HOME -------- //
+  function removeHome() {
+  const ifr = document.getElementById(IFRAME_ID);
+  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+
   const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
     const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
     if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-      hidden.style.display = '';
+      hidden.style.display = '';                // <-- FIXED
       hidden.removeAttribute('data-cv-demo-hidden');
     }
   }
+}
 
-  // Remove optional info iframe
-  const ifr = document.getElementById(IFRAME_ID);
-  if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
-} 
 
-  
   // -------- INJECT HOME -------- //
   function injectHome() {
   if (document.getElementById(IFRAME_ID)) return;
@@ -350,7 +350,6 @@ function removeHome() {
   else slot.appendChild(iframe);
 }
 
-
   // --- date helpers ---
 function fmtMMMDDYYYY(d){
   const mo = d.toLocaleString('en-US', { month: 'long' });
@@ -372,6 +371,35 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
   }
   return pts;
 }
+
+  function replaceHomeCallGraph() {
+  const host = document.querySelector('#omp-callgraphs-body .chart-container #chart_div');
+  if (!host) return;
+
+  // neutralize size locks on this slot only
+  host.style.height = 'auto';
+  host.style.minHeight = '0';
+
+  const parent = host.closest('.chart-container');
+  if (parent) parent.classList.add('cv-demo-graph');
+
+  // attribute-scoped CSS for this card only
+  let st = document.getElementById('cv-demo-graph-style');
+  if (!st) {
+    st = document.createElement('style');
+    st.id = 'cv-demo-graph-style';
+    st.textContent = `
+      .cv-demo-graph::before, .cv-demo-graph::after { display:none !important; content:none !important; }
+      .cv-demo-graph #chart_div svg { display:block; width:100%; height:auto; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // replace only the contents of #chart_div
+  while (host.firstChild) host.removeChild(host.firstChild);
+  host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
+}
+
 
 // Build SVG: responsive (width:100% / height:auto), grids, right-side Y labels
 function buildCallGraphSVG(dataPoints){
@@ -467,11 +495,22 @@ function buildCallGraphSVG(dataPoints){
   </svg>`;
 }
 
-
-
-  // Replace the native Google chart IN PLACE (no second iframe, no duplication)
-  replaceHomeCallGraph();
+function waitForChartThenReplace(timeoutMs = 45000) {
+  const SEL = '#omp-callgraphs-body .chart-container #chart_div';
+  const t0 = Date.now();
+  (function tick(){
+    const host = document.querySelector(SEL);
+    const ready = host && host.offsetWidth > 0 && host.offsetHeight > 0;
+    if (ready) { replaceHomeCallGraph(); return; }
+    if (Date.now() - t0 > timeoutMs) { console.warn('Timed out waiting for chart slot'); return; }
+    requestAnimationFrame(tick);
+  })();
 }
+
+
+// Replace the native Google chart IN PLACE (no second iframe, no duplication)
+waitForChartThenReplace();   // <-- use the waiter below
+
 
   
 
@@ -4972,6 +5011,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
