@@ -316,7 +316,9 @@ function removeHome() {
   // Remove optional info iframe
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
+} 
 
+  
   // -------- INJECT HOME -------- //
   function injectHome() {
   if (document.getElementById(IFRAME_ID)) return;
@@ -371,8 +373,7 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
   return pts;
 }
 
-// Build SVG: responsive (width:100% / height:auto), grids, right-side Y labels,
-// peaks-only hover dots with tooltip. Short X labels that actually fit.
+// Build SVG: responsive (width:100% / height:auto), grids, right-side Y labels
 function buildCallGraphSVG(dataPoints){
   // Canvas "design size" only for viewBox; NOT enforced as fixed pixels
   const width = 650, height = 350;                    // ↓ shorter design height
@@ -468,43 +469,11 @@ function buildCallGraphSVG(dataPoints){
 
 
 
-
-// -------- INJECT HOME (info iframe optional, graph replaced in-place) -------- //
-function injectHome() {
-  // Optional: keep the info iframe at the top, but don't hide anything else
-  if (!document.getElementById(IFRAME_ID)) {
-    const slot = document.querySelector(SLOT_SELECTOR);
-    if (!slot) return;
-
-    // If you still want to position the info iframe before a specific anchor, do it WITHOUT hiding it
-    function findAnchor(el) {
-      const preferred = el.querySelector('.table-container.scrollable-small');
-      if (preferred) return preferred;
-      if (el.firstElementChild) return el.firstElementChild;
-      let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-      return n || null;
-    }
-
-    const anchor = findAnchor(slot);
-    const iframe = document.createElement('iframe');
-    iframe.id = IFRAME_ID;
-    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-    iframe.setAttribute('scrolling', 'yes');
-    iframe.srcdoc = buildSrcdoc();
-
-    if (anchor && anchor.parentNode) {
-      anchor.parentNode.insertBefore(iframe, anchor);   // insert, don't hide
-    } else {
-      slot.appendChild(iframe);
-    }
-  }
-
   // Replace the native Google chart IN PLACE (no second iframe, no duplication)
   replaceHomeCallGraph();
 }
 
   
-
 
   // -------- WAIT HOME AND INJECT -------- //
   function waitForSlotAndInject(tries = 0) {
@@ -5003,6 +4972,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
