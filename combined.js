@@ -3260,7 +3260,6 @@ const rows = [
 
 
 
-
   /* Render (dynamic Date only) */
   function renderRowsDynamicDate(){
     var tbody  = document.getElementById('cvCallHistoryTableBody');
@@ -3473,7 +3472,20 @@ function extractExtSimple(text){
       + '</div>';
   }
 
- 
+ // Ensure AGENTS has a name for the outbound caller's extension (uses the row's CNAM)
+if (type === 'outbound') {
+  const ext  = extractAnyExt(tds[1]?.textContent) || extractAnyExt(tds[5]?.textContent) || agentExt;
+  const cnam = (tds[0]?.textContent || '').trim();   // first column = agent name from your static rows
+  if (ext && cnam && Array.isArray(AGENTS)) {
+    const rec = AGENTS.find(a => a.ext === String(ext));
+    if (!rec) {
+      AGENTS.push({ ext: String(ext), name: cnam });
+    } else if (!rec.name || rec.name === ('Ext. ' + ext)) {
+      rec.name = cnam; // fill/refresh name if missing/generic
+    }
+  }
+}
+
 
   // ---- Inbound builder (uses shared helpers above; no template literals) ----
 function buildInboundHTML(from, dateText, toText, durText, releaseText, agentExt){
@@ -5197,6 +5209,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
