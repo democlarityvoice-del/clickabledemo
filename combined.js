@@ -373,7 +373,7 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
 }
 
   function replaceHomeCallGraph() {
-  const host = document.querySelector('#omp-callgraphs-body .chart-container #chart_div');
+  const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
   if (!host) return;
 
   // neutralize size locks on this slot only
@@ -496,7 +496,7 @@ function buildCallGraphSVG(dataPoints){
 }
 
 function waitForChartThenReplace(timeoutMs = 45000) {
-  const SEL = '#omp-callgraphs-body .chart-container #chart_div';
+  const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
   const t0 = Date.now();
   (function tick(){
     const host = document.querySelector(SEL);
@@ -5011,6 +5011,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
