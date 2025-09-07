@@ -372,9 +372,9 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
   return pts;
 }
 
-  function replaceHomeCallGraph() {
-  const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
+  function replaceHomeCallGraph(host) {
   if (!host) return;
+
 
   // neutralize size locks on this slot only
   host.style.height = 'auto';
@@ -501,15 +501,44 @@ function waitForChartThenReplace(timeoutMs = 45000) {
   (function tick(){
     const host = document.querySelector(SEL);
     const ready = host && host.offsetWidth > 0 && host.offsetHeight > 0;
-    if (ready) { replaceHomeCallGraph(); return; }
-    if (Date.now() - t0 > timeoutMs) { console.warn('Timed out waiting for chart slot'); return; }
+    if (ready) { 
+      replaceHomeCallGraph(host); // ✅ FIXED
+      return; 
+    }
+    if (Date.now() - t0 > timeoutMs) { 
+      console.warn('Timed out waiting for chart slot'); 
+      return; 
+    }
     requestAnimationFrame(tick);
   })();
 }
 
+function replaceHomeCallGraph(host) {
+  if (!host) return;
 
-// Replace the native Google chart IN PLACE (no second iframe, no duplication)
-waitForChartThenReplace();   // <-- use the waiter below
+  // neutralize size locks on this slot only
+  host.style.height = 'auto';
+  host.style.minHeight = '0';
+
+  const parent = host.closest('.chart-container');
+  if (parent) parent.classList.add('cv-demo-graph');
+
+  // attribute-scoped CSS for this card only
+  let st = document.getElementById('cv-demo-graph-style');
+  if (!st) {
+    st = document.createElement('style');
+    st.id = 'cv-demo-graph-style';
+    st.textContent = `
+      .cv-demo-graph::before, .cv-demo-graph::after { display:none !important; content:none !important; }
+      .cv-demo-graph #chart_div svg { display:block; width:100%; height:auto; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // replace only the contents of #chart_div
+  while (host.firstChild) host.removeChild(host.firstChild);
+  host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
+}
 
 
   
@@ -5011,6 +5040,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
