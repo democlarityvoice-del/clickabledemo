@@ -520,7 +520,6 @@ function buildCallGraphSVG(dataPoints){
 
 
 
-
 // -------- INJECT HOME (info iframe optional, graph replaced in-place) -------- //
 function injectHome() {
   // Optional: keep the info iframe at the top, but don't hide anything else
@@ -555,6 +554,7 @@ function injectHome() {
   replaceHomeCallGraph();
 }
 
+  
 
 
   // -------- WAIT HOME AND INJECT -------- //
@@ -5054,6 +5054,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
