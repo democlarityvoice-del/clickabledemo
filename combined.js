@@ -456,53 +456,15 @@ function buildCallGraphSVG(dataPoints){
   </svg>`;
 }
 
-// Replace the native Google chart IN PLACE (no second iframe, no duplication)
-function replaceHomeCallGraph(host) {
-  if (!host) {
-    host = document.querySelector('#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div');
-    if (!host) return;
-  }
-
-  host.style.height = 'auto';
-  host.style.minHeight = '0';
-
-  const parent = host.closest('.chart-container');
-  if (parent) parent.classList.add('cv-demo-graph');
-
-  // reapply if something wipes our SVG
-const guard = new MutationObserver(() => {
-  if (!host.querySelector('svg')) {
-    while (host.firstChild) host.removeChild(host.firstChild);
-    host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
-  }
-});
-guard.observe(host, { childList: true });
-  
-
-  let st = document.getElementById('cv-demo-graph-style');
-  if (!st) {
-    st = document.createElement('style');
-    st.id = 'cv-demo-graph-style';
-    st.textContent = `
-      .cv-demo-graph::before, .cv-demo-graph::after { display:none !important; content:none !important; }
-      .cv-demo-graph #chart_div svg { display:block; width:100%; height:auto; }
-    `;
-    document.head.appendChild(st);
-  }
-
-  while (host.firstChild) host.removeChild(host.firstChild);
-  host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
-}
-
+// Wait for the native chart to load (SPA-safe + layout check) and then lock/replace
 function waitForChartThenReplace(timeoutMs = 45000) {
   const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
   const t0 = Date.now();
-  let done = false;
-  let raf = 0, mo = null;
+  let done = false, raf = 0, mo = null;
 
   const ready = h => h && h.offsetWidth > 0 && h.offsetHeight > 0;
 
-  function tryRun(tag) {
+  function tryRun() {
     if (done) return;
     const host = document.querySelector(SEL);
     if (ready(host)) {
@@ -519,17 +481,77 @@ function waitForChartThenReplace(timeoutMs = 45000) {
     }
   }
 
-  // watch for late SPA injections
-  mo = new MutationObserver(() => tryRun('mutation'));
+  // watch for late SPA insertions
+  mo = new MutationObserver(tryRun);
   mo.observe(document.documentElement || document.body, { childList: true, subtree: true });
 
-  // catch the moment layout flips from 0→>0
-  (function loop(){ tryRun('raf'); if (!done) raf = requestAnimationFrame(loop); })();
+  // catch 0→>0 layout transition
+  (function loop(){ tryRun(); if (!done) raf = requestAnimationFrame(loop); })();
 
   // in case we’re already ready
-  tryRun('init');
+  tryRun();
 }
 
+
+// Replace and LOCK the chart slot so native redraws can’t overwrite it
+function replaceHomeCallGraph(host) {
+  if (!host) return;
+
+  // style neutralization (slot only)
+  host.style.height = 'auto';
+  host.style.minHeight = '0';
+
+  // mark the card we’re controlling
+  const card = host.closest('.chart-container') || host;
+  card.classList.add('cv-demo-graph');
+
+  // lock attribute: only our root is allowed inside the slot
+  host.setAttribute('data-cv-locked', '1');
+
+  // attribute-scoped CSS for this specific slot/card
+  let st = document.getElementById('cv-demo-graph-style');
+  if (!st) {
+    st = document.createElement('style');
+    st.id = 'cv-demo-graph-style';
+    st.textContent = `
+      .cv-demo-graph::before, .cv-demo-graph::after { display:none !important; content:none !important; }
+      /* our SVG sizing */
+      .cv-demo-graph #chart_div .cv-graph-root svg { display:block; width:100%; height:auto; }
+      /* HARD LOCK: anything the native script adds is hidden immediately */
+      #omp-callgraphs-body #chart_div[data-cv-locked="1"] > :not(.cv-graph-root) { display:none !important; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // build our graph inside a dedicated root
+  const root = document.createElement('div');
+  root.className = 'cv-graph-root';
+  root.innerHTML = buildCallGraphSVG(generateFakeCallGraphData());
+
+  // atomic swap
+  host.replaceChildren(root);
+
+  // guard AFTER swap: purge any non-root children the native code tries to add
+  setTimeout(() => {
+    if (host._cvGuard) host._cvGuard.disconnect();
+    const guard = new MutationObserver(muts => {
+      for (const m of muts) {
+        m.addedNodes.forEach(n => {
+          if (n.nodeType === 1 && !n.classList.contains('cv-graph-root')) n.remove();
+        });
+      }
+      // if our root got removed, restore it
+      if (!host.querySelector('.cv-graph-root')) {
+        const r = document.createElement('div');
+        r.className = 'cv-graph-root';
+        r.innerHTML = buildCallGraphSVG(generateFakeCallGraphData());
+        host.replaceChildren(r);
+      }
+    });
+    guard.observe(host, { childList: true });
+    host._cvGuard = guard;
+  }, 0);
+}
 
 
 // Safe DOM-ready boot
@@ -5038,6 +5060,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
