@@ -299,19 +299,42 @@ tr:hover .listen-btn img {
 </body></html>`;
 }
 
-  // -------- HELPER-------- //
-function replaceChartWithDemoGraph(iframe) {
-  const tryReplace = () => {
-    const chartSpot = document.getElementById("chart_div");
-    if (chartSpot && chartSpot.parentNode) {
-      chartSpot.parentNode.insertBefore(iframe, chartSpot);
-      chartSpot.remove();
-    } else {
-      requestAnimationFrame(tryReplace);
-    }
-  };
-  tryReplace();
+// --- In-place graph replacer (define once) ---
+function replaceHomeCallGraph() {
+  const host = document.querySelector('#omp-callgraphs-body .chart-container #chart_div');
+  if (!host) { console.warn('Chart slot #chart_div not found'); return false; }
+
+  // Neutralize size locks on the slot & its parent
+  host.style.height = 'auto';
+  host.style.minHeight = '0';
+  const parent = host.closest('.chart-container');
+  if (parent) parent.classList.add('cv-demo-graph');
+
+  // Ensure local CSS to suppress pseudo gaps (scoped to this card only)
+  let st = document.getElementById('cv-demo-graph-style');
+  if (!st) {
+    st = document.createElement('style');
+    st.id = 'cv-demo-graph-style';
+    st.textContent = `
+      .cv-demo-graph::before,
+      .cv-demo-graph::after { display:none !important; content:none !important; }
+      /* not strictly needed because SVG uses width:100%/height:auto,
+         but harmless if the inline style gets removed later */
+      .cv-demo-graph #chart_div svg { display:block; width:100%; height:auto; }
+    `;
+    document.head.appendChild(st);
+  }
+
+  // Remove any previous content (e.g., Google wrapper) and insert our SVG
+  while (host.firstChild) host.removeChild(host.firstChild);
+  host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
+
+  return true;
 }
+
+// If this file is wrapped in an IIFE/module, expose it:
+window.replaceHomeCallGraph = window.replaceHomeCallGraph || replaceHomeCallGraph;
+
 
 
 // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
@@ -4990,6 +5013,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
