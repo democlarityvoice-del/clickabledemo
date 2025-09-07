@@ -339,12 +339,15 @@ window.replaceHomeCallGraph = window.replaceHomeCallGraph || replaceHomeCallGrap
 
 // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
 function removeHome() {
-    const slot = document.querySelector(SLOT_SELECTOR);
+  // Unhide the anchor if we hid it earlier
+  const slot = document.querySelector(SLOT_SELECTOR);
   if (slot) {
     const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
     if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-      hidden.style.display = '';                // <-- FIXED
+      hidden.style.display = '';
       hidden.removeAttribute('data-cv-demo-hidden');
+    }
+  }
 
   // Remove optional info iframe
   const ifr = document.getElementById(IFRAME_ID);
@@ -359,10 +362,10 @@ function removeHome() {
     const parent = host.closest('.chart-container');
     if (parent) parent.classList.remove('cv-demo-graph');
   }
+
   const st = document.getElementById('cv-demo-graph-style');
   if (st) st.remove();
 }
-
 
 
   // -------- INJECT HOME -------- //
@@ -5051,6 +5054,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
