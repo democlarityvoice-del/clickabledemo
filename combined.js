@@ -372,7 +372,7 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
   return pts;
 }
 
-  function replaceHomeCallGraph(host) {
+  function (host) {
   if (!host) return;
 
 
@@ -513,8 +513,6 @@ function waitForChartThenReplace(timeoutMs = 45000) {
   })();
 }
 
-function replaceHomeCallGraph(host) {
-  if (!host) return;
 
   // neutralize size locks on this slot only
   host.style.height = 'auto';
@@ -540,6 +538,7 @@ function replaceHomeCallGraph(host) {
   host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
 }
 
+waitForChartThenReplace();
 
   
 
@@ -5040,6 +5039,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
