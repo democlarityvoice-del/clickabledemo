@@ -319,12 +319,17 @@ function removeHome() {
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-  const slot = document.querySelector(SLOT_SELECTOR);
-  if (slot) {
-    const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
-    if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
-      hidden.style.display = '';
-      hidden.removeAttribute('data-cv-demo-hidden');
+// Restore the graph area we replaced in place
+  const host = document.querySelector('#omp-callgraphs-body .chart-container #chart_div');
+  if (host) {
+    host.innerHTML = '';
+    host.style.height = '';      // undo height:auto we set
+    host.style.minHeight = '';
+    const parent = host.closest('.chart-container');
+    if (parent) parent.classList.remove('cv-demo-graph');
+  }
+  const st = document.getElementById('cv-demo-graph-style');
+  if (st) st.remove();
     }
   }
 }
@@ -354,10 +359,12 @@ function generateFakeCallGraphData(count = 60, yMax = 18){
   return pts;
 }
 
-// Build SVG: 623x350, grids, right-side Y labels, peaks-only hover dots with tooltip
+// Build SVG: responsive (width:100% / height:auto), grids, right-side Y labels,
+// peaks-only hover dots with tooltip. Short X labels that actually fit.
 function buildCallGraphSVG(dataPoints){
-  const width = 650, height = 500;
-  const pad = { top: 30, right: 12, bottom: 48, left: 10 };
+  // Canvas "design size" only for viewBox; NOT enforced as fixed pixels
+  const width = 650, height = 350;                    // ↓ shorter design height
+  const pad = { top: 30, right: 12, bottom: 36, left: 30 }; // a bit more left pad for path/clip
   const innerW = width - pad.left - pad.right;
   const innerH = height - pad.top - pad.bottom;
   const yMax = 18;
@@ -372,33 +379,39 @@ function buildCallGraphSVG(dataPoints){
 
   const pathD = dataPoints.map((pt, i) => `${i ? 'L' : 'M'}${xPx(i)},${yPx(pt.y)}`).join(' ');
 
+  // horizontal grid
   const grid = [];
   for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
-    grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#ccc" stroke-width="1"/>`);
+    grid.push(`<line x1="${pad.left}" y1="${yy}" x2="${width - pad.right}" y2="${yy}" stroke="#e3e6ea" stroke-width="1"/>`);
   }
 
+  // light vertical guides (sparse)
   const vStep = Math.max(1, Math.round(dataPoints.length / 12));
   for (let i = 0; i < dataPoints.length; i += vStep) {
     const xx = xPx(i);
-    grid.push(`<line x1="${xx}" y1="${pad.top}" x2="${xx}" y2="${height - pad.bottom}" stroke="#eee" stroke-width="1"/>`);
+    grid.push(`<line x1="${xx}" y1="${pad.top}" x2="${xx}" y2="${height - pad.bottom}" stroke="#f1f3f5" stroke-width="1"/>`);
   }
 
+  // right-side Y labels
   const yLabels = [];
   for (let y = 0; y <= yMax; y += 2) {
     const yy = yPx(y);
     yLabels.push(`<text x="${width - pad.right - 6}" y="${yy + 4}" text-anchor="end" font-size="11" fill="#666">${y}</text>`);
   }
 
+  // X labels: SHORT and SPARSE (no bias; avoids overlap at ~650px)
   const xLabels = [];
-  for (let d = 0; d <= daySpan; d += 2) {
-    const frac = d / daySpan;
-    const bias = (frac - 0.5) * (width / 42);  // scaled bias for 650px
-    const xx = pad.left + frac * innerW + bias;
-    const labelDate = addDays(start, d);
-    xLabels.push(`<text x="${xx}" y="${height - 10}" font-size="11" fill="#777" text-anchor="middle">${fmtMMMDDYYYY(labelDate)}</text>`);
+  const steps = 6; // ~6–7 ticks fits this slot
+  const fmtShort = d => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); // "Sep 6"
+  for (let i = 0; i <= steps; i++) {
+    const frac = i / steps;
+    const xx = pad.left + frac * innerW;             // ← no width-based bias
+    const labelDate = addDays(start, Math.round(frac * daySpan));
+    xLabels.push(`<text x="${xx}" y="${height - 10}" font-size="11" fill="#777" text-anchor="middle">${fmtShort(labelDate)}</text>`);
   }
 
+  // peaks (unchanged logic; hover to reveal)
   const peakIdx = [];
   for (let i = 1; i < dataPoints.length - 1; i++) {
     const a = dataPoints[i - 1].y, b = dataPoints[i].y, c = dataPoints[i + 1].y;
@@ -410,7 +423,7 @@ function buildCallGraphSVG(dataPoints){
     const frac = i / (dataPoints.length - 1);
     const dayOffset = Math.round(frac * daySpan);
     const d = addDays(start, dayOffset);
-    const label = `${fmtMMMDDYYYY(d)} · ${dataPoints[i].y}`;
+    const label = `${fmtShort(d)} · ${dataPoints[i].y}`;
     return `
       <g class="peak" transform="translate(${x},${y})">
         <rect x="-8" y="-8" width="16" height="16" fill="transparent"></rect>
@@ -427,8 +440,11 @@ function buildCallGraphSVG(dataPoints){
     .peak:hover .tip { opacity:1; }
   `;
 
+  // CRITICAL CHANGES:
+  // - viewBox only; no fixed height attr
+  // - style uses width:100%; height:auto (so it fits the slot and scales)
   return `
-  <svg viewBox="0 0 ${width} ${height}" width="100%" height="100%" style="background:white; display:block;">
+  <svg viewBox="0 0 ${width} ${height}" style="width:100%; height:auto; background:white; display:block;">
     <style>${css}</style>
     <g>${grid.join('')}</g>
     <g>${yLabels.join('')}</g>
@@ -441,60 +457,40 @@ function buildCallGraphSVG(dataPoints){
 
 
 
-// -------- INJECT HOME -------- //
+
+// -------- INJECT HOME (info iframe optional, graph replaced in-place) -------- //
 function injectHome() {
-  if (document.getElementById(IFRAME_ID)) return;
+  // Optional: keep the info iframe at the top, but don't hide anything else
+  if (!document.getElementById(IFRAME_ID)) {
+    const slot = document.querySelector(SLOT_SELECTOR);
+    if (!slot) return;
 
-  const slot = document.querySelector(SLOT_SELECTOR);
-  if (!slot) return;
+    // If you still want to position the info iframe before a specific anchor, do it WITHOUT hiding it
+    function findAnchor(el) {
+      const preferred = el.querySelector('.table-container.scrollable-small');
+      if (preferred) return preferred;
+      if (el.firstElementChild) return el.firstElementChild;
+      let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+      return n || null;
+    }
 
-  function findAnchor(el) {
-    const preferred = el.querySelector('.table-container.scrollable-small');
-    if (preferred) return preferred;
-    if (el.firstElementChild) return el.firstElementChild;
-    let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
-    return n || null;
+    const anchor = findAnchor(slot);
+    const iframe = document.createElement('iframe');
+    iframe.id = IFRAME_ID;
+    iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
+    iframe.setAttribute('scrolling', 'yes');
+    iframe.srcdoc = buildSrcdoc();
+
+    if (anchor && anchor.parentNode) {
+      anchor.parentNode.insertBefore(iframe, anchor);   // insert, don't hide
+    } else {
+      slot.appendChild(iframe);
+    }
   }
 
-  const anchor = findAnchor(slot);
-
-  const iframe = document.createElement('iframe');
-  iframe.id = IFRAME_ID;
-  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;';
-  iframe.setAttribute('scrolling', 'yes');
-  iframe.srcdoc = buildSrcdoc();
-
-  const graphIframe = document.createElement('iframe');
-  graphIframe.id = 'cv-demo-graph-iframe';
-  graphIframe.style.cssText = 'border:none;width:100%;display:block;margin-top:12px;height:500px;';
-  graphIframe.setAttribute('scrolling', 'no');
-  graphIframe.onload = () => {
-    const doc = graphIframe.contentWindow.document;
-    doc.open();
-    doc.write(`
-      <!doctype html>
-      <html><head><style>body{margin:0;}</style></head><body>
-        ${buildCallGraphSVG(generateFakeCallGraphData())}
-      </body></html>
-    `);
-    doc.close();
-  };
-
-  if (anchor && anchor.parentNode) {
-    anchor.style.display = 'none';
-    anchor.setAttribute('data-cv-demo-hidden', '1');
-    anchor.parentNode.insertBefore(iframe, anchor);
-    slot.appendChild(graphIframe);
-  } else {
-    slot.appendChild(iframe);
-    slot.appendChild(graphIframe);
-  }
-
-  replaceChartWithDemoGraph(graphIframe);
+  // Replace the native Google chart IN PLACE (no second iframe, no duplication)
+  replaceHomeCallGraph();
 }
-
-
-
 
 
 
@@ -4995,6 +4991,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
