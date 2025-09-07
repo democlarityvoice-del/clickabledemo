@@ -469,6 +469,16 @@ function replaceHomeCallGraph(host) {
   const parent = host.closest('.chart-container');
   if (parent) parent.classList.add('cv-demo-graph');
 
+  // reapply if something wipes our SVG
+const guard = new MutationObserver(() => {
+  if (!host.querySelector('svg')) {
+    while (host.firstChild) host.removeChild(host.firstChild);
+    host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
+  }
+});
+guard.observe(host, { childList: true });
+  
+
   let st = document.getElementById('cv-demo-graph-style');
   if (!st) {
     st = document.createElement('style');
@@ -5028,6 +5038,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
