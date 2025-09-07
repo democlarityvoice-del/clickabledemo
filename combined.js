@@ -3636,8 +3636,6 @@ document.addEventListener('click', function (e) {
 
     const agentExt = extractAnyExt(tds[5]?.textContent) || extractAnyExt(tds[1]?.textContent);
 
-      // ✅ ONE-LINER goes here
-    if (type === 'outbound') AGENTS.unshift({ ext: (agentExt || '').replace(/\D/g,''), name: (tds[0]?
 
     const html = (type === 'inbound')
       ? buildInboundHTML(fromText, date, toText, dur, release, agentExt)   // <-- pass agentExt
@@ -5199,6 +5197,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
