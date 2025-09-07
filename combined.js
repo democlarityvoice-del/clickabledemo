@@ -484,56 +484,42 @@ function replaceHomeCallGraph(host) {
   host.insertAdjacentHTML('afterbegin', buildCallGraphSVG(generateFakeCallGraphData()));
 }
 
-// Wait for the native chart to load before replacing
-// Wait for the native chart to load before replacing (SPA-safe + layout-safe)
 function waitForChartThenReplace(timeoutMs = 45000) {
   const SEL = '#omp-callgraphs-body #chart_div, #omp-callgraphs-body .chart-container #chart_div';
   const t0 = Date.now();
-
-  let rafId = 0;
-  let mo = null;
   let done = false;
+  let raf = 0, mo = null;
 
-  function ready(host) {
-    return host && host.offsetWidth > 0 && host.offsetHeight > 0;
-  }
+  const ready = h => h && h.offsetWidth > 0 && h.offsetHeight > 0;
 
-  function tryRun(reason) {
+  function tryRun(tag) {
     if (done) return;
     const host = document.querySelector(SEL);
     if (ready(host)) {
       done = true;
-      cleanup();
+      if (raf) cancelAnimationFrame(raf);
+      if (mo) mo.disconnect();
       replaceHomeCallGraph(host);
       return;
     }
     if (Date.now() - t0 > timeoutMs) {
-      cleanup();
-      console.warn('[CV-DEMO] Timed out waiting for chart slot');
+      if (raf) cancelAnimationFrame(raf);
+      if (mo) mo.disconnect();
+      console.warn('[CV-DEMO] timeout waiting for chart slot');
     }
   }
 
-  function tick() {
-    tryRun('raf');
-    if (!done) rafId = requestAnimationFrame(tick);
-  }
-
-  function cleanup() {
-    if (rafId) cancelAnimationFrame(rafId);
-    if (mo) mo.disconnect();
-  }
-
-  // 1) MutationObserver catches late insertions / re-renders
+  // watch for late SPA injections
   mo = new MutationObserver(() => tryRun('mutation'));
-  // observe the whole document since the portal injects late
   mo.observe(document.documentElement || document.body, { childList: true, subtree: true });
 
-  // 2) rAF loop catches “layout just flipped from 0 to >0”
-  tick();
+  // catch the moment layout flips from 0→>0
+  (function loop(){ tryRun('raf'); if (!done) raf = requestAnimationFrame(loop); })();
 
-  // 3) Kick once immediately in case we’re already ready
+  // in case we’re already ready
   tryRun('init');
 }
+
 
 
 // Safe DOM-ready boot
@@ -5042,6 +5028,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
