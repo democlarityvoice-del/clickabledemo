@@ -339,6 +339,13 @@ window.replaceHomeCallGraph = window.replaceHomeCallGraph || replaceHomeCallGrap
 
 // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
 function removeHome() {
+    const slot = document.querySelector(SLOT_SELECTOR);
+  if (slot) {
+    const hidden = slot.querySelector('[data-cv-demo-hidden="1"]');
+    if (hidden && hidden.nodeType === Node.ELEMENT_NODE) {
+      hidden.style.display = '';                // <-- FIXED
+      hidden.removeAttribute('data-cv-demo-hidden');
+
   // Remove optional info iframe
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
@@ -357,6 +364,37 @@ function removeHome() {
 }
 
 
+
+  // -------- INJECT HOME -------- //
+  function injectHome() {
+  if (document.getElementById(IFRAME_ID)) return;
+  const slot = document.querySelector(SLOT_SELECTOR);
+  if (!slot) return;
+
+  function findAnchor(el){
+    const preferred = el.querySelector('.table-container.scrollable-small');
+    if (preferred) return preferred;
+    if (el.firstElementChild) return el.firstElementChild;
+    let n = el.firstChild; while (n && n.nodeType !== Node.ELEMENT_NODE) n = n.nextSibling;
+    return n || null;
+  }
+
+  const anchor = findAnchor(slot);
+
+  if (anchor && anchor.nodeType === Node.ELEMENT_NODE) {
+    anchor.style.display = 'none';                 // <-- FIXED
+    anchor.setAttribute('data-cv-demo-hidden','1');
+  }
+
+  const iframe = document.createElement('iframe');
+  iframe.id = IFRAME_ID;
+  iframe.style.cssText = 'border:none;width:100%;display:block;margin-top:0;height:360px;'; // <-- FIXED
+  iframe.setAttribute('scrolling','yes');
+  iframe.srcdoc = buildSrcdoc();
+
+  if (anchor && anchor.parentNode) anchor.parentNode.insertBefore(iframe, anchor);
+  else slot.appendChild(iframe);
+}
 
 
   // --- date helpers ---
@@ -5013,6 +5051,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
