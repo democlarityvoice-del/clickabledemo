@@ -316,10 +316,11 @@ function replaceChartWithDemoGraph(iframe) {
 
 // -------- REMOVE NATIVE ACTIVE CALLS AND GRAPH -------- //
 function removeHome() {
+  // Remove optional info iframe
   const ifr = document.getElementById(IFRAME_ID);
   if (ifr && ifr.parentNode) ifr.parentNode.removeChild(ifr);
 
-// Restore the graph area we replaced in place
+  // Restore the graph area we replaced in place
   const host = document.querySelector('#omp-callgraphs-body .chart-container #chart_div');
   if (host) {
     host.innerHTML = '';
@@ -330,8 +331,6 @@ function removeHome() {
   }
   const st = document.getElementById('cv-demo-graph-style');
   if (st) st.remove();
-    }
-  }
 }
 
 
@@ -4991,6 +4990,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
