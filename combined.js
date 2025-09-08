@@ -5167,9 +5167,43 @@ function insertDateRange(modalEl) {
     if (kind === 'listen') {
       // no-op or your listen action
       return;
+
+   // ▼▼▼ Listen dropdown (matches Call History's fake UI) ▼▼▼
+      const tr   = btn.closest('tr');
+      const next = tr && tr.nextElementSibling;
+
+      // collapse if already open
+      if (next && next.classList && next.classList.contains('cv-audio-row')) {
+        next.remove();
+        btn.setAttribute('aria-expanded','false');
+        return;
+      }
+
+      // close any others (scope to this modal)
+      modal.querySelectorAll('.cv-audio-row').forEach(r => r.remove());
+
+      const colCount = tr.children.length;
+      const audioTr  = document.createElement('tr');
+      audioTr.className = 'cv-audio-row';
+
+      audioTr.innerHTML =
+        '<td colspan="'+colCount+'">' +
+          '<div class="cv-audio-player">' +
+            '<button class="cv-audio-play" aria-label="Play"></button>' +
+            '<span class="cv-audio-time">0:00 / 0:00</span>' +
+            '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+            '<div class="cv-audio-right">' +
+              '<img class="cv-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg" alt="Listen">' +
+            '</div>' +
+          '</div>' +
+        '</td>';
+
+      tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+      btn.setAttribute('aria-expanded','true');
+      return;
+      // ▲▲▲ /Listen dropdown ▲▲▲
     }
     if (kind === 'cradle') {
-      // no-op or your cradle-to-grave action
       return;
     }
   });
@@ -5182,40 +5216,14 @@ function insertDateRange(modalEl) {
     }
   });
 
-// ===== Listen dropdown for Call Queue Report =====
-modal.addEventListener('click', function(e) {
-  const listenBtn = e.target.closest('.cvqs-icon-btn[data-icon="listen"]');
-  if (!listenBtn) return;
+  // (Optional) keyboard: make Space/Enter activate the buttons
+  modal.addEventListener('keydown', (e) => {
+    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvqs-icon-btn[data-icon]')) {
+      e.preventDefault();
+      e.target.click();
+    }
+  });
 
-  const tr = listenBtn.closest('tr');
-  const next = tr?.nextElementSibling;
-
-  // Collapse if already open
-  if (next && next.classList.contains('cvqs-audio-row')) {
-    next.remove();
-    listenBtn.setAttribute('aria-expanded', 'false');
-    return;
-  }
-
-  // Close any other open audio rows
-  modal.querySelectorAll('.cvqs-audio-row').forEach(r => r.remove());
-
-audioTr.innerHTML =
-  '<td colspan="'+colCount+'">' +
-    '<div class="cv-audio-player">' +
-      '<button class="cv-audio-play" aria-label="Play"></button>' +
-      '<span class="cv-audio-time">0:00 / 0:00</span>' +
-      '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
-      '<div class="cv-audio-right">' +
-        '<img class="cv-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg" alt="Listen">' +
-      '</div>' +
-    '</div>' +
-  '</td>';
-
-
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  listenBtn.setAttribute('aria-expanded', 'true');
-});
 
 } // ← closes openQueueModal function
 
@@ -5293,6 +5301,7 @@ audioTr.innerHTML =
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
