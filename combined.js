@@ -5156,19 +5156,15 @@ function insertDateRange(modalEl) {
 
     const kind = btn.dataset.icon;
     if (kind === 'notes') {
-      // uses your existing function defined above in this scope
       openQueueNotesPopover(btn);
       return;
     }
     if (kind === 'download') {
-      // no-op or your download action
       return;
     }
-    if (kind === 'listen') {
-      // no-op or your listen action
-      return;
 
-   // ▼▼▼ Listen dropdown (matches Call History's fake UI) ▼▼▼
+    // === FIXED LISTEN BRANCH (no early return) ===
+    if (kind === 'listen') {
       const tr   = btn.closest('tr');
       const next = tr && tr.nextElementSibling;
 
@@ -5179,7 +5175,7 @@ function insertDateRange(modalEl) {
         return;
       }
 
-      // close any others (scope to this modal)
+      // close any others in this modal
       modal.querySelectorAll('.cv-audio-row').forEach(r => r.remove());
 
       const colCount = tr.children.length;
@@ -5201,20 +5197,14 @@ function insertDateRange(modalEl) {
       tr.parentNode.insertBefore(audioTr, tr.nextSibling);
       btn.setAttribute('aria-expanded','true');
       return;
-      // ▲▲▲ /Listen dropdown ▲▲▲
     }
+
     if (kind === 'cradle') {
       return;
     }
   });
 
-  // (Optional) keyboard: make Space/Enter activate the buttons
-  modal.addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvqs-icon-btn[data-icon]')) {
-      e.preventDefault();
-      e.target.click();
-    }
-  });
+
 
   // (Optional) keyboard: make Space/Enter activate the buttons
   modal.addEventListener('keydown', (e) => {
@@ -5301,6 +5291,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
