@@ -5125,7 +5125,7 @@ function insertDateRange(modalEl) {
     }
   });
 
-    // ===== Listen dropdown for Call Queue Report =====
+// ===== Listen dropdown for Call Queue Report =====
 modal.addEventListener('click', function(e) {
   const listenBtn = e.target.closest('.cvqs-icon-btn[data-icon="listen"]');
   if (!listenBtn) return;
@@ -5140,7 +5140,7 @@ modal.addEventListener('click', function(e) {
     return;
   }
 
-  // Close any others
+  // Close any other open audio rows
   modal.querySelectorAll('.cvqs-audio-row').forEach(r => r.remove());
 
   // Insert new audio row
@@ -5148,25 +5148,22 @@ modal.addEventListener('click', function(e) {
   const audioTr = document.createElement('tr');
   audioTr.className = 'cvqs-audio-row';
 
-audioTr.innerHTML = `
-  <td colspan="${colCount}" style="background: #f9f9f9;">
-    <div style="padding: 10px 8px;">
-      <audio controls preload="none" style="width: 100%; max-width: 600px; outline: none;">
-        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-        Your browser does not support the audio element.
-      </audio>
-    </div>
-  </td>
-`;
-
-
+  audioTr.innerHTML = `
+    <td colspan="${colCount}" style="background: #f9f9f9;">
+      <div style="padding: 10px 8px;">
+        <audio controls preload="none" style="width: 100%; max-width: 600px; outline: none;">
+          <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+          Your browser does not support the audio element.
+        </audio>
+      </div>
+    </td>
+  `;
 
   tr.parentNode.insertBefore(audioTr, tr.nextSibling);
   listenBtn.setAttribute('aria-expanded', 'true');
 });
 
-  
-}
+} // ← closes openQueueModal function
 
 
 
@@ -5242,6 +5239,7 @@ audioTr.innerHTML = `
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
