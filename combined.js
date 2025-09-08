@@ -5148,22 +5148,23 @@ modal.addEventListener('click', function(e) {
   const audioTr = document.createElement('tr');
   audioTr.className = 'cvqs-audio-row';
 
-  audioTr.innerHTML = `
-    <td colspan="${colCount}">
-      <div class="cvqs-audio-player">
-        <button class="cvqs-audio-play" aria-label="Play">
-          <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Play">
-        </button>
-        <span class="cvqs-audio-time">0:00 / 0:00</span>
-        <div class="cvqs-audio-bar">
-          <div class="cvqs-audio-bar-fill" style="width:0%"></div>
-        </div>
-        <div class="cvqs-audio-right">
-          <img class="cvqs-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Listen">
-        </div>
+audioTr.innerHTML = `
+  <td colspan="${colCount}">
+    <div class="cvqs-audio-player">
+      <button class="cvqs-audio-play" aria-label="Play">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Play">
+      </button>
+      <span class="cvqs-audio-time">0:00 / 0:00</span>
+      <div class="cvqs-audio-bar">
+        <div class="cvqs-audio-bar-fill" style="width:0%"></div>
       </div>
-    </td>
-  `;
+      <div class="cvqs-audio-right">
+        <img class="cvqs-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Listen">
+      </div>
+    </div>
+  </td>
+`;
+
 
   tr.parentNode.insertBefore(audioTr, tr.nextSibling);
   listenBtn.setAttribute('aria-expanded', 'true');
@@ -5246,6 +5247,7 @@ modal.addEventListener('click', function(e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
