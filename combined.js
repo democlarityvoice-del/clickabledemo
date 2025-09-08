@@ -4914,6 +4914,8 @@ pop.style.visibility = 'visible';
   document.addEventListener('click', onDocClick, true);
   document.addEventListener('keydown', onKeyDown, true);
 
+  
+
   // buttons
   pop.querySelector('#qn2-close').addEventListener('click', close);
   pop.querySelector('#qn2-cancel').addEventListener('click', close);
@@ -5124,6 +5126,50 @@ function insertDateRange(modalEl) {
   });
 }
 
+  // ===== Listen dropdown for Call Queue Report =====
+modal.addEventListener('click', function(e) {
+  const listenBtn = e.target.closest('.cvqs-icon-btn[data-icon="listen"]');
+  if (!listenBtn) return;
+
+  const tr = listenBtn.closest('tr');
+  const next = tr?.nextElementSibling;
+
+  // Collapse if already open
+  if (next && next.classList.contains('cvqs-audio-row')) {
+    next.remove();
+    listenBtn.setAttribute('aria-expanded', 'false');
+    return;
+  }
+
+  // Close any others
+  modal.querySelectorAll('.cvqs-audio-row').forEach(r => r.remove());
+
+  // Insert new audio row
+  const colCount = tr.children.length;
+  const audioTr = document.createElement('tr');
+  audioTr.className = 'cvqs-audio-row';
+
+  audioTr.innerHTML = `
+    <td colspan="${colCount}">
+      <div class="cvqs-audio-player">
+        <button class="cvqs-audio-play" aria-label="Play">
+          <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Play">
+        </button>
+        <span class="cvqs-audio-time">0:00 / 0:00</span>
+        <div class="cvqs-audio-bar">
+          <div class="cvqs-audio-bar-fill" style="width:0%"></div>
+        </div>
+        <div class="cvqs-audio-right">
+          <img class="cvqs-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Listen">
+        </div>
+      </div>
+    </td>
+  `;
+
+  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+  listenBtn.setAttribute('aria-expanded', 'true');
+});
+
 
 
   function injectTable(doc, table) {
@@ -5197,6 +5243,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
