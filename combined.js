@@ -5149,21 +5149,16 @@ modal.addEventListener('click', function(e) {
   audioTr.className = 'cvqs-audio-row';
 
 audioTr.innerHTML = `
-  <td colspan="${colCount}">
-    <div class="cvqs-audio-player">
-      <button class="cvqs-audio-play" aria-label="Play">
-        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Play">
-      </button>
-      <span class="cvqs-audio-time">0:00 / 0:00</span>
-      <div class="cvqs-audio-bar">
-        <div class="cvqs-audio-bar-fill" style="width:0%"></div>
-      </div>
-      <div class="cvqs-audio-right">
-        <img class="cvqs-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg" alt="Listen">
-      </div>
+  <td colspan="${colCount}" style="background: #f9f9f9;">
+    <div style="padding: 10px 8px;">
+      <audio controls preload="none" style="width: 100%; max-width: 600px; outline: none;">
+        <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+        Your browser does not support the audio element.
+      </audio>
     </div>
   </td>
 `;
+
 
 
   tr.parentNode.insertBefore(audioTr, tr.nextSibling);
@@ -5247,6 +5242,7 @@ audioTr.innerHTML = `
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
