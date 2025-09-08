@@ -5124,9 +5124,8 @@ function insertDateRange(modalEl) {
       e.target.click();
     }
   });
-}
 
-  // ===== Listen dropdown for Call Queue Report =====
+    // ===== Listen dropdown for Call Queue Report =====
 modal.addEventListener('click', function(e) {
   const listenBtn = e.target.closest('.cvqs-icon-btn[data-icon="listen"]');
   if (!listenBtn) return;
@@ -5169,6 +5168,10 @@ modal.addEventListener('click', function(e) {
   tr.parentNode.insertBefore(audioTr, tr.nextSibling);
   listenBtn.setAttribute('aria-expanded', 'true');
 });
+
+  
+}
+
 
 
 
@@ -5243,6 +5246,7 @@ modal.addEventListener('click', function(e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
