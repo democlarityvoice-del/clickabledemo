@@ -1,4 +1,4 @@
-  // ==============================
+    // ==============================
 // Clarity Voice Demo Calls Inject (HOME)
 // ==============================
 if (!window.__cvDemoInit) {
@@ -5017,6 +5017,63 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
       tr:hover .cvqs-icon-btn img {
         opacity: 1;
       }
+      .cv-audio-row td {
+        background: #f3f6f8;
+        padding: 10px 12px;
+        border-top: 0;
+      }
+    .cv-audio-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cv-audio-play {
+      width: 24px;
+     height: 24px;
+     background: transparent;
+     border: 0;
+     cursor: pointer;
+   }
+   .cv-audio-play:before {
+     content: '';
+     display: block;
+     width: 0;
+     height: 0;
+     border-left: 10px solid #333;
+     border-top: 6px solid transparent;
+     border-bottom: 6px solid transparent;
+   }
+   .cv-audio-time {
+     font-weight: 600;
+    color: #333;
+   }
+   .cv-audio-bar {
+     flex: 1;
+     height: 6px;
+     background: #e0e0e0;
+     border-radius: 3px;
+     position: relative;
+    }
+   .cv-audio-bar-fill {
+     position: absolute;
+     left: 0;
+     top: 0;
+     bottom: 0;
+     width: 0%;
+     background: #9e9e9e;
+     border-radius: 3px;
+    }
+   .cv-audio-right {
+     display: flex;
+     align-items: center;
+    gap: 12px;
+    }
+   .cv-audio-icon {
+     width: 20px;
+     height: 20px;
+     opacity: 0.6;
+   }
+
     </style>
 
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
@@ -5143,21 +5200,18 @@ modal.addEventListener('click', function(e) {
   // Close any other open audio rows
   modal.querySelectorAll('.cvqs-audio-row').forEach(r => r.remove());
 
-  // Insert new audio row
-  const colCount = tr.children.length;
-  const audioTr = document.createElement('tr');
-  audioTr.className = 'cvqs-audio-row';
+audioTr.innerHTML =
+  '<td colspan="'+colCount+'">' +
+    '<div class="cv-audio-player">' +
+      '<button class="cv-audio-play" aria-label="Play"></button>' +
+      '<span class="cv-audio-time">0:00 / 0:00</span>' +
+      '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+      '<div class="cv-audio-right">' +
+        '<img class="cv-audio-icon" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg" alt="Listen">' +
+      '</div>' +
+    '</div>' +
+  '</td>';
 
-  audioTr.innerHTML = `
-    <td colspan="${colCount}" style="background: #f9f9f9;">
-      <div style="padding: 10px 8px;">
-        <audio controls preload="none" style="width: 100%; max-width: 600px; outline: none;">
-          <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
-          Your browser does not support the audio element.
-        </audio>
-      </div>
-    </td>
-  `;
 
   tr.parentNode.insertBefore(audioTr, tr.nextSibling);
   listenBtn.setAttribute('aria-expanded', 'true');
@@ -5239,6 +5293,7 @@ modal.addEventListener('click', function(e) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
