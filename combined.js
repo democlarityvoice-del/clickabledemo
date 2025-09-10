@@ -6274,9 +6274,6 @@ function cvasResolveModalContainer() {
   return body;
 }
 
-// --- replace your old mount code with this ---
-const container = cvasResolveModalContainer();
-container.appendChild(modal);
 
 
 /* ==== CV Agent Stats: date range helper + row icon injection ==== */
@@ -6698,6 +6695,7 @@ container.appendChild(modal);
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
