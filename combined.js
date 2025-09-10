@@ -5954,61 +5954,63 @@ if (kind === 'cradle') {
     `;
   }
 
-  // 4) Modal opener (single delegated handler inside)
-  window.openAgentModal = function(agentName, agentExt, code) {
-    const direction   = (code === 'AHT') ? 'outbound' : 'inbound';
-    const titleMetric = getStatTitle(code);
-    const who = (agentName && agentExt)
-      ? `${agentName} (${agentExt})`
-      : (agentExt ? `Agent ${agentExt}` : (agentName || 'Agent'));
+ // 4) Modal opener (single delegated handler inside)
+window.openAgentModal = function(agentName, agentExt, code) {
+  const direction   = (code === 'AHT') ? 'outbound' : 'inbound';
+  const titleMetric = getStatTitle(code);
+  const who = (agentName && agentExt)
+    ? `${agentName} (${agentExt})`
+    : (agentExt ? `Agent ${agentExt}` : (agentName || 'Agent'));
 
-    const modal = document.createElement('div');
-    modal.id = 'cvas-inline-modal';
-    ensureCvasModalStyles(document.body);
+  const modal = document.createElement('div');
+  modal.id = 'cvas-inline-modal';
+  ensureCvasModalStyles(document.body);
 
-    const rowsHTML = getRowsForAgent(agentExt, direction) || '';
+  const rowsHTML = getRowsForAgent(agentExt, direction) || '';
 
-    modal.innerHTML = `
-      <div class="cvas-header">
-        <span class="cvas-title">${who} — ${titleMetric}</span>
-        <button class="cvas-close" aria-label="Close">&times;</button>
-      </div>
+  modal.innerHTML = `
+    <div class="cvas-header">
+      <span class="cvas-title">${who} — ${titleMetric}</span>
+      <button class="cvas-close" aria-label="Close">&times;</button>
+    </div>
 
-      <div style="margin:10px 0;">
-        <input placeholder="Search calls" style="padding:6px 8px;width:220px;border:1px solid #cfd3d7;border-radius:6px">
-      </div>
+    <div style="margin:10px 0;">
+      <input placeholder="Search calls" style="padding:6px 8px;width:220px;border:1px solid #cfd3d7;border-radius:6px">
+    </div>
 
-      ${tableShell(direction, rowsHTML)}
-    `;
+    ${tableShell(direction, rowsHTML)}
+  `;
 
-    const container = window.cvasResolveModalContainer
-      ? window.cvasResolveModalContainer()
-      : document.body;
-    if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
-    container.appendChild(modal);
+  const container = window.cvasResolveModalContainer
+    ? window.cvasResolveModalContainer()
+    : document.body;
+  if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
+  container.appendChild(modal);
 
-    window.cvasInsertDateRange?.(modal);
-    window.cvasWireBackOrClose?.(modal);
+  window.cvasInsertDateRange?.(modal);
+  window.cvasWireBackOrClose?.(modal);
 
-    // inject row icons
-    modal.querySelectorAll('tbody tr').forEach(cvasInjectIcons);
+  // Inject row icons
+  modal.querySelectorAll('tbody tr').forEach(cvasInjectIcons);
 
-    // close button
-    modal.querySelector('.cvas-close')?.addEventListener('click', () => modal.remove());
+  // Close button
+  const closeBtn = modal.querySelector('.cvas-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => modal.remove());
+  }
 
-    // search
-    modal.querySelector('input[placeholder="Search calls"]')?.addEventListener('input', (e) => {
+  // Search input
+  const searchInput = modal.querySelector('input[placeholder="Search calls"]');
+  if (searchInput) {
+    searchInput.addEventListener('input', (e) => {
       const q = e.target.value.trim().toLowerCase();
       modal.querySelectorAll('tbody tr').forEach(tr => {
         tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
       });
     });
+  }
 
-window.openAgentModal = function(agentName, agentExt, code) {
-  ...
-  modal.querySelector('input[...]')?.addEventListener(...);
-
-  // ⬇⬇⬇ Move this here ⬇⬇⬇
+  // Delegated click handler (icon buttons)
   modal.addEventListener('click', (e) => {
     const btn = e.target.closest('.cvas-icon-btn[data-icon]');
     if (!btn || !modal.contains(btn)) return;
@@ -6065,6 +6067,7 @@ window.openAgentModal = function(agentName, agentExt, code) {
     }
   });
 };
+
 
 
   // expose injector for reuse
@@ -6900,6 +6903,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
