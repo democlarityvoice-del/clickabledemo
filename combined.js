@@ -6026,8 +6026,8 @@ if (kind === 'cradle') {
       document.body.appendChild(modal);
     }
 
-    cvasInsertDateRange(modal);
-    cvasWireBackOrClose(modal);
+   window.cvasInsertDateRange(modal);
+   window.cvasWireBackOrClose(modal);
 
 
     // inject icons into each body row
@@ -6049,22 +6049,22 @@ if (kind === 'cradle') {
       });
     });
 
-    // delegate icon actions (inside openAgentModal after modal is built)
+// delegate icon actions (ALL branches live inside this one handler)
 modal.addEventListener('click', (e) => {
   const btn = e.target.closest('.cvas-icon-btn[data-icon]');
   if (!btn || !modal.contains(btn)) return;
 
   const kind = btn.dataset.icon;
 
-  if (kind === 'notes') {
-    window.openAgentNotesPopover?.(btn);
-    return;
-  }
-
   if (kind === 'download') {
     console.log('[CV-AS] Download clicked');
     return;
   }
+
+  if (kind === 'notes') {
+    window.openAgentNotesPopover(btn);
+    return;
+   }
 
   if (kind === 'listen') {
     const tr   = btn.closest('tr');
@@ -6107,25 +6107,7 @@ modal.addEventListener('click', (e) => {
   }
 });
 
-
-        // optional: you can call your CTG overlay here, e.g., window.cvasOpenCtgModal(tr, agentName, agentExt);
-        console.log('[CV-AS] CTG clicked for', { agentName, agentExt });
-        return;
-      }
-
-      if (kind === 'download') {
-        console.log('[CV-AS] Download clicked');
-        return;
-      }
-
-      if (kind === 'notes') {
-          openAgentNotesPopover(btn);
-          return;
-      }
-
-    });
-
- // keyboard activate
+// keyboard activate
 modal.addEventListener('keydown', (e) => {
   if ((e.key === 'Enter' || e.key === ' ')
       && e.target.matches('.cvas-icon-btn[data-icon]')) {
@@ -6134,8 +6116,8 @@ modal.addEventListener('keydown', (e) => {
   }
 }); // <-- closes the keydown listener
 
-}; // <-- closes window.openAgentModal (was `});`)
- 
+}; // <-- closes window.openAgentModal
+
 // expose injector in case you need it elsewhere
 window.cvasInjectIcons = cvasInjectIcons;
 })(); // <-- closes the IIFE
@@ -6974,6 +6956,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
