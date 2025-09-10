@@ -6004,65 +6004,67 @@ if (kind === 'cradle') {
       });
     });
 
-   modal.addEventListener('click', (e) => {
-  const btn = e.target.closest('.cvas-icon-btn[data-icon]');
-  if (!btn || !modal.contains(btn)) return;
+window.openAgentModal = function(agentName, agentExt, code) {
+  ...
+  modal.querySelector('input[...]')?.addEventListener(...);
 
-  const kind = btn.dataset.icon;
+  // ⬇⬇⬇ Move this here ⬇⬇⬇
+  modal.addEventListener('click', (e) => {
+    const btn = e.target.closest('.cvas-icon-btn[data-icon]');
+    if (!btn || !modal.contains(btn)) return;
 
-  if (kind === 'notes') {
-    openAgentNotesPopover(btn);
-    return;
-  }
+    const kind = btn.dataset.icon;
 
-  if (kind === 'download') {
-    return;
-  }
-
-  if (kind === 'listen') {
-    const tr   = btn.closest('tr');
-    const next = tr && tr.nextElementSibling;
-
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded', 'false');
+    if (kind === 'notes') {
+      openAgentNotesPopover(btn);
       return;
     }
 
-    // close any others in this modal
-    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+    if (kind === 'download') {
+      return;
+    }
 
-    const colCount = tr.children.length;
-    const audioTr  = document.createElement('tr');
-    audioTr.className = 'cvas-audio-row';
+    if (kind === 'listen') {
+      const tr   = btn.closest('tr');
+      const next = tr && tr.nextElementSibling;
 
-    audioTr.innerHTML =
-      '<td colspan="' + colCount + '">' +
-        '<div class="cvas-audio-player">' +
-          '<button class="cvas-audio-play" aria-label="Play"></button>' +
-          '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-          '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-          '<div class="cvas-audio-right">' +
-            '<img class="cvas-audio-icon" src="' + ICONS.listen + '" alt="Listen">' +
-          '</div>' +
-        '</div>' +
-      '</td>';
+      if (next?.classList?.contains('cvas-audio-row')) {
+        next.remove();
+        btn.setAttribute('aria-expanded', 'false');
+        return;
+      }
 
-    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-    btn.setAttribute('aria-expanded', 'true');
-    return;
-  }
+      modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
 
-  if (kind === 'cradle') {
-    const tr = btn.closest('tr');
-    if (!tr) return;
-    window.cvasOpenCtgModal(tr);
-    return;
-  }
+      const colCount = tr.children.length;
+      const audioTr  = document.createElement('tr');
+      audioTr.className = 'cvas-audio-row';
+      audioTr.innerHTML = `
+        <td colspan="${colCount}">
+          <div class="cvas-audio-player">
+            <button class="cvas-audio-play" aria-label="Play"></button>
+            <span class="cvas-audio-time">0:00 / 0:00</span>
+            <div class="cvas-audio-bar">
+              <div class="cvas-audio-bar-fill" style="width:0%"></div>
+            </div>
+            <div class="cvas-audio-right">
+              <img class="cvas-audio-icon" src="${ICONS.listen}" alt="Listen">
+            </div>
+          </div>
+        </td>`;
+      tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+      btn.setAttribute('aria-expanded', 'true');
+      return;
+    }
 
-  // Add more `if (kind === 'xyz')` branches as needed...
-});
+    if (kind === 'cradle') {
+      const tr = btn.closest('tr');
+      if (!tr) return;
+      window.cvasOpenCtgModal(tr);
+      return;
+    }
+  });
+};
 
 
   // expose injector for reuse
@@ -6898,6 +6900,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
