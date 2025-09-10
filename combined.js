@@ -6032,7 +6032,7 @@ modal.addEventListener('click', (e) => {
 
     // keyboard activate
     modal.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
+      if ((e.key === 'Enter' || e.code === 'Space') && e.target.matches('.cvas-icon-btn[data-icon]')) {
         e.preventDefault();
         e.target.click();
       }
@@ -6876,6 +6876,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
