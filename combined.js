@@ -6259,13 +6259,7 @@ if (kind === 'cradle') {
   };
 })();
 
-// Decide direction from the clicked metric, then fetch rows
-const direction = (code === 'AHT') ? 'outbound' : 'inbound';
-const rowsHTML  = getRowsForAgent(agentExt, direction) || '';
-const titleMetric = getStatTitle(code);
-const who = (agentName && agentExt)
-  ? `${agentName} (${agentExt})`
-  : (agentName || (agentExt ? `Agent ${agentExt}` : 'Agent'));
+
 
 modal.innerHTML = `
   <style>
@@ -6938,6 +6932,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
