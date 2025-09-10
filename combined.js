@@ -6027,7 +6027,7 @@ modal.addEventListener('keydown', (e) => {
 
   // expose injector in case you need it elsewhere
   window.cvasInjectIcons = cvasInjectIcons;
-})();
+
 
 /* ==== agentNotesPopover (anchored dropdown, unique IDs; Agent Stats scope) ==== */
 (() => {
@@ -6804,6 +6804,7 @@ function cvasResolveModalContainer() {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
