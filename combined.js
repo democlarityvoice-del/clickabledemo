@@ -5916,6 +5916,12 @@ if (kind === 'cradle') {
   }
 
   // --- tiny header + table styles scoped to this modal ---
+(() => {
+  // assumes window.CVAS_CONST + window.CVAS_HELPERS are already defined
+  const { ICONS } = window.CVAS_CONST || {};
+  const { getStatTitle, getRowsForAgent } = window.CVAS_HELPERS || {};
+
+  // --- tiny header + table styles scoped to this modal ---
   function ensureCvasModalStyles(root) {
     if (root.querySelector('#cvas-modal-styles')) return;
     const style = document.createElement('style');
@@ -5976,32 +5982,18 @@ if (kind === 'cradle') {
     `;
   }
 
-  // Date range helper (same visual as queues)
-  function insertDateRange(modalEl) {
-    const now = new Date();
-    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
-    const fmt = (d) => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
-    const range = `${fmt(yesterday)} 12:00 am to ${fmt(now)} 11:59 pm`;
-    const div = document.createElement('div');
-    div.textContent = range;
-    div.style.margin = '8px 0 10px 0';
-    div.style.fontSize = '13px';
-    div.style.color = '#555';
-    const title = modalEl.querySelector('.cvas-title');
-    if (title) title.insertAdjacentElement('afterend', div);
-  }
-
-  // --- 2) Modal opener for Agent Stats clicks ---
+  // --- Modal opener for Agent Stats clicks (single source of truth) ---
   window.openAgentModal = function(agentName, agentExt, code) {
-    const direction = (code === 'AHT') ? 'outbound' : 'inbound';
+    const direction   = (code === 'AHT') ? 'outbound' : 'inbound';
     const titleMetric = getStatTitle(code);
-    const who = agentName && agentExt ? `${agentName} (${agentExt})` : (agentExt ? `Agent ${agentExt}` : (agentName || 'Agent'));
+    const who = (agentName && agentExt)
+      ? `${agentName} (${agentExt})`
+      : (agentExt ? `Agent ${agentExt}` : (agentName || 'Agent'));
 
     const modal = document.createElement('div');
     modal.id = 'cvas-inline-modal';
     ensureCvasModalStyles(document.body);
 
-    // rows
     const rowsHTML = getRowsForAgent(agentExt, direction) || '';
 
     modal.innerHTML = `
@@ -6017,110 +6009,100 @@ if (kind === 'cradle') {
       ${tableShell(direction, rowsHTML)}
     `;
 
-    // mount inside the reports area if present
-    const container = cvasResolveModalContainer();
-    if (container) {
-      container.style.position = 'relative';
-      container.appendChild(modal);
-    } else {
-      document.body.appendChild(modal);
-    }
+    // mount
+    const container = window.cvasResolveModalContainer
+      ? window.cvasResolveModalContainer()
+      : document.body;
+    if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
+    container.appendChild(modal);
 
-   window.cvasInsertDateRange(modal);
-   window.cvasWireBackOrClose(modal);
+    // date line + close wiring (your exposed helpers)
+    window.cvasInsertDateRange?.(modal);
+    window.cvasWireBackOrClose?.(modal);
 
+    // row icons
+    modal.querySelectorAll('tbody tr').forEach(tr => window.cvasInjectIcons?.(tr));
 
-    // inject icons into each body row
-    modal.querySelectorAll('tbody tr').forEach(cvasInjectIcons);
+    // close button
+    modal.querySelector('.cvas-close')?.addEventListener('click', () => modal.remove());
 
-    // close behavior
-    modal.querySelector('.cvas-close').addEventListener('click', () => modal.remove());
-    modal.addEventListener('click', (e) => {
-      // outside click? (optional) – skip for inline modal in container
-    });
-
-    // simple search (row text match)
+    // search
     const searchInput = modal.querySelector('input[placeholder="Search calls"]');
-    searchInput.addEventListener('input', (e) => {
+    searchInput?.addEventListener('input', (e) => {
       const q = e.target.value.trim().toLowerCase();
       modal.querySelectorAll('tbody tr').forEach(tr => {
-        const txt = tr.textContent.toLowerCase();
-        tr.style.display = txt.includes(q) ? '' : 'none';
+        tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
       });
     });
 
-// delegate icon actions (ALL branches live inside this one handler)
-modal.addEventListener('click', (e) => {
-  const btn = e.target.closest('.cvas-icon-btn[data-icon]');
-  if (!btn || !modal.contains(btn)) return;
+    // --- SINGLE delegated handler for all icon actions ---
+    modal.addEventListener('click', (e) => {
+      const btn = e.target.closest('.cvas-icon-btn[data-icon]');
+      if (!btn || !modal.contains(btn)) return;
 
-  const kind = btn.dataset.icon;
+      const kind = btn.dataset.icon;
 
-  if (kind === 'download') {
-    console.log('[CV-AS] Download clicked');
-    return;
-  }
+      if (kind === 'download') {
+        console.log('[CV-AS] Download clicked');
+        return;
+      }
 
-  if (kind === 'notes') {
-    window.openAgentNotesPopover(btn);
-    return;
-   }
+      if (kind === 'notes') {
+        window.openAgentNotesPopover?.(btn);
+        return;
+      }
 
-  if (kind === 'listen') {
-    const tr   = btn.closest('tr');
-    const next = tr && tr.nextElementSibling;
+      if (kind === 'listen') {
+        const tr   = btn.closest('tr');
+        const next = tr && tr.nextElementSibling;
 
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded','false');
-      return;
-    }
+        // collapse if already open
+        if (next && next.classList && next.classList.contains('cvas-audio-row')) {
+          next.remove();
+          btn.setAttribute('aria-expanded','false');
+          return;
+        }
 
-    // close any others in this modal
-    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+        // close any others
+        modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
 
-    const colCount = tr.children.length;
-    const audioTr  = document.createElement('tr');
-    audioTr.className = 'cvas-audio-row';
-    audioTr.innerHTML =
-      '<td colspan="'+colCount+'">' +
-        '<div class="cvas-audio-player">' +
-          '<button class="cvas-audio-play" aria-label="Play"></button>' +
-          '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-          '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-          '<div class="cvas-audio-right">' +
-            '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
-          '</div>' +
-        '</div>' +
-      '</td>';
-    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-    btn.setAttribute('aria-expanded','true');
-    return;
-  }
+        const colCount = tr.children.length;
+        const audioTr  = document.createElement('tr');
+        audioTr.className = 'cvas-audio-row';
+        audioTr.innerHTML =
+          '<td colspan="'+colCount+'">' +
+            '<div class="cvas-audio-player">' +
+              '<button class="cvas-audio-play" aria-label="Play"></button>' +
+              '<span class="cvas-audio-time">0:00 / 0:00</span>' +
+              '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
+              '<div class="cvas-audio-right">' +
+                '<img class="cvas-audio-icon" src="'+(ICONS?.listen || '')+'" alt="Listen">' +
+              '</div>' +
+            '</div>' +
+          '</td>';
+        tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+        btn.setAttribute('aria-expanded','true');
+        return;
+      }
 
-  if (kind === 'cradle') {
-    const tr = btn.closest('tr');
-    if (!tr) return;
-    window.cvasOpenCtgModal?.(tr);
-    return;
-  }
-});
+      if (kind === 'cradle') {
+        const tr = btn.closest('tr');
+        if (!tr) return;
+        window.cvasOpenCtgModal?.(tr);
+        return;
+      }
+    });
 
-// keyboard activate
-modal.addEventListener('keydown', (e) => {
-  if ((e.key === 'Enter' || e.key === ' ')
-      && e.target.matches('.cvas-icon-btn[data-icon]')) {
-    e.preventDefault();
-    e.target.click();
-  }
-}); // <-- closes the keydown listener
+    // keyboard activate for focused icon buttons
+    modal.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
+        e.preventDefault();
+        e.target.click();
+      }
+    });
+  };
+})();
 
-}; // <-- closes window.openAgentModal
-
-// expose injector in case you need it elsewhere
-window.cvasInjectIcons = cvasInjectIcons;
-})(); // <-- closes the IIFE
 
 
 /* ==== agentNotesPopover (anchored dropdown, unique IDs; Agent Stats scope) ==== */
@@ -6956,6 +6938,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
