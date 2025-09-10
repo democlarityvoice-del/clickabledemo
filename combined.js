@@ -5151,7 +5151,7 @@ function insertDateRange(modalEl) {
 
 // === CTG (inbound-only) — modal & timeline, scoped to this queue modal ===
 
-// Icon URLs (from your message)
+// Icon URLs 
 const ICON_PHONE     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
 const ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
 const ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
@@ -5501,17 +5501,1476 @@ if (kind === 'cradle') {
     boot();
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
+})(); // ← closes QUEUE STATS REPORTS PAGE
+
+
+/* ==== CV AGENT STATS BEGIN: constants / seeds (append-only; scoped to /stats/queuestats/agent) ==== */
+(() => {
+  if (window.__cvas_agentstats_installed__) return;
+  window.__cvas_agentstats_installed__ = true;
+
+  /* selectors / classnames */
+  const LINK_CLASS = 'cvas-poc-link';
+  const AGENT_STATS_TABLE_SEL = '#modal_stats_table';   // primary table on this page
+  const MAX_SCAN_TRIES = 20;
+
+  /* icons (same set we used elsewhere, kept here for parity) */
+  const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+  const agentStatsListen   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+  const agentStatsCradle   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+  const agentStatsNotes    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+  const magnifyIcon        = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+  /* header mapping (Agent Stats) */
+  const HEADER_TO_AGENTSTAT = {
+    'Calls Handled':        'CH',   // inbound only
+    'Talk Time':            'TT',   // inbound only (total)
+    'Average Talk Time':    'ATT',  // inbound only (for now, equals TT in demo)
+    'Average Handle Time':  'AHT',  // includes outbound (we'll compute next)
+  };
+
+  /* utils used by this page */
+  const keyNorm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+  /* roster (for table decoration / lookups) */
+  const CVAS_AGENT_META = {
+    '200': { first:'Mike',     last:'Johnson',   dept:'Sales' },
+    '201': { first:'Cathy',    last:'Thomas',    dept:'Sales' },
+    '202': { first:'Jake',     last:'Lee',       dept:'Admin' },
+    '203': { first:'Bob',      last:'Andersen',  dept:'Admin' },
+    '204': { first:'Brittany', last:'Lawrence',  dept:'Admin' },
+    '205': { first:'Alex',     last:'Roberts',   dept:'Engineering' },
+    '206': { first:'Mark',     last:'Sanchez',   dept:'Engineering' },
+    '207': { first:'John',     last:'Smith',     dept:'Sales' },
+  };
+
+  const CVAS_EXTENSIONS = Object.keys(CVAS_AGENT_META); // ['200'..'207']
+
+  /* inbound-only tallies (from your seeded Queue rows 301/302/303) */
+  const CVAS_INBOUND = {
+    '200': { CH: 5, TT: '18:10', TT_s: 1090, ATT: '18:10' },
+    '201': { CH: 3, TT: '09:40', TT_s: 580,  ATT: '09:40' },
+    '202': { CH: 4, TT: '13:26', TT_s: 806,  ATT: '13:26' },
+    '203': { CH: 2, TT: '30:57', TT_s: 1857, ATT: '30:57' },
+    '204': { CH: 1, TT: '03:53', TT_s: 233,  ATT: '03:53' },
+    '205': { CH: 4, TT: '30:27', TT_s: 1827, ATT: '30:27' },
+    '206': { CH: 6, TT: '38:34', TT_s: 2314, ATT: '38:34' },
+    '207': { CH: 0, TT: '00:00', TT_s: 0,    ATT: '00:00' },
+  };
+
+  /* outbound-only slice (from your “real quick” list) — used ONLY for AHT */
+  const CVAS_OUTBOUND = {
+    '200': { CH: 1, TT: '17:20', TT_s: 1040 },
+    '201': { CH: 1, TT: '11:33', TT_s: 693  },
+    '202': { CH: 1, TT: '27:22', TT_s: 1642 },
+    '203': { CH: 1, TT: '05:12', TT_s: 312  },
+    '204': { CH: 0, TT: '00:00', TT_s: 0    },
+    '205': { CH: 1, TT: '02:36', TT_s: 156  },
+    '206': { CH: 1, TT: '06:05', TT_s: 365  },
+    '207': { CH: 1, TT: '01:53', TT_s: 113  },
+  };
+
+  /* expose just the constants we’ll need later (no behavior yet) */
+  window.CVAS_CONST = {
+    LINK_CLASS,
+    AGENT_STATS_TABLE_SEL,
+    MAX_SCAN_TRIES,
+    ICONS: {
+      download: agentStatsDownload,
+      listen:   agentStatsListen,
+      cradle:   agentStatsCradle,
+      notes:    agentStatsNotes,
+      magnify:  magnifyIcon,
+    },
+    HEADER_TO_AGENTSTAT,
+    keyNorm,                    // small helper, reused elsewhere
+    AGENT_META: CVAS_AGENT_META,
+    EXTENSIONS: CVAS_EXTENSIONS,
+    INBOUND: CVAS_INBOUND,      // CH/TT/ATT (inbound-only)
+    OUTBOUND: CVAS_OUTBOUND,    // for AHT calc
+  };
 })();
 
 
+/* ==== CV Agent Stats: call rows by agent & direction (append-only) ==== */
+(() => {
+  // make sure the namespace exists
+  window.CVAS_CONST = window.CVAS_CONST || {};
+
+  // Inbound calls (grouped by Agent Extension) — rows lifted from your queue seeds
+  const CVAS_CALLS_INBOUND_BY_AGENT = {
+    "200": [
+      `<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 1:30 pm</td><td>Chloe Bennet</td><td>(313) 555-0120</td><td>248-436-3443</td><td>5:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 10:27 am</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3449</td><td>4:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>4:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 10:23 am</td><td>Monica Alvarez</td><td>(989) 555-0113</td><td>248-436-3443</td><td>2:49</td><td>200</td><td>200</td><td>Mike Johnson</td><td>1:52</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 08:16 am</td><td>Leif Hendricksen</td><td>517-555-0162</td><td>(313) 995-9080</td><td>8:17</td><td>200</td><td>200</td><td>Mike Johnson</td><td>2:27</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "201": [
+      `<tr><td>Today, 1:46 pm</td><td>Tucker Jones</td><td>(989) 555-0128</td><td>248-436-3443</td><td>6:17</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>1:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 11:41 am</td><td>Elizabeth Li</td><td>(313) 555-8471</td><td>(313) 995-9080</td><td>1:23</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>2:17</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 08:08 am</td><td>Coco LaBelle</td><td>(989) 555-0672</td><td>248-436-3443</td><td>0:22</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>5:55</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "202": [
+      `<tr><td>Today, 1:35 pm</td><td>Jack Burton</td><td>(517) 555-0148</td><td>(313) 995-9080</td><td>0:42</td><td>202</td><td>202</td><td>Jake Lee</td><td>7:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 10:58 am</td><td>Lola Turner</td><td>517-555-0170</td><td>248-436-3449</td><td>4:47</td><td>202</td><td>202</td><td>Jake Lee</td><td>1:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 1:26 pm</td><td>Carlos Riviera</td><td>(517) 555-0177</td><td>248-436-3449</td><td>3:52</td><td>202</td><td>202</td><td>Jake Lee</td><td>1:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 11:58 am</td><td>Mark Sanchez</td><td>989-555-0213</td><td>(313) 995-9080</td><td>4:29</td><td>202</td><td>202</td><td>Jake Lee</td><td>2:47</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "203": [
+      `<tr><td>Today, 1:21 pm</td><td>John Travers</td><td>810-555-0192</td><td>(313) 995-9080</td><td>2:27</td><td>203</td><td>203</td><td>Bob Andersen</td><td>9:41</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 11:58 am</td><td>Freddie Travis</td><td>800-649-2907</td><td>(313) 995-9080</td><td>3:48</td><td>203</td><td>203</td><td>Bob Andersen</td><td>21:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "204": [
+      `<tr><td>Today, 12:06 pm</td><td>Thomas Lee</td><td>517-555-0157</td><td>248-436-3443</td><td>1:21</td><td>204</td><td>204</td><td>Brittany Lawrence</td><td>3:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "205": [
+      `<tr><td>Today, 1:37 pm</td><td>Maya Brooks</td><td>(517) 555-0126</td><td>248-436-3449</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>2:05</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 11:18 am</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>(313) 995-9080</td><td>2:22</td><td>205</td><td>205</td><td>Alex Roberts</td><td>17:29</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 08:42 am</td><td>Alexander Chen</td><td>(517) 555-0122</td><td>(313) 995-9080</td><td>4:24</td><td>205</td><td>205</td><td>Alex Roberts</td><td>7:42</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 1:59 pm</td><td>Harper Green</td><td>(947) 555-0179</td><td>248-436-3447</td><td>1:08</td><td>205</td><td>205</td><td>Alex Roberts</td><td>3:11</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "206": [
+      `<tr><td>Today, 1:41 pm</td><td>Liam Nguyen</td><td>(810) 555-0100</td><td>248-436-3449</td><td>5:29</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:06</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>(313) 555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 11:22 am</td><td>JR Knight</td><td>248-555-0144</td><td>248-436-3443</td><td>3:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:35</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>313-555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 09:29 am</td><td>Tanya Roberts</td><td>313-555-3443</td><td>248-436-3443</td><td>3:47</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:57</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`,
+      `<tr><td>Today, 1:24 pm</td><td>Martin Smith</td><td>800-909-5384</td><td>(313) 995-9080</td><td>4:11</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>4:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "207": []
+  };
+
+  // Outbound calls (grouped by Agent Extension) — built from your “outbound slice”
+  // Columns: Call Time | Agent (Ext) | Dialed | To | Duration | Release | (actions)
+  const CVAS_CALLS_OUTBOUND_BY_AGENT = {
+    "200": [
+      `<tr><td>Today, 9:26 pm</td><td>Mike Johnson (200)</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>17:20</td><td>Orig: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "201": [
+      `<tr><td>Today, 9:10 pm</td><td>Cathy Thomas (201)</td><td>(517) 555-0170</td><td>(517) 555-0170</td><td>11:33</td><td>Orig: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "202": [
+      `<tr><td>Today, 9:30 pm</td><td>Jake Lee (202)</td><td>(248) 555-0191</td><td>(248) 555-0191</td><td>27:22</td><td>Orig: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "203": [
+      `<tr><td>Today, 9:19 pm</td><td>Bob Andersen (203)</td><td>(313) 555-0179</td><td>(313) 555-0179</td><td>05:12</td><td>Term: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "204": [],
+    "205": [
+      `<tr><td>Today, 9:53 pm</td><td>Alex Roberts (205)</td><td>(248) 555-0110</td><td>(248) 555-0110</td><td>02:36</td><td>Orig: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "206": [
+      `<tr><td>Today, 9:15 pm</td><td>Mark Sanchez (206)</td><td>(989) 555-0140</td><td>(989) 555-0140</td><td>06:05</td><td>Term: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ],
+    "207": [
+      `<tr><td>Today, 9:59 pm</td><td>John Smith (207)</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>01:53</td><td>Term: Bye</td><td class="cvas-action-cell"></td></tr>`
+    ]
+  };
+
+  // expose
+  window.CVAS_CONST.CALLS = {
+    INBOUND_BY_AGENT:  CVAS_CALLS_INBOUND_BY_AGENT,
+    OUTBOUND_BY_AGENT: CVAS_CALLS_OUTBOUND_BY_AGENT
+  };
+})();
+
+/* ==== CV Agent Stats: helpers (append-only; sit between constants and first function) ==== */
+(() => {
+  if (!window.CVAS_CONST) return; // ensure constants are loaded first
+
+  const {
+    LINK_CLASS,
+    AGENT_STATS_TABLE_SEL,
+    HEADER_TO_AGENTSTAT,
+    keyNorm,                 // from constants block
+    EXTENSIONS,              // ['200'..'207']
+    CALLS,                   // { INBOUND_BY_AGENT, OUTBOUND_BY_AGENT }
+  } = window.CVAS_CONST;
+
+  /* basic utils */
+  const norm = s => (s || '').replace(/\s+/g, ' ').trim();
+  const LOG  = (...a) => console.debug('[CV-AS]', ...a);
+
+  /* rows lookup: by Agent + direction */
+  function getRowsForAgent(agentExt, direction = 'inbound') {
+    const map = direction === 'outbound'
+      ? CALLS?.OUTBOUND_BY_AGENT
+      : CALLS?.INBOUND_BY_AGENT;
+    const rows = (map && map[String(agentExt)]) || [];
+    return rows.join('') || '';
+  }
+
+  /* discover docs (page + iframes) */
+  function collectDocs(root, out = []) {
+    out.push(root);
+    root.querySelectorAll('iframe').forEach(f => {
+      try { if (f.contentDocument) collectDocs(f.contentDocument, out); } catch (_) {}
+    });
+    return out;
+  }
+
+  /* find the Agent Stats table */
+  function candidateTables(doc) {
+    // direct selector first
+    const direct = Array.from(doc.querySelectorAll(AGENT_STATS_TABLE_SEL));
+    if (direct.length) return direct;
+
+    // fallback: header text heuristic
+    return Array.from(doc.querySelectorAll('table')).filter(t => {
+      const ths = Array.from(t.querySelectorAll('thead th'));
+      const labels = ths.map(th => norm(th.textContent));
+      return labels.some(l =>
+        /calls handled|talk time|average talk time|average handle time/i.test(l)
+      );
+    });
+  }
+
+  /* map header positions; find Agent/Ext columns */
+  function mapHeaders(table) {
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const colMap = {};
+
+    ths.forEach((th, i) => {
+      const label = norm(th.textContent);
+      const code  = HEADER_TO_AGENTSTAT[label];
+      if (code) colMap[code] = i;
+    });
+
+    // Try to detect agent/name and extension columns by header name
+    let agentIdx = ths.findIndex(th => /^agent$/i.test(norm(th.textContent)));
+    let extIdx   = ths.findIndex(th => /^(ext|extension)$/i.test(norm(th.textContent)));
+
+    // Fallback: infer extension column by scanning row cells that look like a 3-digit ext
+    if (extIdx < 0) {
+      const rows = Array.from(table.tBodies[0]?.rows || []).slice(0, 20);
+      const scores = ths.map((_, idx) => {
+        let hits = 0;
+        rows.forEach(r => {
+          const txt = norm(r.cells[idx]?.textContent);
+          if (/^(?:ext\.?\s*)?\d{3}$/i.test(txt) || /\(\s*\d{3}\s*\)$/.test(txt)) hits++;
+        });
+        return hits;
+      });
+      const max = Math.max(...scores);
+      extIdx = max > 0 ? scores.indexOf(max) : -1;
+    }
+
+    // Fallback: if no explicit agent column, prefer the first non-metric text column
+    if (agentIdx < 0) {
+      const metricIdxs = new Set(Object.values(colMap));
+      agentIdx = ths.findIndex((_, i) => !metricIdxs.has(i) && i !== extIdx);
+      if (agentIdx < 0) agentIdx = 0;
+    }
+
+    return { colMap, agentIdx, extIdx };
+  }
+
+  /* label helper */
+  function getStatTitle(code) {
+    const titles = {
+      CH:  'Calls Handled',
+      TT:  'Talk Time',
+      ATT: 'Average Talk Time',
+      AHT: 'Average Handle Time'
+    };
+    return titles[code] || code;
+  }
+
+  /* time parsing */
+  function timeToSeconds(t) {
+    if (!t) return null;
+    const parts = String(t).split(':').map(Number);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];                 // MM:SS
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]; // HH:MM:SS
+    return null;
+  }
+
+  /* sorting helper for tablesorter/data-order */
+  function setSort(td, code, v) {
+    // CH is numeric; TT/ATT/AHT are times
+    if (code === 'CH') {
+      const n = Number(String(v).replace(/[, ]+/g, ''));
+      if (!Number.isNaN(n)) td.setAttribute('data-order', String(n));
+      return;
+    }
+    if (code === 'TT' || code === 'ATT' || code === 'AHT') {
+      const s = timeToSeconds(v);
+      if (s != null) td.setAttribute('data-order', String(s));
+      return;
+    }
+  }
+
+  /* make metric cell clickable; resolves Agent/Ext from the row */
+  function linkify(td, hintedAgent, code, v) {
+    if (v == null) return;
+    if (td.querySelector(`a.${LINK_CLASS}`)) return;
+
+    const a = td.ownerDocument.createElement('a');
+    a.href = '#';
+    a.className = LINK_CLASS;
+    a.textContent = String(v);
+    a.style.fontWeight = 'bold';
+    a.style.textDecoration = 'underline';
+    a.style.cursor = 'pointer';
+
+    a.addEventListener('click', e => {
+      e.preventDefault();
+
+      const row = td.closest('tr');
+      const cells = Array.from(row?.cells || []).map(c => norm(c.textContent));
+      const doc   = td.ownerDocument;
+      const table = td.closest('table');
+
+      // Try to use mapped header indices when available
+      let agentName = '';
+      let agentExt  = '';
+
+      if (table) {
+        const { agentIdx, extIdx } = mapHeaders(table);
+        if (agentIdx >= 0) agentName = cells[agentIdx] || '';
+        if (extIdx   >= 0) agentExt  = (cells[extIdx] || '').replace(/^ext\.?\s*/i, '');
+      }
+
+      // Fallbacks
+      if (!agentExt) {
+        // extract "(###)" from agentName
+        const m = agentName.match(/\((\d{3})\)\s*$/);
+        if (m) agentExt = m[1];
+      }
+      if (!agentExt) {
+        // hunt any 3-digit token in the row that matches a known extension
+        const hit = cells.map(t => (t.match(/\b\d{3}\b/g) || [])).flat()
+          .find(tok => EXTENSIONS.includes(tok));
+        if (hit) agentExt = hit;
+      }
+      if (!agentName && hintedAgent) agentName = hintedAgent;
+
+      LOG('click', { agentName, agentExt, code, value: v });
+
+      // Delegate to the main opener (implemented later, like in Queue Reports)
+      // For Agent Stats:
+      // - CH, TT, ATT → INBOUND calls list
+      // - AHT → combined (we’ll decide in opener how to show both tabs or just outbound)
+      if (typeof window.openAgentModal === 'function') {
+        window.openAgentModal(agentName, agentExt, code);
+      }
+    });
+
+    td.replaceChildren(a);
+    setSort(td, code, v);
+  }
+
+  // expose helpers
+  window.CVAS_HELPERS = {
+    norm, LOG,
+    getRowsForAgent,
+    collectDocs,
+    candidateTables,
+    mapHeaders,
+    getStatTitle,
+    timeToSeconds,
+    setSort,
+    linkify
+  };
+})();
+
+/* ==== CV Agent Stats: first functions (icons injector + modal opener) ==== */
+(() => {
+  if (!window.CVAS_CONST || !window.CVAS_HELPERS) return;
+
+  const {
+    ICONS,
+    LINK_CLASS,
+  } = window.CVAS_CONST;
+
+  const {
+    getStatTitle,
+    getRowsForAgent,
+  } = window.CVAS_HELPERS;
+
+  // --- 1) Inject icons into the last unlabeled cell (Agent Stats version) ---
+  function cvasInjectIcons(tr) {
+    // Use pre-allocated action cell; fallback to create if missing
+    let td = tr.querySelector('td.cvas-action-cell');
+    if (!td) {
+      td = document.createElement('td');
+      td.className = 'cvas-action-cell';
+      tr.appendChild(td);
+    }
+
+    td.innerHTML = `
+      <span role="button" tabindex="0" class="cvas-icon-btn" aria-label="Download" title="Download" data-icon="download">
+        <img src="${ICONS.download}" alt="">
+      </span>
+      <span role="button" tabindex="0" class="cvas-icon-btn" aria-label="Listen" title="Listen" data-icon="listen">
+        <img src="${ICONS.listen}" alt="">
+      </span>
+      <span role="button" tabindex="0" class="cvas-icon-btn" aria-label="Cradle to Grave" title="Cradle to Grave" data-icon="cradle">
+        <img src="${ICONS.cradle}" alt="">
+      </span>
+      <span role="button" tabindex="0" class="cvas-icon-btn" aria-label="Edit Notes" title="Edit Notes" data-icon="notes">
+        <img src="${ICONS.notes}" alt="">
+      </span>
+    `;
+  }
+
+  // --- tiny header + table styles scoped to this modal ---
+  function ensureCvasModalStyles(root) {
+    if (root.querySelector('#cvas-modal-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cvas-modal-styles';
+    style.textContent = `
+      #cvas-inline-modal { position:absolute; inset:0 auto auto 0; right:0; background:#fff; padding:20px 20px 40px; z-index:10; font-family:sans-serif; max-height:calc(100vh - 32px); overflow:auto; }
+      .cvas-call-table { width:100%; border-collapse:collapse; font-size:13px; border:1px solid #ccc; table-layout:auto; }
+      .cvas-call-table thead th { background:#fff; color:#004a9b; text-align:left; padding:6px 8px; border:1px solid #ccc; border-top:0; }
+      .cvas-call-table tbody td { padding:6px 8px; border-left:1px solid #eee; border-bottom:1px solid #eee; }
+      .cvas-call-table tbody tr:hover td { background:#f7f7f7; }
+      .cvas-action-cell { white-space:nowrap; text-align:center; }
+      .cvas-icon-btn { display:inline-flex; align-items:center; justify-content:center; width:24px; height:24px; border-radius:50%; background:#fff; margin:3px; border:1px solid #dcdcdc; overflow:hidden; cursor:pointer; }
+      .cvas-icon-btn img { width:14px; height:14px; pointer-events:none; opacity:.35; transition:opacity .2s; }
+      .cvas-icon-btn:hover img { opacity:1; }
+      .cvas-audio-row td { background:#f3f6f8; padding:10px 12px; border-top:0; }
+      .cvas-audio-player { display:flex; align-items:center; gap:12px; }
+      .cvas-audio-play { width:24px; height:24px; background:transparent; border:0; cursor:pointer; }
+      .cvas-audio-play:before { content:''; display:block; width:0; height:0; border-left:10px solid #333; border-top:6px solid transparent; border-bottom:6px solid transparent; }
+      .cvas-audio-time { font-weight:600; color:#333; }
+      .cvas-audio-bar { flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
+      .cvas-audio-bar-fill { position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
+      .cvas-header { display:flex; justify-content:space-between; align-items:center; padding:10px 16px; margin:-10px -16px 10px; border-bottom:1px solid #ddd; }
+      .cvas-title { font-weight:700; font-size:16px; }
+      .cvas-close { background:none; border:0; font-size:20px; line-height:1; cursor:pointer; padding:4px 8px; opacity:.7; }
+      .cvas-close:hover { opacity:1; }
+    `;
+    root.appendChild(style);
+  }
+
+  // Build table skeleton by direction
+  function tableShell(direction, rowsHTML) {
+    if (direction === 'outbound') {
+      return `
+        <table class="cvas-call-table">
+          <thead>
+            <tr>
+              <th>Call Time</th><th>Agent</th><th>Dialed</th><th>To</th>
+              <th>Duration</th><th>Release</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      `;
+    }
+    // inbound default
+    return `
+      <table class="cvas-call-table">
+        <thead>
+          <tr>
+            <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+            <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+            <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+            <th>Queue Release Reason</th><th></th>
+          </tr>
+        </thead>
+        <tbody>${rowsHTML}</tbody>
+      </table>
+    `;
+  }
+
+  // Date range helper (same visual as queues)
+  function insertDateRange(modalEl) {
+    const now = new Date();
+    const yesterday = new Date(now); yesterday.setDate(now.getDate() - 1);
+    const fmt = (d) => `${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}/${d.getFullYear()}`;
+    const range = `${fmt(yesterday)} 12:00 am to ${fmt(now)} 11:59 pm`;
+    const div = document.createElement('div');
+    div.textContent = range;
+    div.style.margin = '8px 0 10px 0';
+    div.style.fontSize = '13px';
+    div.style.color = '#555';
+    const title = modalEl.querySelector('.cvas-title');
+    if (title) title.insertAdjacentElement('afterend', div);
+  }
+
+  // --- 2) Modal opener for Agent Stats clicks ---
+  window.openAgentModal = function(agentName, agentExt, code) {
+    const direction = (code === 'AHT') ? 'outbound' : 'inbound';
+    const titleMetric = getStatTitle(code);
+    const who = agentName && agentExt ? `${agentName} (${agentExt})` : (agentExt ? `Agent ${agentExt}` : (agentName || 'Agent'));
+
+    const modal = document.createElement('div');
+    modal.id = 'cvas-inline-modal';
+    ensureCvasModalStyles(document.body);
+
+    // rows
+    const rowsHTML = getRowsForAgent(agentExt, direction) || '';
+
+    modal.innerHTML = `
+      <div class="cvas-header">
+        <span class="cvas-title">${who} — ${titleMetric}</span>
+        <button class="cvas-close" aria-label="Close">&times;</button>
+      </div>
+
+      <div style="margin:10px 0;">
+        <input placeholder="Search calls" style="padding:6px 8px;width:220px;border:1px solid #cfd3d7;border-radius:6px">
+      </div>
+
+      ${tableShell(direction, rowsHTML)}
+    `;
+
+    // mount inside the reports area if present
+    const container = cvasResolveModalContainer();
+    if (container) {
+      container.style.position = 'relative';
+      container.appendChild(modal);
+    } else {
+      document.body.appendChild(modal);
+    }
+
+    cvasInsertDateRange(modal);
+    cvasWireBackOrClose(modal);
 
 
+    // inject icons into each body row
+    modal.querySelectorAll('tbody tr').forEach(cvasInjectIcons);
+
+    // close behavior
+    modal.querySelector('.cvas-close').addEventListener('click', () => modal.remove());
+    modal.addEventListener('click', (e) => {
+      // outside click? (optional) – skip for inline modal in container
+    });
+
+    // simple search (row text match)
+    const searchInput = modal.querySelector('input[placeholder="Search calls"]');
+    searchInput.addEventListener('input', (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      modal.querySelectorAll('tbody tr').forEach(tr => {
+        const txt = tr.textContent.toLowerCase();
+        tr.style.display = txt.includes(q) ? '' : 'none';
+      });
+    });
+
+    // delegate icon actions (inside openAgentModal after modal is built)
+modal.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cvas-icon-btn[data-icon]');
+  if (!btn || !modal.contains(btn)) return;
+
+  const kind = btn.dataset.icon;
+
+  if (kind === 'notes') {
+    window.openAgentNotesPopover?.(btn);
+    return;
+  }
+
+  if (kind === 'download') {
+    console.log('[CV-AS] Download clicked');
+    return;
+  }
+
+  if (kind === 'listen') {
+    const tr   = btn.closest('tr');
+    const next = tr && tr.nextElementSibling;
+
+    // collapse if already open
+    if (next && next.classList && next.classList.contains('cvas-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded','false');
+      return;
+    }
+
+    // close any others in this modal
+    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+
+    const colCount = tr.children.length;
+    const audioTr  = document.createElement('tr');
+    audioTr.className = 'cvas-audio-row';
+    audioTr.innerHTML =
+      '<td colspan="'+colCount+'">' +
+        '<div class="cvas-audio-player">' +
+          '<button class="cvas-audio-play" aria-label="Play"></button>' +
+          '<span class="cvas-audio-time">0:00 / 0:00</span>' +
+          '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
+          '<div class="cvas-audio-right">' +
+            '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
+          '</div>' +
+        '</div>' +
+      '</td>';
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded','true');
+    return;
+  }
+
+  if (kind === 'cradle') {
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    window.cvasOpenCtgModal?.(tr);
+    return;
+  }
+});
 
 
+        // optional: you can call your CTG overlay here, e.g., window.cvasOpenCtgModal(tr, agentName, agentExt);
+        console.log('[CV-AS] CTG clicked for', { agentName, agentExt });
+        return;
+      }
+
+      if (kind === 'download') {
+        console.log('[CV-AS] Download clicked');
+        return;
+      }
+
+      if (kind === 'notes') {
+          openAgentNotesPopover(btn);
+          return;
+      }
+
+    });
+
+    // keyboard activate
+    modal.addEventListener('keydown', (e) => {
+      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
+        e.preventDefault();
+        e.target.click();
+      }
+    });
+  };
+
+  // expose injector in case you need it elsewhere
+  window.cvasInjectIcons = cvasInjectIcons;
+})();
+
+/* ==== agentNotesPopover (anchored dropdown, unique IDs; Agent Stats scope) ==== */
+(() => {
+  // reasons (same buckets as queue; tweak as needed)
+  const AN_REASONS = {
+    'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
+    'Outbound Sales': ['Cold Call', 'Follow-up'],
+  };
+
+  // global so the modal’s click handler can call it
+  window.openAgentNotesPopover = function(anchorEl, initial) {
+    // remove any existing popover (agent-scope)
+    document.getElementById('cvas-notes-popover')?.remove();
+
+    // build container
+    const pop = document.createElement('div');
+    pop.id = 'cvas-notes-popover';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Agent Notes');
+    Object.assign(pop.style, {
+      position: 'fixed',            // anchor to viewport (we’ll position precisely below)
+      top: '0px',
+      left: '0px',
+      width: '340px',
+      maxWidth: '92vw',
+      background: '#fff',
+      border: '1px solid #cfd3d7',
+      borderRadius: '8px',
+      boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+      zIndex: '2147483647',
+      padding: '12px',
+      visibility: 'hidden'          // position first, then show
+    });
+
+    // content (unique element IDs so it won’t clash)
+    pop.innerHTML = `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <strong style="font-size:14px">Notes</strong>
+        <button id="an2-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;line-height:1">&times;</button>
+      </div>
+      <div style="display:grid;grid-template-columns:110px 1fr;gap:10px 12px;align-items:center">
+        <label for="an2-disposition" style="justify-self:end;font-weight:600">Disposition</label>
+        <select id="an2-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+          <option value="">Select a Disposition</option>
+          <option>Inbound Sales</option>
+          <option>Outbound Sales</option>
+        </select>
+
+        <label for="an2-reason" style="justify-self:end;font-weight:600">Reason</label>
+        <select id="an2-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+          <option value="">Select a Disposition First</option>
+        </select>
+
+        <label for="an2-text" style="justify-self:end;font-weight:600">Notes</label>
+        <textarea id="an2-text" rows="4" style="width:100%;padding:2px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+        <button id="an2-cancel" class="cv-btn">Cancel</button>
+        <button id="an2-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>
+      </div>
+    `;
+
+    // add to DOM to measure
+    document.body.appendChild(pop);
+
+    // init
+    const dispSel = pop.querySelector('#an2-disposition');
+    const reasonSel = pop.querySelector('#an2-reason');
+    const txt = pop.querySelector('#an2-text');
+
+    function populateReasons(disp) {
+      reasonSel.innerHTML = '';
+      const opts = AN_REASONS[disp] || [];
+      if (!opts.length) {
+        reasonSel.innerHTML = '<option value="">Select a Disposition First</option>';
+        return;
+      }
+      opts.forEach((label, i) => {
+        const o = document.createElement('option');
+        o.value = label;
+        o.textContent = label;
+        if (i === 0) o.selected = true;
+        reasonSel.appendChild(o);
+      });
+    }
+
+    const dispInit = (initial && initial.disposition) || 'Inbound Sales';
+    dispSel.value = dispInit;
+    populateReasons(dispInit);
+    if (initial && initial.reason) reasonSel.value = initial.reason;
+    txt.value = (initial && initial.notes) || '';
+    dispSel.onchange = () => populateReasons(dispSel.value);
+
+    // position near the icon but keep it inside the Agent modal bounds
+    const iconRect = anchorEl.getBoundingClientRect();
+    const modalEl  = document.getElementById('cvas-inline-modal');
+    const box = modalEl
+      ? modalEl.getBoundingClientRect()
+      : { left: 8, top: 8, right: window.innerWidth - 8, bottom: window.innerHeight - 8 };
+
+    const gap = 8;
+
+    // measure after it's in the DOM
+    const rect = pop.getBoundingClientRect();
+    const pw = rect.width;
+    const ph = rect.height;
+
+    // prefer right-of, else left-of
+    let left = (iconRect.right + gap + pw <= box.right)
+      ? iconRect.right + gap
+      : iconRect.right - pw;
+
+    // prefer below, else above
+    let top = (iconRect.bottom + gap + ph <= box.bottom)
+      ? iconRect.bottom + gap
+      : iconRect.top - ph - gap;
+
+    // clamp within the modal box
+    left = Math.min(Math.max(left, box.left + gap), box.right - pw - gap);
+    top  = Math.min(Math.max(top,  box.top  + gap), box.bottom - ph - gap);
+
+    pop.style.left = `${left}px`;
+    pop.style.top  = `${top}px`;
+    pop.style.visibility = 'visible';
+
+    // close helpers
+    const close = () => {
+      document.removeEventListener('click', onDocClick, true);
+      document.removeEventListener('keydown', onKeyDown, true);
+      pop.remove();
+    };
+    const onDocClick = (e) => {
+      if (pop.contains(e.target) || anchorEl.contains(e.target)) return;
+      close();
+    };
+    const onKeyDown = (e) => { if (e.key === 'Escape') close(); };
+
+    document.addEventListener('click', onDocClick, true);
+    document.addEventListener('keydown', onKeyDown, true);
+
+    // buttons
+    pop.querySelector('#an2-close').addEventListener('click', close);
+    pop.querySelector('#an2-cancel').addEventListener('click', close);
+    pop.querySelector('#an2-save').addEventListener('click', () => {
+      const payload = {
+        disposition: dispSel.value || '',
+        reason:      reasonSel.value || '',
+        notes:       txt.value || ''
+      };
+      console.log('[agentNotesPopover] Saved', payload);
+      close();
+    });
+  };
+})();
+
+// Decide direction from the clicked metric, then fetch rows
+const direction = (code === 'AHT') ? 'outbound' : 'inbound';
+const rowsHTML  = getRowsForAgent(agentExt, direction) || '';
+const titleMetric = getStatTitle(code);
+const who = (agentName && agentExt)
+  ? `${agentName} (${agentExt})`
+  : (agentName || (agentExt ? `Agent ${agentExt}` : 'Agent'));
+
+modal.innerHTML = `
+  <style>
+    /* ===== Agent Stats modal (scoped) ===== */
+    .cvas-call-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: sans-serif;
+      font-size: 13px;
+      border: 1px solid #ccc;
+      table-layout: auto;
+    }
+
+    .cvas-call-table thead th {
+      background: white;
+      color: #004a9b;
+      text-align: left;
+      padding: 6px 8px;
+      border-left: 1px solid #ccc;
+      border-right: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+    }
+
+    .cvas-call-table tbody td {
+      padding: 6px 8px;
+      border-right: 1px solid #eee;
+      border-left: 1px solid #eee;
+      border-bottom: 1px solid #eee;
+    }
+
+    /* Action cell (real cell, not :last-child) */
+    .cvas-call-table td.cvas-action-cell {
+      white-space: nowrap;
+      text-align: center;
+      padding: 6px 8px;
+      position: relative;
+      background: inherit; /* let row hover/zebra show through */
+    }
+
+    /* Ensure the action cell also shows row hover */
+    .cvas-call-table tbody tr:hover td.cvas-action-cell {
+      background-color: #f3f3f3;
+    }
+
+    /* Image baseline alignment */
+    .cvas-call-table img {
+      vertical-align: middle;
+    }
+
+    /* Icon buttons (Clarity-style hover-fade) */
+    .cvas-icon-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #ffffff;
+      margin: 3px;
+      border: 1px solid #dcdcdc;
+      overflow: hidden;
+      cursor: pointer;
+    }
+    .cvas-icon-btn:focus { outline: none; }
+    .cvas-icon-btn img {
+      width: 14px;
+      height: 14px;
+      pointer-events: none;
+      opacity: 0.35;
+      transition: opacity 0.2s ease-in-out;
+    }
+    .cvas-icon-btn:hover img,
+    tr:hover .cvas-icon-btn img {
+      opacity: 1;
+    }
+
+    /* Faux audio row (Listen) */
+    .cvas-audio-row td {
+      background: #f3f6f8;
+      padding: 10px 12px;
+      border-top: 0;
+    }
+    .cvas-audio-player { display: flex; align-items: center; gap: 12px; }
+    .cvas-audio-play { width: 24px; height: 24px; background: transparent; border: 0; cursor: pointer; }
+    .cvas-audio-play:before {
+      content: '';
+      display: block;
+      width: 0; height: 0;
+      border-left: 10px solid #333;
+      border-top: 6px solid transparent;
+      border-bottom: 6px solid transparent;
+    }
+    .cvas-audio-time { font-weight: 600; color: #333; }
+    .cvas-audio-bar { flex: 1; height: 6px; background: #e0e0e0; border-radius: 3px; position: relative; }
+    .cvas-audio-bar-fill { position: absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
+    .cvas-audio-right { display:flex; align-items:center; gap:12px; }
+    .cvas-audio-icon { width:20px; height:20px; opacity:0.6; }
+
+    /* Header like Call History/Queue Reports */
+    .cvas-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 16px; border-bottom:1px solid #ddd; background:#fff;
+      position:sticky; top:0; z-index:2;
+      margin:-10px -16px 10px -16px; /* compensate container padding if needed */
+    }
+    .cvas-title { font-weight:700; font-size:16px; color:#000; letter-spacing:.2px; }
+    .cvas-close {
+      background:transparent; border:0; font-size:20px; line-height:1;
+      cursor:pointer; padding:4px 8px; opacity:.7;
+    }
+    .cvas-close:hover { opacity:1; }
+  </style>
+
+  <div class="cvas-header">
+    <span class="cvas-title">${who} — ${titleMetric}</span>
+    <button class="cvas-close" aria-label="Close">&times;</button>
+  </div>
+
+  <div style="margin:10px 0;">
+    <input placeholder="Search calls" style="padding:6px 8px;width:220px;border:1px solid #cfd3d7;border-radius:6px">
+  </div>
+
+  ${
+    direction === 'outbound'
+      ? `
+        <table class="cvas-call-table">
+          <thead>
+            <tr>
+              <th>Call Time</th><th>Agent</th><th>Dialed</th><th>To</th>
+              <th>Duration</th><th>Release</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      `
+      : `
+        <table class="cvas-call-table">
+          <thead>
+            <tr>
+              <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+              <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+              <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+              <th>Queue Release Reason</th><th></th>
+            </tr>
+          </thead>
+          <tbody>${rowsHTML}</tbody>
+        </table>
+      `
+  }
+`;
+
+// === Agent Stats: resolve a good modal mount container ===
+function cvasResolveModalContainer() {
+  const { collectDocs, candidateTables } = window.CVAS_HELPERS || {};
+  const docs = (typeof collectDocs === 'function') ? collectDocs(document) : [document];
+
+  // 1) Try to anchor near the actual Agent Stats table
+  for (const doc of docs) {
+    const tables = (typeof candidateTables === 'function') ? candidateTables(doc) : [];
+    const table = tables && tables[0];
+    if (!table) continue;
+
+    // Prefer a known wrapper around the table
+    const preferred = table.closest(
+      '#modal-body-reports, .modal-body, #content, #main-content, .content, .page-content, .panel-body, .card-body, main'
+    );
+
+    const container = preferred || table.parentElement || doc.body;
+    const cs = container.ownerDocument.defaultView.getComputedStyle(container);
+    if (cs.position === 'static') container.style.position = 'relative';
+    return container;
+  }
+
+  // 2) Fallback: page-level containers
+  const fallbacks = [
+    '#modal-body-reports', '.modal-body', '#content', '#main-content',
+    '.content', '.page-content', 'main', '#app'
+  ];
+  for (const sel of fallbacks) {
+    const el = document.querySelector(sel);
+    if (el) {
+      const cs = getComputedStyle(el);
+      if (cs.position === 'static') el.style.position = 'relative';
+      return el;
+    }
+  }
+
+  // 3) Last resort: body
+  const body = document.body;
+  if (getComputedStyle(body).position === 'static') body.style.position = 'relative';
+  return body;
+}
+
+// --- replace your old mount code with this ---
+const container = cvasResolveModalContainer();
+container.appendChild(modal);
 
 
+/* ==== CV Agent Stats: date range helper + row icon injection ==== */
+(() => {
+  // Insert a date range line just under the modal title.
+  // Defaults: yesterday 12:00 am → today 11:59 pm.
+  // You can override by passing { start: Date, end: Date }.
+  function cvasInsertDateRange(modalEl, opts = {}) {
+    const end   = opts.end   instanceof Date ? opts.end   : new Date();
+    const start = opts.start instanceof Date ? opts.start : new Date(end.getTime() - 24*60*60*1000);
+
+    const fmt = (d) => {
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      const yyyy = d.getFullYear();
+      return `${mm}/${dd}/${yyyy}`;
+    };
+
+    const rangeText = `${fmt(start)} 12:00 am to ${fmt(end)} 11:59 pm`;
+
+    const div = document.createElement('div');
+    div.className = 'cvas-date-range';
+    Object.assign(div.style, {
+      margin: '8px 0 10px 0',
+      fontSize: '13px',
+      color: '#555'
+    });
+    div.textContent = rangeText;
+
+    // Scope to this modal (no global queries)
+    const title = modalEl.querySelector('.cvas-title');
+    const header = modalEl.querySelector('.cvas-header');
+    if (title) {
+      title.insertAdjacentElement('afterend', div);
+    } else if (header) {
+      header.insertAdjacentElement('afterend', div);
+    } else {
+      modalEl.prepend(div);
+    }
+  }
+
+  // Optional: support a “Back” button if you add one later
+  function cvasWireBackOrClose(modalEl) {
+    const backBtn  = modalEl.querySelector('#cvas-back-btn');
+    const closeBtn = modalEl.querySelector('.cvas-close');
+    const close = () => modalEl.remove();
+
+    if (backBtn)  backBtn.addEventListener('click', close);
+    if (closeBtn) closeBtn.addEventListener('click', close);
+  }
+
+  // Expose helpers
+  window.cvasInsertDateRange = cvasInsertDateRange;
+  window.cvasWireBackOrClose = cvasWireBackOrClose;
+})();
+
+/* ==== CV Agent Stats: CTG (Cradle-to-Grave) timeline & overlay ==== */
+(() => {
+  // --- CTG icon URLs (same art you used) ---
+  const ICON_PHONE     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+  const ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+  const ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+  const ICON_DIAL      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+  const ICON_ELLIPS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+  const ICON_AGENTRING = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg';
+
+  // map keys → <img> tags (for easy templating)
+  const CVAS_CTG_ICONS = {
+    phone:     `<img src="${ICON_PHONE}"     alt="">`,
+    answer:    `<img src="${ICON_ANSWER}"    alt="">`,
+    hang:      `<img src="${ICON_HANG}"      alt="">`,
+    dial:      `<img src="${ICON_DIAL}"      alt="">`,
+    ellipsis:  `<img src="${ICON_ELLIPS}"    alt="">`,
+    agentring: `<img src="${ICON_AGENTRING}" alt="">`,
+  };
+
+  // one-time styles for the CTG overlay (Agent Stats scope)
+  function cvasEnsureCtgStyles(modal) {
+    if (modal.querySelector('#cvas-ctg-styles')) return;
+    const style = document.createElement('style');
+    style.id = 'cvas-ctg-styles';
+    style.textContent = `
+      #cvas-ctg-overlay { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index: 999; display:flex; align-items:flex-start; justify-content:center; padding:24px; }
+      #cvas-ctg-modal { background:#fff; border-radius:8px; width:min(880px, 96%); max-height: calc(100vh - 96px); overflow:auto; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+      .cvas-ctg-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid #e5e8eb; font:600 16px/1.2 system-ui,sans-serif; }
+      .cvas-ctg-body { padding:12px 8px 18px 8px; }
+      .cvas-ctg-item { display:grid; grid-template-columns: 100px 28px 1fr; align-items:flex-start; gap:10px; padding:8px 12px; }
+      .cvas-ctg-time { color:#111; font-weight:700; }
+      .cvas-ctg-subtime { color:#777; font-size:12px; margin-top:2px; }
+      .cvas-ctg-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+      .cvas-ctg-icon img { width:18px; height:18px; background:#f2f3f5; border:1px solid #e1e4e8; border-radius:50%; padding:3px; box-sizing:content-box; }
+      .cvas-ctg-text { color:#111; }
+      .cvas-ctg-sub { color:#777; font-size:12px; margin-top:2px; }
+      .cvas-ctg-close { background:none; border:0; font-size:20px; line-height:1; cursor:pointer; padding:4px 8px; opacity:.7; }
+      .cvas-ctg-close:hover { opacity:1; }
+    `;
+    modal.appendChild(style);
+
+    // header style (sticky like Call History)
+    if (!document.getElementById('cvas-ctg-header-styles')) {
+      const s = document.createElement('style');
+      s.id = 'cvas-ctg-header-styles';
+      s.textContent = `
+        #cvas-ctg-modal { background:#fff; border-radius:8px; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+        .cvas-ctg-header { position:sticky; top:0; z-index:2; background:#fff; }
+      `;
+      document.head.appendChild(s);
+    }
+  }
+
+  // small utilities
+  const cvasText = el => (el?.textContent || '').replace(/\s+/g,' ').trim();
+  function cvasTimeParts(date) {
+    const pad = n => String(n).padStart(2,'0');
+    let h = date.getHours(), am = 'AM';
+    if (h >= 12) { am = 'PM'; if (h > 12) h -= 12; }
+    if (h === 0) h = 12;
+    return `${h}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${am}`;
+  }
+  function cvasTimelineBuilder(start=new Date()) {
+    let t = new Date(start.getTime());
+    let ms = 0;
+    const bump  = inc => { ms += inc; t = new Date(start.getTime() + ms); };
+    const stamp = () => ({ time: cvasTimeParts(t), subtime: ms ? `+${ms}ms` : '' });
+    return { bump, stamp };
+  }
+
+  // Infer which table we're in (inbound vs outbound) by column count/headers
+  function cvasInferDirectionFromRow(tr) {
+    const ths = tr.closest('table')?.querySelectorAll('thead th');
+    if (ths && ths.length <= 7) return 'outbound'; // our OB table has 7 headers incl. action
+    return 'inbound';
+  }
+
+  // Build timeline for INBOUND row (uses Agent modal inbound column order)
+  function cvasBuildCtgInbound(tr) {
+    const c = tr.cells;
+    const callerName  = cvasText(c[1]);
+    const callerNum   = cvasText(c[2]);
+    const agentExt    = cvasText(c[5]);
+    const agentName   = cvasText(c[7]);
+    const queueRel    = cvasText(c[10]); // "Orig: Bye" / "Term: Bye" / "Voicemail"...
+
+    const { bump, stamp } = cvasTimelineBuilder(new Date());
+    const events = [];
+
+    // 1) inbound call
+    events.push({ ...stamp(), icon:'phone', text:`Inbound call from ${callerNum}${callerName ? ` (${callerName})` : ''}`, sub:'STIR: Verified' });
+    bump(150);
+
+    // 2) generic queue connect (we’re on Agent page; queue name may not be present)
+    events.push({ ...stamp(), icon:'ellipsis', text:'Connected to Call Queue' });
+    bump(300);
+
+    // 3) ring cascade (show the known agent first, then a couple of peers)
+    const primary = agentName ? `${agentName}${agentExt ? ` (${agentExt})` : ''}` : (agentExt ? `Agent (${agentExt})` : 'Agent');
+    const cascade = [
+      primary,
+      'Cathy Thomas (201)',
+      'Jake Lee (202)',
+      'Bob Andersen (203)',
+      'Brittany Lawrence (204)',
+      'Alex Roberts (205)',
+      'Mark Sanchez (206)'
+    ];
+    cascade.slice(0, 5).forEach((who, i) => {
+      events.push({ ...stamp(), icon:'agentring', text:`${who} is ringing` });
+      bump(220 + i*90);
+    });
+
+    // 4) answer
+    events.push({ ...stamp(), icon:'answer', text:`Call answered by ${primary}` });
+    bump(90_000);
+
+    // 5) tail by release
+    if (/v ?mail|voice ?mail/i.test(queueRel)) {
+      events.push({ ...stamp(), icon:'ellipsis', text:'Sent to Voicemail' });
+    } else {
+      events.push({ ...stamp(), icon:'hang', text:`Caller hung up` });
+    }
+
+    return events;
+  }
+
+  // Build timeline for OUTBOUND row
+  function cvasBuildCtgOutbound(tr) {
+    const c = tr.cells;
+    const callTime = cvasText(c[0]);
+    const agent    = cvasText(c[1]); // "Mike Johnson (200)" or similar
+    const dialed   = cvasText(c[2]);
+    const to       = cvasText(c[3]);
+    const release  = cvasText(c[5]);
+
+    const { bump, stamp } = cvasTimelineBuilder(new Date());
+    const events = [];
+
+    events.push({ ...stamp(), icon:'dial', text:`Outbound call by ${agent}` });
+    bump(180);
+    events.push({ ...stamp(), icon:'ellipsis', text:`Dialing ${to || dialed}` });
+    bump(480);
+    events.push({ ...stamp(), icon:'agentring', text:`Ringing ${to || dialed}` });
+    bump(1600);
+    events.push({ ...stamp(), icon:'answer', text:'Call connected' });
+    bump(75_000);
+
+    if (/term:\s*bye/i.test(release)) {
+      events.push({ ...stamp(), icon:'hang', text:`Remote party ended call` });
+    } else {
+      events.push({ ...stamp(), icon:'hang', text:`Agent ended call` });
+    }
+
+    return events;
+  }
+
+  // Public opener: reads agent name/ext from the current Agent modal title
+  window.cvasOpenCtgModal = function(tr) {
+    const modal = document.getElementById('cvas-inline-modal') || document.body;
+    cvasEnsureCtgStyles(modal);
+
+    // direction: infer from the table we’re in
+    const direction = cvasInferDirectionFromRow(tr);
+
+    // parse Agent (Name + Ext) from modal header "Name (200) — Metric"
+    let agentLabel = 'Cradle To Grave';
+    const titleEl = modal.querySelector('.cvas-title');
+    if (titleEl) {
+      const t = titleEl.textContent.trim();
+      // keep just "Name (Ext)"
+      agentLabel = t.split('—')[0].trim();
+    }
+
+    const events = (direction === 'outbound')
+      ? cvasBuildCtgOutbound(tr)
+      : cvasBuildCtgInbound(tr);
+
+    // overlay
+    const overlay = document.createElement('div');
+    overlay.id = 'cvas-ctg-overlay';
+    overlay.innerHTML = `
+      <div id="cvas-ctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvas-ctg-title">
+        <div class="cvas-ctg-header">
+          <span id="cvas-ctg-title" class="cvas-ctg-title">Cradle To Grave — ${agentLabel}</span>
+          <button class="cvas-ctg-close" aria-label="Close">&times;</button>
+        </div>
+        <div class="cvas-ctg-body">
+          ${
+            events.map(ev => `
+              <div class="cvas-ctg-item">
+                <div class="cvas-ctg-time">
+                  ${ev.time}
+                  ${ev.subtime ? `<div class="cvas-ctg-subtime">${ev.subtime}</div>` : ``}
+                </div>
+                <div class="cvas-ctg-icon">${CVAS_CTG_ICONS[ev.icon] || ``}</div>
+                <div class="cvas-ctg-text">
+                  ${ev.text}
+                  ${ev.sub ? `<div class="cvas-ctg-sub">${ev.sub}</div>` : ``}
+                </div>
+              </div>
+            `).join('')
+          }
+        </div>
+      </div>
+    `;
+
+    const close = () => overlay.remove();
+    overlay.addEventListener('click', (e) => { if (e.target.id === 'cvas-ctg-overlay') close(); });
+    overlay.querySelector('.cvas-ctg-close').addEventListener('click', close);
+
+    modal.appendChild(overlay);
+  };
+})();
 
 
+// === LISTEN (toggle inline audio row) ===
+if (kind === 'listen') {
+  const tr   = btn.closest('tr');
+  const next = tr && tr.nextElementSibling;
+
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cvas-audio-row')) {
+    next.remove();
+    btn.setAttribute('aria-expanded', 'false');
+    return;
+  }
+
+  // close any others in this modal
+  modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+
+  const colCount = tr.children.length;
+  const audioTr  = document.createElement('tr');
+  audioTr.className = 'cvas-audio-row';
+
+  audioTr.innerHTML =
+    '<td colspan="'+colCount+'">' +
+      '<div class="cvas-audio-player">' +
+        '<button class="cvas-audio-play" aria-label="Play"></button>' +
+        '<span class="cvas-audio-time">0:00 / 0:00</span>' +
+        '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
+        '<div class="cvas-audio-right">' +
+          '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
+        '</div>' +
+      '</div>' +
+    '</td>';
+
+  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+  btn.setAttribute('aria-expanded', 'true');
+  return;
+}
+
+// === CRADLE TO GRAVE (opens overlay timeline) ===
+if (kind === 'cradle') {
+  const tr = btn.closest('tr');
+  if (!tr) return;
+  window.cvasOpenCtgModal(tr);
+  return;
+}
+
+// (notes/download branches handled above if you kept them)
+
+// === keyboard: Space/Enter activates focused icon buttons ===
+})();
+
+modal.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
+    e.preventDefault();
+    e.target.click();
+  }
+});
+
+/* ==== CV Agent Stats: injector / attach / boot ==== */
+(() => {
+  if (!window.CVAS_CONST || !window.CVAS_HELPERS) return;
+
+  const {
+    AGENT_STATS_TABLE_SEL,
+    MAX_SCAN_TRIES,
+    INBOUND,
+    OUTBOUND,
+    EXTENSIONS,
+  } = window.CVAS_CONST;
+
+  const {
+    norm,
+    LOG,
+    collectDocs,
+    candidateTables,
+    mapHeaders,
+    linkify,
+    timeToSeconds,   // not used here but available if you want
+    setSort,
+  } = window.CVAS_HELPERS;
+
+  /* format seconds → mm:ss or h:mm:ss */
+  function secondsToClock(s) {
+    if (s == null || !isFinite(s) || s < 0) return '00:00';
+    const h = Math.floor(s / 3600);
+    const m = Math.floor((s % 3600) / 60);
+    const sec = Math.floor(s % 60);
+    const pad = n => String(n).padStart(2, '0');
+    return h > 0 ? `${h}:${pad(m)}:${pad(sec)}` : `${m}:${pad(sec)}`;
+  }
+
+  /* AHT includes outbound (demo formula: total talk / total calls for in+out) */
+  function computeAHT(ext) {
+    const inb = INBOUND[ext]  || { CH: 0, TT_s: 0 };
+    const out = OUTBOUND[ext] || { CH: 0, TT_s: 0 };
+    const totalCalls = (inb.CH || 0) + (out.CH || 0);
+    const totalSecs  = (inb.TT_s || 0) + (out.TT_s || 0);
+    const ahtSecs    = totalCalls > 0 ? Math.round(totalSecs / totalCalls) : 0;
+    return { sec: ahtSecs, str: secondsToClock(ahtSecs) };
+  }
+
+  /* fill a single Agent Stats table with our values + linkify */
+  function injectAgentTable(doc, table) {
+    const { colMap, agentIdx, extIdx } = mapHeaders(table);
+    const statCodes = Object.keys(colMap); // e.g., ['CH','TT','ATT','AHT']
+    if (!statCodes.length) return 0;
+
+    let wrote = 0;
+
+    Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
+      const cells = tr.cells;
+      const agentLabel = norm(cells[agentIdx]?.textContent);
+
+      // derive extension
+      let ext = norm(cells[extIdx]?.textContent).replace(/^ext\.?\s*/i, '');
+      if (!/^\d{3}$/.test(ext)) {
+        const m = agentLabel.match(/\((\d{3})\)\s*$/);
+        if (m) ext = m[1];
+      }
+      if (!ext || !EXTENSIONS.includes(ext)) {
+        const any3 = Array.from(cells).map(c => norm(c.textContent)).join(' ').match(/\b\d{3}\b/g);
+        const hit  = (any3 || []).find(tok => EXTENSIONS.includes(tok));
+        if (hit) ext = hit;
+      }
+      if (!ext) return; // nothing to fill
+
+      const inb = INBOUND[ext] || { CH:0, TT:'00:00', TT_s:0, ATT:'00:00' };
+      const aht = computeAHT(ext);
+
+      statCodes.forEach(code => {
+        const td = tr.cells[colMap[code]];
+        if (!td) return;
+
+        let val = null;
+        if (code === 'CH')  val = inb.CH;     // inbound only
+        if (code === 'TT')  val = inb.TT;     // inbound only (total talk)
+        if (code === 'ATT') val = inb.ATT;    // inbound only (demo == TT)
+        if (code === 'AHT') val = aht.str;    // in+out
+
+        if (val == null) return;
+        linkify(td, agentLabel, code, val);
+        setSort(td, code, val);
+        wrote++;
+      });
+    });
+
+    return wrote;
+  }
+
+  function attachAgent(doc, table) {
+    const apply = () => {
+      const n = injectAgentTable(doc, table);
+      if (n) LOG('wrote', n, 'cell(s) in', doc.defaultView?.location?.href || '(doc)');
+    };
+
+    // wait for rows to settle once
+    let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
+    const t = doc.defaultView.setInterval(() => {
+      tries++;
+      const rows = table.tBodies[0]?.rows.length || 0;
+      if (rows !== last) { last = rows; lastChange = Date.now(); }
+      if (Date.now() - lastChange > calmMs || tries > 40) {
+        doc.defaultView.clearInterval(t);
+        apply();
+      }
+    }, 150);
+
+    // DataTables redraw hook
+    try {
+      const $ = doc.defaultView.jQuery;
+      if ($ && $.fn && $.fn.DataTable) {
+        $(table).on('draw.dt', apply);
+      }
+    } catch (_) {}
+
+    // also watch body mutations for SPA swaps
+    const tb = table.tBodies[0];
+    if (tb) new doc.defaultView.MutationObserver(apply)
+      .observe(tb, { childList: true, subtree: true });
+
+    // manual trigger if needed
+    doc.defaultView.cvasForce = apply;
+  }
+
+  function bootAgent() {
+    const docs = collectDocs(document);
+    LOG('scanning', docs.length, 'document(s)…');
+    let attached = 0;
+    docs.forEach(doc => {
+      const tables = candidateTables(doc);
+      if (!tables.length) return;
+      tables.forEach(tbl => { attachAgent(doc, tbl); attached++; });
+    });
+    if (!attached) LOG('no candidate tables found (yet)');
+  }
+
+  // initial + retry loop (SPA/late tables)
+  bootAgent();
+  let tries = 0;
+  const again = setInterval(() => {
+    tries++;
+    bootAgent();
+    if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
+  }, 350);
+})();
 
 
 
