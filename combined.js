@@ -6004,70 +6004,66 @@ if (kind === 'cradle') {
       });
     });
 
-    // one delegated handler for all icon clicks
-    modal.addEventListener('click', (e) => {
-      const btn = e.target.closest('.cvas-icon-btn[data-icon]');
-      if (!btn || !modal.contains(btn)) return;
+   modal.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cvas-icon-btn[data-icon]');
+  if (!btn || !modal.contains(btn)) return;
 
-      const kind = btn.dataset.icon;
+  const kind = btn.dataset.icon;
 
-      if (kind === 'download') {
-        console.log('[CV-AS] Download clicked');
-        return;
-      }
+  if (kind === 'notes') {
+    openAgentNotesPopover(btn);
+    return;
+  }
 
-      if (kind === 'notes') {
-        window.openAgentNotesPopover?.(btn);
-        return;
-      }
+  if (kind === 'download') {
+    return;
+  }
 
-      if (kind === 'listen') {
-        const tr   = btn.closest('tr');
-        const next = tr && tr.nextElementSibling;
+  if (kind === 'listen') {
+    const tr   = btn.closest('tr');
+    const next = tr && tr.nextElementSibling;
 
-        if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-          next.remove();
-          btn.setAttribute('aria-expanded', 'false');
-          return;
-        }
+    // collapse if already open
+    if (next && next.classList && next.classList.contains('cvas-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded', 'false');
+      return;
+    }
 
-        modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+    // close any others in this modal
+    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
 
-        const colCount = tr.children.length;
-        const audioTr  = document.createElement('tr');
-        audioTr.className = 'cvas-audio-row';
-        audioTr.innerHTML =
-          '<td colspan="'+colCount+'">' +
-            '<div class="cvas-audio-player">' +
-              '<button class="cvas-audio-play" aria-label="Play"></button>' +
-              '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-              '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-              '<div class="cvas-audio-right">' +
-                '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
-              '</div>' +
-            '</div>' +
-          '</td>';
-        tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-        btn.setAttribute('aria-expanded', 'true');
-        return;
-      }
+    const colCount = tr.children.length;
+    const audioTr  = document.createElement('tr');
+    audioTr.className = 'cvas-audio-row';
 
-      if (kind === 'cradle') {
-        const tr = btn.closest('tr');
-        if (!tr) return;
-        window.cvasOpenCtgModal?.(tr);
-        return;
-      }
-    });
+    audioTr.innerHTML =
+      '<td colspan="' + colCount + '">' +
+        '<div class="cvas-audio-player">' +
+          '<button class="cvas-audio-play" aria-label="Play"></button>' +
+          '<span class="cvas-audio-time">0:00 / 0:00</span>' +
+          '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
+          '<div class="cvas-audio-right">' +
+            '<img class="cvas-audio-icon" src="' + ICONS.listen + '" alt="Listen">' +
+          '</div>' +
+        '</div>' +
+      '</td>';
 
-    // keyboard support for icon buttons
-    modal.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
-        e.preventDefault();
-        e.target.click();
-      }
-    });
-  };
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded', 'true');
+    return;
+  }
+
+  if (kind === 'cradle') {
+    const tr = btn.closest('tr');
+    if (!tr) return;
+    window.cvasOpenCtgModal(tr);
+    return;
+  }
+
+  // Add more `if (kind === 'xyz')` branches as needed...
+});
+
 
   // expose injector for reuse
   window.cvasInjectIcons = cvasInjectIcons;
@@ -6902,6 +6898,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
