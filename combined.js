@@ -5296,10 +5296,9 @@ function cvqsOpenCtgModal(tr) {
 
   const events = cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber);
 
-  const overlay = document.createElement('div');
-  overlay.id = 'cvqs-ctg-overlay';
-  overlay.innerHTML = `
-    overlay.innerHTML = `
+ const overlay = document.createElement('div');
+overlay.id = 'cvqs-ctg-overlay';
+overlay.innerHTML = `
   <div id="cvqs-ctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvqs-ctg-title">
     <div class="cvqs-ctg-header">
       <span id="cvqs-ctg-title" class="cvqs-ctg-title">Cradle To Grave</span>
@@ -5310,12 +5309,12 @@ function cvqsOpenCtgModal(tr) {
         <div class="cvqs-ctg-item">
           <div class="cvqs-ctg-time">
             ${ev.time}
-            ${ev.subtime ? `<div class="cvqs-ctg-subtime">${ev.subtime}</div>` : ''}
+            ${ev.subtime ? `<div class="cvqs-ctg-subtime">${ev.subtime}</div>` : ``}
           </div>
-          <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ''}</div>
+          <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ``}</div>
           <div class="cvqs-ctg-text">
             ${ev.text}
-            ${ev.sub ? `<div class="cvqs-ctg-sub">${ev.sub}</div>` : ''}
+            ${ev.sub ? `<div class="cvqs-ctg-sub">${ev.sub}</div>` : ``}
           </div>
         </div>
       `).join('')}
@@ -5503,6 +5502,7 @@ if (kind === 'cradle') {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
