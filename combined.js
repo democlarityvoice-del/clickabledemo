@@ -5149,89 +5149,132 @@ function insertDateRange(modalEl) {
 
   // === CTG (inbound-only) helpers & styles — scoped to this modal ===
 
-// styles (scoped to the modal so nothing leaks)
+// === CTG (inbound-only) — modal & timeline, scoped to this queue modal ===
+
+// Minimal icons (inline SVG) so we don’t depend on external CSS
+const CVQS_CTG_ICONS = {
+  phone:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#444" stroke-width="1.5"/><path d="M15.2 16.5c-3.7-1.7-6-4-7.7-7.7-.2-.4 0-.9.4-1.1l1.5-.8c.4-.2.9-.1 1.2.3l1 1.7c.2.3.2.7 0 1l-.6.9c.9 1.5 2.2 2.8 3.7 3.7l.9-.6c.3-.2.7-.2 1 0l1.7 1c.4.2.5.8.3 1.2l-.8 1.5c-.2.4-.7.6-1.1.4Z" fill="#444"/></svg>',
+  queue:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#444" stroke-width="1.5"/><circle cx="8" cy="12" r="2" fill="#444"/><circle cx="12" cy="12" r="2" fill="#444"/><circle cx="16" cy="12" r="2" fill="#444"/></svg>',
+  ring:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 16 0" stroke="#444" stroke-width="1.5"/><path d="M7 12a5 5 0 0 1 10 0" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="12" r="1.6" fill="#444"/></svg>',
+  agent:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3" stroke="#444" stroke-width="1.5"/><path d="M6 19c0-3 2.7-5 6-5s6 2 6 5" stroke="#444" stroke-width="1.5"/></svg>',
+  end:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="12" rx="2" stroke="#444" stroke-width="1.5"/><path d="M8 12h8" stroke="#444" stroke-width="1.5"/></svg>',
+  vm:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="12" r="3" stroke="#444" stroke-width="1.5"/><circle cx="16" cy="12" r="3" stroke="#444" stroke-width="1.5"/><path d="M11 15h2" stroke="#444" stroke-width="1.5"/></svg>',
+  speak:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10h6l3-3v10l-3-3H4z" stroke="#444" stroke-width="1.5"/><path d="M17 9v6" stroke="#444" stroke-width="1.5"/></svg>'
+};
+
+// styles for the CTG modal + timeline
 (function cvqsEnsureCtgStyles(){
   if (modal.querySelector('#cvqs-ctg-styles')) return;
   const style = document.createElement('style');
   style.id = 'cvqs-ctg-styles';
   style.textContent = `
-    .cvqs-ctg-row td { background:#f7f9fb; padding:10px 12px; border-top:0; }
-    .cvqs-ctg { display:flex; align-items:center; gap:12px; }
-    .cvqs-ctg-pills { display:flex; flex-wrap:wrap; gap:6px; }
-    .cvqs-pill { padding:2px 8px; border-radius:999px; background:#eaeef2; font:12px/1.8 system-ui, sans-serif; }
-    .cvqs-div { opacity:.6; }
+    #cvqs-ctg-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 999; display:flex; align-items:flex-start; justify-content:center; padding:24px; }
+    #cvqs-ctg-modal { background:#fff; border-radius:8px; width:min(880px, 96%); max-height: calc(100vh - 96px); overflow:auto; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+    .cvqs-ctg-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid #e5e8eb; font:600 16px/1.2 system-ui,sans-serif; }
+    .cvqs-ctg-body { padding:12px 8px 18px 8px; }
+    .cvqs-ctg-item { display:grid; grid-template-columns: 100px 28px 1fr; align-items:flex-start; gap:10px; padding:8px 12px; }
+    .cvqs-ctg-time { color:#333; font-weight:700; }
+    .cvqs-ctg-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+    .cvqs-ctg-text { color:#111; }
+    .cvqs-ctg-sub { color:#777; font-size:12px; margin-top:2px; }
+    .cvqs-ctg-close { background:none; border:0; font-size:20px; line-height:1; cursor:pointer; padding:4px 8px; }
   `;
   modal.appendChild(style);
 })();
 
 function cvqsText(el){ return (el?.textContent || '').replace(/\s+/g,' ').trim(); }
+function cvqsNowParts() {
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  let h = d.getHours(), am = 'AM';
+  if (h >= 12) { am = 'PM'; if (h > 12) h -= 12; }
+  if (h === 0) h = 12;
+  return { t: `${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${am}` };
+}
 
-// Build the CTG steps from the clicked table row
-function cvqsComputeCtgSteps(tr, queueNameOnly){
-  // columns from your THEAD definition:
-  // 0 Time | 1 Caller | 2 Caller# | 3 DNIS | 4 TimeInQ | 5 AgentExt | 6 AgentPhone | 7 AgentName | 8 AgentTime | 9 AgentRelease | 10 QueueRelease | 11 actions
-  const cells = tr.cells;
-  const agentExt   = cvqsText(cells[5]);
-  const agentName  = cvqsText(cells[7]);
-  const queueRel   = cvqsText(cells[10]);
+function cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber) {
+  // read from the row
+  const c = tr.cells;
+  const callerName  = cvqsText(c[1]);
+  const callerNum   = cvqsText(c[2]);
+  const agentExt    = cvqsText(c[5]);
+  const agentName   = cvqsText(c[7]);
+  const queueRel    = cvqsText(c[10]); // e.g., "Orig: Bye", "Term: Bye", "SpeakAccount", "VMail"
 
-  // Map Queue Release Reason → final step(s)
-  let tail;
-  if (/speakaccount/i.test(queueRel)) {
-    // your special case: SpeakAccount → VMail
-    tail = ['SpeakAccount', 'VMail'];
-  } else if (/v ?mail|voice ?mail/i.test(queueRel)) {
-    tail = ['VMail'];
-  } else {
-    tail = ['End'];
+  // compose steps (all inbound)
+  const events = [];
+  const t0 = cvqsNowParts().t;
+
+  // 1) inbound call
+  events.push({ time: t0, icon: 'phone', text: `Inbound call from ${callerNum}${callerName ? ` (${callerName})` : ''}`, sub: 'STIR: Verified' });
+
+  // 2) connected to queue
+  const qLabel = queueNumber ? `${queueNameOnly} ${queueNumber}` : `${queueNameOnly}`;
+  events.push({ time: t0, icon: 'queue', text: `Connected to Call Queue ${qLabel}` });
+
+  // 3) agent ringing
+  if (agentName || agentExt) {
+    const who = agentName ? `${agentName}${agentExt ? ` (${agentExt})` : ''}` : `Agent (${agentExt})`;
+    events.push({ time: t0, icon: 'ring', text: `${who} is ringing` });
+    events.push({ time: t0, icon: 'agent', text: `Connected to ${who}` });
   }
 
-  const agentLabel = agentName
-    ? (agentExt ? `Agent ${agentName} (${agentExt})` : `Agent ${agentName}`)
-    : (agentExt ? `Agent (${agentExt})` : 'Agent');
+  // 4) tail based on release reason
+  if (/speakaccount/i.test(queueRel)) {
+    events.push({ time: t0, icon: 'speak', text: `Routed to SpeakAccount` });
+    events.push({ time: t0, icon: 'vm', text: `Sent to Voicemail` });
+  } else if (/v ?mail|voice ?mail/i.test(queueRel)) {
+    events.push({ time: t0, icon: 'vm', text: `Sent to Voicemail` });
+  } else {
+    events.push({ time: t0, icon: 'end', text: `End` });
+  }
 
-  // All inbound → no direction detection needed
-  return [queueNameOnly || 'Queue', agentLabel, ...tail];
+  return events;
 }
 
-function cvqsRenderCtgPills(steps){
-  const parts = [];
-  steps.forEach((s,i)=>{
-    parts.push(`<span class="cvqs-pill">${s}</span>`);
-    if (i < steps.length - 1) parts.push(`<span class="cvqs-div">→</span>`);
-  });
-  return parts.join('');
-}
+function cvqsOpenCtgModal(tr) {
+  // derive queue name from your title: "<Name> Queue (<num>) …"
+  const titleEl = modal.querySelector('h2');
+  let queueNameOnly = '', queueNumber = '';
+  if (titleEl) {
+    const m = cvqsText(titleEl).match(/^(.+?)\s+Queue\s+\((\d+)\)/i);
+    if (m) { queueNameOnly = m[1]; queueNumber = m[2]; }
+  }
 
-function cvqsBuildCtgRow(tr, queueNameOnly){
-  const colCount = tr.children.length;
-  const steps = cvqsComputeCtgSteps(tr, queueNameOnly);
-  // Reuse your Call History inbound icon class. If that CSS exists globally, it will render 1:1.
-  const inboundIcon = `<span class="cv-icon-inbound" aria-label="Inbound"></span>`;
-  return `
-    <tr class="cvqs-ctg-row">
-      <td colspan="${colCount}">
-        <div class="cvqs-ctg">
-          ${inboundIcon}
-          <div class="cvqs-ctg-pills">${cvqsRenderCtgPills(steps)}</div>
-        </div>
-      </td>
-    </tr>
+  const events = cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber);
+
+  // overlay container
+  const overlay = document.createElement('div');
+  overlay.id = 'cvqs-ctg-overlay';
+  overlay.innerHTML = `
+    <div id="cvqs-ctg-modal" role="dialog" aria-label="Cradle To Grave">
+      <div class="cvqs-ctg-header">
+        <div>Cradle To Grave</div>
+        <button class="cvqs-ctg-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="cvqs-ctg-body">
+        ${events.map(ev => `
+          <div class="cvqs-ctg-item">
+            <div class="cvqs-ctg-time">${ev.time}</div>
+            <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ''}</div>
+            <div class="cvqs-ctg-text">
+              ${ev.text}
+              ${ev.sub ? `<div class="cvqs-ctg-sub">${ev.sub}</div>` : ''}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
   `;
+
+  // close handlers
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', (e) => { if (e.target.id === 'cvqs-ctg-overlay') close(); });
+  overlay.querySelector('.cvqs-ctg-close').addEventListener('click', close);
+
+  modal.appendChild(overlay);
 }
 
-function cvqsToggleCtg(tr, queueNameOnly){
-  const next = tr.nextElementSibling;
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cvqs-ctg-row')) { next.remove(); return; }
-
-  // close any other CTG rows in this modal
-  modal.querySelectorAll('.cvqs-ctg-row').forEach(r => r.remove());
-  // (optional) also close any open audio rows for cleanliness
-  modal.querySelectorAll('.cv-audio-row').forEach(r => r.remove());
-
-  tr.insertAdjacentHTML('afterend', cvqsBuildCtgRow(tr, queueNameOnly));
-}
 
 
   //  Event delegation so Notes (and others) always work after HTML swaps
@@ -5287,17 +5330,8 @@ function cvqsToggleCtg(tr, queueNameOnly){
     if (kind === 'cradle') {
   const tr = btn.closest('tr');
   if (!tr) return;
-
-  // Read the queue name from the modal title (built earlier)
-  // Title looks like: `${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}`
-  const titleEl = modal.querySelector('h2');
-  let queueNameOnlyFromTitle = '';
-  if (titleEl) {
-    const m = cvqsText(titleEl).match(/^(.+?)\s+Queue\s+\(/i);
-    if (m) queueNameOnlyFromTitle = m[1];
-  }
-
-  cvqsToggleCtg(tr, queueNameOnlyFromTitle || queueNameOnly);
+  // open inbound-only CTG timeline modal (like Call History)
+  cvqsOpenCtgModal(tr);
   return;
 }
 
@@ -5390,6 +5424,7 @@ function cvqsToggleCtg(tr, queueNameOnly){
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
