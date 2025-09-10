@@ -5879,26 +5879,17 @@ if (kind === 'cradle') {
 (() => {
   if (!window.CVAS_CONST || !window.CVAS_HELPERS) return;
 
-  const {
-    ICONS,
-    LINK_CLASS,
-  } = window.CVAS_CONST;
+  const { ICONS } = window.CVAS_CONST;
+  const { getStatTitle, getRowsForAgent } = window.CVAS_HELPERS;
 
-  const {
-    getStatTitle,
-    getRowsForAgent,
-  } = window.CVAS_HELPERS;
-
-  // --- 1) Inject icons into the last unlabeled cell (Agent Stats version) ---
+  // 1) Inject icons into the last unlabeled cell (Agent Stats version)
   function cvasInjectIcons(tr) {
-    // Use pre-allocated action cell; fallback to create if missing
     let td = tr.querySelector('td.cvas-action-cell');
     if (!td) {
       td = document.createElement('td');
       td.className = 'cvas-action-cell';
       tr.appendChild(td);
     }
-
     td.innerHTML = `
       <span role="button" tabindex="0" class="cvas-icon-btn" aria-label="Download" title="Download" data-icon="download">
         <img src="${ICONS.download}" alt="">
@@ -5915,13 +5906,7 @@ if (kind === 'cradle') {
     `;
   }
 
-  // --- tiny header + table styles scoped to this modal ---
-(() => {
-  // assumes window.CVAS_CONST + window.CVAS_HELPERS are already defined
-  const { ICONS } = window.CVAS_CONST || {};
-  const { getStatTitle, getRowsForAgent } = window.CVAS_HELPERS || {};
-
-  // --- tiny header + table styles scoped to this modal ---
+  // 2) Modal styles (scoped)
   function ensureCvasModalStyles(root) {
     if (root.querySelector('#cvas-modal-styles')) return;
     const style = document.createElement('style');
@@ -5951,7 +5936,7 @@ if (kind === 'cradle') {
     root.appendChild(style);
   }
 
-  // Build table skeleton by direction
+  // 3) Table shell by direction
   function tableShell(direction, rowsHTML) {
     if (direction === 'outbound') {
       return `
@@ -5966,7 +5951,6 @@ if (kind === 'cradle') {
         </table>
       `;
     }
-    // inbound default
     return `
       <table class="cvas-call-table">
         <thead>
@@ -5982,7 +5966,7 @@ if (kind === 'cradle') {
     `;
   }
 
-  // --- Modal opener for Agent Stats clicks (single source of truth) ---
+  // 4) Modal opener (single delegated handler inside)
   window.openAgentModal = function(agentName, agentExt, code) {
     const direction   = (code === 'AHT') ? 'outbound' : 'inbound';
     const titleMetric = getStatTitle(code);
@@ -6009,33 +5993,30 @@ if (kind === 'cradle') {
       ${tableShell(direction, rowsHTML)}
     `;
 
-    // mount
     const container = window.cvasResolveModalContainer
       ? window.cvasResolveModalContainer()
       : document.body;
     if (getComputedStyle(container).position === 'static') container.style.position = 'relative';
     container.appendChild(modal);
 
-    // date line + close wiring (your exposed helpers)
     window.cvasInsertDateRange?.(modal);
     window.cvasWireBackOrClose?.(modal);
 
-    // row icons
-    modal.querySelectorAll('tbody tr').forEach(tr => window.cvasInjectIcons?.(tr));
+    // inject row icons
+    modal.querySelectorAll('tbody tr').forEach(cvasInjectIcons);
 
     // close button
     modal.querySelector('.cvas-close')?.addEventListener('click', () => modal.remove());
 
     // search
-    const searchInput = modal.querySelector('input[placeholder="Search calls"]');
-    searchInput?.addEventListener('input', (e) => {
+    modal.querySelector('input[placeholder="Search calls"]')?.addEventListener('input', (e) => {
       const q = e.target.value.trim().toLowerCase();
       modal.querySelectorAll('tbody tr').forEach(tr => {
         tr.style.display = tr.textContent.toLowerCase().includes(q) ? '' : 'none';
       });
     });
 
-    // --- SINGLE delegated handler for all icon actions ---
+    // one delegated handler for all icon clicks
     modal.addEventListener('click', (e) => {
       const btn = e.target.closest('.cvas-icon-btn[data-icon]');
       if (!btn || !modal.contains(btn)) return;
@@ -6056,14 +6037,12 @@ if (kind === 'cradle') {
         const tr   = btn.closest('tr');
         const next = tr && tr.nextElementSibling;
 
-        // collapse if already open
         if (next && next.classList && next.classList.contains('cvas-audio-row')) {
           next.remove();
-          btn.setAttribute('aria-expanded','false');
+          btn.setAttribute('aria-expanded', 'false');
           return;
         }
 
-        // close any others
         modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
 
         const colCount = tr.children.length;
@@ -6076,12 +6055,12 @@ if (kind === 'cradle') {
               '<span class="cvas-audio-time">0:00 / 0:00</span>' +
               '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
               '<div class="cvas-audio-right">' +
-                '<img class="cvas-audio-icon" src="'+(ICONS?.listen || '')+'" alt="Listen">' +
+                '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
               '</div>' +
             '</div>' +
           '</td>';
         tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-        btn.setAttribute('aria-expanded','true');
+        btn.setAttribute('aria-expanded', 'true');
         return;
       }
 
@@ -6093,7 +6072,7 @@ if (kind === 'cradle') {
       }
     });
 
-    // keyboard activate for focused icon buttons
+    // keyboard support for icon buttons
     modal.addEventListener('keydown', (e) => {
       if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
         e.preventDefault();
@@ -6101,6 +6080,9 @@ if (kind === 'cradle') {
       }
     });
   };
+
+  // expose injector for reuse
+  window.cvasInjectIcons = cvasInjectIcons;
 })();
 
 
@@ -6932,6 +6914,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
