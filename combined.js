@@ -6701,26 +6701,6 @@ container.appendChild(modal);
 
 
 
-// === CRADLE TO GRAVE (opens overlay timeline) ===
-if (kind === 'cradle') {
-  const tr = btn.closest('tr');
-  if (!tr) return;
-  window.cvasOpenCtgModal(tr);
-  return;
-}
-
-// (notes/download branches handled above if you kept them)
-
-// === keyboard: Space/Enter activates focused icon buttons ===
-})();
-
-modal.addEventListener('keydown', (e) => {
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
-    e.preventDefault();
-    e.target.click();
-  }
-});
-
 /* ==== CV Agent Stats: injector / attach / boot ==== */
 (() => {
   if (!window.CVAS_CONST || !window.CVAS_HELPERS) return;
@@ -6868,6 +6848,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
