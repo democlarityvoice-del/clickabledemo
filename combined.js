@@ -6125,18 +6125,21 @@ modal.addEventListener('click', (e) => {
 
     });
 
-    // keyboard activate
-    modal.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
-        e.preventDefault();
-        e.target.click();
-      }
-    });
-  };
+ // keyboard activate
+modal.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.key === ' ')
+      && e.target.matches('.cvas-icon-btn[data-icon]')) {
+    e.preventDefault();
+    e.target.click();
+  }
+}); // <-- closes the keydown listener
 
-  // expose injector in case you need it elsewhere
-  window.cvasInjectIcons = cvasInjectIcons;
-})();
+}; // <-- closes window.openAgentModal (was `});`)
+ 
+// expose injector in case you need it elsewhere
+window.cvasInjectIcons = cvasInjectIcons;
+})(); // <-- closes the IIFE
+
 
 /* ==== agentNotesPopover (anchored dropdown, unique IDs; Agent Stats scope) ==== */
 (() => {
@@ -6971,6 +6974,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
