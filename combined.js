@@ -6700,41 +6700,6 @@ container.appendChild(modal);
 })();
 
 
-// === LISTEN (toggle inline audio row) ===
-if (kind === 'listen') {
-  const tr   = btn.closest('tr');
-  const next = tr && tr.nextElementSibling;
-
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded', 'false');
-    return;
-  }
-
-  // close any others in this modal
-  modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
-
-  const colCount = tr.children.length;
-  const audioTr  = document.createElement('tr');
-  audioTr.className = 'cvas-audio-row';
-
-  audioTr.innerHTML =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cvas-audio-player">' +
-        '<button class="cvas-audio-play" aria-label="Play"></button>' +
-        '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-        '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cvas-audio-right">' +
-          '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
-        '</div>' +
-      '</div>' +
-    '</td>';
-
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded', 'true');
-  return;
-}
 
 // === CRADLE TO GRAVE (opens overlay timeline) ===
 if (kind === 'cradle') {
@@ -6903,6 +6868,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
