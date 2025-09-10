@@ -5299,32 +5299,58 @@ function cvqsOpenCtgModal(tr) {
   const overlay = document.createElement('div');
   overlay.id = 'cvqs-ctg-overlay';
   overlay.innerHTML = `
-    <div id="cvqs-ctg-modal" role="dialog" aria-label="Cradle To Grave">
-      <div class="cvqs-ctg-header">
-        <div>Cradle To Grave</div>
-        <button class="cvqs-ctg-close" aria-label="Close">&times;</button>
-      </div>
-      <div class="cvqs-ctg-body">
-        ${events.map(ev => `
-          <div class="cvqs-ctg-item">
-            <div class="cvqs-ctg-time">
-              ${ev.time}
-              ${ev.subtime ? `<div class="cvqs-ctg-subtime">${ev.subtime}</div>` : ''}
-            </div>
-            <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ''}</div>
-            <div class="cvqs-ctg-text">
-              ${ev.text}
-              ${ev.sub ? `<div class="cvqs-ctg-sub">${ev.sub}</div>` : ''}
-            </div>
-          </div>
-        `).join('')}
-      </div>
+    overlay.innerHTML = `
+  <div id="cvqs-ctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvqs-ctg-title">
+    <div class="cvqs-ctg-header">
+      <span id="cvqs-ctg-title" class="cvqs-ctg-title">Cradle To Grave</span>
+      <button class="cvqs-ctg-close" aria-label="Close">&times;</button>
     </div>
-  `;
+    <div class="cvqs-ctg-body">
+      ${events.map(ev => `
+        <div class="cvqs-ctg-item">
+          <div class="cvqs-ctg-time">
+            ${ev.time}
+            ${ev.subtime ? `<div class="cvqs-ctg-subtime">${ev.subtime}</div>` : ''}
+          </div>
+          <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ''}</div>
+          <div class="cvqs-ctg-text">
+            ${ev.text}
+            ${ev.sub ? `<div class="cvqs-ctg-sub">${ev.sub}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
+    </div>
+  </div>
+`;
 
+
+(function cvqsHeaderStyles(){
+  if (document.getElementById('cvqs-ctg-header-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'cvqs-ctg-header-styles';
+  s.textContent = `
+    /* CTG modal container already exists; this just styles the header like Call History */
+    #cvqs-ctg-modal { background:#fff; border-radius:8px; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+    .cvqs-ctg-header {
+      display:flex; justify-content:space-between; align-items:center;
+      padding:10px 16px; border-bottom:1px solid #ddd; background:#fff;
+      position:sticky; top:0; z-index:2; /* keeps header visible while scrolling */
+    }
+    .cvqs-ctg-title { font-weight:700; font-size:16px; color:#000; letter-spacing:.2px; }
+    .cvqs-ctg-close {
+      background:transparent; border:0; font-size:20px; line-height:1;
+      cursor:pointer; padding:4px 8px; opacity:.7;
+    }
+    .cvqs-ctg-close:hover { opacity:1; }
+  `;
+  document.head.appendChild(s);
+})();
+    
+    
   const close = () => overlay.remove();
   overlay.addEventListener('click', (e) => { if (e.target.id === 'cvqs-ctg-overlay') close(); });
   overlay.querySelector('.cvqs-ctg-close').addEventListener('click', close);
+
 
   modal.appendChild(overlay);
 }
@@ -5477,6 +5503,7 @@ if (kind === 'cradle') {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
