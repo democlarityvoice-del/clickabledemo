@@ -5417,19 +5417,7 @@ if (kind === 'cradle') {
 
 
 
-  // (Optional) keyboard: make Space/Enter activate the buttons
-  modal.addEventListener('keydown', (e) => {
-    if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvqs-icon-btn[data-icon]')) {
-      e.preventDefault();
-      e.target.click();
-    }
-  });
-
-
 } // ← closes openQueueModal function
-
-
-
 
   function injectTable(doc, table) {
     const { colMap, nameIdx } = mapHeaders(table);
@@ -6914,6 +6902,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
