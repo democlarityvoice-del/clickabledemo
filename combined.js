@@ -5954,90 +5954,76 @@ if (kind === 'cradle') {
       });
     });
 
-    // delegate icon actions (inside openAgentModal after modal is built)
+// === ICON BUTTON LOGIC (Agent Stats) ===
 modal.addEventListener('click', (e) => {
   const btn = e.target.closest('.cvas-icon-btn[data-icon]');
   if (!btn || !modal.contains(btn)) return;
 
   const kind = btn.dataset.icon;
+  const tr = btn.closest('tr');
+  if (!tr) return;
 
+  // === LISTEN (toggle inline audio row) ===
+  if (kind === 'listen') {
+    const next = tr.nextElementSibling;
+
+    // Collapse if already open
+    if (next?.classList?.contains('cvas-audio-row')) {
+      next.remove();
+      btn.setAttribute('aria-expanded', 'false');
+      return;
+    }
+
+    // Close any others in this modal
+    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
+
+    const colCount = tr.children.length;
+    const audioTr = document.createElement('tr');
+    audioTr.className = 'cvas-audio-row';
+    audioTr.innerHTML = `
+      <td colspan="${colCount}">
+        <div class="cvas-audio-player">
+          <button class="cvas-audio-play" aria-label="Play"></button>
+          <span class="cvas-audio-time">0:00 / 0:00</span>
+          <div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>
+          <div class="cvas-audio-right">
+            <img class="cvas-audio-icon" src="${ICONS.listen}" alt="Listen">
+          </div>
+        </div>
+      </td>
+    `;
+    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
+    btn.setAttribute('aria-expanded', 'true');
+    return;
+  }
+
+  // === CRADLE TO GRAVE (CTG overlay) ===
+  if (kind === 'cradle') {
+    window.cvasOpenCtgModal?.(tr);
+    return;
+  }
+
+  // === NOTES (popover) ===
   if (kind === 'notes') {
     window.openAgentNotesPopover?.(btn);
     return;
   }
 
+  // === DOWNLOAD (stubbed) ===
   if (kind === 'download') {
     console.log('[CV-AS] Download clicked');
     return;
   }
+});
 
-  if (kind === 'listen') {
-    const tr   = btn.closest('tr');
-    const next = tr && tr.nextElementSibling;
-
-    // collapse if already open
-    if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-      next.remove();
-      btn.setAttribute('aria-expanded','false');
-      return;
-    }
-
-    // close any others in this modal
-    modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
-
-    const colCount = tr.children.length;
-    const audioTr  = document.createElement('tr');
-    audioTr.className = 'cvas-audio-row';
-    audioTr.innerHTML =
-      '<td colspan="'+colCount+'">' +
-        '<div class="cvas-audio-player">' +
-          '<button class="cvas-audio-play" aria-label="Play"></button>' +
-          '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-          '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-          '<div class="cvas-audio-right">' +
-            '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
-          '</div>' +
-        '</div>' +
-      '</td>';
-    tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-    btn.setAttribute('aria-expanded','true');
-    return;
-  }
-
-  if (kind === 'cradle') {
-    const tr = btn.closest('tr');
-    if (!tr) return;
-    window.cvasOpenCtgModal?.(tr);
-    return;
+// keyboard activate
+modal.addEventListener('keydown', (e) => {
+  if ((e.key === 'Enter' || e.code === 'Space') && e.target.matches('.cvas-icon-btn[data-icon]')) {
+    e.preventDefault();
+    e.target.click();
   }
 });
 
-
-        // optional: you can call your CTG overlay here, e.g., window.cvasOpenCtgModal(tr, agentName, agentExt);
-        console.log('[CV-AS] CTG clicked for', { agentName, agentExt });
-        return;
-      }
-
-      if (kind === 'download') {
-        console.log('[CV-AS] Download clicked');
-        return;
-      }
-
-      if (kind === 'notes') {
-          openAgentNotesPopover(btn);
-          return;
-      }
-
-    });
-
-    // keyboard activate
-    modal.addEventListener('keydown', (e) => {
-      if ((e.key === 'Enter' || e.code === 'Space') && e.target.matches('.cvas-icon-btn[data-icon]')) {
-        e.preventDefault();
-        e.target.click();
-      }
-    });
-  };
 
   // expose injector in case you need it elsewhere
   window.cvasInjectIcons = cvasInjectIcons;
@@ -6397,9 +6383,6 @@ function cvasResolveModalContainer() {
   return body;
 }
 
-// --- replace your old mount code with this ---
-const container = cvasResolveModalContainer();
-container.appendChild(modal);
 
 
 /* ==== CV Agent Stats: date range helper + row icon injection ==== */
@@ -6673,61 +6656,6 @@ container.appendChild(modal);
 })();
 
 
-// === LISTEN (toggle inline audio row) ===
-if (kind === 'listen') {
-  const tr   = btn.closest('tr');
-  const next = tr && tr.nextElementSibling;
-
-  // collapse if already open
-  if (next && next.classList && next.classList.contains('cvas-audio-row')) {
-    next.remove();
-    btn.setAttribute('aria-expanded', 'false');
-    return;
-  }
-
-  // close any others in this modal
-  modal.querySelectorAll('.cvas-audio-row').forEach(r => r.remove());
-
-  const colCount = tr.children.length;
-  const audioTr  = document.createElement('tr');
-  audioTr.className = 'cvas-audio-row';
-
-  audioTr.innerHTML =
-    '<td colspan="'+colCount+'">' +
-      '<div class="cvas-audio-player">' +
-        '<button class="cvas-audio-play" aria-label="Play"></button>' +
-        '<span class="cvas-audio-time">0:00 / 0:00</span>' +
-        '<div class="cvas-audio-bar"><div class="cvas-audio-bar-fill" style="width:0%"></div></div>' +
-        '<div class="cvas-audio-right">' +
-          '<img class="cvas-audio-icon" src="'+ICONS.listen+'" alt="Listen">' +
-        '</div>' +
-      '</div>' +
-    '</td>';
-
-  tr.parentNode.insertBefore(audioTr, tr.nextSibling);
-  btn.setAttribute('aria-expanded', 'true');
-  return;
-}
-
-// === CRADLE TO GRAVE (opens overlay timeline) ===
-if (kind === 'cradle') {
-  const tr = btn.closest('tr');
-  if (!tr) return;
-  window.cvasOpenCtgModal(tr);
-  return;
-}
-
-// (notes/download branches handled above if you kept them)
-
-// === keyboard: Space/Enter activates focused icon buttons ===
-})();
-
-modal.addEventListener('keydown', (e) => {
-  if ((e.key === 'Enter' || e.key === ' ') && e.target.matches('.cvas-icon-btn[data-icon]')) {
-    e.preventDefault();
-    e.target.click();
-  }
-});
 
 /* ==== CV Agent Stats: injector / attach / boot ==== */
 (() => {
@@ -6876,6 +6804,7 @@ modal.addEventListener('keydown', (e) => {
     if (tries >= (MAX_SCAN_TRIES || 20)) clearInterval(again);
   }, 350);
 })();
+
 
 
 
