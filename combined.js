@@ -4827,7 +4827,7 @@ function openQueueNotesPopover(anchorEl, initial) {
       </select>
 
       <label for="qn2-text" style="justify-self:end;font-weight:600">Notes</label>
-      <textarea id="qn2-text" rows="4" style="width:100%;padding:2px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+      <textarea id="qn2-text" rows="4" style="width:100%;padding:2px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
       <button id="qn2-cancel" class="cv-btn">Cancel</button>
@@ -5147,7 +5147,92 @@ function insertDateRange(modalEl) {
   // inject icons into each row
   modal.querySelectorAll('tbody tr').forEach(injectIcons);
 
-  
+  // === CTG (inbound-only) helpers & styles — scoped to this modal ===
+
+// styles (scoped to the modal so nothing leaks)
+(function cvqsEnsureCtgStyles(){
+  if (modal.querySelector('#cvqs-ctg-styles')) return;
+  const style = document.createElement('style');
+  style.id = 'cvqs-ctg-styles';
+  style.textContent = `
+    .cvqs-ctg-row td { background:#f7f9fb; padding:10px 12px; border-top:0; }
+    .cvqs-ctg { display:flex; align-items:center; gap:12px; }
+    .cvqs-ctg-pills { display:flex; flex-wrap:wrap; gap:6px; }
+    .cvqs-pill { padding:2px 8px; border-radius:999px; background:#eaeef2; font:12px/1.8 system-ui, sans-serif; }
+    .cvqs-div { opacity:.6; }
+  `;
+  modal.appendChild(style);
+})();
+
+function cvqsText(el){ return (el?.textContent || '').replace(/\s+/g,' ').trim(); }
+
+// Build the CTG steps from the clicked table row
+function cvqsComputeCtgSteps(tr, queueNameOnly){
+  // columns from your THEAD definition:
+  // 0 Time | 1 Caller | 2 Caller# | 3 DNIS | 4 TimeInQ | 5 AgentExt | 6 AgentPhone | 7 AgentName | 8 AgentTime | 9 AgentRelease | 10 QueueRelease | 11 actions
+  const cells = tr.cells;
+  const agentExt   = cvqsText(cells[5]);
+  const agentName  = cvqsText(cells[7]);
+  const queueRel   = cvqsText(cells[10]);
+
+  // Map Queue Release Reason → final step(s)
+  let tail;
+  if (/speakaccount/i.test(queueRel)) {
+    // your special case: SpeakAccount → VMail
+    tail = ['SpeakAccount', 'VMail'];
+  } else if (/v ?mail|voice ?mail/i.test(queueRel)) {
+    tail = ['VMail'];
+  } else {
+    tail = ['End'];
+  }
+
+  const agentLabel = agentName
+    ? (agentExt ? `Agent ${agentName} (${agentExt})` : `Agent ${agentName}`)
+    : (agentExt ? `Agent (${agentExt})` : 'Agent');
+
+  // All inbound → no direction detection needed
+  return [queueNameOnly || 'Queue', agentLabel, ...tail];
+}
+
+function cvqsRenderCtgPills(steps){
+  const parts = [];
+  steps.forEach((s,i)=>{
+    parts.push(`<span class="cvqs-pill">${s}</span>`);
+    if (i < steps.length - 1) parts.push(`<span class="cvqs-div">→</span>`);
+  });
+  return parts.join('');
+}
+
+function cvqsBuildCtgRow(tr, queueNameOnly){
+  const colCount = tr.children.length;
+  const steps = cvqsComputeCtgSteps(tr, queueNameOnly);
+  // Reuse your Call History inbound icon class. If that CSS exists globally, it will render 1:1.
+  const inboundIcon = `<span class="cv-icon-inbound" aria-label="Inbound"></span>`;
+  return `
+    <tr class="cvqs-ctg-row">
+      <td colspan="${colCount}">
+        <div class="cvqs-ctg">
+          ${inboundIcon}
+          <div class="cvqs-ctg-pills">${cvqsRenderCtgPills(steps)}</div>
+        </div>
+      </td>
+    </tr>
+  `;
+}
+
+function cvqsToggleCtg(tr, queueNameOnly){
+  const next = tr.nextElementSibling;
+  // collapse if already open
+  if (next && next.classList && next.classList.contains('cvqs-ctg-row')) { next.remove(); return; }
+
+  // close any other CTG rows in this modal
+  modal.querySelectorAll('.cvqs-ctg-row').forEach(r => r.remove());
+  // (optional) also close any open audio rows for cleanliness
+  modal.querySelectorAll('.cv-audio-row').forEach(r => r.remove());
+
+  tr.insertAdjacentHTML('afterend', cvqsBuildCtgRow(tr, queueNameOnly));
+}
+
 
   //  Event delegation so Notes (and others) always work after HTML swaps
   modal.addEventListener('click', (e) => {
@@ -5200,8 +5285,22 @@ function insertDateRange(modalEl) {
     }
 
     if (kind === 'cradle') {
-      return;
-    }
+  const tr = btn.closest('tr');
+  if (!tr) return;
+
+  // Read the queue name from the modal title (built earlier)
+  // Title looks like: `${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}`
+  const titleEl = modal.querySelector('h2');
+  let queueNameOnlyFromTitle = '';
+  if (titleEl) {
+    const m = cvqsText(titleEl).match(/^(.+?)\s+Queue\s+\(/i);
+    if (m) queueNameOnlyFromTitle = m[1];
+  }
+
+  cvqsToggleCtg(tr, queueNameOnlyFromTitle || queueNameOnly);
+  return;
+}
+
   });
 
 
@@ -5291,6 +5390,7 @@ function insertDateRange(modalEl) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
