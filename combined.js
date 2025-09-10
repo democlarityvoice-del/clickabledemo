@@ -5151,15 +5151,22 @@ function insertDateRange(modalEl) {
 
 // === CTG (inbound-only) — modal & timeline, scoped to this queue modal ===
 
-// Minimal icons (inline SVG) so we don’t depend on external CSS
+// Icon URLs (from your message)
+const ICON_PHONE     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+const ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+const ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+const ICON_DIAL      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+const ICON_ELLIPS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+const ICON_AGENTRING = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg';
+
+// Map keys to <img> tags (keeps render code simple)
 const CVQS_CTG_ICONS = {
-  phone:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="#444" stroke-width="1.5"/><path d="M15.2 16.5c-3.7-1.7-6-4-7.7-7.7-.2-.4 0-.9.4-1.1l1.5-.8c.4-.2.9-.1 1.2.3l1 1.7c.2.3.2.7 0 1l-.6.9c.9 1.5 2.2 2.8 3.7 3.7l.9-.6c.3-.2.7-.2 1 0l1.7 1c.4.2.5.8.3 1.2l-.8 1.5c-.2.4-.7.6-1.1.4Z" fill="#444"/></svg>',
-  queue:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2" stroke="#444" stroke-width="1.5"/><circle cx="8" cy="12" r="2" fill="#444"/><circle cx="12" cy="12" r="2" fill="#444"/><circle cx="16" cy="12" r="2" fill="#444"/></svg>',
-  ring:   '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 0 1 16 0" stroke="#444" stroke-width="1.5"/><path d="M7 12a5 5 0 0 1 10 0" stroke="#444" stroke-width="1.5"/><circle cx="12" cy="12" r="1.6" fill="#444"/></svg>',
-  agent:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3" stroke="#444" stroke-width="1.5"/><path d="M6 19c0-3 2.7-5 6-5s6 2 6 5" stroke="#444" stroke-width="1.5"/></svg>',
-  end:    '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><rect x="4" y="6" width="16" height="12" rx="2" stroke="#444" stroke-width="1.5"/><path d="M8 12h8" stroke="#444" stroke-width="1.5"/></svg>',
-  vm:     '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><circle cx="8" cy="12" r="3" stroke="#444" stroke-width="1.5"/><circle cx="16" cy="12" r="3" stroke="#444" stroke-width="1.5"/><path d="M11 15h2" stroke="#444" stroke-width="1.5"/></svg>',
-  speak:  '<svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M4 10h6l3-3v10l-3-3H4z" stroke="#444" stroke-width="1.5"/><path d="M17 9v6" stroke="#444" stroke-width="1.5"/></svg>'
+  phone:     `<img src="${ICON_PHONE}"     alt="" />`,
+  answer:    `<img src="${ICON_ANSWER}"    alt="" />`,
+  hang:      `<img src="${ICON_HANG}"      alt="" />`,
+  dial:      `<img src="${ICON_DIAL}"      alt="" />`,
+  ellipsis:  `<img src="${ICON_ELLIPS}"    alt="" />`,
+  agentring: `<img src="${ICON_AGENTRING}" alt="" />`,
 };
 
 // styles for the CTG modal + timeline
@@ -5168,13 +5175,15 @@ const CVQS_CTG_ICONS = {
   const style = document.createElement('style');
   style.id = 'cvqs-ctg-styles';
   style.textContent = `
-    #cvqs-ctg-overlay { position: absolute; inset: 0; background: rgba(0,0,0,.35); z-index: 999; display:flex; align-items:flex-start; justify-content:center; padding:24px; }
-    #cvqs-ctg-modal { background:#fff; border-radius:8px; width:min(880px, 96%); max-height: calc(100vh - 96px); overflow:auto; box-shadow:0 16px 40px rgba(0,0,0,.25); }
+    #cvqs-ctg-overlay { position:absolute; inset:0; background:rgba(0,0,0,.35); z-index:999; display:flex; align-items:flex-start; justify-content:center; padding:24px; }
+    #cvqs-ctg-modal { background:#fff; border-radius:8px; width:min(880px,96%); max-height:calc(100vh - 96px); overflow:auto; box-shadow:0 16px 40px rgba(0,0,0,.25); }
     .cvqs-ctg-header { display:flex; align-items:center; justify-content:space-between; padding:16px 18px; border-bottom:1px solid #e5e8eb; font:600 16px/1.2 system-ui,sans-serif; }
     .cvqs-ctg-body { padding:12px 8px 18px 8px; }
     .cvqs-ctg-item { display:grid; grid-template-columns: 100px 28px 1fr; align-items:flex-start; gap:10px; padding:8px 12px; }
-    .cvqs-ctg-time { color:#333; font-weight:700; }
+    .cvqs-ctg-time { color:#111; font-weight:700; }
+    .cvqs-ctg-subtime { color:#777; font-size:12px; margin-top:2px; }
     .cvqs-ctg-icon { width:20px; height:20px; display:flex; align-items:center; justify-content:center; }
+    .cvqs-ctg-icon img { width:18px; height:18px; background:#f2f3f5; border:1px solid #e1e4e8; border-radius:50%; padding:3px; box-sizing:content-box; }
     .cvqs-ctg-text { color:#111; }
     .cvqs-ctg-sub { color:#777; font-size:12px; margin-top:2px; }
     .cvqs-ctg-close { background:none; border:0; font-size:20px; line-height:1; cursor:pointer; padding:4px 8px; }
@@ -5183,17 +5192,26 @@ const CVQS_CTG_ICONS = {
 })();
 
 function cvqsText(el){ return (el?.textContent || '').replace(/\s+/g,' ').trim(); }
-function cvqsNowParts() {
-  const d = new Date();
-  const pad = n => String(n).padStart(2, '0');
-  let h = d.getHours(), am = 'AM';
+
+function cvqsTimeParts(date) {
+  const pad = n => String(n).padStart(2,'0');
+  let h = date.getHours(), am = 'AM';
   if (h >= 12) { am = 'PM'; if (h > 12) h -= 12; }
   if (h === 0) h = 12;
-  return { t: `${h}:${pad(d.getMinutes())}:${pad(d.getSeconds())} ${am}` };
+  return `${h}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${am}`;
 }
 
+// Utility to build a timeline that “ticks” like your screenshot
+function cvqsTimelineBuilder(start=new Date()) {
+  let t = new Date(start.getTime());
+  let ms = 0;
+  const bump = inc => { ms += inc; t = new Date(start.getTime() + ms); };
+  const stamp = () => ({ time: cvqsTimeParts(t), subtime: ms ? `+${ms}ms` : '' });
+  return { bump, stamp };
+}
+
+// Build events from a row (inbound only). Adds AA+DTMF for “Main Routing”, then queue, then ring cascade, answer, hang.
 function cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber) {
-  // read from the row
   const c = tr.cells;
   const callerName  = cvqsText(c[1]);
   const callerNum   = cvqsText(c[2]);
@@ -5201,39 +5219,74 @@ function cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber) {
   const agentName   = cvqsText(c[7]);
   const queueRel    = cvqsText(c[10]); // e.g., "Orig: Bye", "Term: Bye", "SpeakAccount", "VMail"
 
-  // compose steps (all inbound)
+  const { bump, stamp } = cvqsTimelineBuilder(new Date());
+
   const events = [];
-  const t0 = cvqsNowParts().t;
 
-  // 1) inbound call
-  events.push({ time: t0, icon: 'phone', text: `Inbound call from ${callerNum}${callerName ? ` (${callerName})` : ''}`, sub: 'STIR: Verified' });
+  // 1) Inbound call
+  events.push({ ...stamp(), icon:'phone', text:`Inbound call from ${callerNum}${callerName ? ` (${callerName})` : ''}`, sub:'STIR: Verified' });
+  bump(2);
 
-  // 2) connected to queue
-  const qLabel = queueNumber ? `${queueNameOnly} ${queueNumber}` : `${queueNameOnly}`;
-  events.push({ time: t0, icon: 'queue', text: `Connected to Call Queue ${qLabel}` });
+  // Optional “current timeframe” line (as in your screenshot)
+  events.push({ ...stamp(), icon:'ellipsis', text:'The currently active time frame is Daytime' });
+  bump(135);
 
-  // 3) agent ringing
-  if (agentName || agentExt) {
-    const who = agentName ? `${agentName}${agentExt ? ` (${agentExt})` : ''}` : `Agent (${agentExt})`;
-    events.push({ time: t0, icon: 'ring', text: `${who} is ringing` });
-    events.push({ time: t0, icon: 'agent', text: `Connected to ${who}` });
+  // 2) Auto Attendant + selection for Main Routing (matches your example)
+  if (/main routing/i.test(queueNameOnly || '')) {
+    events.push({ ...stamp(), icon:'dial', text:'Connected to Auto Attendant Daytime 700' });
+    bump(23);
+    events.push({ ...stamp(), icon:'ellipsis', text:'Selected 1' });
+    bump(14);
+    events.push({ ...stamp(), icon:'ellipsis', text:'The currently active time frame is Daytime' });
+    bump(1000); // small pause before queue connect
   }
 
-  // 4) tail based on release reason
+  // 3) Connected to Queue
+  const qLabel = queueNumber ? `${queueNameOnly} ${queueNumber}` : `${queueNameOnly || 'Queue'}`;
+  events.push({ ...stamp(), icon:'ellipsis', text:`Connected to Call Queue ${qLabel}` });
+  bump(286);
+
+  // 4) Ring cascade (use the table’s known agent plus a familiar list to mimic your order)
+  const ringRoster = [
+    'Mike Johnson (200)','Cathy Thomas (201)','Jake Lee (202)','Bob Andersen (203)','Brittany Lawrence (204)',
+    'Alex Roberts (205)','Mark Sanchez (206)','John Smith (207)','Emily Johnson (208)','Michael Williams (209)','Jessica Brown (210)'
+  ];
+
+  // Put the row’s agent first if present; then add the rest without duplicates
+  const primary = agentName ? `${agentName}${agentExt ? ` (${agentExt})` : ''}` : (agentExt ? `Agent (${agentExt})` : '');
+  const seen = new Set();
+  const cascade = [];
+  if (primary) { cascade.push(primary); seen.add(primary.toLowerCase()); }
+  ringRoster.forEach(n => { if (!seen.has(n.toLowerCase())) cascade.push(n); });
+
+  // Emit a few “is ringing” lines (you can increase/decrease count easily)
+  const RING_COUNT = Math.min(cascade.length, 11); // matches your screenshot depth
+  for (let i=0; i<RING_COUNT; i++) {
+    events.push({ ...stamp(), icon:'agentring', text:`${cascade[i]} is ringing` });
+    bump(286 + (i*143)); // ramps a little like your example
+  }
+
+  // 5) Answer + hang up tail (use release reason to decide tail)
+  events.push({ ...stamp(), icon:'answer', text:'Call answered by Agent' });
+  // Simulate talk time ~ 2 minutes before hangup
+  bump(120000);
+
   if (/speakaccount/i.test(queueRel)) {
-    events.push({ time: t0, icon: 'speak', text: `Routed to SpeakAccount` });
-    events.push({ time: t0, icon: 'vm', text: `Sent to Voicemail` });
+    events.push({ ...stamp(), icon:'ellipsis', text:'Routed to SpeakAccount' });
+    bump(500);
+    events.push({ ...stamp(), icon:'ellipsis', text:'Sent to Voicemail' });
   } else if (/v ?mail|voice ?mail/i.test(queueRel)) {
-    events.push({ time: t0, icon: 'vm', text: `Sent to Voicemail` });
+    events.push({ ...stamp(), icon:'ellipsis', text:'Sent to Voicemail' });
   } else {
-    events.push({ time: t0, icon: 'end', text: `End` });
+    events.push({ ...stamp(), icon:'hang', text:`${callerNum} hung up` });
   }
 
   return events;
 }
 
+// Open the overlay modal and render the timeline
 function cvqsOpenCtgModal(tr) {
-  // derive queue name from your title: "<Name> Queue (<num>) …"
+  // derive queue name & number from your <h2>: "<Name> Queue (<num>) ..."
   const titleEl = modal.querySelector('h2');
   let queueNameOnly = '', queueNumber = '';
   if (titleEl) {
@@ -5243,7 +5296,6 @@ function cvqsOpenCtgModal(tr) {
 
   const events = cvqsBuildCtgEvents(tr, queueNameOnly, queueNumber);
 
-  // overlay container
   const overlay = document.createElement('div');
   overlay.id = 'cvqs-ctg-overlay';
   overlay.innerHTML = `
@@ -5255,7 +5307,10 @@ function cvqsOpenCtgModal(tr) {
       <div class="cvqs-ctg-body">
         ${events.map(ev => `
           <div class="cvqs-ctg-item">
-            <div class="cvqs-ctg-time">${ev.time}</div>
+            <div class="cvqs-ctg-time">
+              ${ev.time}
+              ${ev.subtime ? `<div class="cvqs-ctg-subtime">${ev.subtime}</div>` : ''}
+            </div>
             <div class="cvqs-ctg-icon">${CVQS_CTG_ICONS[ev.icon] || ''}</div>
             <div class="cvqs-ctg-text">
               ${ev.text}
@@ -5267,14 +5322,12 @@ function cvqsOpenCtgModal(tr) {
     </div>
   `;
 
-  // close handlers
   const close = () => overlay.remove();
   overlay.addEventListener('click', (e) => { if (e.target.id === 'cvqs-ctg-overlay') close(); });
   overlay.querySelector('.cvqs-ctg-close').addEventListener('click', close);
 
   modal.appendChild(overlay);
 }
-
 
 
   //  Event delegation so Notes (and others) always work after HTML swaps
@@ -5327,13 +5380,13 @@ function cvqsOpenCtgModal(tr) {
       return;
     }
 
-    if (kind === 'cradle') {
+if (kind === 'cradle') {
   const tr = btn.closest('tr');
   if (!tr) return;
-  // open inbound-only CTG timeline modal (like Call History)
   cvqsOpenCtgModal(tr);
   return;
 }
+
 
   });
 
@@ -5424,6 +5477,7 @@ function cvqsOpenCtgModal(tr) {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
