@@ -4931,6 +4931,221 @@ pop.style.visibility = 'visible';
 }
 // ==== /queueNotesPopover ====
 
+// ===== /continue modal =====
+const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
+
+  modal.innerHTML = `
+    <style>      
+
+      .cvqs-call-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 13px;
+        border: 1px solid #ccc;
+        table-layout: auto; /* was: fixed */
+      }
+
+      /* Header cells */
+      .cvqs-call-table thead th {
+        background: white;
+        color: #004a9b;
+        text-align: left;
+        padding: 6px 8px;
+        border-left: 1px solid #ccc;
+        border-right: 1px solid #ccc;
+        border-bottom: 1px solid #ccc;
+      }
+
+      /* Body cells */
+      .cvqs-call-table tbody td {
+        padding: 6px 8px;
+        border-right: 1px solid #eee;
+        border-left: 1px solid #eee;
+        border-bottom: 1px solid #eee;
+      }
+
+      /* Action cell (real cell, not :last-child) */
+      .cvqs-call-table td.cvqs-action-cell {
+        white-space: nowrap;
+        text-align: center;
+        padding: 6px 8px;
+        position: relative;
+        background: inherit; /* let row hover/zebra show through */
+      }
+
+      /* Ensure the action cell also shows row hover */
+      .cvqs-call-table tbody tr:hover td.cvqs-action-cell {
+        background-color: #f3f3f3;
+      }
+      
+
+      /* Image baseline alignment */
+      .cvqs-call-table img {
+        vertical-align: middle;
+      }
+
+      /* Icon buttons (Clarity-style hover-fade) */
+      .cvqs-icon-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background-color: #ffffff;
+        margin: 3px;
+        border: 1px solid #dcdcdc;
+        overflow: hidden;
+        cursor: pointer;
+      }
+
+      .cvqs-icon-btn:focus {
+        outline: none;
+      }
+
+      .cvqs-icon-btn img {
+        width: 14px;
+        height: 14px;
+        pointer-events: none;
+        opacity: 0.35;
+        transition: opacity 0.2s ease-in-out;
+      }
+
+      /* On hover: icon brightens, not the button */
+      .cvqs-icon-btn:hover img,
+      tr:hover .cvqs-icon-btn img {
+        opacity: 1;
+      }
+      .cv-audio-row td {
+        background: #f3f6f8;
+        padding: 10px 12px;
+        border-top: 0;
+      }
+    .cv-audio-player {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .cv-audio-play {
+      width: 24px;
+     height: 24px;
+     background: transparent;
+     border: 0;
+     cursor: pointer;
+   }
+   .cv-audio-play:before {
+     content: '';
+     display: block;
+     width: 0;
+     height: 0;
+     border-left: 10px solid #333;
+     border-top: 6px solid transparent;
+     border-bottom: 6px solid transparent;
+   }
+   .cv-audio-time {
+     font-weight: 600;
+    color: #333;
+   }
+   .cv-audio-bar {
+     flex: 1;
+     height: 6px;
+     background: #e0e0e0;
+     border-radius: 3px;
+     position: relative;
+    }
+   .cv-audio-bar-fill {
+     position: absolute;
+     left: 0;
+     top: 0;
+     bottom: 0;
+     width: 0%;
+     background: #9e9e9e;
+     border-radius: 3px;
+    }
+   .cv-audio-right {
+     display: flex;
+     align-items: center;
+    gap: 12px;
+    }
+   .cv-audio-icon {
+     width: 20px;
+     height: 20px;
+     opacity: 0.6;
+   }
+
+    </style>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+      <button id="cvqs-back-btn" style="font-weight:bold;">Back</button>
+    </div>
+    <h2 style="margin: 0 0 10px 0; font-size: 18px; font-weight: 600; color: #000;">
+      ${queueNameOnly} Queue (${queueNumber}) ${getStatTitle(code)}
+    </h2>
+    <div style="margin:10px 0;">
+      <input placeholder="Search calls" style="padding:6px 8px;width:200px"> 
+      <img src="${magnifyIcon}" style="width:16px;vertical-align:middle;margin-left:5px" alt="">
+    </div>
+    <table class="cvqs-call-table">
+      <thead>
+        <tr>
+          <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+          <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+          <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+          <th>Queue Release Reason</th><th></th> <!-- keep this blank TH -->
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsForQueue}
+      </tbody>
+    </table>
+  `;
+
+  // add to DOM
+  const container = document.querySelector('#modal-body-reports');
+  if (container) {
+    container.style.position = 'relative';
+    container.appendChild(modal);
+  } else {
+    document.body.appendChild(modal);
+  }
+
+  insertDateRange(modal);
+
+  // helper
+function insertDateRange(modalEl) {
+  const now = new Date();
+  const yesterday = new Date(now);
+  yesterday.setDate(now.getDate() - 1);
+
+  const formatDate = (date) => {
+    const mm = String(date.getMonth() + 1).padStart(2, '0');
+    const dd = String(date.getDate()).padStart(2, '0');
+    const yyyy = date.getFullYear();
+    return `${mm}/${dd}/${yyyy}`;
+  };
+
+  const rangeText = `${formatDate(yesterday)} 12:00 am to ${formatDate(now)} 11:59 pm`;
+
+  const rangeDiv = document.createElement('div');
+  rangeDiv.textContent = rangeText;
+  rangeDiv.style.margin = '8px 0 10px 0';
+  rangeDiv.style.fontSize = '13px';
+  rangeDiv.style.color = '#555';
+
+  // Scope to this modal (no global query)
+  const title = modalEl.querySelector('h2');
+  if (title) title.insertAdjacentElement('afterend', rangeDiv);
+}
+
+  const backBtn = modal.querySelector('#cvqs-back-btn');
+  backBtn.addEventListener('click', () => {
+    console.log('[CVQS] Back button clicked - closing modal');
+    modal.remove(); // Cleanly removes entire modal
+  });
+
+  // inject icons into each row
+  modal.querySelectorAll('tbody tr').forEach(injectIcons);
 
   // === CTG (inbound-only) helpers & styles — scoped to this modal ===
 
@@ -5275,7 +5490,5 @@ if (kind === 'cradle') {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })(); // ← closes QUEUE STATS REPORTS PAGE
-
-
 
 
