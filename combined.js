@@ -5552,7 +5552,7 @@ const actionIcons = `
     'Calls Handled': 'CH',
     'Talk Time': 'TT',  
     'Average Talk Time': 'ATT',
-    'Average Handle Time : 'AHT'
+    'Average Handle Time': 'AHT'
   };
 
 const CVAS_CALLS_INBOUND_BY_AGENT = {
@@ -6218,6 +6218,7 @@ function openAgentDetails(agentExt, stat) {
 }
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
