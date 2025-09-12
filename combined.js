@@ -5491,4 +5491,77 @@ if (kind === 'cradle') {
   }, 350);
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
+// AGENT STATS PAGE
+
+(() => {
+  if (window.__cvas_agentstats_installed__) return;
+  if (!location.href.includes('/portal/stats/queuestats/agent')) return;
+  window.__cvas_agentstats_installed__ = true;
+
+  const AGENT_STATS_TABLE_SEL = '#modal_stats_table';
+
+  const CVAS_INBOUND = {
+    '200': { CH: 5, TT: '18:10',  ATT: '18:10' },
+    '201': { CH: 3, TT: '09:40',  ATT: '09:40' }, 
+    '202': { CH: 4, TT: '13:26',  ATT: '13:26' },
+    '203': { CH: 2, TT: '30:57',  ATT: '30:57' }, 
+    '204': { CH: 1, TT: '03:53',  ATT: '03:53' },
+    '205': { CH: 4, TT: '30:27',  ATT: '30:27' },
+    '206': { CH: 6, TT: '38:34',  ATT: '38:34' },
+    '207': { CH: 0, TT: '00:00',  ATT: '00:00' },
+  };
+
+  const CVAS_AHT = { 
+    '200': { AHT: '05:55' }, 
+    '201': { AHT: '05:18' },  
+    '202': { AHT: '08:09' },  
+    '203': { AHT: '12:03' },  
+    '204': { AHT: '03:53' },  
+    '205': { AHT: '06:36' },  
+    '206': { AHT: '06:22' },  
+    '207': { AHT: '01:53' },  
+  };
+
+  const injectNumbers = () => {
+    const table = document.querySelector(AGENT_STATS_TABLE_SEL);
+    if (!table) return;
+
+    const rows = Array.from(table.querySelectorAll('tbody tr'));
+    rows.forEach(row => {
+      const extCell = row.querySelector('td');
+      if (!extCell) return;
+
+      const ext = extCell.textContent.trim();
+      const inbound = CVAS_INBOUND[ext];
+      const aht = CVAS_AHT[ext];
+
+      if (!inbound && !aht) return;
+
+      const cells = row.querySelectorAll('td');
+      // Assuming fixed column index:
+      // 0 = Ext, 1 = First, 2 = Last, 3 = Dept, 4 = CH, 5 = TT, 6 = ATT, 7 = AHT
+      if (inbound) {
+        if (cells[4]) cells[4].textContent = inbound.CH ?? '0';
+        if (cells[5]) cells[5].textContent = inbound.TT ?? '00:00';
+        if (cells[6]) cells[6].textContent = inbound.ATT ?? '00:00';
+      }
+      if (aht && cells[7]) {
+        cells[7].textContent = aht.AHT ?? '00:00';
+      }
+    });
+  };
+
+  // Wait until table is loaded before injecting
+  const tryInject = (attempts = 0) => {
+    const table = document.querySelector(AGENT_STATS_TABLE_SEL);
+    if (table && table.querySelector('tbody tr')) {
+      injectNumbers();
+    } else if (attempts < 20) {
+      setTimeout(() => tryInject(attempts + 1), 300);
+    }
+  };
+
+  tryInject();
+})();
+
 
