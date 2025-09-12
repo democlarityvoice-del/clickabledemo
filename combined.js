@@ -5842,6 +5842,12 @@ function addAgentModalIcons(tbody) {
   });
 }
 
+document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () => {
+  const modal = document.getElementById('cvas-agent-modal');
+  if (modal) modal.remove();
+});
+
+
 
 
 
