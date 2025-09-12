@@ -5546,12 +5546,12 @@ if (kind === 'cradle') {
     };
   });
 
-// CVAS Action Icons (URLs provided by user)
+// CVAS Action Icons 
 const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
 const agentStatsListen   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
 const agentStatsCradle   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 const agentStatsNotes    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-const magnifyIcon        = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
     
 const actionIcons = `
 <img src="${agentStatsListen}" title="Listen" class="cvas-icon" />
@@ -5659,7 +5659,7 @@ function linkify(td, ext, stat, value) {
     const showOutbound = stat === 'AHT';
     const rows = showOutbound ? inbound.concat(outbound) : inbound;
 
-    const modal = ensureAgentModal();
+    const modal = document.getElementById('cvas-agent-modal');
     const tbody = modal.querySelector('tbody');
     tbody.innerHTML = rows.join('');
     addAgentModalIcons(tbody);
@@ -5718,6 +5718,9 @@ const t = setInterval(() => {
 
   const modal = document.createElement('div');
   modal.id = 'cvas-agent-modal';
+
+  const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';  
+    
 
   modal.innerHTML = `
     <div class="cvas-agent-modal-inline">
@@ -5848,6 +5851,8 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   const modal = document.getElementById('cvas-agent-modal');
   if (modal) modal.remove();
 });
+
+
 
 
 
