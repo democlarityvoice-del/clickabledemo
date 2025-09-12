@@ -5492,164 +5492,52 @@ if (kind === 'cradle') {
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
 // AGENT STATS PAGE(() => {
-// AGENT STATS PAGE
 (() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
 
-
-  const STATS_TABLE_ID = '#modal_stats_table';
-  const MAX_SCAN_TRIES = 20;
-
-  const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-
-  const HEADER_TO_STAT = {
-    'calls handled': 'CH',
-    'talk time': 'TT',
-    'average talk time': 'ATT',
-    'avg. talk time': 'ATT',
-    'average handle time': 'AHT',
-    'avg. handle time': 'AHT'
+  const DATA = {
+    '200': { CH: 5, TT: '18:10', ATT: '18:10', AHT: '05:55' },
+    '201': { CH: 3, TT: '09:40', ATT: '09:40', AHT: '05:18' },
+    '202': { CH: 4, TT: '13:26', ATT: '13:26', AHT: '08:09' },
+    '203': { CH: 2, TT: '30:57', ATT: '30:57', AHT: '12:03' },
+    '204': { CH: 1, TT: '03:53', ATT: '03:53', AHT: '03:53' },
+    '205': { CH: 4, TT: '30:27', ATT: '30:27', AHT: '06:36' },
+    '206': { CH: 6, TT: '38:34', ATT: '38:34', AHT: '06:22' },
+    '207': { CH: 0, TT: '00:00', ATT: '00:00', AHT: '01:53' }
   };
 
-  const CVAS_INBOUND = {
-    '200': { CH: 5, TT: '18:10',  ATT: '18:10' },
-    '201': { CH: 3, TT: '09:40',  ATT: '09:40' }, 
-    '202': { CH: 4, TT: '13:26',  ATT: '13:26' },
-    '203': { CH: 2, TT: '30:57',  ATT: '30:57' }, 
-    '204': { CH: 1, TT: '03:53',  ATT: '03:53' },
-    '205': { CH: 4, TT: '30:27',  ATT: '30:27' },
-    '206': { CH: 6, TT: '38:34',  ATT: '38:34' },
-    '207': { CH: 0, TT: '00:00',  ATT: '00:00' },
+  const inject = () => {
+    const rows = Array.from(document.querySelectorAll('#modal_stats_table_example tbody tr'));
+    if (!rows.length) return;
+
+    rows.forEach(row => {
+      const ext = row.querySelector('td')?.textContent.trim();
+      const stats = DATA[ext];
+      if (!stats) return;
+
+      const injectStat = (selector, value) => {
+        const cell = row.querySelector(selector);
+        if (cell) cell.textContent = value;
+      };
+
+      injectStat('.stat-td-agent-CH', stats.CH);
+      injectStat('.stat-td-agent-TT', stats.TT);
+      injectStat('.stat-td-agent-ATT', stats.ATT);
+      injectStat('.stat-td-agent-AHT', stats.AHT);
+    });
+
+    console.log('[CVAS] Agent stat injection complete');
   };
 
-  const CVAS_AHT = { 
-    '200': { AHT: '05:55' }, 
-    '201': { AHT: '05:18' },  
-    '202': { AHT: '08:09' },  
-    '203': { AHT: '12:03' },  
-    '204': { AHT: '03:53' },  
-    '205': { AHT: '06:36' },  
-    '206': { AHT: '06:22' },  
-    '207': { AHT: '01:53' },  
-  };
-
-  const CVAS_DATA = {};
-  Object.keys(CVAS_INBOUND).forEach(ext => {
-    CVAS_DATA[ext] = {
-      ...(CVAS_INBOUND[ext] || {}),
-      ...(CVAS_AHT[ext] || {})
-    };
-  });
-
-  function mapHeaders(table) {
-    const ths = Array.from(table.querySelectorAll('thead th'));
-    const colMap = {};
-    let extIdx = -1;
-
-    ths.forEach((th, i) => {
-      const txt = norm(th.textContent);
-      const code = HEADER_TO_STAT[txt];
-      if (code) colMap[code] = i;
-      if (txt === 'ext' || txt === 'ext.') extIdx = i;
-    });
-
-    return { colMap, extIdx };
-  }
-
-  function injectTable(doc, table) {
-    const { colMap, extIdx } = mapHeaders(table);
-    const statCodes = Object.keys(colMap);
-    if (!statCodes.length || extIdx === -1) return 0;
-
-    let wrote = 0;
-    const rows = Array.from(table.tBodies[0]?.rows || []);
-    rows.forEach(tr => {
-      const ext = (tr.cells[extIdx]?.textContent || '').trim();
-      const data = CVAS_DATA[ext];
-      if (!data) return;
-
-      statCodes.forEach(code => {
-        const td = tr.cells[colMap[code]];
-        if (!td) return;
-        const val = data[code];
-        if (val == null) return;
-        td.textContent = val;
-        wrote++;
-      });
-    });
-
-    return wrote;
-  }
-
-  function attach(doc, table) {
-    const apply = () => {
-      const n = injectTable(doc, table);
-      if (n) console.log('[CVAS] wrote', n, 'cell(s)');
-    };
-
-    let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
-    const t = doc.defaultView.setInterval(() => {
-      tries++;
-      const rows = table.tBodies[0]?.rows.length || 0;
-      if (rows !== last) { last = rows; lastChange = Date.now(); }
-      if (Date.now() - lastChange > calmMs || tries > 40) {
-        doc.defaultView.clearInterval(t);
-        apply();
-      }
-    }, 150);
-
-    try {
-      const $ = doc.defaultView.jQuery;
-      if ($ && $.fn && $.fn.DataTable) {
-        $(table).on('draw.dt', apply);
-      }
-    } catch (_) {}
-
-    const tb = table.tBodies[0];
-    if (tb) new doc.defaultView.MutationObserver(apply)
-      .observe(tb, { childList: true, subtree: true });
-
-    doc.defaultView.cvasForce = apply;
-  }
-
-  function collectDocs(root, out = []) {
-    out.push(root);
-    root.querySelectorAll('iframe').forEach(f => {
-      try { if (f.contentDocument) collectDocs(f.contentDocument, out); } catch (_) {}
-    });
-    return out;
-  }
-
-  function candidateTables(doc) {
-    const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
-    if (direct.length) return direct;
-    return Array.from(doc.querySelectorAll('table')).filter(t => {
-      const ths = Array.from(t.querySelectorAll('thead th'));
-      const labels = ths.map(th => norm(th.textContent));
-      return labels.some(l => /handle|talk|average/i.test(l));
-    });
-  }
-
-  function boot() {
-    const docs = collectDocs(document);
-    let attached = 0;
-    docs.forEach(doc => {
-      const tables = candidateTables(doc);
-      if (!tables.length) return;
-      tables.forEach(tbl => { attach(doc, tbl); attached++; });
-    });
-    if (!attached) console.log('[CVAS] no candidate tables found (yet)');
-  }
-
-  boot();
-  let tries = 0;
-  const again = setInterval(() => {
-    tries++;
-    boot();
-    if (tries >= MAX_SCAN_TRIES) clearInterval(again);
-  }, 350);
+  // Retry logic in case DataTable loads late
+  let attempts = 0;
+  const interval = setInterval(() => {
+    attempts++;
+    inject();
+    if (attempts > 20) clearInterval(interval);
+  }, 300);
 })();
 
 
