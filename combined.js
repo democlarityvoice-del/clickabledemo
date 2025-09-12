@@ -5822,8 +5822,11 @@ function addAgentModalIcons(tbody) {
       opacity: 1;
     }
   `;
+  
   document.head.appendChild(style);
-})();
+})(); // <-- <== This closes the entire top-level IIFE
+
+
 
 
 
