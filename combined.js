@@ -5499,19 +5499,6 @@ if (kind === 'cradle') {
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
 
-  // === Headers ===
-  function mapHeaders(table) {
-    const ths = table.querySelectorAll('thead th');
-    const colMap = {};
-    ths.forEach((th, idx) => {
-      const txt = th.textContent.trim().toUpperCase();
-      if (txt === 'CH') colMap.CH = idx;
-      if (txt === 'TT') colMap.TT = idx;
-      if (txt === 'ATT') colMap.ATT = idx;
-      if (txt === 'AHT') colMap.AHT = idx;
-    });
-    return { colMap };
-  }
 
   // === Real Data from user ===
   const CVAS_INBOUND = {
@@ -5560,7 +5547,12 @@ const actionIcons = `
 <img src="${agentStatsDownload}" title="Download" class="cvas-icon" />
 `;
  
-
+  const CVAS_HEADER_TO_STAT = {
+    'Calls Handled': 'CH',
+    'Talk Time': 'TT',  
+    'Average Talk Time': 'ATT',
+    'Average Handle Time : 'AHT'
+  };
 
 const CVAS_CALLS_INBOUND_BY_AGENT = {
 "200": [
@@ -5632,7 +5624,46 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
 };
 
 
+  // === Headers ===
+  function mapHeaders(table) {
+    const ths = table.querySelectorAll('thead th');
+    const colMap = {};
+    ths.forEach((th, idx) => {
+      const txt = th.textContent.trim().toUpperCase();
+      if (txt === 'CH') colMap.CH = idx;
+      if (txt === 'TT') colMap.TT = idx;
+      if (txt === 'ATT') colMap.ATT = idx;
+      if (txt === 'AHT') colMap.AHT = idx;
+    });
+    return { colMap };
+  }    
 
+  function getAgentStatTitle(code) {
+    const titles = {
+     'Calls Handled': 'CH',
+    'Talk Time': 'TT',  
+    'Average Talk Time': 'ATT',
+    'Average Handle Time : 'AHT'
+    };
+    return titles[code] || code;
+  }
+
+  function timeToSeconds(t) {
+    const parts = t.split(':').map(Number);
+    if (parts.length === 2) return parts[0] * 60 + parts[1];
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
+    return null;
+  }
+
+
+  function setSort(td, code, v) {
+    const n = Number(v);
+    if (!Number.isNaN(n)) { td.setAttribute('data-order', String(n)); return; }
+    if (code === 'ATT' || code === 'TT' || code === 'AHT') {
+      const s = timeToSeconds(v);
+      if (s != null) td.setAttribute('data-order', String(s));
+    }
+  }  
 
   // === Linkify Utility ===
  // === Linkify Utility ===
@@ -5670,7 +5701,34 @@ function linkify(td, ext, stat, value) {
   td.appendChild(a);
 }
 
+
 // === Inject Logic ===
+function injectActionIcons(tr) {
+  // Use the pre-allocated action cell; fallback to create if missing
+  let td = tr.querySelector('td.cvqs-action-cell');
+  if (!td) {
+    td = document.createElement('td');
+    td.className = 'cvqs-action-cell';
+    tr.appendChild(td);
+  }
+
+  td.innerHTML = `
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Download" title="Download" data-icon="download">
+    <img src="${agentStatsDownload}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" title="Listen" data-icon="listen">
+    <img src="${agentStatsListen}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" title="Cradle to Grave" data-icon="cradle">
+    <img src="${agentStatsCradle}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" title="Edit Notes" data-icon="notes">
+    <img src="${agentStatsNotes}" alt="">
+  </span>
+`;
+
+}
+
 function injectAgentStats(table) {
   const { colMap } = mapHeaders(table);
   const rows = table.tBodies[0]?.rows || [];
@@ -5851,6 +5909,7 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   const modal = document.getElementById('cvas-agent-modal');
   if (modal) modal.remove();
 });
+
 
 
 
