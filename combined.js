@@ -5635,28 +5635,25 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
 
 
   // === Linkify Utility ===
-  function linkify(td, ext, stat, value) {
-    if (value === 0 || value === '00:00' || value == null) {
-      td.textContent = value; // plain text for zeros
-      return;
-    }
-    td.innerHTML = ''; // clear existing
+ // === Linkify Utility ===
+function linkify(td, ext, stat, value) {
+  if (value === 0 || value === '00:00' || value == null) {
+    td.textContent = value;
+    return;
+  }
 
-    const a = document.createElement('a');
-    a.href = '#';
-    a.className = 'cvas-stat-link';
-    a.textContent = value;
-    a.style.fontWeight = 'bold';
-    a.style.textDecoration = 'underline';
-    a.dataset.ext = ext;
-    a.dataset.stat = stat;
+  td.innerHTML = '';
+  const a = document.createElement('a');
+  a.href = '#';
+  a.className = 'cvas-stat-link';
+  a.textContent = value;
+  a.style.fontWeight = 'bold';
+  a.style.textDecoration = 'underline';
+  a.dataset.ext = ext;
+  a.dataset.stat = stat;
 
-    // Later this will open the modal
-    a.addEventListener('click', e => {
-      e.preventDefault();
-      console.log(`[CVAS] Clicked ext ${ext}, stat ${stat}, value ${value}`);
-
-      // modal logic will go here next
+  a.addEventListener('click', e => {
+    e.preventDefault();
     const inbound = CVAS_CALLS_INBOUND_BY_AGENT[ext] || [];
     const outbound = CVAS_CALLS_OUTBOUND_BY_AGENT[ext] || [];
     const showOutbound = stat === 'AHT';
@@ -5668,53 +5665,51 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
     addAgentModalIcons(tbody);
     modal.style.display = 'block';
     document.body.classList.add('cvas-modal-open');
+  });
 
+  td.appendChild(a);
+}
+
+// === Inject Logic ===
+function injectAgentStats(table) {
+  const { colMap } = mapHeaders(table);
+  const rows = table.tBodies[0]?.rows || [];
+  let wrote = 0;
+
+  Array.from(rows).forEach(tr => {
+    const ext = tr.cells[1]?.textContent?.trim();
+    const data = CVAS_DATA[ext];
+    if (!data) return;
+
+    Object.entries(colMap).forEach(([key, idx]) => {
+      const td = tr.cells[idx];
+      const val = data[key];
+      if (td) {
+        linkify(td, ext, key, val);
+        wrote++;
+      }
     });
+  });
 
-    td.appendChild(a);
-  }
+  console.log(`[CVAS] Linked and injected ${wrote} stat cell(s)`);
+}
 
-  // === Inject Logic ===
-  function injectAgentStats(table) {
-    const { colMap } = mapHeaders(table);
-    const rows = table.tBodies[0]?.rows || [];
-    let wrote = 0;
+// === Wait for Table to be Ready ===
+const tryInject = () => {
+  const table = document.querySelector('#modal_stats_table');
+  if (!table || !table.tBodies[0]?.rows.length) return false;
+  injectAgentStats(table);
+  return true;
+};
 
-    Array.from(rows).forEach(tr => {
-      const ext = tr.cells[1]?.textContent?.trim(); // extension is at col index 1
-      const data = CVAS_DATA[ext];
-      if (!data) return;
+let tries = 0;
+const maxTries = 20;
+const t = setInterval(() => {
+  tries++;
+  if (tryInject() || tries >= maxTries) clearInterval(t);
+}, 400);
 
-      Object.entries(colMap).forEach(([key, idx]) => {
-        const td = tr.cells[idx];
-        const val = data[key];
-
-        if (td) {
-          linkify(td, ext, key, val);
-          wrote++;
-        }
-      });
-    });
-
-    console.log(`[CVAS] Linked and injected ${wrote} stat cell(s)`);
-  }
-
-  // === Wait for Table to be Ready ===
-  const tryInject = () => {
-    const table = document.querySelector('#modal_stats_table');
-    if (!table || !table.tBodies[0]?.rows.length) return false;
-    injectAgentStats(table);
-    return true;
-  };
-
-  let tries = 0;
-  const maxTries = 20;
-  const t = setInterval(() => {
-    tries++;
-    if (tryInject() || tries >= maxTries) clearInterval(t);
-  }, 400);
-})();
-
+// === Ensure Modal ===
 function ensureAgentModal() {
   let modal = document.querySelector('#cvas-agent-modal');
   if (modal) return modal;
@@ -5726,7 +5721,7 @@ function ensureAgentModal() {
     <div class="cvas-agent-modal-content">
       <div class="cvas-agent-modal-header">
         <span>Agent Call Details</span>
-        <button class="cvas-agent-modal-close">×</button>
+        <button class="cvas-agent-modal-close">&times;</button>
       </div>
       <div class="cvas-agent-modal-body">
         <table class="table table-hover table-condensed cvas-agent-table">
@@ -5736,6 +5731,7 @@ function ensureAgentModal() {
       </div>
     </div>
   `;
+
   document.body.appendChild(modal);
 
   modal.querySelector('.cvas-agent-modal-close').onclick = () => {
@@ -5750,22 +5746,23 @@ function ensureAgentModal() {
   return modal;
 }
 
+// === Add Icons Per Row ===
 function addAgentModalIcons(tbody) {
   const icons = [
     agentStatsDownload,
     agentStatsListen,
     agentStatsCradle,
-    agentStatsNotes,
-    magnifyIcon
+    agentStatsNotes
   ];
 
   Array.from(tbody.querySelectorAll('.cvas-action-cell')).forEach(td => {
-    td.innerHTML = icons.map(src => `<img src="${src}" class="cvas-icon" />`).join(' ');
+    td.innerHTML = icons
+      .map(src => `<img src="${src}" class="cvas-icon" />`)
+      .join(' ');
   });
 }
 
-
-// === Inject Modal Styles Once ===
+// === Modal Styles ===
 (() => {
   const existing = document.getElementById('cvas-agentstats-style');
   if (existing) return;
@@ -5788,44 +5785,46 @@ function addAgentModalIcons(tbody) {
       box-shadow: 0 0 20px rgba(0,0,0,0.3);
       z-index: 9999;
     }
-
-    #cvas-agent-modal h2 {
-      margin-top: 0;
-      font-size: 18px;
-      text-align: center;
+    .cvas-agent-modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 16px;
+      font-weight: bold;
     }
-
-    #cvas-agent-modal table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-
-    #cvas-agent-modal th,
-    #cvas-agent-modal td {
-      padding: 6px 8px;
-      border: 1px solid #ccc;
-      text-align: left;
-      vertical-align: middle;
-    }
-
-    .cvas-action-cell {
-      text-align: center;
-    }
-
-    .cvas-modal-close {
-      float: right;
+    .cvas-agent-modal-close {
       font-weight: bold;
       cursor: pointer;
       color: #e57027;
+      background: transparent;
+      border: none;
+      font-size: 22px;
     }
-
-    .cvas-modal-close:hover {
-      color: #c14f00;
+    .cvas-agent-modal-body table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .cvas-agent-modal-body th,
+    .cvas-agent-modal-body td {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+    }
+    .cvas-action-cell {
+      text-align: center;
+    }
+    .cvas-icon {
+      width: 16px;
+      height: 16px;
+      margin: 0 3px;
+      opacity: 0.6;
+    }
+    .cvas-icon:hover {
+      opacity: 1;
     }
   `;
   document.head.appendChild(style);
 })();
+
 
 
 
