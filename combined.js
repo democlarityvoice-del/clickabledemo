@@ -5645,7 +5645,7 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
      'Calls Handled': 'CH',
     'Talk Time': 'TT',  
     'Average Talk Time': 'ATT',
-    'Average Handle Time : 'AHT'
+    'Average Handle Time': 'AHT'
     };
     return titles[code] || code;
   }
@@ -6219,6 +6219,7 @@ function openAgentDetails(agentExt, stat) {
 }
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
