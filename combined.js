@@ -5492,13 +5492,13 @@ if (kind === 'cradle') {
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
 // AGENT STATS PAGE
-
 (() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
 
   const AGENT_STATS_TABLE_SEL = '#modal_stats_table';
+  const MAX_SCAN_TRIES = 20;
 
   const CVAS_INBOUND = {
     '200': { CH: 5, TT: '18:10',  ATT: '18:10' },
@@ -5522,46 +5522,120 @@ if (kind === 'cradle') {
     '207': { AHT: '01:53' },  
   };
 
-  const injectNumbers = () => {
-    const table = document.querySelector(AGENT_STATS_TABLE_SEL);
-    if (!table) return;
+  const CVAS_DATA = {};
+  Object.keys(CVAS_INBOUND).forEach(ext => {
+    CVAS_DATA[ext] = {
+      ...(CVAS_INBOUND[ext] || {}),
+      ...(CVAS_AHT[ext] || {})
+    };
+  });
 
-    const rows = Array.from(table.querySelectorAll('tbody tr'));
-    rows.forEach(row => {
-      const extCell = row.querySelector('td');
-      if (!extCell) return;
+  function norm(s) {
+    return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+  }
 
-      const ext = extCell.textContent.trim();
-      const inbound = CVAS_INBOUND[ext];
-      const aht = CVAS_AHT[ext];
-
-      if (!inbound && !aht) return;
-
-      const cells = row.querySelectorAll('td');
-      // Assuming fixed column index:
-      // 0 = Ext, 1 = First, 2 = Last, 3 = Dept, 4 = CH, 5 = TT, 6 = ATT, 7 = AHT
-      if (inbound) {
-        if (cells[4]) cells[4].textContent = inbound.CH ?? '0';
-        if (cells[5]) cells[5].textContent = inbound.TT ?? '00:00';
-        if (cells[6]) cells[6].textContent = inbound.ATT ?? '00:00';
-      }
-      if (aht && cells[7]) {
-        cells[7].textContent = aht.AHT ?? '00:00';
-      }
+  function mapHeaders(table) {
+    const map = {};
+    const headers = Array.from(table.querySelectorAll('thead th'));
+    let extIdx = -1;
+    headers.forEach((th, i) => {
+      const txt = norm(th.textContent);
+      if (txt === 'ext.' || txt === 'ext') extIdx = i;
+      if (txt === 'calls handled') map['CH'] = i;
+      if (txt === 'talk time') map['TT'] = i;
+      if (txt === 'average talk time') map['ATT'] = i;
+      if (txt === 'average handle time') map['AHT'] = i;
     });
-  };
+    return { colMap: map, extIdx };
+  }
 
-  // Wait until table is loaded before injecting
-  const tryInject = (attempts = 0) => {
-    const table = document.querySelector(AGENT_STATS_TABLE_SEL);
-    if (table && table.querySelector('tbody tr')) {
-      injectNumbers();
-    } else if (attempts < 20) {
-      setTimeout(() => tryInject(attempts + 1), 300);
-    }
-  };
+  function injectTable(doc, table) {
+    const { colMap, extIdx } = mapHeaders(table);
+    const statCodes = Object.keys(colMap);
+    if (!statCodes.length || extIdx === -1) return 0;
+    let wrote = 0;
+    Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
+      const ext = (tr.cells[extIdx]?.textContent || '').trim();
+      const data = CVAS_DATA[ext];
+      if (!data) return;
+      statCodes.forEach(code => {
+        const td = tr.cells[colMap[code]];
+        if (!td) return;
+        const val = data[code];
+        if (val == null) return;
+        td.textContent = val;
+        wrote++;
+      });
+    });
+    return wrote;
+  }
 
-  tryInject();
+  function attach(doc, table) {
+    const apply = () => {
+      const n = injectTable(doc, table);
+      if (n) console.log('[CVAS] wrote', n, 'cell(s)');
+    };
+    let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
+    const t = doc.defaultView.setInterval(() => {
+      tries++;
+      const rows = table.tBodies[0]?.rows.length || 0;
+      if (rows !== last) { last = rows; lastChange = Date.now(); }
+      if (Date.now() - lastChange > calmMs || tries > 40) {
+        doc.defaultView.clearInterval(t);
+        apply();
+      }
+    }, 150);
+
+    try {
+      const $ = doc.defaultView.jQuery;
+      if ($ && $.fn && $.fn.DataTable) {
+        $(table).on('draw.dt', apply);
+      }
+    } catch (_) {}
+
+    const tb = table.tBodies[0];
+    if (tb) new doc.defaultView.MutationObserver(apply)
+      .observe(tb, { childList: true, subtree: true });
+
+    doc.defaultView.cvasForce = apply;
+  }
+
+  function candidateTables(doc) {
+    return Array.from(doc.querySelectorAll(AGENT_STATS_TABLE_SEL));
+  }
+
+  function collectDocs(rootDoc) {
+    const docs = [rootDoc];
+    const frames = rootDoc.querySelectorAll('iframe');
+    frames.forEach(f => {
+      try {
+        const d = f.contentDocument;
+        if (d) docs.push(d);
+      } catch (_) {}
+    });
+    return docs;
+  }
+
+  function boot() {
+    const docs = collectDocs(document);
+    let attached = 0;
+    docs.forEach(doc => {
+      const tables = candidateTables(doc);
+      if (!tables.length) return;
+      tables.forEach(tbl => { attach(doc, tbl); attached++; });
+    });
+    if (!attached) console.log('[CVAS] no candidate tables found (yet)');
+  }
+
+  boot();
+  let tries = 0;
+  const again = setInterval(() => {
+    tries++;
+    boot();
+    if (tries >= MAX_SCAN_TRIES) clearInterval(again);
+  }, 350);
 })();
+
+
 
 
