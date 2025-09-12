@@ -5709,6 +5709,8 @@ const t = setInterval(() => {
   if (tryInject() || tries >= maxTries) clearInterval(t);
 }, 400);
 
+})(); // CLOSE FIRST IIFE
+
 // === CV Agent Stats Modal Rebuild (Literal Drop-in) ===
 (() => {
   const existingModal = document.querySelector('#cvas-agent-modal');
@@ -5846,6 +5848,7 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   const modal = document.getElementById('cvas-agent-modal');
   if (modal) modal.remove();
 });
+
 
 
 
