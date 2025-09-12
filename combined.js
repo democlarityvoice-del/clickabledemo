@@ -5536,6 +5536,7 @@ if (kind === 'cradle') {
     '207': { AHT: '01:53' },
   };
 
+
   // === Combine Data ===
   const CVAS_DATA = {};
   Object.keys(CVAS_INBOUND).forEach(ext => {
@@ -5544,6 +5545,94 @@ if (kind === 'cradle') {
       ...(CVAS_AHT[ext] || {})
     };
   });
+
+// CVAS Action Icons (URLs provided by user)
+const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
+const agentStatsListen   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+const agentStatsCradle   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
+const agentStatsNotes    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
+const magnifyIcon        = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+    
+const actionIcons = `
+<img src="${agentStatsListen}" title="Listen" class="cvas-icon" />
+<img src="${agentStatsCradle}" title="Cradle to Grave" class="cvas-icon" />
+<img src="${agentStatsNotes}" title="Notes" class="cvas-icon" />
+<img src="${agentStatsDownload}" title="Download" class="cvas-icon" />
+`;
+ 
+
+
+const CVAS_CALLS_INBOUND_BY_AGENT = {
+"200": [
+`<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 1:30 pm</td><td>Chloe Bennet</td><td>(313) 555-0120</td><td>248-436-3443</td><td>5:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 10:27 am</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3449</td><td>4:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>4:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 10:23 am</td><td>Monica Alvarez</td><td>(989) 555-0113</td><td>248-436-3443</td><td>2:49</td><td>200</td><td>200</td><td>Mike Johnson</td><td>1:52</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 08:16 am</td><td>Leif Hendricksen</td><td>517-555-0162</td><td>(313) 995-9080</td><td>8:17</td><td>200</td><td>200</td><td>Mike Johnson</td><td>2:27</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"201": [
+`<tr><td>Today, 1:46 pm</td><td>Tucker Jones</td><td>(989) 555-0128</td><td>248-436-3443</td><td>6:17</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>1:28</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 11:41 am</td><td>Elizabeth Li</td><td>(313) 555-8471</td><td>(313) 995-9080</td><td>1:23</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>2:17</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 08:08 am</td><td>Coco LaBelle</td><td>(989) 555-0672</td><td>248-436-3443</td><td>0:22</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>5:55</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"202": [
+`<tr><td>Today, 1:35 pm</td><td>Jack Burton</td><td>(517) 555-0148</td><td>(313) 995-9080</td><td>0:42</td><td>202</td><td>202</td><td>Jake Lee</td><td>7:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 10:58 am</td><td>Lola Turner</td><td>517-555-0170</td><td>248-436-3449</td><td>4:47</td><td>202</td><td>202</td><td>Jake Lee</td><td>1:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 1:26 pm</td><td>Carlos Riviera</td><td>(517) 555-0177</td><td>248-436-3449</td><td>3:52</td><td>202</td><td>202</td><td>Jake Lee</td><td>1:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 11:58 am</td><td>Mark Sanchez</td><td>989-555-0213</td><td>(313) 995-9080</td><td>4:29</td><td>202</td><td>202</td><td>Jake Lee</td><td>2:47</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"203": [
+`<tr><td>Today, 1:21 pm</td><td>John Travers</td><td>810-555-0192</td><td>(313) 995-9080</td><td>2:27</td><td>203</td><td>203</td><td>Bob Andersen</td><td>9:41</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 11:58 am</td><td>Freddie Travis</td><td>800-649-2907</td><td>(313) 995-9080</td><td>3:48</td><td>203</td><td>203</td><td>Bob Andersen</td><td>21:16</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"204": [
+`<tr><td>Today, 12:06 pm</td><td>Thomas Lee</td><td>517-555-0157</td><td>248-436-3443</td><td>1:21</td><td>204</td><td>204</td><td>Brittany Lawrence</td><td>3:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"205": [
+`<tr><td>Today, 1:37 pm</td><td>Maya Brooks</td><td>(517) 555-0126</td><td>248-436-3449</td><td>1:01</td><td>205</td><td>205</td><td>Alex Roberts</td><td>2:05</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 11:18 am</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>(313) 995-9080</td><td>2:22</td><td>205</td><td>205</td><td>Alex Roberts</td><td>17:29</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 08:42 am</td><td>Alexander Chen</td><td>(517) 555-0122</td><td>(313) 995-9080</td><td>4:24</td><td>205</td><td>205</td><td>Alex Roberts</td><td>7:42</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 1:59 pm</td><td>Harper Green</td><td>(947) 555-0179</td><td>248-436-3447</td><td>1:08</td><td>205</td><td>205</td><td>Alex Roberts</td><td>3:11</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"206": [
+`<tr><td>Today, 1:41 pm</td><td>Liam Nguyen</td><td>(810) 555-0100</td><td>248-436-3449</td><td>5:29</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:06</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>(313) 555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 11:22 am</td><td>JR Knight</td><td>248-555-0144</td><td>248-436-3443</td><td>3:49</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:35</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>313-555-0179</td><td>(313) 995-9080</td><td>1:01</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>8:17</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 09:29 am</td><td>Tanya Roberts</td><td>313-555-3443</td><td>248-436-3443</td><td>3:47</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>0:57</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
+`<tr><td>Today, 1:24 pm</td><td>Martin Smith</td><td>800-909-5384</td><td>(313) 995-9080</td><td>4:11</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>4:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+],
+"207": []
+};
+
+    const CVAS_CALLS_OUTBOUND_BY_AGENT = {
+ const CVAS_CALLS_OUTBOUND_BY_AGENT = {
+  "200": [
+    `<tr><td>Today, 9:26 pm</td><td>Mike Johnson (200)</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>17:20</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "201": [
+    `<tr><td>Today, 9:10 pm</td><td>Cathy Thomas (201)</td><td>(517) 555-0170</td><td>(517) 555-0170</td><td>11:33</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "202": [
+    `<tr><td>Today, 9:30 pm</td><td>Jake Lee (202)</td><td>(248) 555-0191</td><td>(248) 555-0191</td><td>27:22</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "203": [
+    `<tr><td>Today, 9:19 pm</td><td>Bob Andersen (203)</td><td>(313) 555-0179</td><td>(313) 555-0179</td><td>05:12</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "204": [],
+  "205": [
+    `<tr><td>Today, 9:53 pm</td><td>Alex Roberts (205)</td><td>(248) 555-0110</td><td>(248) 555-0110</td><td>02:36</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "206": [
+    `<tr><td>Today, 9:15 pm</td><td>Mark Sanchez (206)</td><td>(989) 555-0140</td><td>(989) 555-0140</td><td>06:05</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ],
+  "207": [
+    `<tr><td>Today, 9:59 pm</td><td>John Smith (207)</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>01:53</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+  ]
+};
+
+
+
 
   // === Linkify Utility ===
   function linkify(td, ext, stat, value) {
@@ -5566,7 +5655,20 @@ if (kind === 'cradle') {
     a.addEventListener('click', e => {
       e.preventDefault();
       console.log(`[CVAS] Clicked ext ${ext}, stat ${stat}, value ${value}`);
+
       // modal logic will go here next
+    const inbound = CVAS_CALLS_INBOUND_BY_AGENT[ext] || [];
+    const outbound = CVAS_CALLS_OUTBOUND_BY_AGENT[ext] || [];
+    const showOutbound = stat === 'AHT';
+    const rows = showOutbound ? inbound.concat(outbound) : inbound;
+
+    const modal = ensureAgentModal();
+    const tbody = modal.querySelector('tbody');
+    tbody.innerHTML = rows.join('');
+    addAgentModalIcons(tbody);
+    modal.style.display = 'block';
+    document.body.classList.add('cvas-modal-open');
+
     });
 
     td.appendChild(a);
@@ -5613,6 +5715,121 @@ if (kind === 'cradle') {
   }, 400);
 })();
 
+function ensureAgentModal() {
+  let modal = document.querySelector('#cvas-agent-modal');
+  if (modal) return modal;
+
+  modal = document.createElement('div');
+  modal.id = 'cvas-agent-modal';
+  modal.innerHTML = `
+    <div class="cvas-agent-modal-backdrop"></div>
+    <div class="cvas-agent-modal-content">
+      <div class="cvas-agent-modal-header">
+        <span>Agent Call Details</span>
+        <button class="cvas-agent-modal-close">×</button>
+      </div>
+      <div class="cvas-agent-modal-body">
+        <table class="table table-hover table-condensed cvas-agent-table">
+          <thead><tr><th colspan="99">Calls</th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(modal);
+
+  modal.querySelector('.cvas-agent-modal-close').onclick = () => {
+    modal.style.display = 'none';
+    document.body.classList.remove('cvas-modal-open');
+  };
+  modal.querySelector('.cvas-agent-modal-backdrop').onclick = () => {
+    modal.style.display = 'none';
+    document.body.classList.remove('cvas-modal-open');
+  };
+
+  return modal;
+}
+
+function addAgentModalIcons(tbody) {
+  const icons = [
+    agentStatsDownload,
+    agentStatsListen,
+    agentStatsCradle,
+    agentStatsNotes,
+    magnifyIcon
+  ];
+
+  Array.from(tbody.querySelectorAll('.cvas-action-cell')).forEach(td => {
+    td.innerHTML = icons.map(src => `<img src="${src}" class="cvas-icon" />`).join(' ');
+  });
+}
+
+// Helper functions (outside the IIFE)
+function ensureAgentModal() { ... }
+
+function addAgentModalIcons(tbody) { ... }
+
+// === Inject Modal Styles Once ===
+(() => {
+  const existing = document.getElementById('cvas-agentstats-style');
+  if (existing) return;
+
+  const style = document.createElement('style');
+  style.id = 'cvas-agentstats-style';
+  style.textContent = `
+    #cvas-agent-modal {
+      position: fixed;
+      top: 5%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: white;
+      border: 2px solid #aaa;
+      border-radius: 6px;
+      padding: 16px;
+      max-width: 95%;
+      max-height: 85%;
+      overflow: auto;
+      box-shadow: 0 0 20px rgba(0,0,0,0.3);
+      z-index: 9999;
+    }
+
+    #cvas-agent-modal h2 {
+      margin-top: 0;
+      font-size: 18px;
+      text-align: center;
+    }
+
+    #cvas-agent-modal table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    #cvas-agent-modal th,
+    #cvas-agent-modal td {
+      padding: 6px 8px;
+      border: 1px solid #ccc;
+      text-align: left;
+      vertical-align: middle;
+    }
+
+    .cvas-action-cell {
+      text-align: center;
+    }
+
+    .cvas-modal-close {
+      float: right;
+      font-weight: bold;
+      cursor: pointer;
+      color: #e57027;
+    }
+
+    .cvas-modal-close:hover {
+      color: #c14f00;
+    }
+  `;
+  document.head.appendChild(style);
+})();
 
 
 
