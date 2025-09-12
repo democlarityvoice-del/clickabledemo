@@ -5493,7 +5493,7 @@ if (kind === 'cradle') {
 
 // AGENTS STATS
 
-// == CV Agent Stats Injection (using real provided data) ==
+// == CV Agent Stats Injection (using real provided data) ==// == CV Agent Stats Injection (linkify non-zero values) ==
 (() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
@@ -5513,7 +5513,7 @@ if (kind === 'cradle') {
     return { colMap };
   }
 
-  // === Real Data from user (DO NOT MODIFY) ===
+  // === Real Data from user ===
   const CVAS_INBOUND = {
     '200': { CH: 5, TT: '18:10', ATT: '18:10' },
     '201': { CH: 3, TT: '09:40', ATT: '09:40' },
@@ -5536,7 +5536,7 @@ if (kind === 'cradle') {
     '207': { AHT: '01:53' },
   };
 
-  // === Combine sources ===
+  // === Combine Data ===
   const CVAS_DATA = {};
   Object.keys(CVAS_INBOUND).forEach(ext => {
     CVAS_DATA[ext] = {
@@ -5545,31 +5545,59 @@ if (kind === 'cradle') {
     };
   });
 
-  // === Injection ===
+  // === Linkify Utility ===
+  function linkify(td, ext, stat, value) {
+    if (value === 0 || value === '00:00' || value == null) {
+      td.textContent = value; // plain text for zeros
+      return;
+    }
+    td.innerHTML = ''; // clear existing
+
+    const a = document.createElement('a');
+    a.href = '#';
+    a.className = 'cvas-stat-link';
+    a.textContent = value;
+    a.style.fontWeight = 'bold';
+    a.style.textDecoration = 'underline';
+    a.dataset.ext = ext;
+    a.dataset.stat = stat;
+
+    // Later this will open the modal
+    a.addEventListener('click', e => {
+      e.preventDefault();
+      console.log(`[CVAS] Clicked ext ${ext}, stat ${stat}, value ${value}`);
+      // modal logic will go here next
+    });
+
+    td.appendChild(a);
+  }
+
+  // === Inject Logic ===
   function injectAgentStats(table) {
     const { colMap } = mapHeaders(table);
     const rows = table.tBodies[0]?.rows || [];
     let wrote = 0;
 
     Array.from(rows).forEach(tr => {
-      const ext = tr.cells[1]?.textContent?.trim(); // Extension column is #1
+      const ext = tr.cells[1]?.textContent?.trim(); // extension is at col index 1
       const data = CVAS_DATA[ext];
       if (!data) return;
 
       Object.entries(colMap).forEach(([key, idx]) => {
         const td = tr.cells[idx];
         const val = data[key];
-        if (td && val != null) {
-          td.textContent = val;
+
+        if (td) {
+          linkify(td, ext, key, val);
           wrote++;
         }
       });
     });
 
-    console.log(`[CVAS] Injected agent stats → ${wrote} cell(s)`);
+    console.log(`[CVAS] Linked and injected ${wrote} stat cell(s)`);
   }
 
-  // === Wait for Table ===
+  // === Wait for Table to be Ready ===
   const tryInject = () => {
     const table = document.querySelector('#modal_stats_table');
     if (!table || !table.tBodies[0]?.rows.length) return false;
@@ -5584,6 +5612,8 @@ if (kind === 'cradle') {
     if (tryInject() || tries >= maxTries) clearInterval(t);
   }, 400);
 })();
+
+
 
 
 
