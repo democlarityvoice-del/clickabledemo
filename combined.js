@@ -5605,7 +5605,7 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
 "207": []
 };
 
-    const CVAS_CALLS_OUTBOUND_BY_AGENT = {
+    
  const CVAS_CALLS_OUTBOUND_BY_AGENT = {
   "200": [
     `<tr><td>Today, 9:26 pm</td><td>Mike Johnson (200)</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>17:20</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
@@ -5764,10 +5764,6 @@ function addAgentModalIcons(tbody) {
   });
 }
 
-// Helper functions (outside the IIFE)
-function ensureAgentModal() { ... }
-
-function addAgentModalIcons(tbody) { ... }
 
 // === Inject Modal Styles Once ===
 (() => {
@@ -5830,6 +5826,7 @@ function addAgentModalIcons(tbody) { ... }
   `;
   document.head.appendChild(style);
 })();
+
 
 
 
