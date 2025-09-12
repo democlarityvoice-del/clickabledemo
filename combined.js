@@ -5555,6 +5555,7 @@ const actionIcons = `
     'Average Handle Time': 'AHT'
   };
 
+
 const CVAS_CALLS_INBOUND_BY_AGENT = {
 "200": [
 `<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
@@ -6218,6 +6219,7 @@ function openAgentDetails(agentExt, stat) {
 }
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
