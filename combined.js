@@ -5824,7 +5824,10 @@ function addAgentModalIcons(tbody) {
   `;
   
   document.head.appendChild(style);
-})(); // <-- <== This closes the entire top-level IIFE
+})(); // closes the inner IIFE
+})(); // closes the outermost IIFE (your entire module)
+
+
 
 
 
