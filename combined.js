@@ -5492,9 +5492,12 @@ if (kind === 'cradle') {
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
 // AGENT STATS PAGE(() => {
+// AGENT STATS PAGE
+(() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
+
 
   const STATS_TABLE_ID = '#modal_stats_table';
   const MAX_SCAN_TRIES = 20;
@@ -5648,6 +5651,7 @@ if (kind === 'cradle') {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
 
 
 
