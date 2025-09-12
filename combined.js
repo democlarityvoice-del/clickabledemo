@@ -5493,46 +5493,97 @@ if (kind === 'cradle') {
 
 // AGENTS STATS
 
+// == CV Agent Stats Injection (using real provided data) ==
 (() => {
-  const stats = {
-    '200': { CH: 5, TT: '18:10', ATT: '18:10', AHT: '05:55' },
-    '201': { CH: 3, TT: '09:40', ATT: '09:40', AHT: '05:18' },
-    '202': { CH: 4, TT: '13:26', ATT: '13:26', AHT: '08:09' },
-    '203': { CH: 2, TT: '30:57', ATT: '30:57', AHT: '12:03' },
-    '204': { CH: 1, TT: '03:53', ATT: '03:53', AHT: '03:53' },
-    '205': { CH: 4, TT: '30:27', ATT: '30:27', AHT: '06:36' },
-    '206': { CH: 6, TT: '38:34', ATT: '38:34', AHT: '06:22' },
-    '207': { CH: 0, TT: '00:00', ATT: '00:00', AHT: '01:53' }
+  if (window.__cvas_agentstats_installed__) return;
+  if (!location.href.includes('/portal/stats/queuestats/agent')) return;
+  window.__cvas_agentstats_installed__ = true;
+
+  // === Headers ===
+  function mapHeaders(table) {
+    const ths = table.querySelectorAll('thead th');
+    const colMap = {};
+    ths.forEach((th, idx) => {
+      const txt = th.textContent.trim().toUpperCase();
+      if (txt === 'CH') colMap.CH = idx;
+      if (txt === 'TT') colMap.TT = idx;
+      if (txt === 'ATT') colMap.ATT = idx;
+      if (txt === 'AHT') colMap.AHT = idx;
+    });
+    return { colMap };
+  }
+
+  // === Real Data from user (DO NOT MODIFY) ===
+  const CVAS_INBOUND = {
+    '200': { CH: 5, TT: '18:10', ATT: '18:10' },
+    '201': { CH: 3, TT: '09:40', ATT: '09:40' },
+    '202': { CH: 4, TT: '13:26', ATT: '13:26' },
+    '203': { CH: 2, TT: '30:57', ATT: '30:57' },
+    '204': { CH: 1, TT: '03:53', ATT: '03:53' },
+    '205': { CH: 4, TT: '30:27', ATT: '30:27' },
+    '206': { CH: 6, TT: '38:34', ATT: '38:34' },
+    '207': { CH: 0, TT: '00:00', ATT: '00:00' },
+  };
+
+  const CVAS_AHT = {
+    '200': { AHT: '05:55' },
+    '201': { AHT: '05:18' },
+    '202': { AHT: '08:09' },
+    '203': { AHT: '12:03' },
+    '204': { AHT: '03:53' },
+    '205': { AHT: '06:36' },
+    '206': { AHT: '06:22' },
+    '207': { AHT: '01:53' },
+  };
+
+  // === Combine sources ===
+  const CVAS_DATA = {};
+  Object.keys(CVAS_INBOUND).forEach(ext => {
+    CVAS_DATA[ext] = {
+      ...CVAS_INBOUND[ext],
+      ...(CVAS_AHT[ext] || {})
+    };
+  });
+
+  // === Injection ===
+  function injectAgentStats(table) {
+    const { colMap } = mapHeaders(table);
+    const rows = table.tBodies[0]?.rows || [];
+    let wrote = 0;
+
+    Array.from(rows).forEach(tr => {
+      const ext = tr.cells[1]?.textContent?.trim(); // Extension column is #1
+      const data = CVAS_DATA[ext];
+      if (!data) return;
+
+      Object.entries(colMap).forEach(([key, idx]) => {
+        const td = tr.cells[idx];
+        const val = data[key];
+        if (td && val != null) {
+          td.textContent = val;
+          wrote++;
+        }
+      });
+    });
+
+    console.log(`[CVAS] Injected agent stats → ${wrote} cell(s)`);
+  }
+
+  // === Wait for Table ===
+  const tryInject = () => {
+    const table = document.querySelector('#modal_stats_table');
+    if (!table || !table.tBodies[0]?.rows.length) return false;
+    injectAgentStats(table);
+    return true;
   };
 
   let tries = 0;
-  const injectStats = setInterval(() => {
+  const maxTries = 20;
+  const t = setInterval(() => {
     tries++;
-    const rows = document.querySelectorAll('#modal_stats_table tbody tr');
-    if (!rows.length) return;
-
-    rows.forEach(row => {
-      const ext = row.querySelector('td')?.textContent.trim();
-      const s = stats[ext];
-      if (!s) return;
-
-      const set = (cls, val) => {
-        const cell = row.querySelector(cls);
-        if (cell) cell.textContent = val;
-      };
-
-      set('.stat-td-agent-CH', s.CH);
-      set('.stat-td-agent-TT', s.TT);
-      set('.stat-td-agent-ATT', s.ATT);
-      set('.stat-td-agent-AHT', s.AHT);
-    });
-
-    console.log(`[CVAS] Injected agent stats after ${tries} attempt(s).`);
-    clearInterval(injectStats);
-  }, 300);
+    if (tryInject() || tries >= maxTries) clearInterval(t);
+  }, 400);
 })();
-
-
 
 
 
