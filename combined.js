@@ -5491,13 +5491,10 @@ if (kind === 'cradle') {
   }, 350);
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
-// AGENT STATS PAGE(() => {
-(() => {
-  if (window.__cvas_agentstats_installed__) return;
-  if (!location.href.includes('/portal/stats/queuestats/agent')) return;
-  window.__cvas_agentstats_installed__ = true;
+// AGENTS STATS
 
-  const DATA = {
+(() => {
+  const stats = {
     '200': { CH: 5, TT: '18:10', ATT: '18:10', AHT: '05:55' },
     '201': { CH: 3, TT: '09:40', ATT: '09:40', AHT: '05:18' },
     '202': { CH: 4, TT: '13:26', ATT: '13:26', AHT: '08:09' },
@@ -5508,37 +5505,33 @@ if (kind === 'cradle') {
     '207': { CH: 0, TT: '00:00', ATT: '00:00', AHT: '01:53' }
   };
 
-  const inject = () => {
-    const rows = Array.from(document.querySelectorAll('#modal_stats_table_example tbody tr'));
+  let tries = 0;
+  const injectStats = setInterval(() => {
+    tries++;
+    const rows = document.querySelectorAll('#modal_stats_table tbody tr');
     if (!rows.length) return;
 
     rows.forEach(row => {
       const ext = row.querySelector('td')?.textContent.trim();
-      const stats = DATA[ext];
-      if (!stats) return;
+      const s = stats[ext];
+      if (!s) return;
 
-      const injectStat = (selector, value) => {
-        const cell = row.querySelector(selector);
-        if (cell) cell.textContent = value;
+      const set = (cls, val) => {
+        const cell = row.querySelector(cls);
+        if (cell) cell.textContent = val;
       };
 
-      injectStat('.stat-td-agent-CH', stats.CH);
-      injectStat('.stat-td-agent-TT', stats.TT);
-      injectStat('.stat-td-agent-ATT', stats.ATT);
-      injectStat('.stat-td-agent-AHT', stats.AHT);
+      set('.stat-td-agent-CH', s.CH);
+      set('.stat-td-agent-TT', s.TT);
+      set('.stat-td-agent-ATT', s.ATT);
+      set('.stat-td-agent-AHT', s.AHT);
     });
 
-    console.log('[CVAS] Agent stat injection complete');
-  };
-
-  // Retry logic in case DataTable loads late
-  let attempts = 0;
-  const interval = setInterval(() => {
-    attempts++;
-    inject();
-    if (attempts > 20) clearInterval(interval);
+    console.log(`[CVAS] Injected agent stats after ${tries} attempt(s).`);
+    clearInterval(injectStats);
   }, 300);
 })();
+
 
 
 
