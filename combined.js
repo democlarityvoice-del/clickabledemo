@@ -5709,42 +5709,122 @@ const t = setInterval(() => {
   if (tryInject() || tries >= maxTries) clearInterval(t);
 }, 400);
 
-// === Ensure Modal ===
-function ensureAgentModal() {
-  let modal = document.querySelector('#cvas-agent-modal');
-  if (modal) return modal;
+// === CV Agent Stats Modal Rebuild (Literal Drop-in) ===
+(() => {
+  const existingModal = document.querySelector('#cvas-agent-modal');
+  if (existingModal) existingModal.remove();
 
-  modal = document.createElement('div');
+  const modal = document.createElement('div');
   modal.id = 'cvas-agent-modal';
+
   modal.innerHTML = `
-    <div class="cvas-agent-modal-backdrop"></div>
-    <div class="cvas-agent-modal-content">
-      <div class="cvas-agent-modal-header">
-        <span>Agent Call Details</span>
-        <button class="cvas-agent-modal-close">&times;</button>
+    <div class="cvas-agent-modal-inline">
+      <div class="cvas-agent-modal-header-row">
+        <button id="cvas-agent-modal-back" class="cvas-agent-modal-back">Back</button>
+        <div class="cvas-agent-modal-title">Agent Call Details</div>
+        <div class="cvas-agent-modal-date">${new Date().toLocaleDateString()}</div>
       </div>
-      <div class="cvas-agent-modal-body">
+      <div class="cvas-agent-modal-search-row">
+        <input type="text" id="cvas-agent-modal-search" placeholder="Search...">
+        <img src="${magnifyIcon}" class="cvas-search-icon" />
+      </div>
+      <div class="cvas-agent-modal-table-container">
         <table class="table table-hover table-condensed cvas-agent-table">
-          <thead><tr><th colspan="99">Calls</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Date/Time</th><th>Caller</th><th>From #</th><th>To #</th>
+              <th>Duration</th><th>Ext</th><th>Agent Ext</th><th>Agent Name</th>
+              <th>Talk Time</th><th>Disposition</th><th>Result</th><th>Actions</th>
+            </tr>
+          </thead>
           <tbody></tbody>
         </table>
       </div>
     </div>
   `;
 
-  document.body.appendChild(modal);
+  document.querySelector('#omp-active-body')?.prepend(modal);
 
-  modal.querySelector('.cvas-agent-modal-close').onclick = () => {
-    modal.style.display = 'none';
-    document.body.classList.remove('cvas-modal-open');
-  };
-  modal.querySelector('.cvas-agent-modal-backdrop').onclick = () => {
-    modal.style.display = 'none';
-    document.body.classList.remove('cvas-modal-open');
-  };
-
-  return modal;
-}
+  // === Modal Styles ===
+  const style = document.createElement('style');
+  style.textContent = `
+    #cvas-agent-modal {
+      background: white;
+      border: 2px solid #aaa;
+      border-radius: 6px;
+      padding: 16px;
+      margin: 20px auto;
+      box-shadow: 0 0 12px rgba(0,0,0,0.2);
+      font-family: sans-serif;
+      max-width: 98%;
+    }
+    .cvas-agent-modal-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .cvas-agent-modal-title {
+      font-weight: bold;
+      font-size: 18px;
+    }
+    .cvas-agent-modal-date {
+      font-size: 14px;
+      color: #666;
+    }
+    .cvas-agent-modal-search-row {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    #cvas-agent-modal-search {
+      flex: 1;
+      padding: 6px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    .cvas-search-icon {
+      width: 16px;
+      height: 16px;
+      margin-left: 8px;
+      opacity: 0.6;
+    }
+    .cvas-agent-modal-back {
+      background: #e57027;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .cvas-agent-modal-table-container {
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .cvas-agent-table th, .cvas-agent-table td {
+      padding: 6px;
+      border: 1px solid #ccc;
+      font-size: 13px;
+    }
+    .cvas-agent-table th {
+      background: #f7f7f7;
+      font-weight: bold;
+    }
+    .cvas-action-cell {
+      text-align: center;
+    }
+    .cvas-icon {
+      width: 16px;
+      height: 16px;
+      margin: 0 3px;
+      opacity: 0.6;
+    }
+    .cvas-icon:hover {
+      opacity: 1;
+    }
+  `;
+  document.head.appendChild(style);
+})();
 
 // === Add Icons Per Row ===
 function addAgentModalIcons(tbody) {
@@ -5762,70 +5842,7 @@ function addAgentModalIcons(tbody) {
   });
 }
 
-// === Modal Styles ===
-(() => {
-  const existing = document.getElementById('cvas-agentstats-style');
-  if (existing) return;
 
-  const style = document.createElement('style');
-  style.id = 'cvas-agentstats-style';
-  style.textContent = `
-    #cvas-agent-modal {
-      position: fixed;
-      top: 5%;
-      left: 50%;
-      transform: translateX(-50%);
-      background: white;
-      border: 2px solid #aaa;
-      border-radius: 6px;
-      padding: 16px;
-      max-width: 95%;
-      max-height: 85%;
-      overflow: auto;
-      box-shadow: 0 0 20px rgba(0,0,0,0.3);
-      z-index: 9999;
-    }
-    .cvas-agent-modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 16px;
-      font-weight: bold;
-    }
-    .cvas-agent-modal-close {
-      font-weight: bold;
-      cursor: pointer;
-      color: #e57027;
-      background: transparent;
-      border: none;
-      font-size: 22px;
-    }
-    .cvas-agent-modal-body table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    .cvas-agent-modal-body th,
-    .cvas-agent-modal-body td {
-      padding: 6px 8px;
-      border: 1px solid #ccc;
-    }
-    .cvas-action-cell {
-      text-align: center;
-    }
-    .cvas-icon {
-      width: 16px;
-      height: 16px;
-      margin: 0 3px;
-      opacity: 0.6;
-    }
-    .cvas-icon:hover {
-      opacity: 1;
-    }
-  `;
-  
-  document.head.appendChild(style);
-})(); // closes the inner IIFE
-})(); // closes the outermost IIFE (your entire module)
 
 
 
