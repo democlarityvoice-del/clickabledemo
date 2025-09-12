@@ -5491,14 +5491,24 @@ if (kind === 'cradle') {
   }, 350);
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
-// AGENT STATS PAGE
-(() => {
+// AGENT STATS PAGE(() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
 
-  const AGENT_STATS_TABLE_SEL = '#modal_stats_table';
+  const STATS_TABLE_ID = '#modal_stats_table';
   const MAX_SCAN_TRIES = 20;
+
+  const norm = s => (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
+
+  const HEADER_TO_STAT = {
+    'calls handled': 'CH',
+    'talk time': 'TT',
+    'average talk time': 'ATT',
+    'avg. talk time': 'ATT',
+    'average handle time': 'AHT',
+    'avg. handle time': 'AHT'
+  };
 
   const CVAS_INBOUND = {
     '200': { CH: 5, TT: '18:10',  ATT: '18:10' },
@@ -5530,34 +5540,33 @@ if (kind === 'cradle') {
     };
   });
 
-  function norm(s) {
-    return (s || '').replace(/\s+/g, ' ').trim().toLowerCase();
-  }
-
   function mapHeaders(table) {
-    const map = {};
-    const headers = Array.from(table.querySelectorAll('thead th'));
+    const ths = Array.from(table.querySelectorAll('thead th'));
+    const colMap = {};
     let extIdx = -1;
-    headers.forEach((th, i) => {
+
+    ths.forEach((th, i) => {
       const txt = norm(th.textContent);
-      if (txt === 'ext.' || txt === 'ext') extIdx = i;
-      if (txt === 'calls handled') map['CH'] = i;
-      if (txt === 'talk time') map['TT'] = i;
-      if (txt === 'average talk time') map['ATT'] = i;
-      if (txt === 'average handle time') map['AHT'] = i;
+      const code = HEADER_TO_STAT[txt];
+      if (code) colMap[code] = i;
+      if (txt === 'ext' || txt === 'ext.') extIdx = i;
     });
-    return { colMap: map, extIdx };
+
+    return { colMap, extIdx };
   }
 
   function injectTable(doc, table) {
     const { colMap, extIdx } = mapHeaders(table);
     const statCodes = Object.keys(colMap);
     if (!statCodes.length || extIdx === -1) return 0;
+
     let wrote = 0;
-    Array.from(table.tBodies[0]?.rows || []).forEach(tr => {
+    const rows = Array.from(table.tBodies[0]?.rows || []);
+    rows.forEach(tr => {
       const ext = (tr.cells[extIdx]?.textContent || '').trim();
       const data = CVAS_DATA[ext];
       if (!data) return;
+
       statCodes.forEach(code => {
         const td = tr.cells[colMap[code]];
         if (!td) return;
@@ -5567,6 +5576,7 @@ if (kind === 'cradle') {
         wrote++;
       });
     });
+
     return wrote;
   }
 
@@ -5575,6 +5585,7 @@ if (kind === 'cradle') {
       const n = injectTable(doc, table);
       if (n) console.log('[CVAS] wrote', n, 'cell(s)');
     };
+
     let last = -1, calmMs = 600, lastChange = Date.now(), tries = 0;
     const t = doc.defaultView.setInterval(() => {
       tries++;
@@ -5600,20 +5611,22 @@ if (kind === 'cradle') {
     doc.defaultView.cvasForce = apply;
   }
 
-  function candidateTables(doc) {
-    return Array.from(doc.querySelectorAll(AGENT_STATS_TABLE_SEL));
+  function collectDocs(root, out = []) {
+    out.push(root);
+    root.querySelectorAll('iframe').forEach(f => {
+      try { if (f.contentDocument) collectDocs(f.contentDocument, out); } catch (_) {}
+    });
+    return out;
   }
 
-  function collectDocs(rootDoc) {
-    const docs = [rootDoc];
-    const frames = rootDoc.querySelectorAll('iframe');
-    frames.forEach(f => {
-      try {
-        const d = f.contentDocument;
-        if (d) docs.push(d);
-      } catch (_) {}
+  function candidateTables(doc) {
+    const direct = Array.from(doc.querySelectorAll(STATS_TABLE_ID));
+    if (direct.length) return direct;
+    return Array.from(doc.querySelectorAll('table')).filter(t => {
+      const ths = Array.from(t.querySelectorAll('thead th'));
+      const labels = ths.map(th => norm(th.textContent));
+      return labels.some(l => /handle|talk|average/i.test(l));
     });
-    return docs;
   }
 
   function boot() {
@@ -5635,6 +5648,8 @@ if (kind === 'cradle') {
     if (tries >= MAX_SCAN_TRIES) clearInterval(again);
   }, 350);
 })();
+
+
 
 
 
