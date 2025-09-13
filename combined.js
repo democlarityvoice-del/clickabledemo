@@ -5535,10 +5535,11 @@ if (kind === 'cradle') {
   });
 
 // === Global Safe Initialization ===
-window.CVAS_CALLS_INBOUND_BY_AGENT = window.CVAS_CALLS_INBOUND_BY_AGENT || {};
+window.CVAS_CALLS_INBOUND_BY_AGENT  = window.CVAS_CALLS_INBOUND_BY_AGENT  || {};
 window.CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT || {};
-const CVAS_CALLS_INBOUND_BY_AGENT = window.CVAS_CALLS_INBOUND_BY_AGENT;
+const CVAS_CALLS_INBOUND_BY_AGENT  = window.CVAS_CALLS_INBOUND_BY_AGENT;
 const CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT;
+
     
 
 // CVAS Action Icons 
@@ -6174,6 +6175,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
