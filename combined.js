@@ -5795,6 +5795,13 @@ if (!iframeContainer) {
   iframeContainer.innerHTML = '';
   iframeContainer.appendChild(iframe);
 
+  iframe.onload = () => {
+  const tbody = iframe.contentDocument.querySelector('.cvas-agent-table tbody');
+  if (tbody) addAgentModalIcons(tbody);
+};
+ 
+    
+
   // Setup restoration function
   window.__cvAgentRestore = () => {
     if (window.__cvAgentOriginalContent) {
@@ -5941,6 +5948,8 @@ const t = setInterval(() => {
 
   document.querySelector('#omp-active-body')?.prepend(modal);
 
+  
+
   // === Modal Styles ===
   const style = document.createElement('style');
   style.textContent = `
@@ -6042,27 +6051,6 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   const modal = document.getElementById('cvas-agent-modal');
   if (modal) modal.remove();
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // === AGENT MODAL COMPLETION - Define missing data sources ===
 const CVAS_CALLS_INBOUND_BY_AGENT = {
@@ -6231,6 +6219,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
