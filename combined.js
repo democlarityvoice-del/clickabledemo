@@ -5731,18 +5731,18 @@ document.querySelectorAll('tbody tr').forEach(tr => {
   const actionCell = tr.querySelector('td.cvas-action-cell');
   if (actionCell) {
     actionCell.innerHTML = \`
-      <span class="cv-agent-icon" onclick="openModal('download')" title="Download">
-        <img src="\${agentStatsDownload}" class="cv-agent-icon" alt="">
-      </span>
-      <span class="cv-agent-icon" onclick="openModal('listen')" title="Listen">
-        <img src="\${agentStatsListen}" class="cv-agent-icon" alt="">
-      </span>
-      <span class="cv-agent-icon" onclick="openModal('cradle')" title="Cradle to Grave">
-        <img src="\${agentStatsCradle}" class="cv-agent-icon" alt="">
-      </span>
-      <span class="cv-agent-icon" onclick="openModal('notes')" title="Notes">
-        <img src="\${agentStatsNotes}" class="cv-agent-icon" alt="">
-      </span>
+     <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Download" title="Download" data-icon="download">
+    <img src="${agentStatsDownload}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" title="Listen" data-icon="listen">
+    <img src="${agentStatsDownload}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" title="Cradle to Grave" data-icon="cradle">
+    <img src="${agentStatsDownload}" alt="">
+  </span>
+  <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" title="Edit Notes" data-icon="notes">
+    <img src="${agentStatsDownload}" alt="">
+  </span>
     \`;
   }
 });
@@ -6181,6 +6181,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
