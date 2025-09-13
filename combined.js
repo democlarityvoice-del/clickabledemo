@@ -5534,6 +5534,13 @@ if (kind === 'cradle') {
     };
   });
 
+// === Global Safe Initialization ===
+window.CVAS_CALLS_INBOUND_BY_AGENT = window.CVAS_CALLS_INBOUND_BY_AGENT || {};
+window.CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT || {};
+const CVAS_CALLS_INBOUND_BY_AGENT = window.CVAS_CALLS_INBOUND_BY_AGENT;
+const CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT;
+    
+
 // CVAS Action Icons 
 const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
 const agentStatsListen   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
@@ -5666,9 +5673,9 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
     }
   }  
 
-// === Agent Details - Iframe Replacement Pattern (like queue stats) ===
+// === Agent Details - Replacement Pattern (like queue stats) ===
 function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
-  const statTitle = stat === 'AHT' ? 'Average Handle Time' : stat;
+  const statTitle = getAgentStatTitle(stat);
   const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
   const agentStatsListen = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   const agentStatsCradle = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
@@ -5757,12 +5764,14 @@ document.addEventListener('keydown', (e) => {
 }
 
 function openAgentDetails(agentExt, stat) {
-  // Find the iframe container to replace (same pattern as queue stats)
-  const iframeContainer = document.querySelector('#modal_stats_iframe_container, .modal-body');
-  if (!iframeContainer) {
-    console.warn('[CVAS] Could not find iframe container for agent details');
-    return;
-  }
+
+// Use Agent Stats container instead of Queue Stats container
+const iframeContainer = document.querySelector('#modal-body-reports');
+if (!iframeContainer) {
+  console.warn('[CVAS] Could not find #modal-body-reports container for agent details');
+  return;
+}
+
 
   // Get call data for this agent
   const inbound = CVAS_CALLS_INBOUND_BY_AGENT[agentExt] || [];
@@ -6222,6 +6231,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
