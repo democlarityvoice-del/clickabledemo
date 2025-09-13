@@ -6052,51 +6052,6 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   if (modal) modal.remove();
 });
 
-// === AGENT MODAL COMPLETION - Define missing data sources ===
-const CVAS_CALLS_INBOUND_BY_AGENT = {
-  "200": [
-    '<tr><td>Today, 2:15 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>3:24</td><td>Main Routing</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 1:52 pm</td><td>Ruby Foster</td><td>(248) 555-0102</td><td>248-436-3449</td><td>4:16</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 1:08 pm</td><td>Monica Alvarez</td><td>(989) 555-0113</td><td>248-436-3443</td><td>1:52</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 12:16 pm</td><td>Leif Hendricksen</td><td>517-555-0162</td><td>(313) 995-9080</td><td>2:27</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "201": [
-    '<tr><td>Today, 1:46 pm</td><td>Tucker Jones</td><td>(989) 555-0128</td><td>248-436-3443</td><td>1:28</td><td>Existing Customer</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 1:08 pm</td><td>Coco LaBelle</td><td>(989) 555-0672</td><td>248-436-3443</td><td>5:55</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "202": [
-    '<tr><td>Today, 1:35 pm</td><td>Jack Burton</td><td>(517) 555-0148</td><td>(313) 995-9080</td><td>7:22</td><td>Existing Customer</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 1:26 pm</td><td>Carlos Riviera</td><td>(517) 555-0177</td><td>248-436-3449</td><td>1:53</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 10:58 am</td><td>Lola Turner</td><td>517-555-0170</td><td>248-436-3449</td><td>1:24</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "205": [
-    '<tr><td>Today, 1:37 pm</td><td>Maya Brooks</td><td>(517) 555-0126</td><td>248-436-3449</td><td>2:05</td><td>Existing Customer</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 11:18 am</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>(313) 995-9080</td><td>17:29</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 08:42 am</td><td>Alexander Chen</td><td>(517) 555-0122</td><td>(313) 995-9080</td><td>7:42</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "206": [
-    '<tr><td>Today, 1:41 pm</td><td>Liam Nguyen</td><td>(810) 555-0100</td><td>248-436-3449</td><td>8:06</td><td>Existing Customer</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 11:22 am</td><td>JR Knight</td><td>248-555-0144</td><td>248-436-3443</td><td>8:35</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 09:56 am</td><td>Rory Davis</td><td>313-555-0179</td><td>(313) 995-9080</td><td>8:17</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>',
-    '<tr><td>Today, 09:29 am</td><td>Tanya Roberts</td><td>313-555-3443</td><td>248-436-3443</td><td>0:57</td><td>New Sales</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ]
-};
-
-const CVAS_CALLS_OUTBOUND_BY_AGENT = {
-  "200": [
-    '<tr><td>Today, 2:45 pm</td><td>Follow-up: Ruby Foster</td><td>(248) 555-0102</td><td>Outbound</td><td>2:15</td><td>Follow-up</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "201": [
-    '<tr><td>Today, 3:15 pm</td><td>Follow-up: Tucker Jones</td><td>(989) 555-0128</td><td>Outbound</td><td>1:45</td><td>Follow-up</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "202": [],
-  "205": [
-    '<tr><td>Today, 2:30 pm</td><td>Follow-up: Maya Brooks</td><td>(517) 555-0126</td><td>Outbound</td><td>3:12</td><td>Follow-up</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ],
-  "206": [
-    '<tr><td>Today, 4:00 pm</td><td>Follow-up: Liam Nguyen</td><td>(810) 555-0100</td><td>Outbound</td><td>1:30</td><td>Follow-up</td><td>Complete</td><td class="cvas-action-cell"></td></tr>'
-  ]
-};
 
 function openAgentCradleModal(agentExt, row) {
   const ICON_PHONE = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg";
@@ -6219,6 +6174,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
