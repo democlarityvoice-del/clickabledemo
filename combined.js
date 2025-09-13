@@ -5735,13 +5735,13 @@ document.querySelectorAll('tbody tr').forEach(tr => {
     <img src="${agentStatsDownload}" alt="">
   </span>
   <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Listen" title="Listen" data-icon="listen">
-    <img src="${agentStatsDownload}" alt="">
+    <img src="${agentStatsListen}" alt="">
   </span>
   <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Cradle to Grave" title="Cradle to Grave" data-icon="cradle">
-    <img src="${agentStatsDownload}" alt="">
+    <img src="${agentStatsCradle}" alt="">
   </span>
   <span role="button" tabindex="0" class="cvqs-icon-btn" aria-label="Edit Notes" title="Edit Notes" data-icon="notes">
-    <img src="${agentStatsDownload}" alt="">
+    <img src="${agentStatsNotes}" alt="">
   </span>
     \`;
   }
@@ -6181,6 +6181,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
