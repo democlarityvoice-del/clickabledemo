@@ -5494,6 +5494,8 @@ if (kind === 'cradle') {
 // AGENTS STATS
 // AGENTS STATS
 
+// AGENTS STATS
+
 // == CV Agent Stats Injection (using real provided data) ==// == CV Agent Stats Injection (linkify non-zero values) ==
 (() => {
   if (window.__cvas_agentstats_installed__) return;
@@ -5534,13 +5536,12 @@ if (kind === 'cradle') {
     };
   });
 
-// === Global Safe Initialization ===
-window.CVAS_CALLS_INBOUND_BY_AGENT  = window.CVAS_CALLS_INBOUND_BY_AGENT  || {};
-window.CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT || {};
-const CVAS_CALLS_INBOUND_BY_AGENT  = window.CVAS_CALLS_INBOUND_BY_AGENT;
-const CVAS_CALLS_OUTBOUND_BY_AGENT = window.CVAS_CALLS_OUTBOUND_BY_AGENT;
+// === Global Safe Initialization on TOP window ===
+const g = window.top;
+g.CVAS_CALLS_INBOUND_BY_AGENT  = g.CVAS_CALLS_INBOUND_BY_AGENT  || {};
+g.CVAS_CALLS_OUTBOUND_BY_AGENT = g.CVAS_CALLS_OUTBOUND_BY_AGENT || {};
 
-    
+
 
 // CVAS Action Icons 
 const agentStatsDownload = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/download-solid-full.svg';
@@ -5548,14 +5549,14 @@ const agentStatsListen   = 'https://raw.githubusercontent.com/democlarityvoice-d
 const agentStatsCradle   = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
 const agentStatsNotes    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
 
-    
+
 const actionIcons = `
 <img src="${agentStatsListen}" title="Listen" class="cvas-icon" />
 <img src="${agentStatsCradle}" title="Cradle to Grave" class="cvas-icon" />
 <img src="${agentStatsNotes}" title="Notes" class="cvas-icon" />
 <img src="${agentStatsDownload}" title="Download" class="cvas-icon" />
 `;
- 
+
   const CVAS_HEADER_TO_STAT = {
     'Calls Handled': 'CH',
     'Talk Time': 'TT',  
@@ -5563,7 +5564,8 @@ const actionIcons = `
     'Average Handle Time': 'AHT'
   };
 
-const CVAS_CALLS_INBOUND_BY_AGENT = {
+// Populate inbound calls data
+Object.assign(g.CVAS_CALLS_INBOUND_BY_AGENT, {
 "200": [
 `<tr><td>Today, 1:35 pm</td><td>Sarah Patel</td><td>(248) 555-0196</td><td>248-436-3443</td><td>1:57</td><td>200</td><td>200</td><td>Mike Johnson</td><td>3:24</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
 `<tr><td>Today, 1:30 pm</td><td>Chloe Bennet</td><td>(313) 555-0120</td><td>248-436-3443</td><td>5:21</td><td>200</td><td>200</td><td>Mike Johnson</td><td>6:11</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`,
@@ -5604,10 +5606,11 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
 `<tr><td>Today, 1:24 pm</td><td>Martin Smith</td><td>800-909-5384</td><td>(313) 995-9080</td><td>4:11</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>4:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
 ],
 "207": []
-};
+});
 
-    
- const CVAS_CALLS_OUTBOUND_BY_AGENT = {
+
+// Populate outbound calls data
+Object.assign(g.CVAS_CALLS_OUTBOUND_BY_AGENT, {
   "200": [
     `<tr><td>Today, 9:26 pm</td><td>Mike Johnson (200)</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>17:20</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
@@ -5630,7 +5633,7 @@ const CVAS_CALLS_INBOUND_BY_AGENT = {
   "207": [
     `<tr><td>Today, 9:59 pm</td><td>John Smith (207)</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>01:53</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ]
-};
+});
 
 
   // === Headers ===
@@ -5681,7 +5684,7 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
   const agentStatsListen = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
   const agentStatsCradle = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/transcript.svg';
   const agentStatsNotes = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/newspaper-regular-full.svg';
-  
+
   return `<!doctype html><html><head><meta charset="utf-8">
 <style>
   body { font: 13px/1.428 Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
@@ -5689,12 +5692,12 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
   .cv-agent-back { background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; margin-right: 12px; cursor: pointer; font: 600 12px Arial; }
   .cv-agent-title { flex: 1; margin: 0; font: 600 16px Arial; color: #333; }
   .cv-agent-subtitle { font: 400 12px Arial; color: #666; margin-top: 2px; }
-  
+
   .cv-agent-table { width: 100%; border-collapse: collapse; margin: 12px; }
   .cv-agent-table th, .cv-agent-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
   .cv-agent-table th { background: #f8f9fa; font-weight: 600; border-bottom: 1px solid #ddd; }
   .cv-agent-table tr:hover { background: #f7f7f7; }
-  
+
   .cv-agent-actions { text-align: center; }
   .cv-agent-icon { width: 16px; height: 16px; margin: 0 3px; opacity: 0.6; cursor: pointer; }
   .cv-agent-icon:hover { opacity: 1; }
@@ -5707,7 +5710,7 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
       <div class="cv-agent-subtitle">Today, 12:00 AM - 11:59 PM</div>
     </div>
   </div>
-  
+
   <table class="cv-agent-table">
     <thead>
       <tr>
@@ -5775,8 +5778,8 @@ if (!iframeContainer) {
 
 
   // Get call data for this agent
-  const inbound = CVAS_CALLS_INBOUND_BY_AGENT[agentExt] || [];
-  const outbound = CVAS_CALLS_OUTBOUND_BY_AGENT[agentExt] || [];
+  const inbound = window.top.CVAS_CALLS_INBOUND_BY_AGENT[agentExt] || [];
+  const outbound = window.top.CVAS_CALLS_OUTBOUND_BY_AGENT[agentExt] || [];
   const showOutbound = stat === 'AHT';
   const rows = showOutbound ? inbound.concat(outbound) : inbound;
   const rowsHTML = rows.join('');
@@ -5800,8 +5803,8 @@ if (!iframeContainer) {
   const tbody = iframe.contentDocument.querySelector('.cvas-agent-table tbody');
   if (tbody) addAgentModalIcons(tbody);
 };
- 
-    
+
+
 
   // Setup restoration function
   window.__cvAgentRestore = () => {
@@ -5813,8 +5816,8 @@ if (!iframeContainer) {
   };
 }
 
-// === Expose function to window for iframe access ===
-window.openAgentDetails = openAgentDetails;
+// === Expose function to TOP window for iframe access ===
+window.top.openAgentDetails = openAgentDetails;
 
   // === Linkify Utility ===
  // === Linkify Utility ===
@@ -5836,7 +5839,7 @@ function linkify(td, ext, stat, value) {
 
   a.addEventListener('click', e => {
     e.preventDefault();
-    openAgentDetails(ext, stat);
+    window.top.openAgentDetails(ext, stat);
   });
 
   td.appendChild(a);
@@ -5919,7 +5922,7 @@ const t = setInterval(() => {
   modal.id = 'cvas-agent-modal';
 
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';  
-    
+
 
   modal.innerHTML = `
     <div class="cvas-agent-modal-inline">
@@ -5949,7 +5952,7 @@ const t = setInterval(() => {
 
   document.querySelector('#omp-active-body')?.prepend(modal);
 
-  
+
 
   // === Modal Styles ===
   const style = document.createElement('style');
@@ -6059,14 +6062,14 @@ function openAgentCradleModal(agentExt, row) {
   const ICON_ANSWER = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg";
   const ICON_HANG = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg";
   const ICON_AGENTRING = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg";
-  
+
   const cradleModal = document.createElement("div");
   cradleModal.id = "cvas-cradle-modal";
   cradleModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
-  
+
   const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
   const phone = row ? row.cells[2]?.textContent : "Unknown Number";
-  
+
   cradleModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 800px; max-height: 80vh; overflow: auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
       <h3 style="margin: 0; font: 600 16px Arial;">Call Timeline - ${caller}</h3>
@@ -6105,7 +6108,7 @@ function openAgentCradleModal(agentExt, row) {
       </div>
     </div>
   </div>`;
-  
+
   document.body.appendChild(cradleModal);
   cradleModal.querySelector("#cvas-cradle-close").addEventListener("click", () => { cradleModal.remove(); });
   cradleModal.addEventListener("click", (e) => { if (e.target === cradleModal) cradleModal.remove(); });
@@ -6115,9 +6118,9 @@ function openAgentNotesModal(agentExt, row) {
   const notesModal = document.createElement("div");
   notesModal.id = "cvas-notes-modal";
   notesModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
-  
+
   const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
-  
+
   notesModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow: auto;">
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
       <h3 style="margin: 0; font: 600 16px Arial;">Call Notes - ${caller}</h3>
@@ -6131,7 +6134,7 @@ function openAgentNotesModal(agentExt, row) {
       </div>
     </div>
   </div>`;
-  
+
   document.body.appendChild(notesModal);
   notesModal.querySelector("#cvas-notes-close").addEventListener("click", () => { notesModal.remove(); });
   notesModal.addEventListener("click", (e) => { if (e.target === notesModal) notesModal.remove(); });
@@ -6139,13 +6142,13 @@ function openAgentNotesModal(agentExt, row) {
 
 function openAgentListenModal(agentExt, row) {
   const agentStatsListen = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg";
-  
+
   const listenModal = document.createElement("div");
   listenModal.id = "cvas-listen-modal";
   listenModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
-  
+
   const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
-  
+
   listenModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 500px;">
     <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
       <h3 style="margin: 0; font: 600 16px Arial;">Listen to Call - ${caller}</h3>
@@ -6167,7 +6170,7 @@ function openAgentListenModal(agentExt, row) {
       </div>
     </div>
   </div>`;
-  
+
   document.body.appendChild(listenModal);
   listenModal.querySelector("#cvas-listen-close").addEventListener("click", () => { listenModal.remove(); });
   listenModal.addEventListener("click", (e) => { if (e.target === listenModal) listenModal.remove(); });
@@ -6175,6 +6178,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
