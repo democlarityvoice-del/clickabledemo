@@ -5714,9 +5714,10 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
   <table class="cv-agent-table">
     <thead>
       <tr>
-        <th>Date/Time</th><th>Caller</th><th>From #</th><th>To #</th>
-        <th>Duration</th><th>Ext</th><th>Agent Ext</th><th>Agent Name</th>
-        <th>Talk Time</th><th>Disposition</th><th>Result</th><th>Actions</th>
+        <th>Call Time</th><th>Caller Name</th><th>Caller Number</th><th>DNIS</th>
+         <th>Time in Queue</th><th>Agent Extension</th><th>Agent Phone</th>
+         <th>Agent Name</th><th>Agent Time</th><th>Agent Release Reason</th>
+         <th>Queue Release Reason</th><th></th> <!-- keep this blank TH -->
       </tr>
     </thead>
     <tbody>
@@ -6180,6 +6181,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
