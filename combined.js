@@ -5693,10 +5693,10 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
   .cv-agent-title { flex: 1; margin: 0; font: 600 16px Arial; color: #333; }
   .cv-agent-subtitle { font: 400 12px Arial; color: #666; margin-top: 2px; }
 
-  .cv-agent-table { width: 100%; border-collapse: collapse; margin: 12px; }
-  .cv-agent-table th, .cv-agent-table td { padding: 8px 12px; text-align: left; border-bottom: 1px solid #eee; }
-  .cv-agent-table th { background: #f8f9fa; font-weight: 600; border-bottom: 1px solid #ddd; }
-  .cv-agent-table tr:hover { background: #f7f7f7; }
+  .cv-agent-table { width: 100%; border-collapse: collapse; margin: 13x; table-layout: auto;  }
+  .cv-agent-table th, .cv-agent-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #eee; }
+  .cv-agent-table th { background: #f8f9fa; color: #004a9b; font-weight: 600; border-bottom: 1px solid #ddd; }
+  .cv-agent-table tr:hover { background-color: #f3f3f3; }
 
   .cv-agent-actions { text-align: center; }
   .cv-agent-icon { width: 16px; height: 16px; margin: 0 3px; opacity: 0.6; cursor: pointer; }
@@ -6181,6 +6181,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
