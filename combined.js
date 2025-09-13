@@ -5687,20 +5687,39 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
 
   return `<!doctype html><html><head><meta charset="utf-8">
 <style>
+  /* your existing iframe styles */
   body { font: 13px/1.428 Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
-  .cv-agent-header { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid #e5e8eb; background: #f8f9fa; }
-  .cv-agent-back { background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; margin-right: 12px; cursor: pointer; font: 600 12px Arial; }
-  .cv-agent-title { flex: 1; margin: 0; font: 600 16px Arial; color: #333; }
-  .cv-agent-subtitle { font: 400 12px Arial; color: #666; margin-top: 2px; }
-
-  .cv-agent-table { width: 100%; height: auto; border-collapse: collapse; margin: 13x; table-layout: auto;  }
+  .cv-agent-header { /* ... */ }
+  .cv-agent-table { width: 100%; height: auto; border-collapse: collapse; margin: 13px; table-layout: auto; }
   .cv-agent-table th, .cv-agent-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #eee; }
   .cv-agent-table th { background: #f8f9fa; color: #004a9b; font-weight: 600; border-bottom: 1px solid #ddd; }
   .cv-agent-table tr:hover { background-color: #f3f3f3; }
 
-  .cv-agent-actions { text-align: center; }
-  .cv-agent-icon { width: 16px; height: 16px; margin: 0 3px; opacity: 0.6; cursor: pointer; }
-  .cv-agent-icon:hover { opacity: 1; }
+  /* === INSERT THESE NEW RULES INSIDE THE IFRAME STYLE === */
+  .cv-agent-table thead th:last-child { min-width: 140px; }   /* keep actions column wide enough */
+
+  td.cvas-action-cell{
+    white-space: nowrap;              /* stop vertical wrapping */
+    display: inline-flex;             /* lay icons out horizontally */
+    gap: 8px;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* rounded button wrappers you use in the iframe */
+  .cvqs-icon-btn{
+    display:inline-flex; align-items:center; justify-content:center;
+    width:24px; height:24px; border-radius:50%;
+    background:#fff; border:1px solid #dcdcdc; margin:3px; cursor:pointer;
+  }
+  .cvqs-icon-btn img{
+    width:14px; height:14px; opacity:.35; transition:opacity .2s;
+    vertical-align: middle;
+  }
+  .cvqs-icon-btn:hover img, tr:hover .cvqs-icon-btn img{ opacity:1; }
+
+  /* some themes set table imgs to block; force inline */
+  .cv-agent-table img{ display:inline-block; vertical-align:middle; }
 </style>
 </head><body>
   <div class="cv-agent-header">
@@ -6182,6 +6201,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
