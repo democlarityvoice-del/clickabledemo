@@ -5924,6 +5924,10 @@ const t = setInterval(() => {
   const modal = document.createElement('div');
   modal.id = 'cvas-agent-modal';
 
+    // INSERT THESE TWO LINES
+modal.style.maxHeight = 'calc(100vh - 32px)';
+modal.style.overflow  = 'auto';  
+
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';  
 
 
@@ -6009,10 +6013,7 @@ const t = setInterval(() => {
       border-radius: 4px;
       cursor: pointer;
     }
-    .cvas-agent-modal-table-container {
-      max-height: 500px;
-      overflow-y: auto;
-    }
+    
     .cvas-agent-table th, .cvas-agent-table td {
       padding: 6px;
       border: 1px solid #ccc;
@@ -6181,6 +6182,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
