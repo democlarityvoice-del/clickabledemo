@@ -5779,13 +5779,30 @@ function openModal(action) {
   }
 }
 
-// Handle Escape key
+// Esc to close
 document.addEventListener('keydown', (e) => {
-  if (e.key === 'Escape' && parent.__cvAgentRestore) {
-    parent.__cvAgentRestore();
+  if (e.key === 'Escape' && parent.__cvAgentRestore) parent.__cvAgentRestore();
+});
+
+// Handle clicks on the action buttons (inside the iframe)
+const table = document.querySelector('.cv-agent-table');
+table.addEventListener('click', (e) => {
+  const btn = e.target.closest('.cvqs-icon-btn');
+  if (!btn) return;
+  const action = btn.dataset.icon;
+  const tr = btn.closest('tr');
+
+  if (action === 'cradle' && parent.openAgentCradleModal) {
+    parent.openAgentCradleModal('${agentExt}', tr);
+  } else if (action === 'notes' && parent.openAgentNotesModal) {
+    parent.openAgentNotesModal('${agentExt}', tr);
+  } else if (action === 'listen' && parent.openAgentListenModal) {
+    parent.openAgentListenModal('${agentExt}', tr);
+  } else if (action === 'download') {
+    console.log('[CVAS] Download for agent ${agentExt}');
   }
 });
-</script>
+  </script>
 </body></html>`;
 }
 
@@ -5798,6 +5815,29 @@ if (!iframeContainer) {
   return;
 }
 
+  // --- UNLOCK HOST CONTAINER (ADD THIS BLOCK) ---
+  // Make the host div behave like a full-page area instead of a tiny scroller
+  iframeContainer.style.height    = 'auto';
+  iframeContainer.style.maxHeight = 'none';
+  iframeContainer.style.overflow  = 'visible';
+  iframeContainer.style.padding   = '0';
+
+  // Some themes add overflow to the parent wrapper—relax that too
+  const scrollerParent = iframeContainer.parentElement;
+  if (scrollerParent) scrollerParent.style.overflow = 'visible';
+
+  // One-time CSS override (safe to call multiple times)
+  if (!document.getElementById('cvas-unlock-reports-css')) {
+    const unlock = document.createElement('style');
+    unlock.id = 'cvas-unlock-reports-css';
+    unlock.textContent = `
+      #modal-body-reports{max-height:none!important;overflow:visible!important;height:auto!important}
+      #modal-body-reports .table-responsive,
+      #modal-body-reports .scrollable{overflow:visible!important}
+    `;
+    document.head.appendChild(unlock);
+  }
+  // --- END UNLOCK HOST CONTAINER ---  
 
   // Get call data for this agent
   const inbound = window.top.CVAS_CALLS_INBOUND_BY_AGENT[agentExt] || [];
@@ -5820,13 +5860,22 @@ if (!iframeContainer) {
   // Replace container content
   iframeContainer.innerHTML = '';
   iframeContainer.appendChild(iframe);
+// --- FIT IFRAME TO VIEWPORT (ADD THIS BLOCK) ---
+  function sizeIframe() {
+    // Top of iframe relative to viewport
+    const top = iframe.getBoundingClientRect().top;
+    // Leave a little bottom margin (24px)
+    const available = Math.max(480, window.innerHeight - top - 24);
+    iframe.style.height = available + 'px';
+  }
+  sizeIframe();
+  window.addEventListener('resize', sizeIframe);
+  // --- END FIT IFRAME TO VIEWPORT ---
 
   iframe.onload = () => {
-  const tbody = iframe.contentDocument.querySelector('.cvas-agent-table tbody');
-  if (tbody) addAgentModalIcons(tbody);
-};
-
-
+    const tbody = iframe.contentDocument.querySelector('.cvas-agent-table tbody');
+    if (tbody) addAgentModalIcons(tbody);
+  };
 
   // Setup restoration function
   window.__cvAgentRestore = () => {
@@ -5834,6 +5883,7 @@ if (!iframeContainer) {
       iframeContainer.innerHTML = window.__cvAgentOriginalContent;
       delete window.__cvAgentOriginalContent;
       delete window.__cvAgentRestore;
+      window.removeEventListener('resize', sizeIframe);
     }
   };
 }
@@ -6201,6 +6251,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
