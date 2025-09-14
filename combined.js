@@ -6515,45 +6515,18 @@ function openAgentListenModal(agentExt, row, btn) {
 // === AGENT AVAILABILITY STATS INJECTION ===
 (() => {
   if (window.__cvas_availability_installed__) return;
-  if (!location.href.includes('/portal/stats/queuestats/agent_availability')) return;
   window.__cvas_availability_installed__ = true;
-
-  const availabilityData = {
-    '200': { LI: '8:03:15', L: '1:02:00', B: '0:30:00' },
-    '201': { LI: '8:00:45', L: '0:57:00', B: '0:30:00' },
-    '202': { LI: '7:58:30', L: '1:00:00', B: '0:30:00' },
-    '203': { LI: '8:05:20', L: '0:59:00', B: '0:30:00' },
-    '204': { LI: '8:02:10', L: '1:01:00', B: '0:30:00' },
-    '205': { LI: '7:59:45', L: '0:58:00', B: '0:30:00' },
-    '206': { LI: '8:04:30', L: '1:00:00', B: '0:30:00' },
-    '207': { LI: '8:01:00', L: '1:02:00', B: '0:30:00' }
-  };
-
-  function timeToMinutes(timeStr) {
-    const [h, m, s] = timeStr.split(':').map(Number);
-    return h * 60 + m + (s / 60);
-  }
-
-  function minutesToTime(mins) {
-    const h = Math.floor(mins / 60);
-    const m = Math.floor(mins % 60).toString().padStart(2, '0');
-    const s = Math.floor((mins % 1) * 60).toString().padStart(2, '0');
-    return `${h}:${m}:${s}`;
-  }
-
-  Object.values(availabilityData).forEach(data => {
-    const li = timeToMinutes(data.LI);
-    const l = timeToMinutes(data.L);
-    const b = timeToMinutes(data.B);
-    data.AM = minutesToTime(li - l - b); // Available Minutes
-  });
 
   function mapHeaders(table) {
     const ths = table.querySelectorAll('thead th');
     const colMap = {};
-    ths.forEach((th, i) => {
+    ths.forEach((th, idx) => {
       const txt = th.textContent.trim().toUpperCase();
-      if (['LI', 'AM', 'L', 'B'].includes(txt)) colMap[txt] = i;
+      if (txt === 'CH') colMap.CH = idx;
+      if (txt === 'TT') colMap.TT = idx;
+      if (txt === 'ATT') colMap.ATT = idx;
+      if (txt === 'AHT') colMap.AHT = idx;
+      if (txt === 'AM') colMap.AM = idx; // <- add whatever stat you want
     });
     return { colMap };
   }
@@ -6561,27 +6534,28 @@ function openAgentListenModal(agentExt, row, btn) {
   function injectAvailability(table) {
     const { colMap } = mapHeaders(table);
     const rows = table.tBodies[0]?.rows || [];
-    let count = 0;
+    let wrote = 0;
 
-    Array.from(rows).forEach(row => {
-      const ext = row.cells[0]?.textContent.trim(); // EXT column
-      const data = availabilityData[ext];
+    Array.from(rows).forEach(tr => {
+      const ext = tr.cells[0]?.textContent.trim(); // col 0 = ext
+      const data = CVAS_DATA[ext];
       if (!data) return;
 
       Object.entries(colMap).forEach(([key, idx]) => {
-        const cell = row.cells[idx];
-        if (cell && data[key]) {
-          cell.textContent = data[key];
-          count++;
+        const td = tr.cells[idx];
+        const val = data[key];
+        if (td) {
+          linkify(td, ext, key, val);
+          wrote++;
         }
       });
     });
 
-    console.log(`[CVAS] Agent Availability injected into ${count} cell(s)`);
+    console.log(`[CVAS] Linked and injected ${wrote} stat cell(s)`);
   }
 
   function tryInject() {
-    const table = document.querySelector('#contacts-table');
+    const table = document.querySelector('#modal_stats_table');
     if (!table || !table.tBodies[0]?.rows.length) return false;
     injectAvailability(table);
     return true;
@@ -6594,6 +6568,8 @@ function openAgentListenModal(agentExt, row, btn) {
     if (tryInject() || tries >= maxTries) clearInterval(t);
   }, 400);
 })();
+
+
 
 
 
