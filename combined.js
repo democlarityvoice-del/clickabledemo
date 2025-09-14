@@ -6519,31 +6519,36 @@ function openAgentListenModal(agentExt, row, btn) {
   const host = document.querySelector('#modal-body-reports');
   if (!host) return;
 
+  // Ensure absolute children position relative to the host
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
   // one-time CSS for overlay
   if (!document.getElementById('cvav-style')) {
     const css = document.createElement('style');
     css.id = 'cvav-style';
     css.textContent = `
-      #cvav-overlay{position:absolute;inset:auto auto auto auto; pointer-events:none; z-index:3}
-      #cvav-overlay .row{position:absolute; height:20px}
-      #cvav-overlay .seg{position:absolute; top:3px; height:calc(100% - 6px); border-radius:3px;
-        pointer-events:auto; display:flex; align-items:center; justify-content:center;
-        font:600 11px/1 Arial, sans-serif; color:#fff}
+      #cvav-overlay{position:absolute;z-index:3;pointer-events:none}
+      #cvav-overlay .row{position:absolute;height:20px}
+      #cvav-overlay .seg{position:absolute;top:3px;height:calc(100% - 6px);border-radius:3px;
+        pointer-events:auto;display:flex;align-items:center;justify-content:center;
+        font:600 11px/1 Arial,sans-serif;color:#fff}
       #cvav-overlay .avail{background:#1aa74f}
       #cvav-overlay .lunch{background:#e15454}
-      #cvav-overlay .break{background:#f0a722; color:#222}
-      /* simple tooltip using ::after (supports newlines) */
+      #cvav-overlay .break{background:#f0a722;color:#222}
+
+      /* Tooltip via ::after (supports newlines) */
       #cvav-overlay .seg[data-title]{position:relative}
       #cvav-overlay .seg[data-title]::after{
-        content: attr(data-title);
-        position:absolute; left:50%; top:100%; transform:translateX(-50%);
-        margin-top:6px; padding:4px 6px; white-space:pre; background:#111; color:#fff;
-        border-radius:4px; font:12px/1 Arial; opacity:0; pointer-events:none;
+        content:attr(data-title);
+        position:absolute;left:50%;top:100%;transform:translateX(-50%);
+        margin-top:6px;padding:4px 6px;white-space:pre;background:#111;color:#fff;
+        border-radius:4px;font:12px/1 Arial;opacity:0;pointer-events:none;
         box-shadow:0 2px 6px rgba(0,0,0,.25)
       }
       #cvav-overlay .seg:hover::after{opacity:1}
-      /* legend (no Offline item; zebra rows show that) */
-      #cvav-legend{display:flex; gap:18px; align-items:center; margin:8px 0 6px 0; font:13px Arial}
+
+      /* Legend (no Offline item; zebra rows show that) */
+      #cvav-legend{display:flex;gap:18px;align-items:center;margin:8px 0 6px 0;font:13px Arial}
       #cvav-legend .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
       #cvav-legend .lg-avail{background:#1aa74f}
       #cvav-legend .lg-lunch{background:#e15454}
@@ -6552,34 +6557,33 @@ function openAgentListenModal(agentExt, row, btn) {
     document.head.appendChild(css);
   }
 
-  function hhmm(minutes){
+  const hhmm = (minutes) => {
     const h24 = Math.floor(minutes/60)%24, m = String(minutes%60).padStart(2,'0');
-    const ap = h24>=12 ? 'PM':'AM', h12 = ((h24+11)%12)+1;
+    const ap = h24>=12 ? 'PM' : 'AM', h12 = ((h24+11)%12)+1;
     return `${h12}:${m} ${ap}`;
-  }
+  };
 
-  // 8–5 shift with two 15m breaks and 1h lunch (we vary a little per agent)
+  // 8–5 with two 15m breaks + 1h lunch, slightly jittered per agent
   function buildDay(name){
     const seed = [...name].reduce((s,c)=>((s*31 + c.charCodeAt(0))>>>0), 1);
     const rand = (()=>{ let s=seed; return ()=> (s=(1103515245*s+12345)>>>0, (s&0x7fffffff)/0x80000000); })();
 
-    const S = 8*60, E = 17*60;      // shift start/end
+    const S = 8*60, E = 17*60;
     const b1s = 9*60  + 10 + Math.round(rand()*20), b1e = b1s + 15;
     const Ls  = 12*60 - 20 + Math.round(rand()*40), Le = Ls + 60;
     const b2s = 14*60 + 10 + Math.round(rand()*20), b2e = b2s + 15;
 
     return [
-      {type:'avail', s:S,   e:b1s, label:''},
+      {type:'avail', s:S,   e:b1s},
       {type:'break', s:b1s, e:b1e, label:'Break'},
-      {type:'avail', s:b1e, e:Ls,  label:''},
-      {type:'lunch', s:Ls,  e:Le,  label:'Lunch'},
-      {type:'avail', s:Le,  e:b2s, label:''},
+      {type:'avail', s:b1e, e:Ls },
+      {type:'lunch', s:Ls,  e:Le, label:'Lunch'},
+      {type:'avail', s:Le,  e:b2s},
       {type:'break', s:b2s, e:b2e, label:'Break'},
-      {type:'avail', s:b2e, e:E,   label:''}
+      {type:'avail', s:b2e, e:E  }
     ];
   }
 
-  // Draw overlay aligned to vendor plot area
   function drawOverlay() {
     // clean previous
     host.querySelector('#cvav-overlay')?.remove();
@@ -6588,16 +6592,17 @@ function openAgentListenModal(agentExt, row, btn) {
     const svg = host.querySelector('svg[aria-label]');
     if (!svg) return;
 
-    // plot group (inner g) to measure exact area
+    // inner plot area to align bars
     const plot = svg.querySelector('g[clip-path], g[aria-label]') || svg;
     const nb = host.getBoundingClientRect();
     const pb = plot.getBoundingClientRect();
 
-    // agent names in the same order as rows
+    // agent names in row order
     const nameCells = [...host.querySelectorAll('table tbody tr td:first-child, .agent-name, .gv-label')];
     const agents = nameCells.map(el => el.textContent.trim()).filter(Boolean);
     if (!agents.length) return;
 
+    // overlay sized & positioned inside host
     const overlay = document.createElement('div');
     overlay.id = 'cvav-overlay';
     overlay.style.left   = (pb.left - nb.left) + 'px';
@@ -6630,7 +6635,7 @@ function openAgentListenModal(agentExt, row, btn) {
       overlay.appendChild(row);
     });
 
-    // legend (no Offline)
+    // legend (no Offline, zebra rows show off-hours)
     const legend = document.createElement('div');
     legend.id = 'cvav-legend';
     legend.innerHTML = `
@@ -6643,29 +6648,27 @@ function openAgentListenModal(agentExt, row, btn) {
     host.appendChild(overlay);
   }
 
-  // Build once when vendor chart appears, then keep it sticky on redraws
-  const wait = new MutationObserver((m, obs) => {
-    if (host.querySelector('svg[aria-label]')) {
-      obs.disconnect();
-      drawOverlay();
-      stick();
-    }
+  // ---- build once (if already present) or when vendor paints, then keep sticky
+  const svgNow = host.querySelector('svg[aria-label]');
+  if (svgNow) drawOverlay();
+
+  // Debounced redraw (prevents loops when we remove/re-add overlay)
+  let redrawPending = false;
+  const requestRedraw = () => {
+    if (redrawPending) return;
+    redrawPending = true;
+    requestAnimationFrame(() => { redrawPending = false; drawOverlay(); });
+  };
+
+  const wait = new MutationObserver(() => {
+    if (host.querySelector('svg[aria-label]')) requestRedraw();
   });
   wait.observe(host, { childList:true, subtree:true });
 
-  function stick(){
-    const mo = new MutationObserver(() => {
-      // whenever the vendor repaints (SVG/g content changes), rebuild overlay
-      if (host.querySelector('svg[aria-label]')) {
-        drawOverlay();
-      }
-    });
-    mo.observe(host, { childList:true, subtree:true });
-  }
-
-  // keep alignment on window resize
-  window.addEventListener('resize', () => drawOverlay());
+  // keep aligned on window resize
+  window.addEventListener('resize', requestRedraw);
 })();
+
 
 
 
