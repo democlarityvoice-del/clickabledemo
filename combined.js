@@ -6521,6 +6521,46 @@ function openAgentListenModal(agentExt, row, btn) {
   if (document.body.dataset[GUARD]) return;
   document.body.dataset[GUARD] = '1';
 
+  // ---- Safe guard for empty Google Charts on DNIS (append-only) ----
+(function cvGuardEmptyGoogleCharts(){
+  if (!/\/stats\/queuestats\/dnis(?:[?#].*)?$/i.test(location.pathname)) return;
+
+  function install() {
+    if (!window.google || !google.visualization || !google.visualization.ChartWrapper) {
+      setTimeout(install, 50);
+      return;
+    }
+    const CW = google.visualization.ChartWrapper;
+    if (CW.prototype.__cvPatched) return;
+
+    const originalDraw = CW.prototype.draw;
+    CW.prototype.draw = function patchedDraw() {
+      try {
+        const dt = this.getDataTable && this.getDataTable();
+        if (dt && dt.getNumberOfColumns && dt.getNumberOfColumns() < 2) {
+          const el = this.getContainer && this.getContainer();
+          if (el) {
+            el.innerHTML = '<div style="padding:12px;color:#666;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;">No data to chart</div>';
+          }
+          return; // skip drawing to avoid "Not enough columns" error
+        }
+      } catch (e) { /* fall through to original draw */ }
+      return originalDraw.apply(this, arguments);
+    };
+    CW.prototype.__cvPatched = true;
+  }
+  install();
+
+  // Belt & suspenders: silence JUST this specific error in console (doesn't change behavior)
+  window.addEventListener('error', function(e){
+    if ((e.message||'').includes('Not enough columns given to draw the requested chart')) {
+      e.preventDefault();
+      return false;
+    }
+  }, true);
+})();
+  
+
   const $ = (s, el=document) => el.querySelector(s);
   const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
 
@@ -6542,6 +6582,8 @@ function openAgentListenModal(agentExt, row, btn) {
 
     // Hide the native wrapper but keep dimensions
     nativeWrap.style.display = 'none';
+
+      
 
     // Build overlay
     container.style.position = 'relative';
@@ -6754,6 +6796,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
   whenTableReady();
 })();
+
 
 
 
