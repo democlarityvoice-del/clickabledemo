@@ -5878,14 +5878,39 @@ if (!iframeContainer) {
   };
 
   // Setup restoration function
-  window.__cvAgentRestore = () => {
-    if (window.__cvAgentOriginalContent) {
-      iframeContainer.innerHTML = window.__cvAgentOriginalContent;
-      delete window.__cvAgentOriginalContent;
-      delete window.__cvAgentRestore;
-      window.removeEventListener('resize', sizeIframe);
+  // Setup restoration function (OUTER PAGE)
+window.__cvAgentRestore = () => {
+  if (!window.__cvAgentOriginalContent) return;
+
+  // Put the original Agent Stats HTML back
+  iframeContainer.innerHTML = window.__cvAgentOriginalContent;
+
+  // 🔁 Re-bind the stat links we lost when innerHTML replaced the table
+  const rewire = () => {
+    const table = document.querySelector('#modal_stats_table');
+    if (table && table.tBodies[0]?.rows?.length) {
+      injectAgentStats(table);   // recreates <a.cvas-stat-link> + click handlers
+      return true;
     }
+    return false;
   };
+
+  // Try immediately; if rows render async, poll briefly
+  if (!rewire()) {
+    let tries = 0;
+    const maxTries = 10;
+    const timer = setInterval(() => {
+      tries++;
+      if (rewire() || tries >= maxTries) clearInterval(timer);
+    }, 250);
+  }
+
+  // cleanup
+  delete window.__cvAgentOriginalContent;
+  delete window.__cvAgentRestore;
+  window.removeEventListener('resize', sizeIframe);
+};
+
 }
 
 // === Expose function to TOP window for iframe access ===
@@ -6251,6 +6276,7 @@ function openAgentListenModal(agentExt, row) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
