@@ -6278,7 +6278,7 @@ function openAgentNotesModal(agentExt, rowOrBtn) {
       </select>
 
       <label for="anp-text" style="justify-self:end;font-weight:600">Notes</label>
-      <textarea id="anp-text" rows="4" style="width:100%;padding:6px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+      <textarea id="anp-text" rows="4" style="width:100%;padding:.5px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
@@ -6435,5 +6435,6 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
