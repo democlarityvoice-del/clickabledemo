@@ -6556,28 +6556,43 @@ function openAgentListenModal(agentExt, row, btn) {
 
   // Function to inject stats into the table
   function injectAvailabilityStats() {
-    const table = document.querySelector('table');
-    if (!table) return;
+  const table = document.querySelector('#contacts-table');
+  if (!table) return;
 
-    const rows = table.querySelectorAll('tbody tr');
-    rows.forEach(row => {
-      const extCell = row.querySelector('td:first-child');
-      if (!extCell) return;
+  const rows = table.querySelectorAll('tbody tr');
+  rows.forEach(row => {
+    const nameCell = row.querySelector('td.sorting_0');
+    const name = nameCell?.textContent.trim();
 
-      const extension = extCell.textContent.trim();
-      const data = availabilityData[extension];
-      if (!data) return;
+    // You can map names to extensions if needed, e.g.:
+    const nameToExt = {
+      'Mike': '200',
+      'Cathy': '201',
+      'Jake': '202',
+      'Bob': '203',
+      'Brittany': '204',
+      'Alex': '205',
+      'Mark': '206',
+      'John': '207'
+    };
 
-      const cells = row.querySelectorAll('td');
-      if (cells.length >= 9) {
-        if (cells[4]) cells[4].textContent = data.loggedIn;
-        if (cells[5]) cells[5].textContent = data.available;
-        if (cells[6]) cells[6].textContent = data.lunch;
-        if (cells[7]) cells[7].textContent = data.breaks;
-        // cells[8] is Meeting — do not overwrite
-      }
-    });
-  }
+    const ext = nameToExt[name];
+    const data = availabilityData[ext];
+    if (!data) return;
+
+    const liCell = row.querySelector('.stat-td-agent_availability-LI');
+    const amCell = row.querySelector('.stat-td-agent_availability-AM');
+    const lCell  = row.querySelector('.stat-td-agent_availability-L');
+    const bCell  = row.querySelector('.stat-td-agent_availability-B');
+
+    if (liCell) liCell.textContent = data.loggedIn;
+    if (amCell) amCell.textContent = data.available;
+    if (lCell)  lCell.textContent = data.lunch;
+    if (bCell)  bCell.textContent = data.breaks;
+  });
+}
+
+
 
   // MutationObserver to handle dynamic updates
   const observer = new MutationObserver(() => {
@@ -6603,6 +6618,7 @@ function openAgentListenModal(agentExt, row, btn) {
   waitForTableAndInject();
 
 })(); // <== CLOSING of IIFE!
+
 
 
 
