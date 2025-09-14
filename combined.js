@@ -6512,297 +6512,94 @@ function openAgentListenModal(agentExt, row, btn) {
 // === AGENT MODAL COMPLETION - END ===
 
 
+// === AGENT AVAILABILITY STATS INJECTION ===
 (() => {
-  // DNIS overlay (no iframe version)
-  const ON_DNIS = /\/stats\/queuestats\/dnis(?:[?#].*)?$/i;
-  if (!ON_DNIS.test(location.pathname)) return;
+  if (window.__cvas_availability_installed__) return;
+  if (!location.href.includes('/portal/stats/queuestats/agent_availability')) return;
+  window.__cvas_availability_installed__ = true;
 
-  const GUARD = 'cvDnisOverlayV2';
-  if (document.body.dataset[GUARD]) return;
-  document.body.dataset[GUARD] = '1';
-
-  // ---- Safe guard for empty Google Charts on DNIS (append-only) ----
-(function cvGuardEmptyGoogleCharts(){
-  if (!/\/stats\/queuestats\/dnis(?:[?#].*)?$/i.test(location.pathname)) return;
-
-  function install() {
-    if (!window.google || !google.visualization || !google.visualization.ChartWrapper) {
-      setTimeout(install, 50);
-      return;
-    }
-    const CW = google.visualization.ChartWrapper;
-    if (CW.prototype.__cvPatched) return;
-
-    const originalDraw = CW.prototype.draw;
-    CW.prototype.draw = function patchedDraw() {
-      try {
-        const dt = this.getDataTable && this.getDataTable();
-        if (dt && dt.getNumberOfColumns && dt.getNumberOfColumns() < 2) {
-          const el = this.getContainer && this.getContainer();
-          if (el) {
-            el.innerHTML = '<div style="padding:12px;color:#666;border:1px solid #e5e7eb;border-radius:6px;background:#fafafa;">No data to chart</div>';
-          }
-          return; // skip drawing to avoid "Not enough columns" error
-        }
-      } catch (e) { /* fall through to original draw */ }
-      return originalDraw.apply(this, arguments);
-    };
-    CW.prototype.__cvPatched = true;
-  }
-  install();
-
-  // Belt & suspenders: silence JUST this specific error in console (doesn't change behavior)
-  window.addEventListener('error', function(e){
-    if ((e.message||'').includes('Not enough columns given to draw the requested chart')) {
-      e.preventDefault();
-      return false;
-    }
-  }, true);
-})();
-  
-
-  const $ = (s, el=document) => el.querySelector(s);
-  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
-
-  function whenTableReady(tries=0) {
-    const container = $('.table-container');
-    if (!container) return tries < 200 ? setTimeout(()=>whenTableReady(tries+1), 50) : null;
-    init(container);
-  }
-
-  function isEmpty(container) {
-    const emptyCell = container.querySelector('.dataTables_empty');
-    const bodyHasRow = container.querySelector('tbody tr:not(.dataTables_empty)');
-    return !!emptyCell || !bodyHasRow;
-  }
-
-  function init(container) {
-    if (!isEmpty(container)) return; // never cover real data
-    const nativeWrap = container.querySelector('.dataTables_wrapper') || container;
-
-    // Hide the native wrapper but keep dimensions
-    nativeWrap.style.display = 'none';
-
-      
-
-    // Build overlay
-    container.style.position = 'relative';
-    const overlay = document.createElement('div');
-    overlay.id = 'cv-dnis-overlay';
-    Object.assign(overlay.style, {
-      position: 'absolute', inset: '0', background: 'transparent'
-    });
-
-    overlay.innerHTML = buildOverlayHTML();
-    container.appendChild(overlay);
-
-    // Wire interactivity
-    wireOverlay(overlay);
-
-    // If real data ever appears, tear down
-    const mo = new MutationObserver(() => {
-      if (!isEmpty(container)) {
-        try { overlay.remove(); } catch {}
-        nativeWrap.style.display = ''; // restore
-        mo.disconnect();
-      }
-    });
-    mo.observe(container, { childList:true, subtree:true });
-  }
-
-  // ---------- Data (from your constants) ----------
-  const CALLS = [
-    // (248) 436-3443
-    { when:'Today, 1:35 pm', from:'Sarah Patel', fromNum:'(248) 555-0196', dnis:'(248) 436-3443', talk:'1:57', xf:'200', xt:'200', agent:'Mike Johnson', wait:'3:24', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 1:30 pm', from:'Chloe Bennet', fromNum:'(313) 555-0120', dnis:'(248) 436-3443', talk:'5:21', xf:'200', xt:'200', agent:'Mike Johnson', wait:'6:11', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 10:23 am', from:'Monica Alvarez', fromNum:'(989) 555-0113', dnis:'(248) 436-3443', talk:'2:49', xf:'200', xt:'200', agent:'Mike Johnson', wait:'1:52', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 1:46 pm', from:'Tucker Jones', fromNum:'(989) 555-0128', dnis:'(248) 436-3443', talk:'6:17', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'1:28', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 08:08 am', from:'Coco LaBelle', fromNum:'(989) 555-0672', dnis:'(248) 436-3443', talk:'0:22', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'5:55', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 12:06 pm', from:'Thomas Lee', fromNum:'517-555-0157', dnis:'(248) 436-3443', talk:'1:21', xf:'204', xt:'204', agent:'Brittany Lawrence', wait:'3:53', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 11:22 am', from:'JR Knight', fromNum:'248-555-0144', dnis:'(248) 436-3443', talk:'3:49', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:35', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 09:29 am', from:'Tanya Roberts', fromNum:'313-555-3443', dnis:'(248) 436-3443', talk:'3:47', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'0:57', tag:'Orig: Bye', disp:'Connect' },
-
-    // (313) 995-9080
-    { when:'Today, 08:16 am', from:'Leif Hendricksen', fromNum:'517-555-0162', dnis:'(313) 995-9080', talk:'8:17', xf:'200', xt:'200', agent:'Mike Johnson', wait:'2:27', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 11:41 am', from:'Elizabeth Li', fromNum:'(313) 555-8471', dnis:'(313) 995-9080', talk:'1:23', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'2:17', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 1:35 pm', from:'Jack Burton', fromNum:'(517) 555-0148', dnis:'(313) 995-9080', talk:'0:42', xf:'202', xt:'202', agent:'Jake Lee', wait:'7:22', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 11:58 am', from:'Mark Sanchez', fromNum:'989-555-0213', dnis:'(313) 995-9080', talk:'4:29', xf:'202', xt:'202', agent:'Jake Lee', wait:'2:47', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 1:21 pm', from:'John Travers', fromNum:'810-555-0192', dnis:'(313) 995-9080', talk:'2:27', xf:'203', xt:'203', agent:'Bob Andersen', wait:'9:41', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 11:58 am', from:'Freddie Travis', fromNum:'800-649-2907', dnis:'(313) 995-9080', talk:'3:48', xf:'203', xt:'203', agent:'Bob Andersen', wait:'21:16', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 11:18 am', from:'Sarah Patel', fromNum:'(248) 555-0196', dnis:'(313) 995-9080', talk:'2:22', xf:'205', xt:'205', agent:'Alex Roberts', wait:'17:29', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 08:42 am', from:'Alexander Chen', fromNum:'(517) 555-0122', dnis:'(313) 995-9080', talk:'4:24', xf:'205', xt:'205', agent:'Alex Roberts', wait:'7:42', tag:'Term: Bye', disp:'Connect' },
-    { when:'Today, 09:56 am', from:'Rory Davis', fromNum:'(313) 555-0179', dnis:'(313) 995-9080', talk:'1:01', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 09:56 am', from:'Rory Davis', fromNum:'313-555-0179', dnis:'(313) 995-9080', talk:'1:01', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' },
-    { when:'Today, 1:24 pm', from:'Martin Smith', fromNum:'800-909-5384', dnis:'(313) 995-9080', talk:'4:11', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'4:22', tag:'Orig: Bye', disp:'Connect' }
-  ];
-
-  const NAMES = {
-    '(248) 436-3443': 'Clarity Main',
-    '(313) 995-9080': 'Billing Hotline DID'
+  // Agent availability data - 8 hour workdays with variations
+  const availabilityData = {
+    '200': { loggedIn: '8:03:15', lunch: '1:02:00', breaks: '0:30:00' }, // Mike - 1h2min lunch
+    '201': { loggedIn: '8:00:45', lunch: '0:57:00', breaks: '0:30:00' }, // Cathy - 57min lunch
+    '202': { loggedIn: '7:58:30', lunch: '1:00:00', breaks: '0:30:00' }, // Jake - 1h lunch
+    '203': { loggedIn: '8:05:20', lunch: '0:59:00', breaks: '0:30:00' }, // Bob - 59min lunch
+    '204': { loggedIn: '8:02:10', lunch: '1:01:00', breaks: '0:30:00' }, // Brittany - 1h1min lunch
+    '205': { loggedIn: '7:59:45', lunch: '0:58:00', breaks: '0:30:00' }, // Alex - 58min lunch
+    '206': { loggedIn: '8:04:30', lunch: '1:00:00', breaks: '0:30:00' }, // Mark - 1h lunch
+    '207': { loggedIn: '8:01:00', lunch: '0:62:00', breaks: '0:30:00' }  // John - 1h2min lunch
   };
 
-  function buildOverlayHTML() {
-    const now = new Date().toLocaleString();
-    // Minimal styles to align spacing; relies on portal fonts/colors
-    return `
-      <div style="color:#666;margin:14px 0 8px 0;">
-        Showing data up to <b>${now}</b>
-        <button type="button" style="float:right;border:1px solid #d8d8d8;border-radius:6px;padding:6px 10px;background:#fff;cursor:pointer;">Table Settings ▾</button>
-      </div>
-
-      <table class="dataTable" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
-        <thead style="background:#f9fafb;">
-          <tr>
-            <th style="padding:8px 10px;text-align:left;">DNIS</th>
-            <th style="padding:8px 10px;text-align:left;">Name</th>
-            <th style="padding:8px 10px;text-align:right;">Call Volume</th>
-            <th style="padding:8px 10px;text-align:right;">Calls Handled</th>
-            <th style="padding:8px 10px;text-align:right;">Avg. Talk Time</th>
-            <th style="padding:8px 10px;text-align:right;">Avg. Wait Time</th>
-          </tr>
-        </thead>
-        <tbody id="cv-dnis-body"></tbody>
-      </table>
-
-      <div id="cv-dnis-details" style="display:none;margin-top:10px;">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:0;border-radius:6px 6px 0 0;">
-          <button id="cv-back" style="border:1px solid #d8d8d8;border-radius:6px;padding:6px 10px;background:#fff;cursor:pointer;">← Back</button>
-          <div id="cv-dnis-title" style="font-weight:700;">DNIS Details</div>
-          <div style="flex:1"></div>
-          <input id="cv-search" placeholder="Search calls…" style="border:1px solid #d8d8d8;border-radius:6px;padding:6px 8px;width:260px;">
-        </div>
-        <table class="dataTable" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 6px 6px;overflow:hidden;">
-          <thead style="background:#fafafa;">
-            <tr>
-              <th style="padding:8px 10px;">Date</th><th style="padding:8px 10px;">From</th><th style="padding:8px 10px;">From #</th><th style="padding:8px 10px;">To #</th>
-              <th style="padding:8px 10px;">Talk</th><th style="padding:8px 10px;">Ext From</th><th style="padding:8px 10px;">Ext To</th><th style="padding:8px 10px;">Agent</th>
-              <th style="padding:8px 10px;">Wait</th><th style="padding:8px 10px;">Tag</th><th style="padding:8px 10px;">Disp</th><th style="padding:8px 10px;">Actions</th>
-            </tr>
-          </thead>
-          <tbody id="cv-calls-body"></tbody>
-        </table>
-      </div>
-    `;
+  // Helper function to convert time string to minutes
+  function timeToMinutes(timeStr) {
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]) + (parts[2] ? parseInt(parts[2]) / 60 : 0);
   }
 
-  function secs(t){ const [m,s]=t.split(':').map(Number); return m*60+s; }
-  function fmt(s){ const m=Math.floor(s/60), ss=String(s%60).padStart(2,'0'); return `${m}:${ss}`; }
+  // Helper function to convert minutes to time string
+  function minutesToTime(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    const secs = Math.floor((minutes % 1) * 60);
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
 
-  function wireOverlay(overlay) {
-    // Build grouped summary
-    const groups = {};
-    CALLS.forEach(r => (groups[r.dnis] ||= []).push(r));
+  // Calculate available time for each agent
+  Object.keys(availabilityData).forEach(ext => {
+    const data = availabilityData[ext];
+    const loggedInMins = timeToMinutes(data.loggedIn);
+    const lunchMins = timeToMinutes(data.lunch);
+    const breakMins = timeToMinutes(data.breaks);
+    const availableMins = loggedInMins - lunchMins - breakMins;
+    data.available = minutesToTime(availableMins);
+  });
 
-    const body = $('#cv-dnis-body', overlay);
-    Object.entries(groups).forEach(([dnis, rows]) => {
-      const vol = rows.length;
-      const handled = vol;
-      const avgTalk = Math.round(rows.reduce((a,r)=>a+secs(r.talk),0)/vol);
-      const avgWait = Math.round(rows.reduce((a,r)=>a+secs(r.wait),0)/vol);
+  // Function to inject stats into the table
+  function injectAvailabilityStats() {
+    const table = document.querySelector('table');
+    if (!table) return;
 
-      const tr = document.createElement('tr');
-      tr.innerHTML = `
-        <td style="padding:10px;">
-          <span style="display:inline-flex;align-items:center;gap:8px;">
-            <span style="width:8px;height:8px;background:#6a5acd;border-radius:50%;display:inline-block"></span>
-            <b>${dnis}</b>
-          </span>
-        </td>
-        <td style="padding:10px;color:#666;">${NAMES[dnis]||''}</td>
-        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${vol}</a></td>
-        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${handled}</a></td>
-        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${fmt(avgTalk)}</a></td>
-        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${fmt(avgWait)}</a></td>
-      `;
-      body.appendChild(tr);
-    });
+    const rows = table.querySelectorAll('tbody tr');
+    rows.forEach(row => {
+      const extCell = row.querySelector('td:first-child');
+      if (!extCell) return;
 
-    // Details wiring
-    const details = $('#cv-dnis-details', overlay);
-    const callsBody = $('#cv-calls-body', overlay);
-    const title = $('#cv-dnis-title', overlay);
+      const extension = extCell.textContent.trim();
+      const data = availabilityData[extension];
+      if (!data) return;
 
-    function openDetails(dnis) {
-      title.textContent = `${NAMES[dnis]||''} — ${dnis}`;
-      callsBody.innerHTML = '';
-      (groups[dnis]||[]).forEach((r,i) => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td style="padding:8px 10px;">${r.when}</td>
-          <td style="padding:8px 10px;">${r.from}</td>
-          <td style="padding:8px 10px;">${r.fromNum}</td>
-          <td style="padding:8px 10px;">${r.dnis}</td>
-          <td style="padding:8px 10px;">${r.talk}</td>
-          <td style="padding:8px 10px;">${r.xf}</td>
-          <td style="padding:8px 10px;">${r.xt}</td>
-          <td style="padding:8px 10px;">${r.agent}</td>
-          <td style="padding:8px 10px;">${r.wait}</td>
-          <td style="padding:8px 10px;">${r.tag}</td>
-          <td style="padding:8px 10px;">${r.disp}</td>
-          <td class="cvas-action-cell" style="padding:8px 10px;">
-            <span data-action="listen" data-idx="${i}" style="cursor:pointer;margin-right:6px;">🎧</span>
-            <span data-action="transcript" data-idx="${i}" style="cursor:pointer;margin-right:6px;">📄</span>
-            <span data-action="notes" data-idx="${i}" style="cursor:pointer;margin-right:6px;">📝</span>
-            <span data-action="magnify" data-idx="${i}" style="cursor:pointer;margin-right:6px;">🔍</span>
-            <span data-action="download" data-idx="${i}" style="cursor:pointer;">⬇️</span>
-          </td>
-        `;
-        callsBody.appendChild(tr);
-      });
-      details.style.display = 'block';
-      details.scrollIntoView({behavior:'smooth', block:'start'});
-    }
-
-    $$('.cv-go', overlay).forEach(a => {
-      a.addEventListener('click', (e) => {
-        e.preventDefault();
-        openDetails(a.dataset.dnis);
-      });
-    });
-
-    $('#cv-back', overlay).addEventListener('click', () => {
-      details.style.display = 'none';
-    });
-
-    $('#cv-search', overlay).addEventListener('input', e => {
-      const t = e.target.value.toLowerCase();
-      $$('#cv-calls-body tr', overlay).forEach(tr => {
-        tr.style.display = tr.textContent.toLowerCase().includes(t) ? '' : 'none';
-      });
-    });
-
-    // Action icons
-    $('#cv-calls-body', overlay).addEventListener('click', (e) => {
-      const el = e.target.closest('[data-action]');
-      if (!el) return;
-      const what = el.dataset.action;
-      const idx = +el.dataset.idx || 0;
-
-      if (what === 'transcript' && window.cvAiEnsureModal) {
-        try { window.cvAiEnsureModal(); } catch {}
-        try { window.cvAiPopulateModal && window.cvAiPopulateModal(null, idx); } catch {}
-        return;
-      }
-      if (what === 'listen') { alert('Demo listen preview'); return; }
-      if (what === 'notes') { const n = prompt('Add a note (demo)'); if (n) el.title='Notes ✓'; return; }
-      if (what === 'magnify') { alert('Demo cradle-to-grave'); return; }
-      if (what === 'download') {
-        const blob = new Blob(['Demo CSV for call '+(idx+1)], {type:'text/csv'});
-        const url = URL.createObjectURL(blob); const a=document.createElement('a');
-        a.href=url; a.download='call_'+(idx+1)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      const cells = row.querySelectorAll('td');
+      if (cells.length >= 9) { // Ensure we have enough columns
+        // LI column (index 4) - Logged In
+        if (cells[4]) cells[4].textContent = data.loggedIn;
+        
+        // AM column (index 5) - Available Minutes  
+        if (cells[5]) cells[5].textContent = data.available;
+        
+        // L column (index 6) - Lunch
+        if (cells[6]) cells[6].textContent = data.lunch;
+        
+        // B column (index 7) - Breaks
+        if (cells[7]) cells[7].textContent = data.breaks;
+        
+        // M column (index 8) - Meeting (leave as is - don't inject)
       }
     });
   }
 
-  whenTableReady();
+  // Initial injection
+  injectAvailabilityStats();
+
+  // Watch for table updates (in case data refreshes)
+  const observer = new MutationObserver(() => {
+    injectAvailabilityStats();
+  });
+
+  const tableContainer = document.querySelector('.table-responsive') || document.querySelector('table');
+  if (tableContainer) {
+    observer.observe(tableContainer, { childList: true, subtree: true });
+  }
 })();
-
-
-
-
-
-
-
 
 
 
