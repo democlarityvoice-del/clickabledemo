@@ -6520,14 +6520,14 @@ function openAgentListenModal(agentExt, row, btn) {
 
   // Agent availability data - 8 hour workdays with variations
   const availabilityData = {
-    '200': { loggedIn: '8:03:15', lunch: '1:02:00', breaks: '0:30:00' }, // Mike - 1h2min lunch
-    '201': { loggedIn: '8:00:45', lunch: '0:57:00', breaks: '0:30:00' }, // Cathy - 57min lunch
-    '202': { loggedIn: '7:58:30', lunch: '1:00:00', breaks: '0:30:00' }, // Jake - 1h lunch
-    '203': { loggedIn: '8:05:20', lunch: '0:59:00', breaks: '0:30:00' }, // Bob - 59min lunch
-    '204': { loggedIn: '8:02:10', lunch: '1:01:00', breaks: '0:30:00' }, // Brittany - 1h1min lunch
-    '205': { loggedIn: '7:59:45', lunch: '0:58:00', breaks: '0:30:00' }, // Alex - 58min lunch
-    '206': { loggedIn: '8:04:30', lunch: '1:00:00', breaks: '0:30:00' }, // Mark - 1h lunch
-    '207': { loggedIn: '8:01:00', lunch: '0:62:00', breaks: '0:30:00' }  // John - 1h2min lunch
+    '200': { loggedIn: '8:03:15', lunch: '1:02:00', breaks: '0:30:00' },
+    '201': { loggedIn: '8:00:45', lunch: '0:57:00', breaks: '0:30:00' },
+    '202': { loggedIn: '7:58:30', lunch: '1:00:00', breaks: '0:30:00' },
+    '203': { loggedIn: '8:05:20', lunch: '0:59:00', breaks: '0:30:00' },
+    '204': { loggedIn: '8:02:10', lunch: '1:01:00', breaks: '0:30:00' },
+    '205': { loggedIn: '7:59:45', lunch: '0:58:00', breaks: '0:30:00' },
+    '206': { loggedIn: '8:04:30', lunch: '1:00:00', breaks: '0:30:00' },
+    '207': { loggedIn: '8:01:00', lunch: '1:02:00', breaks: '0:30:00' }
   };
 
   // Helper function to convert time string to minutes
@@ -6569,43 +6569,42 @@ function openAgentListenModal(agentExt, row, btn) {
       if (!data) return;
 
       const cells = row.querySelectorAll('td');
-      if (cells.length >= 9) { // Ensure we have enough columns
-        // LI column (index 4) - Logged In
+      if (cells.length >= 9) {
         if (cells[4]) cells[4].textContent = data.loggedIn;
-        
-        // AM column (index 5) - Available Minutes  
         if (cells[5]) cells[5].textContent = data.available;
-        
-        // L column (index 6) - Lunch
         if (cells[6]) cells[6].textContent = data.lunch;
-        
-        // B column (index 7) - Breaks
         if (cells[7]) cells[7].textContent = data.breaks;
-        
-        // M column (index 8) - Meeting (leave as is - don't inject)
+        // cells[8] is Meeting — do not overwrite
       }
     });
   }
 
-  // Watch for table updates (in case data refreshes)
+  // MutationObserver to handle dynamic updates
   const observer = new MutationObserver(() => {
     injectAvailabilityStats();
   });
 
-  // Wait for table to exist, then inject and observe
+  // Wait for the table to exist before injecting
   function waitForTableAndInject(retries = 20, interval = 300) {
     const table = document.querySelector('table');
     if (table) {
+      console.log('[CVAS] Injecting Agent Availability Stats...');
       injectAvailabilityStats();
       const tableContainer = document.querySelector('.table-responsive') || table;
       observer.observe(tableContainer, { childList: true, subtree: true });
     } else if (retries > 0) {
       setTimeout(() => waitForTableAndInject(retries - 1, interval), interval);
+    } else {
+      console.warn('[CVAS] Table not found after multiple attempts.');
     }
   }
 
-  // Initial trigger
+  // Start the injection logic
   waitForTableAndInject();
+
+})(); // <== CLOSING of IIFE!
+
+
 
 
 
