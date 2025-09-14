@@ -5617,28 +5617,29 @@ Object.assign(g.CVAS_CALLS_INBOUND_BY_AGENT, {
 // Populate outbound calls data
 Object.assign(g.CVAS_CALLS_OUTBOUND_BY_AGENT, {
   "200": [
-    `<tr><td>Today, 9:26 pm</td><td>Mike Johnson (200)</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>17:20</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:26 pm</td><td>—</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>0:00</td><td>200</td><td>200</td><td>Mike Johnson</td><td>17:20</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "201": [
-    `<tr><td>Today, 9:10 pm</td><td>Cathy Thomas (201)</td><td>(517) 555-0170</td><td>(517) 555-0170</td><td>11:33</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:10 pm</td><td>—</td><td>(517) 555-0170</td><td>(517) 555-0170</td><td>0:00</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>11:33</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "202": [
-    `<tr><td>Today, 9:30 pm</td><td>Jake Lee (202)</td><td>(248) 555-0191</td><td>(248) 555-0191</td><td>27:22</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:30 pm</td><td>—</td><td>(248) 555-0191</td><td>(248) 555-0191</td><td>0:00</td><td>202</td><td>202</td><td>Jake Lee</td><td>27:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "203": [
-    `<tr><td>Today, 9:19 pm</td><td>Bob Andersen (203)</td><td>(313) 555-0179</td><td>(313) 555-0179</td><td>05:12</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:19 pm</td><td>—</td><td>(313) 555-0179</td><td>(313) 555-0179</td><td>0:00</td><td>203</td><td>203</td><td>Bob Andersen</td><td>05:12</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "204": [],
   "205": [
-    `<tr><td>Today, 9:53 pm</td><td>Alex Roberts (205)</td><td>(248) 555-0110</td><td>(248) 555-0110</td><td>02:36</td><td>Orig: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:53 pm</td><td>—</td><td>(248) 555-0110</td><td>(248) 555-0110</td><td>0:00</td><td>205</td><td>205</td><td>Alex Roberts</td><td>02:36</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "206": [
-    `<tr><td>Today, 9:15 pm</td><td>Mark Sanchez (206)</td><td>(989) 555-0140</td><td>(989) 555-0140</td><td>06:05</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:15 pm</td><td>—</td><td>(989) 555-0140</td><td>(989) 555-0140</td><td>0:00</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>06:05</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ],
   "207": [
-    `<tr><td>Today, 9:59 pm</td><td>John Smith (207)</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>01:53</td><td>Term: Bye</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    `<tr><td>Today, 9:59 pm</td><td>—</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>0:00</td><td>207</td><td>207</td><td>John Smith</td><td>01:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
   ]
 });
+
 
 
   // === Headers ===
@@ -6435,6 +6436,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
