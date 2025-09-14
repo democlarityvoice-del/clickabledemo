@@ -5770,7 +5770,7 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
   /* your existing iframe styles */
   body { font: 13px/1.428 Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
   .cv-agent-header { /* ... */ }
-  .cv-agent-table { width: 100%; height: auto; border-collapse: collapse; margin: 13px; table-layout: auto; }
+  .cv-agent-table { width: 100%; max-width: 100%; height: auto; border-collapse: collapse; margin: 13px; box-sizing: border-box; overflow-x: hidden; table-layout: auto; }
   .cv-agent-table th, .cv-agent-table td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #eee; }
   .cv-agent-table th { background: #f8f9fa; color: #004a9b; font-weight: 600; border-bottom: 1px solid #ddd; }
   .cv-agent-table tr:hover { background-color: #f3f3f3; }
@@ -6510,6 +6510,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
