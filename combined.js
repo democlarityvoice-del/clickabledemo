@@ -5491,8 +5491,7 @@ if (kind === 'cradle') {
   }, 350);
 })(); // ← closes QUEUE STATS REPORTS PAGE
 
-// AGENTS STATS
-// AGENTS STATS
+
 
 // AGENTS STATS
 
@@ -5501,6 +5500,9 @@ if (kind === 'cradle') {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
   window.__cvas_agentstats_installed__ = true;
+
+const isAgentStatsPage = () =>
+  /\/portal\/stats\/queuestats\/agent(?:[/?#]|$)/.test(location.href);
 
 
   // === Real Data from user ===
@@ -6012,15 +6014,18 @@ const t = setInterval(() => {
 
 // === CV Agent Stats Modal Rebuild (Literal Drop-in) ===
 (() => {
+  // prevent flicker on HOME or other pages
+  if (!isAgentStatsPage()) return;
+
   const existingModal = document.querySelector('#cvas-agent-modal');
   if (existingModal) existingModal.remove();
 
   const modal = document.createElement('div');
   modal.id = 'cvas-agent-modal';
 
-    // INSERT THESE TWO LINES
-modal.style.maxHeight = 'calc(100vh - 32px)';
-modal.style.overflow  = 'auto';  
+  // keep height/scroll control
+  modal.style.maxHeight = 'calc(100vh - 32px)';
+  modal.style.overflow  = 'auto';
 
   const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';  
 
@@ -6051,7 +6056,11 @@ modal.style.overflow  = 'auto';
     </div>
   `;
 
-  document.querySelector('#omp-active-body')?.prepend(modal);
+  // PREPEND ONLY INSIDE THE AGENT STATS CONTAINER
+const host = document.querySelector('#modal-body-reports');
+if (!host) return;            // bail if we’re not actually on the agent stats view
+host.prepend(modal);
+
 
 
 
@@ -6322,15 +6331,15 @@ function openAgentCradleModal(agentExt, row){
   });
 
 // --- scope overlay to the Agent Stats host so it sits over the iframe ---
-const host = document.querySelector('#modal-body-reports') || document.body;
-if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+const ctasHost = document.querySelector('#modal-body-reports') || document.body;
+if (getComputedStyle(ctasHost).position === 'static') ctasHost.style.position = 'relative';
 
 // anchor overlay inside the host (not the viewport)
 overlay.style.position = 'absolute';
 overlay.style.inset = '0';
 overlay.style.zIndex = '9999';
 
-host.appendChild(overlay);   // was: document.body.appendChild(overlay)
+ctasHost.appendChild(overlay);
 
 // ==== /Agent CTG ====
 
@@ -6551,6 +6560,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
