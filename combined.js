@@ -6518,37 +6518,64 @@ function openAgentListenModal(agentExt, row, btn) {
   const host = document.querySelector('#modal-graph-div');
   if (!host) return;
 
-  // one-time styles
-  if (!document.getElementById('cvaa24-styles')) {
-    const css = document.createElement('style');
-    css.id = 'cvaa24-styles';
-    css.textContent = `
-      .cvaa24-wrap{width:100%;max-width:100%;font:13px/1.4 Arial,sans-serif}
-      .cvaa24-legend{display:flex;gap:14px;align-items:center;margin:8px 0 10px}
-      .cvaa24-key{display:inline-flex;align-items:center;gap:6px}
-      .cvaa24-dot{width:12px;height:12px;border-radius:2px;display:inline-block}
-      .cvaa24{border:1px solid #e5e8eb;border-radius:6px;overflow:hidden}
-      .cvaa24-row{display:grid;grid-template-columns:180px 1fr;align-items:center}
-      .cvaa24-row:nth-child(odd){background:#f6f7f9}   /* zebra handles OFF hours */
-      .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
-      .cvaa24-track{position:relative;height:28px}
-      .cvaa24-track::before{content:"";position:absolute;inset:0;background:
-        repeating-linear-gradient(to right,
-          rgba(0,0,0,.06) 0, rgba(0,0,0,.06) 1px, transparent 1px, transparent calc(100%/24),
-          rgba(0,0,0,.10) calc(100%/24), rgba(0,0,0,.10) calc(100%/24 + 1px), transparent calc(100%/12)
-        );pointer-events:none}
-      .cvaa24-seg{position:absolute;top:6px;height:16px;border-radius:3px;display:flex;align-items:center;overflow:hidden}
-      .cvaa24-seg--avail{background:#1bb15c}
-      .cvaa24-seg--lunch{background:#e04848}
-      .cvaa24-seg--break{background:#f0a52b}
-      .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
-      .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
-      .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
-        padding:8px 10px;font:12px/1.35 Arial,sans-serif;pointer-events:none;display:none;white-space:nowrap}
-      .cvaa24-tip b{font-weight:700}
-    `;
-    document.head.appendChild(css);
-  }
+  // one-time stylesif (!document.getElementById('cvaa24-styles')) {
+  const css = document.createElement('style');
+  css.id = 'cvaa24-styles';
+  css.textContent = `
+    .cvaa24-wrap{width:100%;max-width:100%;font:13px/1.4 Arial,sans-serif}
+    .cvaa24-legend{display:flex;gap:14px;align-items:center;margin:8px 0 10px}
+    .cvaa24-key{display:inline-flex;align-items:center;gap:6px}
+    .cvaa24-dot{width:12px;height:12px;border-radius:2px;display:inline-block}
+    .cvaa24{border:1px solid #e5e8eb;border-radius:6px;overflow:hidden}
+    .cvaa24-row{display:grid;grid-template-columns:180px 1fr;align-items:center}
+    .cvaa24-row:nth-child(odd){background:#f5f7fa} /* row zebra */
+    .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
+
+    /* our own vertical 2-hour zebra + hour ticks */
+    .cvaa24-track{
+      position:relative;
+      height:28px;
+      background:
+        repeating-linear-gradient(
+          to right,
+          #f7f9fc 0,
+          #f7f9fc calc(100%/12),   /* first hour of a 2-hr band */
+          #eef2f6 calc(100%/12),
+          #eef2f6 calc(100%/6)     /* second hour of the 2-hr band */
+        );
+    }
+    .cvaa24-track::after{
+      content:"";
+      position:absolute; inset:0;
+      background:
+        repeating-linear-gradient(
+          to right,
+          rgba(0,0,0,.10) 0,
+          rgba(0,0,0,.10) 1px,       /* hour tick */
+          transparent 1px,
+          transparent calc(100%/24)
+        );
+      pointer-events:none;
+    }
+
+    /* bars sit above zebra/ticks */
+    .cvaa24-seg{
+      position:absolute; top:6px; height:16px; border-radius:3px;
+      display:flex; align-items:center; overflow:hidden; z-index:1;
+    }
+    .cvaa24-seg--avail{background:#1bb15c}
+    .cvaa24-seg--lunch{background:#e04848}
+    .cvaa24-seg--break{background:#f0a52b}
+
+    .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
+    .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
+    .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
+      padding:8px 10px;font:12px/1.35 Arial,sans-serif;pointer-events:none;display:none;white-space:nowrap}
+    .cvaa24-tip b{font-weight:700}
+  `;
+  document.head.appendChild(css);
+}
+
 
 
  
@@ -6678,6 +6705,7 @@ function stick () {
 }
 
 })();
+
 
 
 
