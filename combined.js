@@ -6676,11 +6676,163 @@ function openAgentListenModal(agentExt, row, btn) {
   // Keep sticky on future redraws (date/time changes)
   function stick(){
     const mo = new MutationObserver(()=>{
-      if (!host.querySelector('.cvaa24-wrap') || host.querySelector('svg,canvas,g')) buildNow();
+      if (!host.querySelector('.cvaa24-wrap') || host.querySelector('svg,canvas,g')) {
+       built = false;
+       buildNow();
+      }
     });
     mo.observe(host, {childList:true, subtree:true});
   }
+
+
+(() => {
+  // only on Agent Availability
+  if (!/\/portal\/stats\/queuestats\/agent_availability(?:[/?#]|$)/.test(location.href)) return;
+
+  const host = document.querySelector('#modal-body-reports');
+  if (!host) return;
+
+  // kill any previous version I added
+  host.querySelector('#cvav-overlay')?.remove();
+  host.querySelector('#cvav-legend')?.remove();
+
+  // find the Google chart SVG so we can align perfectly with its plot area
+  const svg = host.querySelector('svg[aria-label]');
+  if (!svg) return;
+
+  // plot area = the inner <g> that contains the green bars; this works across their chart versions
+  const plot = svg.querySelector('g[clip-path], g[aria-label]') || svg;
+  const hostBox = host.getBoundingClientRect();
+  const plotBox = plot.getBoundingClientRect();
+
+  // Agents (left labels) -> read from the DOM (same order as rows)
+  const nameCells = [...host.querySelectorAll('table tbody tr td:first-child, .agent-name, .gv-label')];
+  const agents = nameCells.map(el => el.textContent.trim()).filter(Boolean);
+  if (!agents.length) return;
+
+  // layout
+  const overlay = document.createElement('div');
+  overlay.id = 'cvav-overlay';
+  Object.assign(overlay.style, {
+    position: 'absolute',
+    left: (plotBox.left - hostBox.left) + 'px',
+    top:  (plotBox.top  - hostBox.top)  + 'px',
+    width: plotBox.width + 'px',
+    height: plotBox.height + 'px',
+    pointerEvents: 'none', // only segments take events
+    zIndex: 3
+  });
+
+  // styles
+ let css = document.getElementById('cvav-style');
+ if (!css) {
+  css = document.createElement('style');
+  css.id = 'cvav-style';
+  css.textContent = `
+    #cvav-overlay .row { position: absolute; height: ${Math.max(18, Math.floor(plotBox.height / Math.max(agents.length,1)))}px; }
+    #cvav-overlay .seg { position:absolute; top:3px; height: calc(100% - 6px); border-radius:3px; pointer-events:auto; display:flex; align-items:center; justify-content:center; font:600 11px/1 Arial, sans-serif; color:#fff; }
+    #cvav-overlay .avail { background:#1aa74f; }
+    #cvav-overlay .lunch { background:#e15454; }
+    #cvav-overlay .break { background:#f0a722; color:#222; }
+    #cvav-overlay .seg[data-title] { position:relative; }
+    #cvav-overlay .seg[data-title]::after {
+      content: attr(data-title);
+      position:absolute; left:50%; top:100%; transform:translateX(-50%); margin-top:6px;
+      padding:4px 6px; white-space:pre; background:#111; color:#fff; border-radius:4px; font:12px/1 Arial; opacity:0; pointer-events:none;
+      box-shadow:0 2px 6px rgba(0,0,0,.25);
+    }
+    #cvav-overlay .seg:hover::after { opacity:1; }
+    /* Legend (no "Offline" now) */
+    #cvav-legend { display:flex; gap:18px; align-items:center; margin:8px 0 6px 0; font:13px Arial; }
+    #cvav-legend .dot{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+    #cvav-legend .lg-avail{background:#1aa74f} .lg-lunch{background:#e15454} .lg-break{background:#f0a722}
+  `;
+  document.head.appendChild(css);
+  }   
+
+  // simple schedule builder: 8a-5p shift with 1h lunch + two 15m breaks
+  function daySegs() {
+    // times in minutes from 00:00
+    const t = s => {
+      const [h,m] = s.split(':').map(Number); return h*60 + (m||0);
+    };
+    const S = t('08:00'), E = t('17:00');
+    const L1 = t('12:00'), L2 = t('13:00');      // 12–1 lunch
+    const B1s = t('10:00'), B1e = t('10:15');    // morning break
+    const B2s = t('15:00'), B2e = t('15:15');    // afternoon break
+    // return only ON-SHIFT segments (let OFF hours be empty so zebra shows)
+    return [
+      { s:S,   e:B1s, type:'avail', label:'' },
+      { s:B1s, e:B1e, type:'break', label:'Break' },
+      { s:B1e, e:L1,  type:'avail', label:'' },
+      { s:L1,  e:L2,  type:'lunch', label:'Lunch' },
+      { s:L2,  e:B2s, type:'avail', label:'' },
+      { s:B2s, e:B2e, type:'break', label:'Break' },
+      { s:B2e, e:E,   type:'avail', label:'' },
+    ];
+  }
+
+  // map minutes → px within the 24h plot area
+  const pxPerMin = plotBox.width / (24*60);
+  const rowsTall = agents.length;
+  const rowH = Math.max(18, Math.floor(plotBox.height / rowsTall));
+
+  // build rows
+  agents.forEach((name, idx) => {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.style.top = (idx * rowH) + 'px';
+    row.style.height = rowH + 'px';
+
+    daySegs().forEach(seg => {
+      const left = Math.round(seg.s * pxPerMin);
+      const width = Math.max(2, Math.round((seg.e - seg.s) * pxPerMin)); // never collapse to 0
+      const el = document.createElement('div');
+      el.className = `seg ${seg.type}`;
+      el.style.left = left + 'px';
+      el.style.width = width + 'px';
+      // center “Lunch” text only for lunch; breaks stay unlabeled bar (tooltip shows details)
+      if (seg.type === 'lunch') el.textContent = 'Lunch';
+
+      // hover detail
+      const toHHMM = m => {
+        const h = Math.floor(m/60), mm = String(m%60).padStart(2,'0');
+        const ap = h>=12 ? 'pm':'am'; const hh = ((h+11)%12)+1;
+        return `${hh}:${mm} ${ap}`;
+      };
+      const label = seg.type === 'lunch' ? 'Lunch' : (seg.type === 'break' ? 'Break' : 'Available');
+      el.setAttribute('data-title', `${label}\n${toHHMM(seg.s)} – ${toHHMM(seg.e)}`);
+
+      row.appendChild(el);
+    });
+
+    overlay.appendChild(row);
+  });
+
+  // legend (no Offline item)
+  const legend = document.createElement('div');
+  legend.id = 'cvav-legend';
+  legend.innerHTML = `
+    <span><i class="dot lg-avail"></i>Available</span>
+    <span><i class="dot lg-lunch"></i>Lunch (1h)</span>
+    <span><i class="dot lg-break"></i>Break (15m)</span>
+  `;
+
+  // place legend above the chart; overlay over the bars
+  svg.parentElement.prepend(legend);
+  host.appendChild(overlay);
+
+  // keep aligned on resize
+  window.addEventListener('resize', () => {
+    const nb = host.getBoundingClientRect();
+    const pb = plot.getBoundingClientRect();
+    overlay.style.left = (pb.left - nb.left) + 'px';
+    overlay.style.top  = (pb.top  - nb.top)  + 'px';
+    overlay.style.width  = pb.width + 'px';
+    overlay.style.height = pb.height + 'px';
+  });
 })();
+
 
 
 
