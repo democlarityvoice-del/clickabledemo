@@ -6015,133 +6015,7 @@ const t = setInterval(() => {
 
 })(); // CLOSE FIRST IIFE
 
-// === CV Agent Stats Modal Rebuild (Literal Drop-in) ===
-(() => {
-  // prevent flicker on HOME or other pages
-  if (!isAgentStatsPage()) return;
 
-  const existingModal = document.querySelector('#cvas-agent-modal');
-  if (existingModal) existingModal.remove();
-
-  const modal = document.createElement('div');
-  modal.id = 'cvas-agent-modal';
-
-  // keep height/scroll control
-  modal.style.maxHeight = 'calc(100vh - 32px)';
-  modal.style.overflow  = 'auto';
-
-  const magnifyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';  
-
-
-  modal.innerHTML = `
-    <div class="cvas-agent-modal-inline">
-      <div class="cvas-agent-modal-header-row">
-        <button id="cvas-agent-modal-back" class="cvas-agent-modal-back">Back</button>
-        <div class="cvas-agent-modal-title">Agent Call Details</div>
-        <div class="cvas-agent-modal-date">${new Date().toLocaleDateString()}</div>
-      </div>
-      <div class="cvas-agent-modal-search-row">
-        <input type="text" id="cvas-agent-modal-search" placeholder="Search...">
-        <img src="${magnifyIcon}" class="cvas-search-icon" />
-      </div>
-      <div class="cvas-agent-modal-table-container">
-        <table class="table table-hover table-condensed cvas-agent-table">
-          <thead>
-            <tr>
-              <th>Date/Time</th><th>Caller</th><th>From #</th><th>To #</th>
-              <th>Duration</th><th>Ext</th><th>Agent Ext</th><th>Agent Name</th>
-              <th>Talk Time</th><th>Disposition</th><th>Result</th><th>Actions</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
-    </div>
-  `;
-
-  // PREPEND ONLY INSIDE THE AGENT STATS CONTAINER
-const host = document.querySelector('#modal-body-reports');
-if (!host) return;            // bail if we’re not actually on the agent stats view
-host.prepend(modal);
-
-
-  // === Modal Styles ===
-  const style = document.createElement('style');
-  style.textContent = `
-    #cvas-agent-modal {
-      background: white;
-      border: 2px solid #aaa;
-      border-radius: 6px;
-      padding: 16px;
-      margin: 20px auto;
-      box-shadow: 0 0 12px rgba(0,0,0,0.2);
-      font-family: sans-serif;
-      max-width: 98%;
-    }
-    .cvas-agent-modal-header-row {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 12px;
-    }
-    .cvas-agent-modal-title {
-      font-weight: bold;
-      font-size: 18px;
-    }
-    .cvas-agent-modal-date {
-      font-size: 14px;
-      color: #666;
-    }
-    .cvas-agent-modal-search-row {
-      display: flex;
-      align-items: center;
-      margin-bottom: 10px;
-    }
-    #cvas-agent-modal-search {
-      flex: 1;
-      padding: 6px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-    }
-    .cvas-search-icon {
-      width: 16px;
-      height: 16px;
-      margin-left: 8px;
-      opacity: 0.6;
-    }
-    .cvas-agent-modal-back {
-      background: #e57027;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-    
-    .cvas-agent-table th, .cvas-agent-table td {
-      padding: 6px;
-      border: 1px solid #ccc;
-      font-size: 13px;
-    }
-    .cvas-agent-table th {
-      background: #f7f7f7;
-      font-weight: bold;
-    }
-    .cvas-action-cell {
-      text-align: center;
-    }
-    .cvas-icon {
-      width: 16px;
-      height: 16px;
-      margin: 0 3px;
-      opacity: 0.6;
-    }
-    .cvas-icon:hover {
-      opacity: 1;
-    }
-  `;
-  document.head.appendChild(style);
-})();
 
 // === Add Icons Per Row ===
 function addAgentModalIcons(tbody) {
@@ -6159,10 +6033,7 @@ function addAgentModalIcons(tbody) {
   });
 }
 
-document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () => {
-  const modal = document.getElementById('cvas-agent-modal');
-  if (modal) modal.remove();
-});
+
 
 // ==== Agent CTG (queue-style) — overlay anchored inside #cvas-agent-modal ====
 
@@ -6564,4 +6435,5 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
