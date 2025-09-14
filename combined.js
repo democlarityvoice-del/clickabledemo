@@ -3693,7 +3693,7 @@ document.addEventListener('click', function (e) {
               '<option value="">Select a Disposition First</option>' +
             '</select>' +
             '<label for="cv-notes-text" style="justify-self:end;font-weight:600">Notes</label>' +
-            '<textarea id="cv-notes-text" rows="5" style="width:100%;padding:8px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
+            '<textarea id="cv-notes-text" rows="5" style="width:100%;padding:6px;border:1px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>' +
           '</div>' +
         '</div>' +
         '<div class="cv-modal-footer" style="display:flex;gap:8px;justify-content:flex-end;padding:12px 16px;border-top:1px solid #e5e7eb">' +
@@ -6428,6 +6428,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
