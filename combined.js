@@ -6550,6 +6550,8 @@ function openAgentListenModal(agentExt, row, btn) {
     document.head.appendChild(css);
   }
 
+
+ 
   // build ours (replace vendor)
   function buildAvailability() {
     host.innerHTML = '';
@@ -6643,31 +6645,40 @@ function openAgentListenModal(agentExt, row, btn) {
     timeline.addEventListener('mouseleave', ()=> tip.style.display='none');
   }
 
-  // anti-flicker: wait for vendor chart, swap once, and stay swapped
-  host.style.visibility = 'hidden';
-  let built = false;
+ // ---- anti-flicker: wait for vendor chart, then replace & keep replaced
+host.style.visibility = 'hidden';
 
-  const buildNow = () => {
-    if (built) return;
-    built = true;
-    buildAvailability();
-    host.style.visibility = '';
-  };
+const buildNow = () => {
+  // always rebuild: nuke whatever is there and paint ours
+  buildAvailability();
+  host.style.visibility = '';
+};
 
-  const once = new MutationObserver((_m, obs)=>{
-    if (host.querySelector('svg,canvas,g')) { obs.disconnect(); buildNow(); keepSticky(); }
-  });
-  once.observe(host, {childList:true, subtree:true});
-
-  setTimeout(()=>{ if (!built) { buildNow(); keepSticky(); } }, 1200);
-
-  function keepSticky(){
-    const mo = new MutationObserver(()=>{
-      if (!host.querySelector('.cvaa24-wrap') || host.querySelector('svg,canvas,g')) buildNow();
-    });
-    mo.observe(host, {childList:true, subtree:true});
+// build once when vendor first paints
+const once = new MutationObserver((_m, obs) => {
+  if (host.querySelector('svg,canvas,g')) {
+    obs.disconnect();
+    buildNow();
+    stick();
   }
+});
+once.observe(host, { childList: true, subtree: true });
+
+// fallback if vendor never paints
+setTimeout(() => { if (!host.querySelector('.cvaa24-wrap')) { buildNow(); stick(); } }, 1200);
+
+// keep replaced: if vendor tries to repaint, rebuild ours immediately
+function stick () {
+  const mo = new MutationObserver(() => {
+    const vendorRepainted = host.querySelector('svg,canvas,g');
+    const oursMissing    = !host.querySelector('.cvaa24-wrap');
+    if (vendorRepainted || oursMissing) buildNow();
+  });
+  mo.observe(host, { childList: true, subtree: true });
+}
+
 })();
+
 
 
 
