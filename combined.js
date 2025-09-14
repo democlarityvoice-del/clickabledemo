@@ -6512,359 +6512,247 @@ function openAgentListenModal(agentExt, row, btn) {
 // === AGENT MODAL COMPLETION - END ===
 
 
-
 (() => {
-  // ===== CV DNIS Overlay (safe, isolated, append-only) ======================
-  const PAGE_OK = /\/stats\/queuestats\/dnis(?:[?#].*)?$/i;
-  if (!PAGE_OK.test(location.pathname)) return;
+  // DNIS overlay (no iframe version)
+  const ON_DNIS = /\/stats\/queuestats\/dnis(?:[?#].*)?$/i;
+  if (!ON_DNIS.test(location.pathname)) return;
 
-  const GUARD_FLAG = 'cvDnisInjected';
-  if (document.body.dataset[GUARD_FLAG]) return;
-  document.body.dataset[GUARD_FLAG] = '1';
+  const GUARD = 'cvDnisOverlayV2';
+  if (document.body.dataset[GUARD]) return;
+  document.body.dataset[GUARD] = '1';
 
-  const q = (sel, el = document) => el.querySelector(sel);
-  const qa = (sel, el = document) => Array.from(el.querySelectorAll(sel));
+  const $ = (s, el=document) => el.querySelector(s);
+  const $$ = (s, el=document) => Array.from(el.querySelectorAll(s));
 
-  // Wait for the native table container
-  function waitForTableContainer(attempts = 0) {
-    const container = q('.table-container');
-    if (!container) {
-      if (attempts < 200) return setTimeout(() => waitForTableContainer(attempts + 1), 50);
-      return;
-    }
-    boot(container);
+  function whenTableReady(tries=0) {
+    const container = $('.table-container');
+    if (!container) return tries < 200 ? setTimeout(()=>whenTableReady(tries+1), 50) : null;
+    init(container);
   }
 
-  function isNativeEmpty(container) {
+  function isEmpty(container) {
     const emptyCell = container.querySelector('.dataTables_empty');
-    const hasRows = container.querySelector('tbody tr:not(.dataTables_empty)');
-    return !!emptyCell || !hasRows;
+    const bodyHasRow = container.querySelector('tbody tr:not(.dataTables_empty)');
+    return !!emptyCell || !bodyHasRow;
   }
 
-  function boot(container) {
-    // Only inject when the table is empty
-    if (!isNativeEmpty(container)) return;
-
-    // Hide native wrapper but keep DOM intact
+  function init(container) {
+    if (!isEmpty(container)) return; // never cover real data
     const nativeWrap = container.querySelector('.dataTables_wrapper') || container;
-    nativeWrap.dataset.cvDnisHidden = '1';
-    nativeWrap.style.visibility = 'hidden';
 
-    // Inject iframe
-    const iframe = document.createElement('iframe');
-    iframe.id = 'cv-dnis-iframe';
-    iframe.setAttribute('title', 'Clarity Voice DNIS Demo');
-    Object.assign(iframe.style, {
-      width: '100%', height: '440px', border: '0',
-      display: 'block', background: 'transparent'
+    // Hide the native wrapper but keep dimensions
+    nativeWrap.style.display = 'none';
+
+    // Build overlay
+    container.style.position = 'relative';
+    const overlay = document.createElement('div');
+    overlay.id = 'cv-dnis-overlay';
+    Object.assign(overlay.style, {
+      position: 'absolute', inset: '0', background: 'transparent'
     });
-    iframe.srcdoc = buildDnisSrcdoc();
-    container.appendChild(iframe);
 
-    // Observe: if real rows appear, tear down overlay
+    overlay.innerHTML = buildOverlayHTML();
+    container.appendChild(overlay);
+
+    // Wire interactivity
+    wireOverlay(overlay);
+
+    // If real data ever appears, tear down
     const mo = new MutationObserver(() => {
-      if (!isNativeEmpty(container)) {
-        teardown();
+      if (!isEmpty(container)) {
+        try { overlay.remove(); } catch {}
+        nativeWrap.style.display = ''; // restore
+        mo.disconnect();
       }
     });
-    mo.observe(container, { childList: true, subtree: true });
-
-    function teardown() {
-      mo.disconnect();
-      try { iframe.remove(); } catch {}
-      if (nativeWrap && nativeWrap.dataset.cvDnisHidden) {
-        nativeWrap.style.visibility = '';
-        delete nativeWrap.dataset.cvDnisHidden;
-      }
-    }
+    mo.observe(container, { childList:true, subtree:true });
   }
 
-  // ===== Data (grouped by DNIS using your constant calls) ====================
-  // We only render these two DNIS as requested.
-  const CV_DNIS_DATA = [
-    // --- (248) 436-3443 -----------------------------------------------------
-    { when: 'Today, 1:35 pm', fromName: 'Sarah Patel', fromPhone: '(248) 555-0196', dnis: '(248) 436-3443', talk:'1:57', extFrom:'200', extTo:'200', agent:'Mike Johnson', wait:'3:24', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 1:30 pm', fromName: 'Chloe Bennet', fromPhone: '(313) 555-0120', dnis: '(248) 436-3443', talk:'5:21', extFrom:'200', extTo:'200', agent:'Mike Johnson', wait:'6:11', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 10:23 am', fromName: 'Monica Alvarez', fromPhone: '(989) 555-0113', dnis: '(248) 436-3443', talk:'2:49', extFrom:'200', extTo:'200', agent:'Mike Johnson', wait:'1:52', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 1:46 pm', fromName: 'Tucker Jones', fromPhone: '(989) 555-0128', dnis: '(248) 436-3443', talk:'6:17', extFrom:'201', extTo:'201', agent:'Cathy Thomas', wait:'1:28', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 08:08 am', fromName: 'Coco LaBelle', fromPhone: '(989) 555-0672', dnis: '(248) 436-3443', talk:'0:22', extFrom:'201', extTo:'201', agent:'Cathy Thomas', wait:'5:55', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 12:06 pm', fromName: 'Thomas Lee', fromPhone: '517-555-0157', dnis: '(248) 436-3443', talk:'1:21', extFrom:'204', extTo:'204', agent:'Brittany Lawrence', wait:'3:53', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 11:22 am', fromName: 'JR Knight', fromPhone: '248-555-0144', dnis: '(248) 436-3443', talk:'3:49', extFrom:'206', extTo:'206', agent:'Mark Sanchez', wait:'8:35', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 09:29 am', fromName: 'Tanya Roberts', fromPhone: '313-555-3443', dnis: '(248) 436-3443', talk:'3:47', extFrom:'206', extTo:'206', agent:'Mark Sanchez', wait:'0:57', tag:'Orig: Bye', disp:'Connect' },
+  // ---------- Data (from your constants) ----------
+  const CALLS = [
+    // (248) 436-3443
+    { when:'Today, 1:35 pm', from:'Sarah Patel', fromNum:'(248) 555-0196', dnis:'(248) 436-3443', talk:'1:57', xf:'200', xt:'200', agent:'Mike Johnson', wait:'3:24', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 1:30 pm', from:'Chloe Bennet', fromNum:'(313) 555-0120', dnis:'(248) 436-3443', talk:'5:21', xf:'200', xt:'200', agent:'Mike Johnson', wait:'6:11', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 10:23 am', from:'Monica Alvarez', fromNum:'(989) 555-0113', dnis:'(248) 436-3443', talk:'2:49', xf:'200', xt:'200', agent:'Mike Johnson', wait:'1:52', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 1:46 pm', from:'Tucker Jones', fromNum:'(989) 555-0128', dnis:'(248) 436-3443', talk:'6:17', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'1:28', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 08:08 am', from:'Coco LaBelle', fromNum:'(989) 555-0672', dnis:'(248) 436-3443', talk:'0:22', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'5:55', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 12:06 pm', from:'Thomas Lee', fromNum:'517-555-0157', dnis:'(248) 436-3443', talk:'1:21', xf:'204', xt:'204', agent:'Brittany Lawrence', wait:'3:53', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 11:22 am', from:'JR Knight', fromNum:'248-555-0144', dnis:'(248) 436-3443', talk:'3:49', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:35', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 09:29 am', from:'Tanya Roberts', fromNum:'313-555-3443', dnis:'(248) 436-3443', talk:'3:47', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'0:57', tag:'Orig: Bye', disp:'Connect' },
 
-    // --- (313) 995-9080 -----------------------------------------------------
-    { when: 'Today, 08:16 am', fromName: 'Leif Hendricksen', fromPhone: '517-555-0162', dnis: '(313) 995-9080', talk:'8:17', extFrom:'200', extTo:'200', agent:'Mike Johnson', wait:'2:27', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 11:41 am', fromName: 'Elizabeth Li', fromPhone: '(313) 555-8471', dnis: '(313) 995-9080', talk:'1:23', extFrom:'201', extTo:'201', agent:'Cathy Thomas', wait:'2:17', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 1:35 pm', fromName: 'Jack Burton', fromPhone: '(517) 555-0148', dnis: '(313) 995-9080', talk:'0:42', extFrom:'202', extTo:'202', agent:'Jake Lee', wait:'7:22', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 11:58 am', fromName: 'Mark Sanchez', fromPhone: '989-555-0213', dnis: '(313) 995-9080', talk:'4:29', extFrom:'202', extTo:'202', agent:'Jake Lee', wait:'2:47', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 1:21 pm', fromName: 'John Travers', fromPhone: '810-555-0192', dnis: '(313) 995-9080', talk:'2:27', extFrom:'203', extTo:'203', agent:'Bob Andersen', wait:'9:41', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 11:58 am', fromName: 'Freddie Travis', fromPhone: '800-649-2907', dnis: '(313) 995-9080', talk:'3:48', extFrom:'203', extTo:'203', agent:'Bob Andersen', wait:'21:16', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 11:18 am', fromName: 'Sarah Patel', fromPhone: '(248) 555-0196', dnis: '(313) 995-9080', talk:'2:22', extFrom:'205', extTo:'205', agent:'Alex Roberts', wait:'17:29', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 08:42 am', fromName: 'Alexander Chen', fromPhone: '(517) 555-0122', dnis: '(313) 995-9080', talk:'4:24', extFrom:'205', extTo:'205', agent:'Alex Roberts', wait:'7:42', tag:'Term: Bye', disp:'Connect' },
-    { when: 'Today, 09:56 am', fromName: 'Rory Davis', fromPhone: '(313) 555-0179', dnis: '(313) 995-9080', talk:'1:01', extFrom:'206', extTo:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' },
-    { when: 'Today, 09:56 am', fromName: 'Rory Davis', fromPhone: '313-555-0179', dnis: '(313) 995-9080', talk:'1:01', extFrom:'206', extTo:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' }, // duplicate kept to match your constants
-    { when: 'Today, 1:24 pm', fromName: 'Martin Smith', fromPhone: '800-909-5384', dnis: '(313) 995-9080', talk:'4:11', extFrom:'206', extTo:'206', agent:'Mark Sanchez', wait:'4:22', tag:'Orig: Bye', disp:'Connect' }
+    // (313) 995-9080
+    { when:'Today, 08:16 am', from:'Leif Hendricksen', fromNum:'517-555-0162', dnis:'(313) 995-9080', talk:'8:17', xf:'200', xt:'200', agent:'Mike Johnson', wait:'2:27', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 11:41 am', from:'Elizabeth Li', fromNum:'(313) 555-8471', dnis:'(313) 995-9080', talk:'1:23', xf:'201', xt:'201', agent:'Cathy Thomas', wait:'2:17', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 1:35 pm', from:'Jack Burton', fromNum:'(517) 555-0148', dnis:'(313) 995-9080', talk:'0:42', xf:'202', xt:'202', agent:'Jake Lee', wait:'7:22', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 11:58 am', from:'Mark Sanchez', fromNum:'989-555-0213', dnis:'(313) 995-9080', talk:'4:29', xf:'202', xt:'202', agent:'Jake Lee', wait:'2:47', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 1:21 pm', from:'John Travers', fromNum:'810-555-0192', dnis:'(313) 995-9080', talk:'2:27', xf:'203', xt:'203', agent:'Bob Andersen', wait:'9:41', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 11:58 am', from:'Freddie Travis', fromNum:'800-649-2907', dnis:'(313) 995-9080', talk:'3:48', xf:'203', xt:'203', agent:'Bob Andersen', wait:'21:16', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 11:18 am', from:'Sarah Patel', fromNum:'(248) 555-0196', dnis:'(313) 995-9080', talk:'2:22', xf:'205', xt:'205', agent:'Alex Roberts', wait:'17:29', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 08:42 am', from:'Alexander Chen', fromNum:'(517) 555-0122', dnis:'(313) 995-9080', talk:'4:24', xf:'205', xt:'205', agent:'Alex Roberts', wait:'7:42', tag:'Term: Bye', disp:'Connect' },
+    { when:'Today, 09:56 am', from:'Rory Davis', fromNum:'(313) 555-0179', dnis:'(313) 995-9080', talk:'1:01', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 09:56 am', from:'Rory Davis', fromNum:'313-555-0179', dnis:'(313) 995-9080', talk:'1:01', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'8:17', tag:'Orig: Bye', disp:'Connect' },
+    { when:'Today, 1:24 pm', from:'Martin Smith', fromNum:'800-909-5384', dnis:'(313) 995-9080', talk:'4:11', xf:'206', xt:'206', agent:'Mark Sanchez', wait:'4:22', tag:'Orig: Bye', disp:'Connect' }
   ];
 
-  // ===== Iframe HTML =========================================================
-  function buildDnisSrcdoc() {
-    const nowText = new Date().toLocaleString();
-    const encodedData = encodeURIComponent(JSON.stringify(CV_DNIS_DATA));
-    return `<!DOCTYPE html>
-<html>
-<head>
-<meta charset="utf-8" />
-<style>
-  :root {
-    --cv-accent: #e57027; /* Clarity orange */
-    --cv-text: #222;
-    --cv-muted: #666;
-    --cv-border: #e5e7eb;
-    --cv-bg: #fff;
-    --cv-chip: #f3f4f6;
-  }
-  html,body{margin:0;padding:0;background:transparent;color:var(--cv-text);font:13px/1.4 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,Arial;}
-  .cv-wrap{padding:6px 0 0 0;}
-  .cv-topline{display:flex;justify-content:space-between;align-items:center;margin:0 8px 6px 8px;color:var(--cv-muted)}
-  .cv-table{width:100%;border-collapse:collapse;background:var(--cv-bg);box-shadow:0 1px 2px rgba(0,0,0,.06);border:1px solid var(--cv-border);border-radius:6px;overflow:hidden}
-  .cv-table th, .cv-table td{padding:8px 10px;border-bottom:1px solid var(--cv-border);vertical-align:middle;white-space:nowrap}
-  .cv-table thead th{font-weight:600;background:#f9fafb;color:#111}
-  .cv-table tbody tr:hover{background:#fcfcfd}
-  .cv-chip{display:inline-flex;align-items:center;gap:6px}
-  .cv-square{width:10px;height:10px;border-radius:2px;background:#4f46e5;display:inline-block}
-  .cv-dnis{font-weight:600}
-  .cv-name{color:var(--cv-muted)}
-  .cv-btn{border:1px solid var(--cv-border);background:#fff;border-radius:6px;padding:6px 9px;cursor:pointer}
-  .cv-btn:hover{border-color:#d1d5db}
-  .cv-link{color:#1d4ed8;text-decoration:none}
-  .cv-link:hover{text-decoration:underline}
-  .cv-center{text-align:center}
-  .cv-right{text-align:right}
-  .cv-accent{color:var(--cv-accent);font-weight:700}
-
-  /* Details view */
-  .cv-details{margin-top:10px;border:1px solid var(--cv-border);border-radius:6px;overflow:hidden;display:none}
-  .cv-details.active{display:block}
-  .cv-head{display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border-bottom:1px solid var(--cv-border)}
-  .cv-head .cv-title{font-weight:700}
-  .cv-head .cv-grow{flex:1}
-  .cv-search{border:1px solid var(--cv-border);border-radius:6px;padding:6px 8px;width:260px}
-
-  .cv-actions{display:flex;gap:8px;justify-content:flex-end}
-  .cv-ic{width:18px;height:18px;display:inline-grid;place-items:center;border-radius:4px;border:1px solid var(--cv-border);cursor:pointer}
-  .cv-ic:hover{background:#f2f2f2}
-
-  .cv-calls{width:100%;border-collapse:collapse}
-  .cv-calls th,.cv-calls td{padding:8px 10px;border-bottom:1px solid var(--cv-border);white-space:nowrap}
-  .cv-calls thead th{background:#fafafa;font-weight:600}
-
-  .cv-audio{margin:6px 10px 10px 10px;padding:8px;border:1px dashed var(--cv-border);border-radius:6px;display:none}
-  .cv-audio.active{display:block}
-  .cv-bar{height:6px;background:#e5e7eb;border-radius:4px;overflow:hidden}
-  .cv-bar > div{height:100%;width:40%;background:var(--cv-accent)}
-</style>
-</head>
-<body>
-  <div class="cv-wrap" id="cv-dnis-root">
-    <div class="cv-topline">
-      <div>Showing data up to <strong>${nowText}</strong></div>
-      <button class="cv-btn" type="button" id="cv-dnis-settings">Table Settings ▾</button>
-    </div>
-
-    <table class="cv-table" id="cv-dnis-table">
-      <thead>
-        <tr>
-          <th>DNIS</th>
-          <th>Name</th>
-          <th class="cv-right">Call Volume</th>
-          <th class="cv-right">Calls Handled</th>
-          <th class="cv-right">Avg. Talk Time</th>
-          <th class="cv-right">Avg. Wait Time</th>
-        </tr>
-      </thead>
-      <tbody id="cv-dnis-tbody"></tbody>
-    </table>
-
-    <div class="cv-details" id="cv-dnis-details">
-      <div class="cv-head">
-        <button class="cv-btn" id="cv-back">← Back</button>
-        <div class="cv-title" id="cv-dnis-title">DNIS Details</div>
-        <div class="cv-grow"></div>
-        <input class="cv-search" id="cv-search" placeholder="Search calls…" />
-      </div>
-      <div id="cv-audio" class="cv-audio">
-        <div style="margin-bottom:6px;color:#555">Now playing preview…</div>
-        <div class="cv-bar"><div></div></div>
-      </div>
-      <table class="cv-calls" id="cv-dnis-calls">
-        <thead>
-          <tr>
-            <th>Date</th><th>From</th><th>From #</th><th>To #</th>
-            <th>Talk</th><th>Ext From</th><th>Ext To</th><th>Agent</th>
-            <th>Wait</th><th>Tag</th><th>Disp</th><th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="cv-calls-tbody"></tbody>
-      </table>
-    </div>
-  </div>
-
-<script>
-  const RAW = JSON.parse(decodeURIComponent("${encodedData}"));
-
-  // Utilities
-  const q = (s, el=document) => el.querySelector(s);
-  const qa = (s, el=document) => Array.from(el.querySelectorAll(s));
-  const toSecs = t => { if(!t) return 0; const p=t.split(':').map(Number); return p.length===2 ? p[0]*60+p[1] : p[0]; };
-  const fmt = s => { const m=Math.floor(s/60), ss=(s%60).toString().padStart(2,'0'); return m+':'+ss; };
-
-  // Group by DNIS we care about
-  const WANT = new Set(['(248) 436-3443','(313) 995-9080']);
-  const groups = {};
-  RAW.forEach(row => {
-    if (!WANT.has(row.dnis)) return;
-    (groups[row.dnis] ||= []).push(row);
-  });
-
-  const NAME_BY_DNIS = {
+  const NAMES = {
     '(248) 436-3443': 'Clarity Main',
     '(313) 995-9080': 'Billing Hotline DID'
   };
 
-  // Build summary rows
-  const tbody = q('#cv-dnis-tbody');
-  Object.entries(groups).forEach(([dnis, rows], idx) => {
-    const vol = rows.length;
-    const handled = vol; // demo assumption
-    const avgTalk = Math.round(rows.reduce((s,r)=>s+toSecs(r.talk),0)/Math.max(1,vol));
-    const avgWait = Math.round(rows.reduce((s,r)=>s+toSecs(r.wait),0)/Math.max(1,vol));
+  function buildOverlayHTML() {
+    const now = new Date().toLocaleString();
+    // Minimal styles to align spacing; relies on portal fonts/colors
+    return `
+      <div style="color:#666;margin:14px 0 8px 0;">
+        Showing data up to <b>${now}</b>
+        <button type="button" style="float:right;border:1px solid #d8d8d8;border-radius:6px;padding:6px 10px;background:#fff;cursor:pointer;">Table Settings ▾</button>
+      </div>
 
-    const tr = document.createElement('tr');
-    tr.innerHTML = \`
-      <td><span class="cv-chip"><span class="cv-square"></span><span class="cv-dnis">\${dnis}</span></span></td>
-      <td class="cv-name">\${NAME_BY_DNIS[dnis] || ''}</td>
-      <td class="cv-right"><a href="#" class="cv-link cv-go" data-dnis="\${dnis}">\${vol}</a></td>
-      <td class="cv-right"><a href="#" class="cv-link cv-go" data-dnis="\${dnis}">\${handled}</a></td>
-      <td class="cv-right"><a href="#" class="cv-link cv-go" data-dnis="\${dnis}">\${fmt(avgTalk)}</a></td>
-      <td class="cv-right"><a href="#" class="cv-link cv-go" data-dnis="\${dnis}">\${fmt(avgWait)}</a></td>
-    \`;
-    tbody.appendChild(tr);
-  });
+      <table class="dataTable" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-radius:6px;overflow:hidden;">
+        <thead style="background:#f9fafb;">
+          <tr>
+            <th style="padding:8px 10px;text-align:left;">DNIS</th>
+            <th style="padding:8px 10px;text-align:left;">Name</th>
+            <th style="padding:8px 10px;text-align:right;">Call Volume</th>
+            <th style="padding:8px 10px;text-align:right;">Calls Handled</th>
+            <th style="padding:8px 10px;text-align:right;">Avg. Talk Time</th>
+            <th style="padding:8px 10px;text-align:right;">Avg. Wait Time</th>
+          </tr>
+        </thead>
+        <tbody id="cv-dnis-body"></tbody>
+      </table>
 
-  // Details view wiring
-  const details = q('#cv-dnis-details');
-  const callsBody = q('#cv-calls-tbody');
-  const title = q('#cv-dnis-title');
-  const audio = q('#cv-audio');
+      <div id="cv-dnis-details" style="display:none;margin-top:10px;">
+        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:#f9fafb;border:1px solid #e5e7eb;border-bottom:0;border-radius:6px 6px 0 0;">
+          <button id="cv-back" style="border:1px solid #d8d8d8;border-radius:6px;padding:6px 10px;background:#fff;cursor:pointer;">← Back</button>
+          <div id="cv-dnis-title" style="font-weight:700;">DNIS Details</div>
+          <div style="flex:1"></div>
+          <input id="cv-search" placeholder="Search calls…" style="border:1px solid #d8d8d8;border-radius:6px;padding:6px 8px;width:260px;">
+        </div>
+        <table class="dataTable" style="width:100%;border-collapse:collapse;background:#fff;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 6px 6px;overflow:hidden;">
+          <thead style="background:#fafafa;">
+            <tr>
+              <th style="padding:8px 10px;">Date</th><th style="padding:8px 10px;">From</th><th style="padding:8px 10px;">From #</th><th style="padding:8px 10px;">To #</th>
+              <th style="padding:8px 10px;">Talk</th><th style="padding:8px 10px;">Ext From</th><th style="padding:8px 10px;">Ext To</th><th style="padding:8px 10px;">Agent</th>
+              <th style="padding:8px 10px;">Wait</th><th style="padding:8px 10px;">Tag</th><th style="padding:8px 10px;">Disp</th><th style="padding:8px 10px;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="cv-calls-body"></tbody>
+        </table>
+      </div>
+    `;
+  }
 
-  function renderDetails(dnis) {
-    title.textContent = \`\${NAME_BY_DNIS[dnis] || ''} — \${dnis}\`;
-    callsBody.innerHTML = '';
-    (groups[dnis]||[]).forEach((r, i) => {
+  function secs(t){ const [m,s]=t.split(':').map(Number); return m*60+s; }
+  function fmt(s){ const m=Math.floor(s/60), ss=String(s%60).padStart(2,'0'); return `${m}:${ss}`; }
+
+  function wireOverlay(overlay) {
+    // Build grouped summary
+    const groups = {};
+    CALLS.forEach(r => (groups[r.dnis] ||= []).push(r));
+
+    const body = $('#cv-dnis-body', overlay);
+    Object.entries(groups).forEach(([dnis, rows]) => {
+      const vol = rows.length;
+      const handled = vol;
+      const avgTalk = Math.round(rows.reduce((a,r)=>a+secs(r.talk),0)/vol);
+      const avgWait = Math.round(rows.reduce((a,r)=>a+secs(r.wait),0)/vol);
+
       const tr = document.createElement('tr');
-      tr.innerHTML = \`
-        <td>\${r.when}</td>
-        <td>\${r.fromName}</td>
-        <td>\${r.fromPhone}</td>
-        <td>\${r.dnis}</td>
-        <td>\${r.talk}</td>
-        <td>\${r.extFrom}</td>
-        <td>\${r.extTo}</td>
-        <td>\${r.agent}</td>
-        <td>\${r.wait}</td>
-        <td>\${r.tag}</td>
-        <td>\${r.disp}</td>
-        <td class="cvas-action-cell">
-          <span class="cv-ic" title="Listen" data-action="listen" data-idx="\${i}">🎧</span>
-          <span class="cv-ic" title="Transcript" data-action="transcript" data-idx="\${i}">📄</span>
-          <span class="cv-ic" title="Notes" data-action="notes" data-idx="\${i}">📝</span>
-          <span class="cv-ic" title="Cradle-to-Grave" data-action="magnify" data-idx="\${i}">🔍</span>
-          <span class="cv-ic" title="Download" data-action="download" data-idx="\${i}">⬇️</span>
+      tr.innerHTML = `
+        <td style="padding:10px;">
+          <span style="display:inline-flex;align-items:center;gap:8px;">
+            <span style="width:8px;height:8px;background:#6a5acd;border-radius:50%;display:inline-block"></span>
+            <b>${dnis}</b>
+          </span>
         </td>
-      \`;
-      callsBody.appendChild(tr);
+        <td style="padding:10px;color:#666;">${NAMES[dnis]||''}</td>
+        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${vol}</a></td>
+        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${handled}</a></td>
+        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${fmt(avgTalk)}</a></td>
+        <td style="padding:10px;text-align:right;"><a href="#" class="cv-go" data-dnis="${dnis}">${fmt(avgWait)}</a></td>
+      `;
+      body.appendChild(tr);
     });
-    details.classList.add('active');
-  }
 
-  // Clicks from summary to details
-  qa('.cv-go').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      const dnis = a.getAttribute('data-dnis');
-      renderDetails(dnis);
-      audio.classList.remove('active');
-    });
-  });
+    // Details wiring
+    const details = $('#cv-dnis-details', overlay);
+    const callsBody = $('#cv-calls-body', overlay);
+    const title = $('#cv-dnis-title', overlay);
 
-  // Back
-  q('#cv-back').addEventListener('click', () => {
-    details.classList.remove('active');
-    audio.classList.remove('active');
-  });
-
-  // Search in details
-  q('#cv-search').addEventListener('input', (e) => {
-    const v = e.target.value.toLowerCase();
-    qa('tbody tr', q('#cv-dnis-calls')).forEach(tr => {
-      tr.style.display = tr.textContent.toLowerCase().includes(v) ? '' : 'none';
-    });
-  });
-
-  // Action handlers (safe: call parent hooks if present, else local demo)
-  q('#cv-dnis-calls').addEventListener('click', (e) => {
-    const ic = e.target.closest('.cv-ic');
-    if (!ic) return;
-
-    const action = ic.getAttribute('data-action');
-    const idx = +ic.getAttribute('data-idx') || 0;
-
-    if (action === 'listen') {
-      audio.classList.add('active');
-      // simple "play" animation
-      const bar = audio.querySelector('.cv-bar > div');
-      bar.style.width = (30 + Math.floor(Math.random()*60)) + '%';
-      return;
+    function openDetails(dnis) {
+      title.textContent = `${NAMES[dnis]||''} — ${dnis}`;
+      callsBody.innerHTML = '';
+      (groups[dnis]||[]).forEach((r,i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="padding:8px 10px;">${r.when}</td>
+          <td style="padding:8px 10px;">${r.from}</td>
+          <td style="padding:8px 10px;">${r.fromNum}</td>
+          <td style="padding:8px 10px;">${r.dnis}</td>
+          <td style="padding:8px 10px;">${r.talk}</td>
+          <td style="padding:8px 10px;">${r.xf}</td>
+          <td style="padding:8px 10px;">${r.xt}</td>
+          <td style="padding:8px 10px;">${r.agent}</td>
+          <td style="padding:8px 10px;">${r.wait}</td>
+          <td style="padding:8px 10px;">${r.tag}</td>
+          <td style="padding:8px 10px;">${r.disp}</td>
+          <td class="cvas-action-cell" style="padding:8px 10px;">
+            <span data-action="listen" data-idx="${i}" style="cursor:pointer;margin-right:6px;">🎧</span>
+            <span data-action="transcript" data-idx="${i}" style="cursor:pointer;margin-right:6px;">📄</span>
+            <span data-action="notes" data-idx="${i}" style="cursor:pointer;margin-right:6px;">📝</span>
+            <span data-action="magnify" data-idx="${i}" style="cursor:pointer;margin-right:6px;">🔍</span>
+            <span data-action="download" data-idx="${i}" style="cursor:pointer;">⬇️</span>
+          </td>
+        `;
+        callsBody.appendChild(tr);
+      });
+      details.style.display = 'block';
+      details.scrollIntoView({behavior:'smooth', block:'start'});
     }
 
-    if (action === 'transcript') {
-      if (window.parent && typeof window.parent.cvAiEnsureModal === 'function') {
-        try { window.parent.cvAiEnsureModal(); } catch {}
-        try { window.parent.cvAiPopulateModal && window.parent.cvAiPopulateModal(null, idx); } catch {}
-      } else {
-        alert('Transcript modal (demo): this would open AI Transcript.');
+    $$('.cv-go', overlay).forEach(a => {
+      a.addEventListener('click', (e) => {
+        e.preventDefault();
+        openDetails(a.dataset.dnis);
+      });
+    });
+
+    $('#cv-back', overlay).addEventListener('click', () => {
+      details.style.display = 'none';
+    });
+
+    $('#cv-search', overlay).addEventListener('input', e => {
+      const t = e.target.value.toLowerCase();
+      $$('#cv-calls-body tr', overlay).forEach(tr => {
+        tr.style.display = tr.textContent.toLowerCase().includes(t) ? '' : 'none';
+      });
+    });
+
+    // Action icons
+    $('#cv-calls-body', overlay).addEventListener('click', (e) => {
+      const el = e.target.closest('[data-action]');
+      if (!el) return;
+      const what = el.dataset.action;
+      const idx = +el.dataset.idx || 0;
+
+      if (what === 'transcript' && window.cvAiEnsureModal) {
+        try { window.cvAiEnsureModal(); } catch {}
+        try { window.cvAiPopulateModal && window.cvAiPopulateModal(null, idx); } catch {}
+        return;
       }
-      return;
-    }
-
-    if (action === 'notes') {
-      const note = prompt('Add a note for this call (demo only):');
-      if (note) ic.setAttribute('title', 'Notes ✓');
-      return;
-    }
-
-    if (action === 'magnify') {
-      alert('Cradle-to-Grave (demo): timeline would appear here.');
-      return;
-    }
-
-    if (action === 'download') {
-      const blob = new Blob(['Demo CSV export for call #' + (idx+1)], {type:'text/csv'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url; a.download = 'call_'+(idx+1)+'.csv';
-      document.body.appendChild(a); a.click(); a.remove();
-      URL.revokeObjectURL(url);
-      return;
-    }
-  });
-</script>
-</body>
-</html>`;
+      if (what === 'listen') { alert('Demo listen preview'); return; }
+      if (what === 'notes') { const n = prompt('Add a note (demo)'); if (n) el.title='Notes ✓'; return; }
+      if (what === 'magnify') { alert('Demo cradle-to-grave'); return; }
+      if (what === 'download') {
+        const blob = new Blob(['Demo CSV for call '+(idx+1)], {type:'text/csv'});
+        const url = URL.createObjectURL(blob); const a=document.createElement('a');
+        a.href=url; a.download='call_'+(idx+1)+'.csv'; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+      }
+    });
   }
 
-  // Kickoff
-  waitForTableContainer();
+  whenTableReady();
 })();
 
 
