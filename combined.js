@@ -6511,6 +6511,171 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === AGENT MODAL COMPLETION - END ===
 
+// === Agent Availability: fake but realistic day timeline (8a–5p) ===
+(() => {
+  // guard: only on Agent Availability
+  if (!/\/portal\/stats\/queuestats\/agent_availability(?:[/?#]|$)/.test(location.href)) return;
+
+  // host = the chart wrapper; we’ll hide the stock SVG and render our own
+  const host = document.querySelector('#modal-graph-div');
+  if (!host) return;
+
+  // One-time styles
+  if (!document.getElementById('cvaa-styles')) {
+    const css = document.createElement('style');
+    css.id = 'cvaa-styles';
+    css.textContent = `
+      .cvaa-wrap { width:100%; max-width:100%; overflow-x:hidden; font:13px/1.4 Arial, sans-serif; }
+      .cvaa-legend { display:flex; gap:12px; margin:8px 0 6px 0; align-items:center; }
+      .cvaa-key { display:inline-flex; align-items:center; gap:6px; }
+      .cvaa-dot { width:12px; height:12px; border-radius:2px; display:inline-block; }
+      .cvaa { border:1px solid #e5e8eb; border-radius:6px; overflow:hidden; }
+      .cvaa-row { display:grid; grid-template-columns: 180px 1fr; align-items:center; }
+      .cvaa-row:nth-child(odd){ background:#f6f7f9; }           /* offline stripe feel */
+      .cvaa-row:nth-child(even){ background:#ffffff; }
+      .cvaa-name { padding:6px 10px; color:#222; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-right:1px solid #e5e8eb; }
+      .cvaa-track { position:relative; height:26px; }
+      .cvaa-seg { position:absolute; top:5px; height:16px; border-radius:3px; cursor:default; }
+      .cvaa-seg--avail { background:#1bb15c; }                  /* green */
+      .cvaa-seg--lunch { background:#e04848; }                  /* red */
+      .cvaa-seg--break { background:#f0a52b; }                  /* orange */
+      /* hour grid lines */
+      .cvaa-track::before { content:""; position:absolute; inset:0; background:
+        repeating-linear-gradient(to right, transparent 0, transparent calc(100%/9 - 1px), rgba(0,0,0,.06) calc(100%/9 - 1px), rgba(0,0,0,.06) calc(100%/9));
+        opacity:.6;
+      }
+      .cvaa-hours { display:grid; grid-template-columns: repeat(9, 1fr); color:#666; font-size:11px; padding:4px 6px 8px 186px; user-select:none; }
+      .cvaa-tip { position:fixed; z-index:2147483647; background:#fff; border:1px solid #cfd3d7; border-radius:6px; box-shadow:0 8px 24px rgba(0,0,0,.18);
+                  padding:8px 10px; font:12px/1.35 Arial, sans-serif; pointer-events:none; display:none; white-space:nowrap; }
+      .cvaa-tip b{ font-weight:700; }
+    `;
+    document.head.appendChild(css);
+  }
+
+  // Hide the stock chart (keep layout)
+  host.style.display = 'none';
+
+  // Try to read agent names from the page; fall back to your known roster
+  const fallbackAgents = [
+    'Cathy Thomas (201)','Mike Johnson (200)','Mark Sanchez (206)',
+    'Brittany Lawrence (204)','John Smith (207)','Alex Roberts (205)'
+  ];
+  let agents = [];
+  try {
+    const svg = host.querySelector('svg');
+    if (svg) {
+      // many libraries render y-axis labels as <text>; grab those that look like names
+      const texts = Array.from(svg.querySelectorAll('text')).map(t => t.textContent.trim()).filter(t => /[A-Za-z]/.test(t));
+      // keep unique, plausible names (2+ words)
+      const names = texts.filter(t => /\s/.test(t) && t.length >= 5);
+      // de-dupe while keeping order
+      const seen = new Set();
+      agents = names.filter(n => !seen.has(n) && seen.add(n));
+    }
+  } catch { /* ignore */ }
+  if (!agents.length) agents = fallbackAgents;
+
+  // Build container
+  const wrap = document.createElement('div');
+  wrap.className = 'cvaa-wrap';
+  wrap.innerHTML = `
+    <div class="cvaa-legend">
+      <span class="cvaa-key"><i class="cvaa-dot" style="background:#1bb15c"></i> Available</span>
+      <span class="cvaa-key"><i class="cvaa-dot" style="background:#e04848"></i> Lunch (1h)</span>
+      <span class="cvaa-key"><i class="cvaa-dot" style="background:#f0a52b"></i> Break (15m)</span>
+    </div>
+    <div class="cvaa" id="cvaa-timeline"></div>
+    <div class="cvaa-hours">${Array.from({length:9},(_,i)=>`${i?i:12}${i<4?' AM':' PM'}`).join('')}</div>
+    <div class="cvaa-tip" id="cvaa-tip"></div>
+  `;
+  host.parentElement.insertBefore(wrap, host);
+
+  const timeline = wrap.querySelector('#cvaa-timeline');
+  const tip = wrap.querySelector('#cvaa-tip');
+
+  // helpers
+  const H_START = 8*60;           // 8:00 -> minutes
+  const H_END   = 17*60;          // 17:00
+  const SPAN    = H_END - H_START; // 540 min = 9h
+  const pct = mins => ((mins - H_START) / SPAN) * 100;
+  const fmt = mins => {
+    let h = Math.floor(mins/60), m = mins%60, am='AM';
+    if (h>=12){ am='PM'; if(h>12) h-=12; }
+    if (h===0) h=12;
+    return `${h}:${String(m).padStart(2,'0')} ${am}`;
+  };
+  const durFmt = mins => `${Math.floor(mins/60)}:${String(mins%60).padStart(2,'0')}:00`;
+
+  // stable “random” by name so people differ but remain consistent
+  function seedRand(name){
+    let s = 0; for (let i=0;i<name.length;i++) s = (s*31 + name.charCodeAt(i)) >>> 0;
+    return () => (s = (1103515245*s + 12345) >>> 0, (s & 0x7fffffff) / 0x80000000);
+  }
+
+  // Build rows
+  agents.forEach(name => {
+    const row = document.createElement('div');
+    row.className = 'cvaa-row';
+    row.innerHTML = `<div class="cvaa-name" title="${name}">${name}</div><div class="cvaa-track"></div>`;
+    const track = row.lastElementChild;
+
+    // schedule: two 15m breaks + 60m lunch
+    const rnd = seedRand(name);
+    const b1Start = 9*60 + 15 + Math.round(rnd()*45);   // 9:15–10:00
+    const b2Start = 14*60 + 15 + Math.round(rnd()*45);  // 2:15–3:00
+    const LStart  = 11*60 + 30 + Math.round(rnd()*90);  // 11:30–13:00
+    const B = 15, L = 60;
+
+    // clamp & sort to avoid overlaps
+    const blocks = [
+      { label:'Break',  kind:'break',  start:b1Start, end:b1Start+B },
+      { label:'Lunch',  kind:'lunch',  start:LStart,  end:LStart+L },
+      { label:'Break',  kind:'break',  start:b2Start, end:b2Start+B },
+    ].sort((a,b)=>a.start-b.start).map(b=>{
+      b.start = Math.max(H_START, Math.min(b.start, H_END-5));
+      b.end   = Math.max(b.start+5, Math.min(b.end,   H_END));
+      return b;
+    });
+
+    // helper to drop a segment
+    function seg(kind, start, end, label){
+      const el = document.createElement('div');
+      el.className = `cvaa-seg cvaa-seg--${kind}`;
+      el.style.left = pct(start)+'%';
+      el.style.width = (pct(end)-pct(start))+'%';
+      el.dataset.label = label;
+      el.dataset.start = start;
+      el.dataset.end   = end;
+      track.appendChild(el);
+    }
+
+    // fill: Avail → Break/Lunch → Avail …
+    let cursor = H_START;
+    blocks.forEach(b=>{
+      if (b.start > cursor) seg('avail', cursor, b.start, 'Available');
+      seg(b.kind, b.start, b.end, b.label);
+      cursor = b.end;
+    });
+    if (cursor < H_END) seg('avail', cursor, H_END, 'Available');
+
+    timeline.appendChild(row);
+  });
+
+  // tooltip (single handler for all rows)
+  timeline.addEventListener('mousemove', e => {
+    const s = e.target.closest('.cvaa-seg');
+    if (!s){ tip.style.display='none'; return; }
+    const start = +s.dataset.start, end = +s.dataset.end;
+    const html = `<b>${s.dataset.label}</b><br>${fmt(start)} – ${fmt(end)}<br>Duration : ${durFmt(end-start)}`;
+    tip.innerHTML = html;
+    tip.style.display = 'block';
+    const pad = 10, x = Math.min(window.innerWidth - tip.offsetWidth - pad, e.clientX + 12);
+    const y = Math.min(window.innerHeight - tip.offsetHeight - pad, e.clientY + 12);
+    tip.style.left = x+'px'; tip.style.top = y+'px';
+  });
+  timeline.addEventListener('mouseleave', ()=>{ tip.style.display='none'; });
+})();
+
 
 
 
