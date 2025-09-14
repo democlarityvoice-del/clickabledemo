@@ -5797,7 +5797,7 @@ table.addEventListener('click', (e) => {
   } else if (action === 'notes' && parent.openAgentNotesModal) {
     parent.openAgentNotesModal('${agentExt}', tr);
   } else if (action === 'listen' && parent.openAgentListenModal) {
-    parent.openAgentListenModal('${agentExt}', tr);
+  parent.openAgentListenModal('${agentExt}', tr, btn);
   } else if (action === 'download') {
     console.log('[CVAS] Download for agent ${agentExt}');
   }
@@ -6238,44 +6238,64 @@ function openAgentNotesModal(agentExt, row) {
   notesModal.addEventListener("click", (e) => { if (e.target === notesModal) notesModal.remove(); });
 }
 
-function openAgentListenModal(agentExt, row) {
-  const agentStatsListen = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg";
+// Inline "Listen" expander (no overlay modal)
+function openAgentListenModal(agentExt, row, btn) {
+  if (!row) return;
+  const doc = row.ownerDocument;          // iframe document
 
-  const listenModal = document.createElement("div");
-  listenModal.id = "cvas-listen-modal";
-  listenModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
+  // ---- ensure the audio styles exist in the iframe ONCE ----
+  if (!doc.getElementById('cv-audio-styles')) {
+    const css = `
+      .cv-audio-row td { background:#f3f6f8; padding:10px 12px; border-top:0; }
+      .cv-audio-player { display:flex; align-items:center; gap:12px; }
+      .cv-audio-play { width:24px; height:24px; background:transparent; border:0; cursor:pointer; padding:0; }
+      .cv-audio-play img { width:16px; height:16px; opacity:.8; }
+      .cv-audio-time { font-weight:600; color:#333; }
+      .cv-audio-bar { flex:1; height:6px; background:#e0e0e0; border-radius:3px; position:relative; }
+      .cv-audio-bar-fill { position:absolute; left:0; top:0; bottom:0; width:0%; background:#9e9e9e; border-radius:3px; }
+      .cv-audio-icon { width:20px; height:20px; opacity:.6; }
+    `;
+    const style = doc.createElement('style');
+    style.id = 'cv-audio-styles';
+    style.textContent = css;
+    doc.head.appendChild(style);
+  }
 
-  const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
+  // ---- toggle: if the next row is already an audio row, remove it ----
+  const next = row.nextElementSibling;
+  if (next && next.classList && next.classList.contains('cv-audio-row')) {
+    next.remove();
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+    return;
+  }
 
-  listenModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 500px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
-      <h3 style="margin: 0; font: 600 16px Arial;">Listen to Call - ${caller}</h3>
-      <button id="cvas-listen-close" style="background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; cursor: pointer;">Close</button>
-    </div>
-    <div style="padding: 16px; text-align: center;">
-      <div style="margin-bottom: 16px;">
-        <img src="${agentStatsListen}" style="width: 48px; height: 48px; opacity: 0.7;" alt="">
-      </div>
-      <div style="font: 600 14px Arial; margin-bottom: 8px;">Call Recording</div>
-      <div style="font: 400 12px Arial; color: #666; margin-bottom: 16px;">Duration: 3:24 | Quality: High</div>
-      <div style="display: flex; gap: 12px; justify-content: center; align-items: center;">
-        <button style="padding: 8px 12px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">▶ Play</button>
-        <button style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">⏸ Pause</button>
-        <button style="padding: 8px 12px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">⏹ Stop</button>
-      </div>
-      <div style="margin-top: 16px; height: 4px; background: #f0f0f0; border-radius: 2px;">
-        <div style="width: 30%; height: 100%; background: #4caf50; border-radius: 2px;"></div>
-      </div>
-    </div>
-  </div>`;
+  // ---- build audio expander row (fake UI) ----
+  const colCount = row.cells.length; // span full width, including actions col
+  const audioTr = doc.createElement('tr');
+  audioTr.className = 'cv-audio-row';
 
-  document.body.appendChild(listenModal);
-  listenModal.querySelector("#cvas-listen-close").addEventListener("click", () => { listenModal.remove(); });
-  listenModal.addEventListener("click", (e) => { if (e.target === listenModal) listenModal.remove(); });
+  const playIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/play-solid-full.svg';
+  const listenIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/speakericon.svg';
+
+  audioTr.innerHTML =
+    '<td colspan="' + colCount + '">' +
+      '<div class="cv-audio-player">' +
+        '<button class="cv-audio-play" aria-label="Play"><img src="' + playIcon + '" alt="Play"></button>' +
+        '<span class="cv-audio-time">0:00 / 0:00</span>' +
+        '<div class="cv-audio-bar"><div class="cv-audio-bar-fill" style="width:0%"></div></div>' +
+        '<img class="cv-audio-icon" src="' + listenIcon + '" alt="Listen">' +
+      '</div>' +
+    '</td>';
+
+  row.parentNode.insertBefore(audioTr, row.nextSibling);
+  if (btn) btn.setAttribute('aria-expanded', 'true');
+  audioTr.scrollIntoView({ block: 'nearest' });
 }
 
 
+
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
