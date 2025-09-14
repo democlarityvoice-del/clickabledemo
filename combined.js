@@ -6212,31 +6212,164 @@ function openAgentCradleModal(agentExt, row) {
   cradleModal.addEventListener("click", (e) => { if (e.target === cradleModal) cradleModal.remove(); });
 }
 
-function openAgentNotesModal(agentExt, row) {
-  const notesModal = document.createElement("div");
-  notesModal.id = "cvas-notes-modal";
-  notesModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
+// --- Agent Notes POPover (matches queue style) ---
+const AGENT_NOTES_REASONS = {
+  'Inbound Sales' : ['Existing customer question', 'Follow up', 'Referral'],
+  'Outbound Sales': ['Cold Call', 'Follow-up']
+};
 
-  const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
+function openAgentNotesModal(agentExt, rowOrBtn) {
+  // If a popover is already open, remove it first
+  document.getElementById('agent-notes-popover')?.remove();
 
-  notesModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 600px; max-height: 80vh; overflow: auto;">
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
-      <h3 style="margin: 0; font: 600 16px Arial;">Call Notes - ${caller}</h3>
-      <button id="cvas-notes-close" style="background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; cursor: pointer;">Close</button>
+  // Figure out the anchor button (we accept either the row or the button)
+  let anchorBtn = null;
+  if (rowOrBtn?.classList?.contains('cvqs-icon-btn')) {
+    anchorBtn = rowOrBtn;
+  } else if (rowOrBtn?.querySelector) {
+    anchorBtn = rowOrBtn.querySelector('.cvqs-icon-btn[data-icon="notes"]');
+  }
+  if (!anchorBtn) return;
+
+  // Build the popover container
+  const pop = document.createElement('div');
+  pop.id = 'agent-notes-popover';
+  pop.setAttribute('role', 'dialog');
+  pop.setAttribute('aria-label', 'Notes');
+  Object.assign(pop.style, {
+    position: 'fixed',
+    top: '0px',
+    left: '0px',
+    width: '340px',
+    maxWidth: '92vw',
+    background: '#fff',
+    border: '1px solid #cfd3d7',
+    borderRadius: '8px',
+    boxShadow: '0 8px 24px rgba(0,0,0,.18)',
+    zIndex: '2147483647',
+    padding: '12px',
+    visibility: 'hidden'
+  });
+
+  // Content
+  pop.innerHTML = `
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <strong style="font-size:14px">Notes</strong>
+      <button id="anp-close" aria-label="Close" style="background:none;border:0;font-size:18px;cursor:pointer;line-height:1">&times;</button>
     </div>
-    <div style="padding: 16px;">
-      <textarea style="width: 100%; height: 200px; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font: 13px Arial; resize: vertical;" placeholder="Enter call notes here...">Customer called regarding billing inquiry. Resolved issue with account balance discrepancy. Updated customer information and provided confirmation number.</textarea>
-      <div style="margin-top: 12px; display: flex; gap: 8px; justify-content: flex-end;">
-        <button style="padding: 8px 16px; background: #f5f5f5; border: 1px solid #ddd; border-radius: 4px; cursor: pointer;">Cancel</button>
-        <button style="padding: 8px 16px; background: #4caf50; color: white; border: none; border-radius: 4px; cursor: pointer;">Save Notes</button>
-      </div>
-    </div>
-  </div>`;
+    <div style="display:grid;grid-template-columns:100px 1fr;gap:10px 12px;align-items:center">
+      <label for="anp-disposition" style="justify-self:end;font-weight:600">Disposition</label>
+      <select id="anp-disposition" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+        <option value="">Select a Disposition</option>
+        <option>Inbound Sales</option>
+        <option>Outbound Sales</option>
+      </select>
 
-  document.body.appendChild(notesModal);
-  notesModal.querySelector("#cvas-notes-close").addEventListener("click", () => { notesModal.remove(); });
-  notesModal.addEventListener("click", (e) => { if (e.target === notesModal) notesModal.remove(); });
+      <label for="anp-reason" style="justify-self:end;font-weight:600">Reason</label>
+      <select id="anp-reason" style="padding:6px;border:1px solid #cfd3d7;border-radius:4px;">
+        <option value="">Select a Disposition First</option>
+      </select>
+
+      <label for="anp-text" style="justify-self:end;font-weight:600">Notes</label>
+      <textarea id="anp-text" rows="4" style="width:100%;padding:2px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button id="anp-cancel" class="cv-btn">Cancel</button>
+      <button id="anp-save" style="min-width:90px;padding:6px 12px;border:0;border-radius:4px;background:#006dcc;color:#fff;font-weight:700;cursor:pointer">Save</button>
+    </div>
+  `;
+
+  document.body.appendChild(pop);
+
+  // Init fields
+  const dispSel   = pop.querySelector('#anp-disposition');
+  const reasonSel = pop.querySelector('#anp-reason');
+  const notesTxt  = pop.querySelector('#anp-text');
+
+  function populateReasons(disp) {
+    reasonSel.innerHTML = '';
+    const opts = AGENT_NOTES_REASONS[disp] || [];
+    if (!opts.length) {
+      reasonSel.innerHTML = '<option value="">Select a Disposition First</option>';
+      return;
+    }
+    opts.forEach((label, i) => {
+      const o = document.createElement('option');
+      o.value = label; o.textContent = label;
+      if (i === 0) o.selected = true;
+      reasonSel.appendChild(o);
+    });
+  }
+  dispSel.value = 'Inbound Sales';
+  populateReasons('Inbound Sales');
+  notesTxt.value = '';
+
+  dispSel.onchange = () => populateReasons(dispSel.value);
+
+  // --- Position next to the icon (account for iframe position) ---
+  const iframe = document.getElementById('cv-agent-details-iframe');
+  const btnRect = anchorBtn.getBoundingClientRect();
+  const iframeRect = iframe ? iframe.getBoundingClientRect() : {left:0,top:0,right:window.innerWidth,bottom:window.innerHeight};
+  const anchorRect = {
+    left: iframeRect.left + btnRect.left,
+    right: iframeRect.left + btnRect.right,
+    top: iframeRect.top + btnRect.top,
+    bottom: iframeRect.top + btnRect.bottom
+  };
+
+  const boundsEl = document.getElementById('modal-body-reports') || document.body;
+  const box = boundsEl.getBoundingClientRect();
+  const gap = 8;
+
+  const rect = pop.getBoundingClientRect();
+  const pw = rect.width, ph = rect.height;
+
+  let left = (anchorRect.right + gap + pw <= box.right)
+    ? anchorRect.right + gap
+    : anchorRect.right - pw;
+
+  let top = (anchorRect.bottom + gap + ph <= box.bottom)
+    ? anchorRect.bottom + gap
+    : anchorRect.top - ph - gap;
+
+  left = Math.min(Math.max(left, box.left + gap), box.right - pw - gap);
+  top  = Math.min(Math.max(top,  box.top  + gap), box.bottom - ph - gap);
+
+  pop.style.left = `${left}px`;
+  pop.style.top  = `${top}px`;
+  pop.style.visibility = 'visible';
+
+  // Close helpers
+  const close = () => {
+    document.removeEventListener('click', onDocClick, true);
+    document.removeEventListener('keydown', onKeyDown, true);
+    pop.remove();
+  };
+  const onDocClick = (e) => {
+    if (pop.contains(e.target) || anchorBtn.contains(e.target)) return;
+    close();
+  };
+  const onKeyDown = (e) => { if (e.key === 'Escape') close(); };
+
+  document.addEventListener('click', onDocClick, true);
+  document.addEventListener('keydown', onKeyDown, true);
+
+  // Buttons
+  pop.querySelector('#anp-close').addEventListener('click', close);
+  pop.querySelector('#anp-cancel').addEventListener('click', close);
+  pop.querySelector('#anp-save').addEventListener('click', () => {
+    const payload = {
+      agent: agentExt,
+      disposition: dispSel.value || '',
+      reason:      reasonSel.value || '',
+      notes:       notesTxt.value || ''
+    };
+    console.log('[AgentNotesPopover] Saved', payload);
+    close();
+  });
 }
+
 
 // Inline "Listen" expander (no overlay modal)
 function openAgentListenModal(agentExt, row, btn) {
@@ -6295,6 +6428,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
