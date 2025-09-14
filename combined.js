@@ -6538,30 +6538,36 @@ function openAgentListenModal(agentExt, row, btn) {
       .cvaa24-row:nth-child(odd){background:#f5f7fa} /* row zebra */
       .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
 
-      /* clean 2-hour zebra across the track */
-      .cvaa24-track{
-        position:relative;
-        height:28px;
-        background-image: linear-gradient(to right, #f7f9fc 0 50%, #eef2f6 50% 100%);
-        background-size: calc(100%/12) 100%; /* 12 tiles = 12*2h = 24h */
-        background-repeat: repeat-x;
-      }
-      /* subtle hour ticks (no rounding seams) */
-      .cvaa24-track::after{
-        content:"";
-        position:absolute; inset:0;
-        background-image: linear-gradient(to right, rgba(0,0,0,.10) 0 1px, transparent 1px 100%);
-        background-size: calc(100%/24) 100%;   /* 24 hour lines */
-        background-repeat: repeat-x;
-        pointer-events:none;
-      }
-
-      /* bars above zebra/ticks */
-      .cvaa24-seg{position:absolute; top:6px; height:16px; border-radius:3px; display:flex; align-items:center; overflow:hidden; z-index:1;}
-      .cvaa24-seg--avail{background:#1bb15c}
-      .cvaa24-seg--lunch{background:#e04848}
-      .cvaa24-seg--break{background:#f0a52b}
-      .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
+      /* track has no background; we draw zebra with real elements */
+    .cvaa24-track{
+      position:relative;
+      height:28px;
+      background:none;            /* important: no gradients here */
+    }
+    
+    /* zebra container under bars */
+    .cvaa24-zebra{
+      position:absolute;
+      inset:0;
+      z-index:0;                  /* under bars */
+      pointer-events:none;
+    }
+    .cvaa24-zebra .band{
+      position:absolute;
+      top:0; bottom:0;
+    }
+    .cvaa24-zebra .tick{
+      position:absolute;
+      top:0; bottom:0;
+      width:1px;
+      background:rgba(0,0,0,.10);
+    }
+    
+    /* keep bars above zebra */
+    .cvaa24-seg{
+      position:absolute; top:6px; height:16px; border-radius:3px;
+      display:flex; align-items:center; overflow:hidden; z-index:1;
+    }
 
       .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
       .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
@@ -6573,6 +6579,35 @@ function openAgentListenModal(agentExt, row, btn) {
 
   // ---- builder ----
   function buildAvailability(){
+    const NAME_BY_EXT = {
+    '200':'Mike Johnson',
+    '201':'Cathy Thomas',
+    '202':'Jake Lee',
+    '203':'Bob Andersen',
+    '204':'Brittany Lawrence',
+    '205':'Alex Roberts',
+    '206':'Mark Sanchez',
+    '207':'John Smith'
+  };
+
+  const grabText = el => (el.textContent || '').trim();
+  let domAgents = Array.from(
+    document.querySelectorAll('#modal-body-reports table tbody tr td:first-child, #modal-body-reports .agent-name, #modal-body-reports .gv-label')
+  ).map(grabText).filter(Boolean);
+
+  // Normalize to “Name (ext)” when we only have a 3-digit ext
+  if (domAgents.length) {
+    domAgents = domAgents.map(a => {
+      const m = a.match(/\b(\d{3})\b/);
+      if (m) {
+        const ext = m[1];
+        const name = NAME_BY_EXT[ext] || `Agent ${ext}`;
+        return `${name} (${ext})`;
+      }
+      return a;
+    });
+  }
+    
     host.innerHTML = '';
     host.style.display = 'block';
     host.style.position = 'relative';
@@ -6620,12 +6655,39 @@ function openAgentListenModal(agentExt, row, btn) {
       el.dataset.kind=kind; el.dataset.start=a; el.dataset.end=b;
       track.appendChild(el);
     }
+      
+    function addZebra(track){
+      const zebra = document.createElement('div');
+      zebra.className = 'cvaa24-zebra';
+    
+      // 12 bands = 2 hours each
+      for (let i = 0; i < 12; i++){
+        const band = document.createElement('div');
+        band.className = 'band';
+        band.style.left  = (i * (100/12)) + '%';
+        band.style.width = (100/12) + '%';
+        band.style.background = (i % 2 === 0) ? '#f7f9fc' : '#eef2f6';
+        zebra.appendChild(band);
+      }
+    
+      // 24 hour ticks
+      for (let i = 0; i <= 24; i++){
+        const tick = document.createElement('div');
+        tick.className = 'tick';
+        tick.style.left = (i * (100/24)) + '%';
+        zebra.appendChild(tick);
+      }
+    
+      track.appendChild(zebra);
+    }
 
+      
     agents.forEach(name=>{
       const row = document.createElement('div');
       row.className = 'cvaa24-row';
       row.innerHTML = `<div class="cvaa24-name" title="${name}">${name}</div><div class="cvaa24-track"></div>`;
       const track = row.lastElementChild;
+      addZebra(track);   // <-- add this line  
 
       const rnd = seeded(name);
       const B=15, L=60;
@@ -6684,6 +6746,7 @@ function openAgentListenModal(agentExt, row, btn) {
     mo.observe(host, { childList:true, subtree:true });
   }
 })();
+
 
 
 
