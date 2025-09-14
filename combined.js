@@ -6509,7 +6509,12 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 
-// === AGENT MODAL COMPLETION - END ===// === Agent Availability (replace vendor chart without flicker) ===
+// === AGENT MODAL COMPLETION - END ===
+
+
+
+// === Agent Availability (replace vendor chart without flicker) ===
+// === Agent Availability (replace vendor chart without flicker) ===
 (() => {
   if (!/\/portal\/stats\/queuestats\/agent_availability(?:[/?#]|$)/.test(location.href)) return;
   if (window.__cvaa24_installed__) return;
@@ -6518,68 +6523,66 @@ function openAgentListenModal(agentExt, row, btn) {
   const host = document.querySelector('#modal-graph-div');
   if (!host) return;
 
-  // one-time stylesif (!document.getElementById('cvaa24-styles')) {
-  const css = document.createElement('style');
-  css.id = 'cvaa24-styles';
-  css.textContent = `
-    .cvaa24-wrap{width:100%;max-width:100%;font:13px/1.4 Arial,sans-serif}
-    .cvaa24-legend{display:flex;gap:14px;align-items:center;margin:8px 0 10px}
-    .cvaa24-key{display:inline-flex;align-items:center;gap:6px}
-    .cvaa24-dot{width:12px;height:12px;border-radius:2px;display:inline-block}
-    .cvaa24{border:1px solid #e5e8eb;border-radius:6px;overflow:hidden}
-    .cvaa24-row{display:grid;grid-template-columns:180px 1fr;align-items:center}
-    .cvaa24-row:nth-child(odd){background:#f5f7fa} /* row zebra */
-    .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
+  // one-time styles (row zebra + our vertical 2-hr zebra + hour ticks)
+  if (!document.getElementById('cvaa24-styles')) {
+    const css = document.createElement('style');
+    css.id = 'cvaa24-styles';
+    css.textContent = `
+      .cvaa24-wrap{width:100%;max-width:100%;font:13px/1.4 Arial,sans-serif}
+      .cvaa24-legend{display:flex;gap:14px;align-items:center;margin:8px 0 10px}
+      .cvaa24-key{display:inline-flex;align-items:center;gap:6px}
+      .cvaa24-dot{width:12px;height:12px;border-radius:2px;display:inline-block}
+      .cvaa24{border:1px solid #e5e8eb;border-radius:6px;overflow:hidden}
+      .cvaa24-row{display:grid;grid-template-columns:180px 1fr;align-items:center}
+      .cvaa24-row:nth-child(odd){background:#f5f7fa} /* row zebra = off-hours look */
+      .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
 
-    /* our own vertical 2-hour zebra + hour ticks */
-    .cvaa24-track{
-      position:relative;
-      height:28px;
-      background:
-        repeating-linear-gradient(
-          to right,
-          #f7f9fc 0,
-          #f7f9fc calc(100%/12),   /* first hour of a 2-hr band */
-          #eef2f6 calc(100%/12),
-          #eef2f6 calc(100%/6)     /* second hour of the 2-hr band */
-        );
-    }
-    .cvaa24-track::after{
-      content:"";
-      position:absolute; inset:0;
-      background:
-        repeating-linear-gradient(
-          to right,
-          rgba(0,0,0,.10) 0,
-          rgba(0,0,0,.10) 1px,       /* hour tick */
-          transparent 1px,
-          transparent calc(100%/24)
-        );
-      pointer-events:none;
-    }
+      /* vertical 2-hour zebra across the track + hour ticks */
+      .cvaa24-track{
+        position:relative;
+        height:28px;
+        background:
+          repeating-linear-gradient(
+            to right,
+            #f7f9fc 0,
+            #f7f9fc calc(100%/12),
+            #eef2f6 calc(100%/12),
+            #eef2f6 calc(100%/6)
+          );
+      }
+      .cvaa24-track::after{
+        content:"";
+        position:absolute; inset:0;
+        background:
+          repeating-linear-gradient(
+            to right,
+            rgba(0,0,0,.10) 0,
+            rgba(0,0,0,.10) 1px,
+            transparent 1px,
+            transparent calc(100%/24)
+          );
+        pointer-events:none;
+      }
 
-    /* bars sit above zebra/ticks */
-    .cvaa24-seg{
-      position:absolute; top:6px; height:16px; border-radius:3px;
-      display:flex; align-items:center; overflow:hidden; z-index:1;
-    }
-    .cvaa24-seg--avail{background:#1bb15c}
-    .cvaa24-seg--lunch{background:#e04848}
-    .cvaa24-seg--break{background:#f0a52b}
+      /* bars sit above the zebra/ticks */
+      .cvaa24-seg{
+        position:absolute; top:6px; height:16px; border-radius:3px;
+        display:flex; align-items:center; overflow:hidden; z-index:1;
+      }
+      .cvaa24-seg--avail{background:#1bb15c}
+      .cvaa24-seg--lunch{background:#e04848}
+      .cvaa24-seg--break{background:#f0a52b}
 
-    .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
-    .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
-    .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
-      padding:8px 10px;font:12px/1.35 Arial,sans-serif;pointer-events:none;display:none;white-space:nowrap}
-    .cvaa24-tip b{font-weight:700}
-  `;
-  document.head.appendChild(css);
-}
+      .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
+      .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
+      .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
+        padding:8px 10px;font:12px/1.35 Arial,sans-serif;pointer-events:none;display:none;white-space:nowrap}
+      .cvaa24-tip b{font-weight:700}
+    `;
+    document.head.appendChild(css);
+  }
 
-
-
- 
-  // build ours (replace vendor)
+  // build ours (fully replace vendor)
   function buildAvailability() {
     host.innerHTML = '';
     host.style.display = 'block';
@@ -6599,42 +6602,48 @@ function openAgentListenModal(agentExt, row, btn) {
     `;
     host.appendChild(wrap);
 
-    const DAY_START = 8*60, DAY_END = 17*60; // 8a–5p
-    const agents = [
-      'Cathy Thomas (201)','Mike Johnson (200)','Mark Sanchez (206)',
-      'Brittany Lawrence (204)','John Smith (207)','Alex Roberts (205)'
-    ];
-
+    // labels every 2 hours (12 items) starting at 12 AM
     const hrs = wrap.querySelector('#cvaa24-hours');
     const hourLabel = h => { let hh=h%12||12; return `${hh} ${h<12?'AM':'PM'}`; };
     hrs.innerHTML = Array.from({length:12},(_,i)=>`<div style="text-align:center">${hourLabel(i*2)}</div>`).join('');
 
+    // helpers
     const timeline = wrap.querySelector('#cvaa24-timeline');
     const tip = wrap.querySelector('#cvaa24-tip');
-    const PCT = m => (m/1440)*100;
+    const PCT = m => (m/1440)*100; // minutes to % width
     const tStr = m => { m=(m+1440)%1440; let h=~~(m/60), mm=m%60, ap='AM'; if(h>=12){ap='PM'; if(h>12)h-=12;} if(!h)h=12; return `${h}:${String(mm).padStart(2,'0')} ${ap}`; };
     const dStr = m => `${~~(m/60)}:${String(m%60).padStart(2,'0')}:00`;
 
-    // deterministic jitter per agent
     function seeded(name){ let s=0; for (const ch of name) s=(s*31+ch.charCodeAt(0))>>>0;
       return ()=> (s=(1103515245*s+12345)>>>0, (s&0x7fffffff)/0x80000000);
     }
     function seg(track, kind, a, b, label){
       const el = document.createElement('div');
       el.className = `cvaa24-seg cvaa24-seg--${kind}`;
-      el.style.left = `${PCT(a)}%`; el.style.width = `${Math.max(0,PCT(b)-PCT(a))}%`;
+      el.style.left = `${PCT(a)}%`;
+      el.style.width = `${Math.max(0, PCT(b)-PCT(a))}%`;
       el.dataset.kind=kind; el.dataset.start=a; el.dataset.end=b;
       if (label){ const sp=document.createElement('span'); sp.className='cvaa24-label'; sp.textContent=label; el.appendChild(sp); }
       track.appendChild(el);
     }
 
+    // agents (read from page if present; otherwise fallback to your typical set)
+    const domAgents = [...document.querySelectorAll('#modal-body-reports table tbody tr td:first-child')]
+      .map(el => el.textContent.trim())
+      .filter(Boolean);
+    const agents = domAgents.length ? domAgents : [
+      'Cathy Thomas (201)','Mike Johnson (200)','Mark Sanchez (206)',
+      'Brittany Lawrence (204)','John Smith (207)','Alex Roberts (205)'
+    ];
+
+    // build rows (8–5, 1h lunch, two 15m breaks; off-hours = just row zebra)
+    const DAY_START = 8*60, DAY_END = 17*60;
     agents.forEach(name=>{
       const row = document.createElement('div');
       row.className = 'cvaa24-row';
       row.innerHTML = `<div class="cvaa24-name" title="${name}">${name}</div><div class="cvaa24-track"></div>`;
       const track = row.lastElementChild;
 
-      // Breaks + Lunch (no OFFLINE segments — zebra shows off-hours)
       const rnd = seeded(name);
       const B=15, L=60;
       const b1 = 9*60  + 10 + Math.round(rnd()*20);
@@ -6672,38 +6681,26 @@ function openAgentListenModal(agentExt, row, btn) {
     timeline.addEventListener('mouseleave', ()=> tip.style.display='none');
   }
 
- // ---- anti-flicker: wait for vendor chart, then replace & keep replaced
-host.style.visibility = 'hidden';
+  // anti-flicker: wait for vendor to paint, then replace and keep replaced
+  host.style.visibility = 'hidden';
 
-const buildNow = () => {
-  // always rebuild: nuke whatever is there and paint ours
-  buildAvailability();
-  host.style.visibility = '';
-};
+  const buildNow = () => { buildAvailability(); host.style.visibility = ''; };
 
-// build once when vendor first paints
-const once = new MutationObserver((_m, obs) => {
-  if (host.querySelector('svg,canvas,g')) {
-    obs.disconnect();
-    buildNow();
-    stick();
-  }
-});
-once.observe(host, { childList: true, subtree: true });
-
-// fallback if vendor never paints
-setTimeout(() => { if (!host.querySelector('.cvaa24-wrap')) { buildNow(); stick(); } }, 1200);
-
-// keep replaced: if vendor tries to repaint, rebuild ours immediately
-function stick () {
-  const mo = new MutationObserver(() => {
-    const vendorRepainted = host.querySelector('svg,canvas,g');
-    const oursMissing    = !host.querySelector('.cvaa24-wrap');
-    if (vendorRepainted || oursMissing) buildNow();
+  const once = new MutationObserver((_m, obs)=>{
+    if (host.querySelector('svg,canvas,g')) { obs.disconnect(); buildNow(); keepSticky(); }
   });
-  mo.observe(host, { childList: true, subtree: true });
-}
+  once.observe(host, {childList:true, subtree:true});
 
+  setTimeout(()=>{ if (!host.querySelector('.cvaa24-wrap')) { buildNow(); keepSticky(); } }, 1200);
+
+  function keepSticky(){
+    const mo = new MutationObserver(()=>{
+      const vendorRepainted = host.querySelector('svg,canvas,g');
+      const oursMissing     = !host.querySelector('.cvaa24-wrap');
+      if (vendorRepainted || oursMissing) buildNow();
+    });
+    mo.observe(host, {childList:true, subtree:true});
+  }
 })();
 
 
