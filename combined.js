@@ -5614,31 +5614,87 @@ Object.assign(g.CVAS_CALLS_INBOUND_BY_AGENT, {
 });
 
 
-// Populate outbound calls data
 Object.assign(g.CVAS_CALLS_OUTBOUND_BY_AGENT, {
   "200": [
-    `<tr><td>Today, 9:26 pm</td><td>—</td><td>(810) 555-0112</td><td>(810) 555-0112</td><td>0:00</td><td>200</td><td>200</td><td>Mike Johnson</td><td>17:20</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:26 pm',
+      callerNum: '(810) 555-0112',
+      dnis: '(810) 555-0112',
+      ext: '200',
+      agentName: 'Mike Johnson',
+      talk: '17:20',
+      release: 'Orig: Bye'
+    })
   ],
   "201": [
-    `<tr><td>Today, 9:10 pm</td><td>—</td><td>(517) 555-0170</td><td>(517) 555-0170</td><td>0:00</td><td>201</td><td>201</td><td>Cathy Thomas</td><td>11:33</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:10 pm',
+      callerNum: '(517) 555-0170',
+      dnis: '(517) 555-0170',
+      ext: '201',
+      agentName: 'Cathy Thomas',
+      talk: '11:33',
+      release: 'Orig: Bye'
+    })
   ],
   "202": [
-    `<tr><td>Today, 9:30 pm</td><td>—</td><td>(248) 555-0191</td><td>(248) 555-0191</td><td>0:00</td><td>202</td><td>202</td><td>Jake Lee</td><td>27:22</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:30 pm',
+      callerNum: '(248) 555-0191',
+      dnis: '(248) 555-0191',
+      ext: '202',
+      agentName: 'Jake Lee',
+      talk: '27:22',
+      release: 'Orig: Bye'
+    })
   ],
   "203": [
-    `<tr><td>Today, 9:19 pm</td><td>—</td><td>(313) 555-0179</td><td>(313) 555-0179</td><td>0:00</td><td>203</td><td>203</td><td>Bob Andersen</td><td>05:12</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:19 pm',
+      callerNum: '(313) 555-0179',
+      dnis: '(313) 555-0179',
+      ext: '203',
+      agentName: 'Bob Andersen',
+      talk: '05:12',
+      release: 'Term: Bye'
+    })
   ],
   "204": [],
   "205": [
-    `<tr><td>Today, 9:53 pm</td><td>—</td><td>(248) 555-0110</td><td>(248) 555-0110</td><td>0:00</td><td>205</td><td>205</td><td>Alex Roberts</td><td>02:36</td><td>Orig: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:53 pm',
+      callerNum: '(248) 555-0110',
+      dnis: '(248) 555-0110',
+      ext: '205',
+      agentName: 'Alex Roberts',
+      talk: '02:36',
+      release: 'Orig: Bye'
+    })
   ],
   "206": [
-    `<tr><td>Today, 9:15 pm</td><td>—</td><td>(989) 555-0140</td><td>(989) 555-0140</td><td>0:00</td><td>206</td><td>206</td><td>Mark Sanchez</td><td>06:05</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:15 pm',
+      callerNum: '(989) 555-0140',
+      dnis: '(989) 555-0140',
+      ext: '206',
+      agentName: 'Mark Sanchez',
+      talk: '06:05',
+      release: 'Term: Bye'
+    })
   ],
   "207": [
-    `<tr><td>Today, 9:59 pm</td><td>—</td><td>(517) 555-0162</td><td>(517) 555-0162</td><td>0:00</td><td>207</td><td>207</td><td>John Smith</td><td>01:53</td><td>Term: Bye</td><td>Connect</td><td class="cvas-action-cell">${actionIcons}</td></tr>`
+    outboundRow({
+      time: 'Today, 9:59 pm',
+      callerNum: '(517) 555-0162',
+      dnis: '(517) 555-0162',
+      ext: '207',
+      agentName: 'John Smith',
+      talk: '01:53',
+      release: 'Term: Bye'
+    })
   ]
 });
+
 
 
 
@@ -5682,6 +5738,24 @@ Object.assign(g.CVAS_CALLS_OUTBOUND_BY_AGENT, {
       if (s != null) td.setAttribute('data-order', String(s));
     }
   }  
+
+ function outboundRow({ time, callerNum, dnis, ext, agentName, talk, release }) {
+  return `<tr data-dir="outbound">
+    <td>${time}</td>
+    <td>—</td>                              <!-- Caller Name (N/A) -->
+    <td>${callerNum}</td>                   <!-- Caller Number -->
+    <td>${dnis}</td>                        <!-- DNIS -->
+    <td>0:00</td>                           <!-- Time in Queue (N/A) -->
+    <td>${ext}</td>                         <!-- Ext -->
+    <td>${ext}</td>                         <!-- Agent Phone (mirror ext) -->
+    <td>${agentName}</td>                   <!-- Agent Name -->
+    <td>${talk}</td>                        <!-- Agent Time (talk) -->
+    <td>${release}</td>                     <!-- Agent Release Reason -->
+    <td>Outbound</td>                       <!-- Queue Release Reason -->
+    <td class="cvas-action-cell">${actionIcons}</td> <!-- Actions -->
+  </tr>`;
+}
+   
 
 // === Agent Details - Replacement Pattern (like queue stats) ===
 function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
@@ -6436,6 +6510,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
