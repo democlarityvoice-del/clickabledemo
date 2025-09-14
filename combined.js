@@ -6321,10 +6321,17 @@ function openAgentCradleModal(agentExt, row){
     if (ev.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
   });
 
-  // anchor overlay inside the agent modal and scroll to top
-  host.appendChild(overlay);
-  overlay.querySelector('#cvas-ctg-modal')?.scrollTo(0,0);
-}
+// --- scope overlay to the Agent Stats host so it sits over the iframe ---
+const host = document.querySelector('#modal-body-reports') || document.body;
+if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
+// anchor overlay inside the host (not the viewport)
+overlay.style.position = 'absolute';
+overlay.style.inset = '0';
+overlay.style.zIndex = '9999';
+
+host.appendChild(overlay);   // was: document.body.appendChild(overlay)
+
 // ==== /Agent CTG ====
 
 
@@ -6387,7 +6394,7 @@ function openAgentNotesModal(agentExt, rowOrBtn) {
       </select>
 
       <label for="anp-text" style="justify-self:end;font-weight:600">Notes</label>
-      <textarea id="anp-text" rows="4" style="width:100%;padding:2px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
+      <textarea id="anp-text" rows="4" style="width:100%;padding:6px;border:.5px solid #cfd3d7;border-radius:4px;resize:vertical"></textarea>
     </div>
 
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
@@ -6544,6 +6551,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
