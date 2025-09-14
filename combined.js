@@ -5496,6 +5496,9 @@ if (kind === 'cradle') {
 // AGENTS STATS
 
 // == CV Agent Stats Injection (using real provided data) ==// == CV Agent Stats Injection (linkify non-zero values) ==
+const isAgentStatsPage = () =>
+  /\/portal\/stats\/queuestats\/agent(?:[/?#]|$)/.test(location.href);
+
 (() => {
   if (window.__cvas_agentstats_installed__) return;
   if (!location.href.includes('/portal/stats/queuestats/agent')) return;
@@ -6062,8 +6065,6 @@ if (!host) return;            // bail if we’re not actually on the agent stats
 host.prepend(modal);
 
 
-
-
   // === Modal Styles ===
   const style = document.createElement('style');
   style.textContent = `
@@ -6226,20 +6227,21 @@ function _readAgentRowFacts(tr){
   return facts;
 }
 
-// Icons (same set you used for queue CTG)
-const ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
-const ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
-const ICON_DIAL      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
-const ICON_ELLIPS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
-const ICON_AGENTRING = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg';
+// Icons (namespaced to avoid collisions with queue code)
+const CVAS_ICON_PHONE     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+const CVAS_ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+const CVAS_ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+const CVAS_ICON_DIAL      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+const CVAS_ICON_ELLIPS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+const CVAS_ICON_AGENTRING = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg';
 
 const CTG_ICONS = {
-  phone:     `<img src="${ICON_PHONE}"     alt="">`,
-  answer:    `<img src="${ICON_ANSWER}"    alt="">`,
-  hang:      `<img src="${ICON_HANG}"      alt="">`,
-  dial:      `<img src="${ICON_DIAL}"      alt="">`,
-  ellipsis:  `<img src="${ICON_ELLIPS}"    alt="">`,
-  agentring: `<img src="${ICON_AGENTRING}" alt="">`,
+  phone:     `<img src="${CVAS_ICON_PHONE}"     alt="">`,
+  answer:    `<img src="${CVAS_ICON_ANSWER}"    alt="">`,
+  hang:      `<img src="${CVAS_ICON_HANG}"      alt="">`,
+  dial:      `<img src="${CVAS_ICON_DIAL}"      alt="">`,
+  ellipsis:  `<img src="${CVAS_ICON_ELLIPS}"    alt="">`,
+  agentring: `<img src="${CVAS_ICON_AGENTRING}" alt="">`,
 };
 
 /* Build the event list to resemble your example */
@@ -6340,6 +6342,8 @@ overlay.style.inset = '0';
 overlay.style.zIndex = '9999';
 
 ctasHost.appendChild(overlay);
+// ⬇️ ADD THIS LINE to close the function
+}    
 
 // ==== /Agent CTG ====
 
@@ -6560,34 +6564,4 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
