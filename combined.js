@@ -6509,17 +6509,16 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 
-// === AGENT MODAL COMPLETION - END ===
-// === Agent Availability (replace vendor chart without flicker) ===
+// === AGENT MODAL COMPLETION - END ===// === Agent Availability (replace vendor chart without flicker) ===
 (() => {
   if (!/\/portal\/stats\/queuestats\/agent_availability(?:[/?#]|$)/.test(location.href)) return;
-  if (window.__cvaa24_sticky__) return;            // guard
-  window.__cvaa24_sticky__ = true;
+  if (window.__cvaa24_installed__) return;
+  window.__cvaa24_installed__ = true;
 
   const host = document.querySelector('#modal-graph-div');
   if (!host) return;
 
-  // One-time styles
+  // one-time styles
   if (!document.getElementById('cvaa24-styles')) {
     const css = document.createElement('style');
     css.id = 'cvaa24-styles';
@@ -6530,7 +6529,7 @@ function openAgentListenModal(agentExt, row, btn) {
       .cvaa24-dot{width:12px;height:12px;border-radius:2px;display:inline-block}
       .cvaa24{border:1px solid #e5e8eb;border-radius:6px;overflow:hidden}
       .cvaa24-row{display:grid;grid-template-columns:180px 1fr;align-items:center}
-      .cvaa24-row:nth-child(odd){background:#f6f7f9}
+      .cvaa24-row:nth-child(odd){background:#f6f7f9}   /* zebra handles OFF hours */
       .cvaa24-name{padding:6px 10px;color:#222;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;border-right:1px solid #e5e8eb}
       .cvaa24-track{position:relative;height:28px}
       .cvaa24-track::before{content:"";position:absolute;inset:0;background:
@@ -6542,9 +6541,7 @@ function openAgentListenModal(agentExt, row, btn) {
       .cvaa24-seg--avail{background:#1bb15c}
       .cvaa24-seg--lunch{background:#e04848}
       .cvaa24-seg--break{background:#f0a52b}
-      .cvaa24-seg--offline{background:#e9edf2}
-      .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none}
-      .cvaa24-seg--lunch .cvaa24-label{color:#fff}
+      .cvaa24-label{font-size:11px;font-weight:700;padding:0 6px;white-space:nowrap;user-select:none;color:#fff}
       .cvaa24-hours{display:grid;grid-template-columns:repeat(12,1fr);color:#666;font-size:11px;padding:6px 6px 8px 186px;user-select:none}
       .cvaa24-tip{position:fixed;z-index:2147483647;background:#fff;border:1px solid #cfd3d7;border-radius:6px;box-shadow:0 8px 24px rgba(0,0,0,.18);
         padding:8px 10px;font:12px/1.35 Arial,sans-serif;pointer-events:none;display:none;white-space:nowrap}
@@ -6553,9 +6550,8 @@ function openAgentListenModal(agentExt, row, btn) {
     document.head.appendChild(css);
   }
 
-  // Build our chart
+  // build ours (replace vendor)
   function buildAvailability() {
-    // replace vendor chart
     host.innerHTML = '';
     host.style.display = 'block';
     host.style.position = 'relative';
@@ -6567,7 +6563,6 @@ function openAgentListenModal(agentExt, row, btn) {
         <span class="cvaa24-key"><i class="cvaa24-dot" style="background:#1bb15c"></i> Available</span>
         <span class="cvaa24-key"><i class="cvaa24-dot" style="background:#e04848"></i> Lunch (1h)</span>
         <span class="cvaa24-key"><i class="cvaa24-dot" style="background:#f0a52b"></i> Break (15m)</span>
-        <span class="cvaa24-key"><i class="cvaa24-dot" style="background:#e9edf2"></i> Offline</span>
       </div>
       <div class="cvaa24" id="cvaa24-timeline"></div>
       <div class="cvaa24-hours" id="cvaa24-hours"></div>
@@ -6591,13 +6586,14 @@ function openAgentListenModal(agentExt, row, btn) {
     const tStr = m => { m=(m+1440)%1440; let h=~~(m/60), mm=m%60, ap='AM'; if(h>=12){ap='PM'; if(h>12)h-=12;} if(!h)h=12; return `${h}:${String(mm).padStart(2,'0')} ${ap}`; };
     const dStr = m => `${~~(m/60)}:${String(m%60).padStart(2,'0')}:00`;
 
+    // deterministic jitter per agent
     function seeded(name){ let s=0; for (const ch of name) s=(s*31+ch.charCodeAt(0))>>>0;
       return ()=> (s=(1103515245*s+12345)>>>0, (s&0x7fffffff)/0x80000000);
     }
     function seg(track, kind, a, b, label){
       const el = document.createElement('div');
       el.className = `cvaa24-seg cvaa24-seg--${kind}`;
-      el.style.left = `${PCT(a)}%`; el.style.width = `${PCT(b)-PCT(a)}%`;
+      el.style.left = `${PCT(a)}%`; el.style.width = `${Math.max(0,PCT(b)-PCT(a))}%`;
       el.dataset.kind=kind; el.dataset.start=a; el.dataset.end=b;
       if (label){ const sp=document.createElement('span'); sp.className='cvaa24-label'; sp.textContent=label; el.appendChild(sp); }
       track.appendChild(el);
@@ -6609,16 +6605,12 @@ function openAgentListenModal(agentExt, row, btn) {
       row.innerHTML = `<div class="cvaa24-name" title="${name}">${name}</div><div class="cvaa24-track"></div>`;
       const track = row.lastElementChild;
 
-      // Offline before/after shift
-      seg(track,'offline',0,DAY_START,'');
-      seg(track,'offline',DAY_END,24*60,'');
-
-      // Breaks + Lunch
+      // Breaks + Lunch (no OFFLINE segments — zebra shows off-hours)
       const rnd = seeded(name);
       const B=15, L=60;
-      const b1 = 9*60  + 15 + Math.round(rnd()*30);
-      const Ls = 12*60 - 30 + Math.round(rnd()*60);
-      const b2 = 14*60 + 15 + Math.round(rnd()*30);
+      const b1 = 9*60  + 10 + Math.round(rnd()*20);
+      const Ls = 12*60 - 20 + Math.round(rnd()*40);
+      const b2 = 14*60 + 10 + Math.round(rnd()*20);
 
       let cur = DAY_START;
       const blocks = [
@@ -6637,11 +6629,11 @@ function openAgentListenModal(agentExt, row, btn) {
       timeline.appendChild(row);
     });
 
-    // Tooltips
+    // tooltips
     timeline.addEventListener('mousemove', (e)=>{
       const el = e.target.closest('.cvaa24-seg'); if (!el){ tip.style.display='none'; return; }
       const start=+el.dataset.start, end=+el.dataset.end;
-      const label = ({avail:'Available',lunch:'Lunch',break:'Break',offline:'Offline'})[el.dataset.kind] || '';
+      const label = ({avail:'Available',lunch:'Lunch',break:'Break'})[el.dataset.kind] || '';
       tip.innerHTML = `<b>${label}</b><br>${tStr(start)} – ${tStr(end)}<br>Duration : ${dStr(end-start)}`;
       tip.style.display='block';
       const pad=10, x=Math.min(window.innerWidth-tip.offsetWidth-pad, e.clientX+12);
@@ -6651,7 +6643,7 @@ function openAgentListenModal(agentExt, row, btn) {
     timeline.addEventListener('mouseleave', ()=> tip.style.display='none');
   }
 
-  // ---- Anti-flicker harness: wait for vendor chart, then replace & keep sticky
+  // anti-flicker: wait for vendor chart, swap once, and stay swapped
   host.style.visibility = 'hidden';
   let built = false;
 
@@ -6659,26 +6651,24 @@ function openAgentListenModal(agentExt, row, btn) {
     if (built) return;
     built = true;
     buildAvailability();
-    host.style.visibility = ''; // show ours
+    host.style.visibility = '';
   };
 
-  // Wait until the vendor drops an <svg>/<g>/<canvas> in the host, then replace
   const once = new MutationObserver((_m, obs)=>{
-    if (host.querySelector('svg,canvas,g')) { obs.disconnect(); buildNow(); stick(); }
+    if (host.querySelector('svg,canvas,g')) { obs.disconnect(); buildNow(); keepSticky(); }
   });
   once.observe(host, {childList:true, subtree:true});
 
-  // Fallback if nothing paints (still prevents flash)
-  setTimeout(()=>{ if (!built) { buildNow(); stick(); } }, 1200);
+  setTimeout(()=>{ if (!built) { buildNow(); keepSticky(); } }, 1200);
 
-  // Keep sticky on future redraws (date/time changes)
-  function stick(){
+  function keepSticky(){
     const mo = new MutationObserver(()=>{
       if (!host.querySelector('.cvaa24-wrap') || host.querySelector('svg,canvas,g')) buildNow();
     });
     mo.observe(host, {childList:true, subtree:true});
   }
 })();
+
 
 
 
