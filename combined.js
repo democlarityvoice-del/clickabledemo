@@ -6154,63 +6154,180 @@ document.getElementById('cvas-agent-modal-back')?.addEventListener('click', () =
   if (modal) modal.remove();
 });
 
+// ==== Agent CTG (queue-style) — overlay anchored inside #cvas-agent-modal ====
 
-function openAgentCradleModal(agentExt, row) {
-  const ICON_PHONE = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg";
-  const ICON_ANSWER = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg";
-  const ICON_HANG = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg";
-  const ICON_AGENTRING = "https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg";
+(function ensureAgentCtgStyles(){
+  if (document.getElementById('cvas-ctg-styles')) return;
+  const s = document.createElement('style');
+  s.id = 'cvas-ctg-styles';
+  s.textContent = `
+    /* overlay sits inside the agent modal so it never escapes the page chrome */
+    #cvas-ctg-overlay{position:absolute;inset:0;background:rgba(0,0,0,.35);z-index:9999;
+      display:flex;align-items:flex-start;justify-content:center;padding:24px;}
+    #cvas-ctg-modal{background:#fff;border-radius:8px;width:min(880px,96%);
+      max-height:calc(100vh - 96px);overflow:auto;box-shadow:0 16px 40px rgba(0,0,0,.25);}
+    .cvas-ctg-header{display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px;border-bottom:1px solid #e5e8eb;background:#fff;position:sticky;top:0;z-index:2;}
+    .cvas-ctg-title{font-weight:700;font-size:16px;color:#000;letter-spacing:.2px;}
+    .cvas-ctg-close{background:transparent;border:0;font-size:20px;line-height:1;cursor:pointer;padding:4px 8px;opacity:.7;}
+    .cvas-ctg-close:hover{opacity:1;}
+    .cvas-ctg-body{padding:12px 8px 18px 8px;}
+    .cvas-ctg-item{display:grid;grid-template-columns:100px 28px 1fr;align-items:flex-start;gap:10px;padding:8px 12px;}
+    .cvas-ctg-time{color:#111;font-weight:700;}
+    .cvas-ctg-subtime{color:#777;font-size:12px;margin-top:2px;}
+    .cvas-ctg-icon{width:20px;height:20px;display:flex;align-items:center;justify-content:center;}
+    .cvas-ctg-icon img{width:18px;height:18px;background:#f2f3f5;border:1px solid #e1e4e8;border-radius:50%;padding:3px;box-sizing:content-box;}
+    .cvas-ctg-text{color:#111;}
+    .cvas-ctg-sub{color:#777;font-size:12px;margin-top:2px;}
+  `;
+  document.head.appendChild(s);
+})();
 
-  const cradleModal = document.createElement("div");
-  cradleModal.id = "cvas-cradle-modal";
-  cradleModal.style.cssText = "position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 999999; display: flex; align-items: center; justify-content: center;";
+function _ctgTxt(n){ return (n?.textContent || '').replace(/\s+/g,' ').trim(); }
+function _ctgTimeParts(date){
+  const pad = n => String(n).padStart(2,'0');
+  let h = date.getHours(), am='AM'; if (h>=12){am='PM'; if(h>12) h-=12;} if(h===0) h=12;
+  return `${h}:${pad(date.getMinutes())}:${pad(date.getSeconds())} ${am}`;
+}
+function _ctgTimeline(start=new Date()){
+  let t = new Date(start.getTime()); let ms = 0;
+  const bump = inc => { ms+=inc; t = new Date(start.getTime()+ms); };
+  const stamp = () => ({ time:_ctgTimeParts(t), subtime: ms ? `+${ms}ms` : '' });
+  return { bump, stamp };
+}
 
-  const caller = row ? row.cells[1]?.textContent : "Unknown Caller";
-  const phone = row ? row.cells[2]?.textContent : "Unknown Number";
+/* Try to read values regardless of which agent-details schema is active */
+function _readAgentRowFacts(tr){
+  const c = tr?.cells || [];
+  const facts = { callerName:'', callerNum:'', agentExt:'', agentName:'', queueRel:'' };
 
-  cradleModal.innerHTML = `<div style="background: white; border-radius: 8px; width: 90%; max-width: 800px; max-height: 80vh; overflow: auto;">
-    <div style="display: flex; align-items: center; justify-content: space-between; padding: 16px; border-bottom: 1px solid #eee;">
-      <h3 style="margin: 0; font: 600 16px Arial;">Call Timeline - ${caller}</h3>
-      <button id="cvas-cradle-close" style="background: none; border: 1px solid #ddd; border-radius: 4px; padding: 6px 10px; cursor: pointer;">Close</button>
-    </div>
-    <div style="padding: 16px;">
-      <div style="display: flex; flex-direction: column; gap: 12px;">
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-left: 3px solid #4caf50;">
-          <img src="${ICON_PHONE}" style="width: 20px; height: 20px;" alt="">
-          <div>
-            <div style="font: 600 13px Arial;">Call Initiated</div>
-            <div style="font: 400 12px Arial; color: #666;">2:15:22 PM - Caller dialed ${phone}</div>
+  if (c.length >= 12) { // queue-like schema
+    facts.callerName = _ctgTxt(c[1]);
+    facts.callerNum  = _ctgTxt(c[2]);
+    facts.agentExt   = _ctgTxt(c[5]);
+    facts.agentName  = _ctgTxt(c[7]);
+    facts.queueRel   = _ctgTxt(c[10]);
+  } else {            // compact agent schema (Time, Caller, Phone, Dialed, Duration, Queue, Result, Actions)
+    facts.callerName = _ctgTxt(c[1]);
+    facts.callerNum  = _ctgTxt(c[2]);
+    facts.agentExt   = '';                 // not present
+    facts.agentName  = '';                 // not present
+    facts.queueRel   = _ctgTxt(c[6] || c[5] || ''); // Result/Queue
+  }
+  return facts;
+}
+
+// Icons (same set you used for queue CTG)
+const ICON_PHONE     = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone%20dialing.svg';
+const ICON_ANSWER    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone-solid-full.svg';
+const ICON_HANG      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phone_disconnect_fill_icon.svg';
+const ICON_DIAL      = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/dialpad%20icon.svg';
+const ICON_ELLIPS    = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/ellipsis-solid-full.svg';
+const ICON_AGENTRING = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/phoneringing.svg';
+
+const CTG_ICONS = {
+  phone:     `<img src="${ICON_PHONE}"     alt="">`,
+  answer:    `<img src="${ICON_ANSWER}"    alt="">`,
+  hang:      `<img src="${ICON_HANG}"      alt="">`,
+  dial:      `<img src="${ICON_DIAL}"      alt="">`,
+  ellipsis:  `<img src="${ICON_ELLIPS}"    alt="">`,
+  agentring: `<img src="${ICON_AGENTRING}" alt="">`,
+};
+
+/* Build the event list to resemble your example */
+function _buildAgentCtgEvents(tr){
+  const { callerName, callerNum, agentExt, agentName, queueRel } = _readAgentRowFacts(tr);
+  const { bump, stamp } = _ctgTimeline(new Date());
+  const ev = [];
+
+  // 1) inbound + timeframe
+  ev.push({ ...stamp(), icon:'phone',    text:`Inbound call from ${callerNum}${callerName ? ` (${callerName})` : ''}`, sub:'STIR: Verified' }); bump(2);
+  ev.push({ ...stamp(), icon:'ellipsis', text:'The currently active time frame is Daytime' }); bump(135);
+
+  // 2) AA + selection (to match your screenshot vibe)
+  ev.push({ ...stamp(), icon:'dial',     text:'Connected to Auto Attendant Daytime 700' }); bump(23);
+  ev.push({ ...stamp(), icon:'ellipsis', text:'Selected 1' });                               bump(14);
+  ev.push({ ...stamp(), icon:'ellipsis', text:'The currently active time frame is Daytime' }); bump(1000);
+
+  // 3) queue connect
+  ev.push({ ...stamp(), icon:'ellipsis', text:'Connected to Call Queue Main Routing 300' }); bump(286);
+
+  // 4) ring cascade
+  const roster = [
+    'Mike Johnson (200)','Cathy Thomas (201)','Jake Lee (202)','Bob Andersen (203)','Brittany Lawrence (204)',
+    'Alex Roberts (205)','Mark Sanchez (206)','John Smith (207)','Emily Johnson (208)','Michael Williams (209)','Jessica Brown (210)'
+  ];
+  const primary = (agentName ? `${agentName}${agentExt ? ` (${agentExt})` : ''}` : '') || (agentExt ? `Agent (${agentExt})` : '');
+  const seen = new Set(); const cascade = [];
+  if (primary) { cascade.push(primary); seen.add(primary.toLowerCase()); }
+  roster.forEach(n => { if (!seen.has(n.toLowerCase())) cascade.push(n); });
+
+  for (let i=0; i<Math.min(cascade.length, 11); i++){
+    ev.push({ ...stamp(), icon:'agentring', text:`${cascade[i]} is ringing` });
+    bump(286 + i*143);
+  }
+
+  // 5) answered + hang
+  ev.push({ ...stamp(), icon:'answer', text:'Call answered by Agent' });
+  bump(120000);
+  if (/v ?mail|voice ?mail/i.test(queueRel)) {
+    ev.push({ ...stamp(), icon:'ellipsis', text:'Sent to Voicemail' });
+  } else if (/speakaccount/i.test(queueRel)) {
+    ev.push({ ...stamp(), icon:'ellipsis', text:'Routed to SpeakAccount' });
+  } else {
+    ev.push({ ...stamp(), icon:'hang', text:`${callerNum || 'Caller'} hung up` });
+  }
+  return ev;
+}
+
+/* Drop-in replacement — called from the iframe via parent.openAgentCradleModal(ext, row) */
+function openAgentCradleModal(agentExt, row){
+  const host = document.getElementById('cvas-agent-modal') || document.body;
+
+  // clean any existing overlay first (prevents duplicates)
+  host.querySelector('#cvas-ctg-overlay')?.remove();
+
+  const events = _buildAgentCtgEvents(row);
+
+  const overlay = document.createElement('div');
+  overlay.id = 'cvas-ctg-overlay';
+  overlay.innerHTML = `
+    <div id="cvas-ctg-modal" role="dialog" aria-modal="true" aria-labelledby="cvas-ctg-title">
+      <div class="cvas-ctg-header">
+        <span id="cvas-ctg-title" class="cvas-ctg-title">Cradle To Grave</span>
+        <button class="cvas-ctg-close" aria-label="Close">&times;</button>
+      </div>
+      <div class="cvas-ctg-body">
+        ${events.map(ev => `
+          <div class="cvas-ctg-item">
+            <div class="cvas-ctg-time">
+              ${ev.time}
+              ${ev.subtime ? `<div class="cvas-ctg-subtime">${ev.subtime}</div>` : ``}
+            </div>
+            <div class="cvas-ctg-icon">${CTG_ICONS[ev.icon] || ''}</div>
+            <div class="cvas-ctg-text">
+              ${ev.text}
+              ${ev.sub ? `<div class="cvas-ctg-sub">${ev.sub}</div>` : ``}
+            </div>
           </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-left: 3px solid #2196f3;">
-          <img src="${ICON_AGENTRING}" style="width: 20px; height: 20px;" alt="">
-          <div>
-            <div style="font: 600 13px Arial;">Queue Processing</div>
-            <div style="font: 400 12px Arial; color: #666;">2:15:25 PM - Call entered Main Routing queue</div>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-left: 3px solid #ff9800;">
-          <img src="${ICON_ANSWER}" style="width: 20px; height: 20px;" alt="">
-          <div>
-            <div style="font: 600 13px Arial;">Agent Connected</div>
-            <div style="font: 400 12px Arial; color: #666;">2:15:34 PM - Connected to Agent ${agentExt}</div>
-          </div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 10px; padding: 8px; border-left: 3px solid #f44336;">
-          <img src="${ICON_HANG}" style="width: 20px; height: 20px;" alt="">
-          <div>
-            <div style="font: 600 13px Arial;">Call Completed</div>
-            <div style="font: 400 12px Arial; color: #666;">2:18:58 PM - Call ended by caller</div>
-          </div>
-        </div>
+        `).join('')}
       </div>
     </div>
-  </div>`;
+  `;
 
-  document.body.appendChild(cradleModal);
-  cradleModal.querySelector("#cvas-cradle-close").addEventListener("click", () => { cradleModal.remove(); });
-  cradleModal.addEventListener("click", (e) => { if (e.target === cradleModal) cradleModal.remove(); });
+  const close = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target.id === 'cvas-ctg-overlay') close(); });
+  overlay.querySelector('.cvas-ctg-close').addEventListener('click', close);
+  document.addEventListener('keydown', function onEsc(ev){
+    if (ev.key === 'Escape') { close(); document.removeEventListener('keydown', onEsc); }
+  });
+
+  // anchor overlay inside the agent modal and scroll to top
+  host.appendChild(overlay);
+  overlay.querySelector('#cvas-ctg-modal')?.scrollTo(0,0);
 }
+// ==== /Agent CTG ====
+
 
 // --- Agent Notes POPover (matches queue style) ---
 const AGENT_NOTES_REASONS = {
@@ -6428,6 +6545,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 // === AGENT MODAL COMPLETION - END ===
+
 
 
 
