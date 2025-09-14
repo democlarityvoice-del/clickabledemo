@@ -6518,106 +6518,84 @@ function openAgentListenModal(agentExt, row, btn) {
   if (!location.href.includes('/portal/stats/queuestats/agent_availability')) return;
   window.__cvas_availability_installed__ = true;
 
-  // Agent availability data - 8 hour workdays with variations
   const availabilityData = {
-    '200': { loggedIn: '8:03:15', lunch: '1:02:00', breaks: '0:30:00' },
-    '201': { loggedIn: '8:00:45', lunch: '0:57:00', breaks: '0:30:00' },
-    '202': { loggedIn: '7:58:30', lunch: '1:00:00', breaks: '0:30:00' },
-    '203': { loggedIn: '8:05:20', lunch: '0:59:00', breaks: '0:30:00' },
-    '204': { loggedIn: '8:02:10', lunch: '1:01:00', breaks: '0:30:00' },
-    '205': { loggedIn: '7:59:45', lunch: '0:58:00', breaks: '0:30:00' },
-    '206': { loggedIn: '8:04:30', lunch: '1:00:00', breaks: '0:30:00' },
-    '207': { loggedIn: '8:01:00', lunch: '1:02:00', breaks: '0:30:00' }
+    '200': { LI: '8:03:15', L: '1:02:00', B: '0:30:00' },
+    '201': { LI: '8:00:45', L: '0:57:00', B: '0:30:00' },
+    '202': { LI: '7:58:30', L: '1:00:00', B: '0:30:00' },
+    '203': { LI: '8:05:20', L: '0:59:00', B: '0:30:00' },
+    '204': { LI: '8:02:10', L: '1:01:00', B: '0:30:00' },
+    '205': { LI: '7:59:45', L: '0:58:00', B: '0:30:00' },
+    '206': { LI: '8:04:30', L: '1:00:00', B: '0:30:00' },
+    '207': { LI: '8:01:00', L: '1:02:00', B: '0:30:00' }
   };
 
-  // Helper function to convert time string to minutes
   function timeToMinutes(timeStr) {
-    const parts = timeStr.split(':');
-    return parseInt(parts[0]) * 60 + parseInt(parts[1]) + (parts[2] ? parseInt(parts[2]) / 60 : 0);
+    const [h, m, s] = timeStr.split(':').map(Number);
+    return h * 60 + m + (s / 60);
   }
 
-  // Helper function to convert minutes to time string
-  function minutesToTime(minutes) {
-    const hours = Math.floor(minutes / 60);
-    const mins = Math.floor(minutes % 60);
-    const secs = Math.floor((minutes % 1) * 60);
-    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  function minutesToTime(mins) {
+    const h = Math.floor(mins / 60);
+    const m = Math.floor(mins % 60).toString().padStart(2, '0');
+    const s = Math.floor((mins % 1) * 60).toString().padStart(2, '0');
+    return `${h}:${m}:${s}`;
   }
 
-  // Calculate available time for each agent
-  Object.keys(availabilityData).forEach(ext => {
-    const data = availabilityData[ext];
-    const loggedInMins = timeToMinutes(data.loggedIn);
-    const lunchMins = timeToMinutes(data.lunch);
-    const breakMins = timeToMinutes(data.breaks);
-    const availableMins = loggedInMins - lunchMins - breakMins;
-    data.available = minutesToTime(availableMins);
+  Object.values(availabilityData).forEach(data => {
+    const li = timeToMinutes(data.LI);
+    const l = timeToMinutes(data.L);
+    const b = timeToMinutes(data.B);
+    data.AM = minutesToTime(li - l - b); // Available Minutes
   });
 
-  // Function to inject stats into the table
-  function injectAvailabilityStats() {
-  const table = document.querySelector('#contacts-table');
-  if (!table) return;
-
-  const rows = table.querySelectorAll('tbody tr');
-  rows.forEach(row => {
-    const nameCell = row.querySelector('td.sorting_0');
-    const name = nameCell?.textContent.trim();
-
-    // You can map names to extensions if needed, e.g.:
-    const nameToExt = {
-      'Mike': '200',
-      'Cathy': '201',
-      'Jake': '202',
-      'Bob': '203',
-      'Brittany': '204',
-      'Alex': '205',
-      'Mark': '206',
-      'John': '207'
-    };
-
-    const ext = nameToExt[name];
-    const data = availabilityData[ext];
-    if (!data) return;
-
-    const liCell = row.querySelector('.stat-td-agent_availability-LI');
-    const amCell = row.querySelector('.stat-td-agent_availability-AM');
-    const lCell  = row.querySelector('.stat-td-agent_availability-L');
-    const bCell  = row.querySelector('.stat-td-agent_availability-B');
-
-    if (liCell) liCell.textContent = data.loggedIn;
-    if (amCell) amCell.textContent = data.available;
-    if (lCell)  lCell.textContent = data.lunch;
-    if (bCell)  bCell.textContent = data.breaks;
-  });
-}
-
-
-
-  // MutationObserver to handle dynamic updates
-  const observer = new MutationObserver(() => {
-    injectAvailabilityStats();
-  });
-
-  // Wait for the table to exist before injecting
-  function waitForTableAndInject(retries = 20, interval = 300) {
-    const table = document.querySelector('table');
-    if (table) {
-      console.log('[CVAS] Injecting Agent Availability Stats...');
-      injectAvailabilityStats();
-      const tableContainer = document.querySelector('.table-responsive') || table;
-      observer.observe(tableContainer, { childList: true, subtree: true });
-    } else if (retries > 0) {
-      setTimeout(() => waitForTableAndInject(retries - 1, interval), interval);
-    } else {
-      console.warn('[CVAS] Table not found after multiple attempts.');
-    }
+  function mapHeaders(table) {
+    const ths = table.querySelectorAll('thead th');
+    const colMap = {};
+    ths.forEach((th, i) => {
+      const txt = th.textContent.trim().toUpperCase();
+      if (['LI', 'AM', 'L', 'B'].includes(txt)) colMap[txt] = i;
+    });
+    return { colMap };
   }
 
-  // Start the injection logic
-  waitForTableAndInject();
+  function injectAvailability(table) {
+    const { colMap } = mapHeaders(table);
+    const rows = table.tBodies[0]?.rows || [];
+    let count = 0;
 
-})(); // <== CLOSING of IIFE!
+    Array.from(rows).forEach(row => {
+      const ext = row.cells[0]?.textContent.trim(); // EXT column
+      const data = availabilityData[ext];
+      if (!data) return;
+
+      Object.entries(colMap).forEach(([key, idx]) => {
+        const cell = row.cells[idx];
+        if (cell && data[key]) {
+          cell.textContent = data[key];
+          count++;
+        }
+      });
+    });
+
+    console.log(`[CVAS] Agent Availability injected into ${count} cell(s)`);
+  }
+
+  function tryInject() {
+    const table = document.querySelector('#contacts-table');
+    if (!table || !table.tBodies[0]?.rows.length) return false;
+    injectAvailability(table);
+    return true;
+  }
+
+  let tries = 0;
+  const maxTries = 20;
+  const t = setInterval(() => {
+    tries++;
+    if (tryInject() || tries >= maxTries) clearInterval(t);
+  }, 400);
+})();
+
+
 
 
 
