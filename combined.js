@@ -6587,19 +6587,27 @@ function openAgentListenModal(agentExt, row, btn) {
     });
   }
 
-  // Initial injection
-  injectAvailabilityStats();
-
   // Watch for table updates (in case data refreshes)
   const observer = new MutationObserver(() => {
     injectAvailabilityStats();
   });
 
-  const tableContainer = document.querySelector('.table-responsive') || document.querySelector('table');
-  if (tableContainer) {
-    observer.observe(tableContainer, { childList: true, subtree: true });
+  // Wait for table to exist, then inject and observe
+  function waitForTableAndInject(retries = 20, interval = 300) {
+    const table = document.querySelector('table');
+    if (table) {
+      injectAvailabilityStats();
+      const tableContainer = document.querySelector('.table-responsive') || table;
+      observer.observe(tableContainer, { childList: true, subtree: true });
+    } else if (retries > 0) {
+      setTimeout(() => waitForTableAndInject(retries - 1, interval), interval);
+    }
   }
-})();
+
+  // Initial trigger
+  waitForTableAndInject();
+
+
 
 
 
