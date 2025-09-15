@@ -6514,60 +6514,106 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === AGENT AVAILABILITY STATS INJECTION ===
 (() => {
-  if (window.__cvas_availability_installed__) return;
-  window.__cvas_availability_installed__ = true;
+  if (window.__cvAgentAvailInstalled__) return;
+  if (!/\/portal\/stats\/queuestats\/agent_availability(?:[/?#]|$)/.test(location.href)) return;
+  window.__cvAgentAvailInstalled__ = true;
 
-  function mapHeaders(table) {
-    const ths = table.querySelectorAll('thead th');
-    const colMap = {};
-    ths.forEach((th, idx) => {
-      const txt = th.textContent.trim().toUpperCase();
-      if (txt === 'CH') colMap.CH = idx;
-      if (txt === 'TT') colMap.TT = idx;
-      if (txt === 'ATT') colMap.ATT = idx;
-      if (txt === 'AHT') colMap.AHT = idx;
-      if (txt === 'AM') colMap.AM = idx; // <- add whatever stat you want
-    });
-    return { colMap };
+  const CVAA_DATA = {
+    '200': { loggedIn: '8:03:15', lunch: '1:02:00', breaks: '0:30:00' },
+    '201': { loggedIn: '8:00:45', lunch: '0:57:00', breaks: '0:30:00' },
+    '202': { loggedIn: '7:58:30', lunch: '1:00:00', breaks: '0:30:00' },
+    '203': { loggedIn: '8:05:20', lunch: '0:59:00', breaks: '0:30:00' },
+    '204': { loggedIn: '8:02:10', lunch: '1:01:00', breaks: '0:30:00' },
+    '205': { loggedIn: '7:59:45', lunch: '0:58:00', breaks: '0:30:00' },
+    '206': { loggedIn: '8:04:30', lunch: '1:00:00', breaks: '0:30:00' },
+    '207': { loggedIn: '8:01:00', lunch: '1:02:00', breaks: '0:30:00' }
+  };
+
+  const nameToExt = {
+    'Mike': '200',
+    'Cathy': '201',
+    'Jake': '202',
+    'Bob': '203',
+    'Brittany': '204',
+    'Alex': '205',
+    'Mark': '206',
+    'John': '207'
+  };
+
+  function timeToMinutes(timeStr) {
+    const parts = timeStr.split(':');
+    return parseInt(parts[0]) * 60 + parseInt(parts[1]) + (parts[2] ? parseInt(parts[2]) / 60 : 0);
   }
 
-  function injectAvailability(table) {
-    const { colMap } = mapHeaders(table);
-    const rows = table.tBodies[0]?.rows || [];
-    let wrote = 0;
+  function minutesToTime(minutes) {
+    const hours = Math.floor(minutes / 60);
+    const mins = Math.floor(minutes % 60);
+    const secs = Math.floor((minutes % 1) * 60);
+    return `${hours}:${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  }
 
-    Array.from(rows).forEach(tr => {
-      const ext = tr.cells[0]?.textContent.trim(); // col 0 = ext
-      const data = CVAS_DATA[ext];
+  // Calculate 'available' time
+  Object.keys(CVAA_DATA).forEach(ext => {
+    const d = CVAA_DATA[ext];
+    const loggedIn = timeToMinutes(d.loggedIn);
+    const lunch = timeToMinutes(d.lunch);
+    const breaks = timeToMinutes(d.breaks);
+    d.available = minutesToTime(loggedIn - lunch - breaks);
+  });
+
+  function injectAgentAvailability(table) {
+    const headers = [...table.querySelectorAll('thead th')].map(th => th.textContent.trim().toUpperCase());
+    const idxExt = headers.findIndex(h => h.includes('EXT'));
+    const idxLI = headers.findIndex(h => h === 'LI');
+    const idxAM = headers.findIndex(h => h === 'AM');
+    const idxL  = headers.findIndex(h => h === 'L');
+    const idxB  = headers.findIndex(h => h === 'B');
+    let updated = 0;
+
+    if (idxExt === -1 || idxLI === -1 || idxAM === -1 || idxL === -1 || idxB === -1) {
+      console.warn('[CVAA] Column index detection failed.');
+      return;
+    }
+
+    const rows = table.tBodies[0]?.rows || [];
+    [...rows].forEach(row => {
+      const name = row.cells[0]?.textContent.trim();
+      const ext = nameToExt[name];
+      const data = CVAA_DATA[ext];
       if (!data) return;
 
-      Object.entries(colMap).forEach(([key, idx]) => {
-        const td = tr.cells[idx];
-        const val = data[key];
-        if (td) {
-          linkify(td, ext, key, val);
-          wrote++;
-        }
-      });
+      if (row.cells[idxLI]) row.cells[idxLI].textContent = data.loggedIn;
+      if (row.cells[idxAM]) row.cells[idxAM].textContent = data.available;
+      if (row.cells[idxL])  row.cells[idxL].textContent = data.lunch;
+      if (row.cells[idxB])  row.cells[idxB].textContent = data.breaks;
+
+      updated++;
     });
 
-    console.log(`[CVAS] Linked and injected ${wrote} stat cell(s)`);
+    console.log(`[CVAA] Updated availability stats for ${updated} agent(s)`);
   }
 
-  function tryInject() {
-    const table = document.querySelector('#modal_stats_table');
-    if (!table || !table.tBodies[0]?.rows.length) return false;
-    injectAvailability(table);
-    return true;
+  function waitAndInject(retries = 20, delay = 300) {
+    const table = [...document.querySelectorAll('table')].find(t => {
+      const headers = [...t.querySelectorAll('thead th')].map(th => th.textContent.trim().toUpperCase());
+      return headers.includes('EXT.') && headers.includes('LI') && headers.includes('AM');
+    });
+
+    if (table && table.tBodies[0]?.rows.length > 0) {
+      injectAgentAvailability(table);
+      const container = table.closest('.table-responsive') || table;
+      new MutationObserver(() => injectAgentAvailability(table))
+        .observe(container, { childList: true, subtree: true });
+    } else if (retries > 0) {
+      setTimeout(() => waitAndInject(retries - 1, delay), delay);
+    } else {
+      console.warn('[CVAA] Table not found after multiple attempts.');
+    }
   }
 
-  let tries = 0;
-  const maxTries = 20;
-  const t = setInterval(() => {
-    tries++;
-    if (tryInject() || tries >= maxTries) clearInterval(t);
-  }, 400);
+  waitAndInject();
 })();
+
 
 
 
