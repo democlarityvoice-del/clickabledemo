@@ -6516,13 +6516,14 @@ function openAgentListenModal(agentExt, row, btn) {
 (() => {
   console.log('[CVAA] Live Agent Availability injection starting...');
 
-  const targetIndex = 2; // Confirmed active container index
-  const maxWait = 10000; // 10 seconds
+  // === CONFIGURATION ===
+  const CVAA_TARGET_INDEX = 2; // Confirmed index of active container
+  const CVAA_MAX_WAIT = 10000; // 10 second max wait
+  const CVAA_INTERVAL = 250;   // Check every 250ms for table
   let waited = 0;
-  const interval = 250; // check every 250ms
 
-  // Data to inject for each extension
-  const availabilityData = {
+  // === DATA TO INJECT ===
+  const CVAA_AVAILABILITY_DATA = {
     '200': { LI: '8:03:15', AM: '6:31:15', L: '1:02:00', B: '0:30:00' },
     '201': { LI: '8:00:45', AM: '6:33:45', L: '0:57:00', B: '0:30:00' },
     '202': { LI: '7:58:30', AM: '6:28:30', L: '1:00:00', B: '0:30:00' },
@@ -6533,10 +6534,10 @@ function openAgentListenModal(agentExt, row, btn) {
     '207': { LI: '8:01:00', AM: '6:29:00', L: '1:02:00', B: '0:30:00' }
   };
 
-  // Core injection logic
+  // === CORE FUNCTION: Inject availability numbers ===
   function injectAvailability() {
     const containers = document.querySelectorAll('.table-container');
-    const activeContainer = containers[targetIndex];
+    const activeContainer = containers[CVAA_TARGET_INDEX];
 
     if (!activeContainer) {
       console.warn('[CVAA] Active container not found.');
@@ -6553,13 +6554,13 @@ function openAgentListenModal(agentExt, row, btn) {
 
     rows.forEach(row => {
       const cells = row.querySelectorAll('td');
-      const ext = cells[0]?.textContent.trim();
+      const ext = cells[0]?.textContent.trim(); // First column is extension
 
-      if (availabilityData[ext]) {
-        cells[4].textContent = availabilityData[ext].LI;
-        cells[5].textContent = availabilityData[ext].AM;
-        cells[6].textContent = availabilityData[ext].L;
-        cells[7].textContent = availabilityData[ext].B;
+      if (CVAA_AVAILABILITY_DATA[ext]) {
+        cells[4].textContent = CVAA_AVAILABILITY_DATA[ext].LI; // Logged In
+        cells[5].textContent = CVAA_AVAILABILITY_DATA[ext].AM; // Available Minutes
+        cells[6].textContent = CVAA_AVAILABILITY_DATA[ext].L;  // Lunch
+        cells[7].textContent = CVAA_AVAILABILITY_DATA[ext].B;  // Breaks
         injectedCount++;
       }
     });
@@ -6568,10 +6569,10 @@ function openAgentListenModal(agentExt, row, btn) {
     return true;
   }
 
-  // Watch for updates with a MutationObserver
+  // === WATCH FOR TABLE UPDATES ===
   function startObserver() {
     const containers = document.querySelectorAll('.table-container');
-    const activeContainer = containers[targetIndex];
+    const activeContainer = containers[CVAA_TARGET_INDEX];
 
     if (!activeContainer) {
       console.warn('[CVAA] Could not start observer, container missing.');
@@ -6584,22 +6585,23 @@ function openAgentListenModal(agentExt, row, btn) {
     console.log('[CVAA] Watching for table updates...');
   }
 
-  // Wait until the container exists
+  // === WAIT UNTIL TABLE EXISTS BEFORE STARTING ===
   const waitInterval = setInterval(() => {
-    waited += interval;
+    waited += CVAA_INTERVAL;
     const containers = document.querySelectorAll('.table-container');
 
-    if (containers.length > targetIndex) {
+    if (containers.length > CVAA_TARGET_INDEX) {
       clearInterval(waitInterval);
       console.log('[CVAA] Table container found, starting injection...');
       injectAvailability();
       startObserver();
-    } else if (waited >= maxWait) {
+    } else if (waited >= CVAA_MAX_WAIT) {
       clearInterval(waitInterval);
       console.warn('[CVAA] Timed out waiting for table container.');
     }
-  }, interval);
+  }, CVAA_INTERVAL);
 })();
+
 
 
 
