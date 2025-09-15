@@ -6514,83 +6514,78 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === AGENT AVAILABILITY STATS INJECTION ===
 (() => {
-  if (window.__cvaa_installed__) return;
-  if (!/\/portal\/stats\/agentavailability(?:[/?#]|$)/.test(location.href)) return;
-  window.__cvaa_installed__ = true;
+  console.log('[CVAA] Live Agent Availability injection starting...');
 
-  const CVAA = {
-    DATA: {
-      '200': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '201': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '202': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '203': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '204': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '205': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '206': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-      '207': { LI: '💡 43:49:56', AM: '💡 43:49:56' },
-    },
+  // === CONFIGURATION ===
+  const targetIndex = 2; // Confirmed active container index
 
-    log(...args) {
-      console.log('[CVAA]', ...args);
-    },
-
-    mapHeaders(table) {
-      const ths = table.querySelectorAll('thead th');
-      const colMap = {};
-      ths.forEach((th, idx) => {
-        const txt = th.textContent.trim().toUpperCase();
-        if (txt === 'LI') colMap.LI = idx;
-        if (txt === 'AM') colMap.AM = idx;
-      });
-      return colMap;
-    },
-
-    inject(table) {
-      const colMap = this.mapHeaders(table);
-      const rows = table.tBodies[0]?.rows || [];
-      let wrote = 0;
-
-      Array.from(rows).forEach(tr => {
-        const ext = tr.cells[0]?.textContent?.trim();
-        const data = this.DATA[ext];
-        if (!data) return;
-
-        Object.entries(colMap).forEach(([key, idx]) => {
-          const td = tr.cells[idx];
-          const val = data[key];
-          if (td && val) {
-            td.textContent = val;
-            td.style.backgroundColor = '#ffffe0';
-            wrote++;
-          }
-        });
-      });
-
-      this.log(`Injected ${wrote} cell(s)`);
-    },
-
-    waitAndInject() {
-      const table = document.querySelector('#contacts-table');
-      if (!table || !table.tBodies[0]?.rows?.length) return false;
-      this.inject(table);
-      return true;
-    },
-
-    init() {
-      let tries = 0;
-      const maxTries = 20;
-      const t = setInterval(() => {
-        tries++;
-        if (this.waitAndInject() || tries >= maxTries) {
-          if (tries >= maxTries) this.log('Table not found after multiple attempts.');
-          clearInterval(t);
-        }
-      }, 400);
-    },
+  // Data to inject for each extension
+  const availabilityData = {
+    '200': { LI: '8:03:15', AM: '6:31:15', L: '1:02:00', B: '0:30:00' },
+    '201': { LI: '8:00:45', AM: '6:33:45', L: '0:57:00', B: '0:30:00' },
+    '202': { LI: '7:58:30', AM: '6:28:30', L: '1:00:00', B: '0:30:00' },
+    '203': { LI: '8:05:20', AM: '6:36:20', L: '0:59:00', B: '0:30:00' },
+    '204': { LI: '8:02:10', AM: '6:31:10', L: '1:01:00', B: '0:30:00' },
+    '205': { LI: '7:59:45', AM: '6:31:45', L: '0:58:00', B: '0:30:00' },
+    '206': { LI: '8:04:30', AM: '6:34:30', L: '1:00:00', B: '0:30:00' },
+    '207': { LI: '8:01:00', AM: '6:29:00', L: '1:02:00', B: '0:30:00' }
   };
 
-  CVAA.init();
+  // === CORE FUNCTION: Inject values into the visible table ===
+  function injectAvailability() {
+    const containers = document.querySelectorAll('.table-container');
+    const activeContainer = containers[targetIndex];
+    if (!activeContainer) {
+      console.warn('[CVAA] Active container not found.');
+      return;
+    }
+
+    const rows = activeContainer.querySelectorAll('tbody tr');
+    if (!rows.length) {
+      console.warn('[CVAA] No rows found to inject.');
+      return;
+    }
+
+    let injectedCount = 0;
+
+    rows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      const ext = cells[0]?.textContent.trim(); // First column is Extension #
+
+      if (availabilityData[ext]) {
+        cells[4].textContent = availabilityData[ext].LI; // Logged In
+        cells[5].textContent = availabilityData[ext].AM; // Available Minutes
+        cells[6].textContent = availabilityData[ext].L;  // Lunch
+        cells[7].textContent = availabilityData[ext].B;  // Breaks
+        injectedCount++;
+      }
+    });
+
+    console.log(`[CVAA] Injected data into ${injectedCount} rows`);
+  }
+
+  // === INITIAL INJECTION ===
+  injectAvailability();
+
+  // === MUTATION OBSERVER: Watch for table refreshes ===
+  const observer = new MutationObserver(mutations => {
+    for (const mutation of mutations) {
+      if (mutation.type === 'childList') {
+        injectAvailability();
+      }
+    }
+  });
+
+  const targetContainer = document.querySelectorAll('.table-container')[targetIndex];
+  if (targetContainer) {
+    observer.observe(targetContainer, { childList: true, subtree: true });
+    console.log('[CVAA] Watching for table updates...');
+  } else {
+    console.warn('[CVAA] Could not start observer, container missing.');
+  }
 })();
+
+
 
 
 
