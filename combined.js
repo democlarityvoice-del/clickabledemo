@@ -6516,8 +6516,10 @@ function openAgentListenModal(agentExt, row, btn) {
 (() => {
   console.log('[CVAA] Live Agent Availability injection starting...');
 
-  // === CONFIGURATION ===
   const targetIndex = 2; // Confirmed active container index
+  const maxWait = 10000; // 10 seconds
+  let waited = 0;
+  const interval = 250; // check every 250ms
 
   // Data to inject for each extension
   const availabilityData = {
@@ -6531,59 +6533,75 @@ function openAgentListenModal(agentExt, row, btn) {
     '207': { LI: '8:01:00', AM: '6:29:00', L: '1:02:00', B: '0:30:00' }
   };
 
-  // === CORE FUNCTION: Inject values into the visible table ===
+  // Core injection logic
   function injectAvailability() {
     const containers = document.querySelectorAll('.table-container');
     const activeContainer = containers[targetIndex];
+
     if (!activeContainer) {
       console.warn('[CVAA] Active container not found.');
-      return;
+      return false;
     }
 
     const rows = activeContainer.querySelectorAll('tbody tr');
     if (!rows.length) {
       console.warn('[CVAA] No rows found to inject.');
-      return;
+      return false;
     }
 
     let injectedCount = 0;
 
     rows.forEach(row => {
       const cells = row.querySelectorAll('td');
-      const ext = cells[0]?.textContent.trim(); // First column is Extension #
+      const ext = cells[0]?.textContent.trim();
 
       if (availabilityData[ext]) {
-        cells[4].textContent = availabilityData[ext].LI; // Logged In
-        cells[5].textContent = availabilityData[ext].AM; // Available Minutes
-        cells[6].textContent = availabilityData[ext].L;  // Lunch
-        cells[7].textContent = availabilityData[ext].B;  // Breaks
+        cells[4].textContent = availabilityData[ext].LI;
+        cells[5].textContent = availabilityData[ext].AM;
+        cells[6].textContent = availabilityData[ext].L;
+        cells[7].textContent = availabilityData[ext].B;
         injectedCount++;
       }
     });
 
     console.log(`[CVAA] Injected data into ${injectedCount} rows`);
+    return true;
   }
 
-  // === INITIAL INJECTION ===
-  injectAvailability();
+  // Watch for updates with a MutationObserver
+  function startObserver() {
+    const containers = document.querySelectorAll('.table-container');
+    const activeContainer = containers[targetIndex];
 
-  // === MUTATION OBSERVER: Watch for table refreshes ===
-  const observer = new MutationObserver(mutations => {
-    for (const mutation of mutations) {
-      if (mutation.type === 'childList') {
-        injectAvailability();
-      }
+    if (!activeContainer) {
+      console.warn('[CVAA] Could not start observer, container missing.');
+      return;
     }
-  });
 
-  const targetContainer = document.querySelectorAll('.table-container')[targetIndex];
-  if (targetContainer) {
-    observer.observe(targetContainer, { childList: true, subtree: true });
+    const observer = new MutationObserver(() => injectAvailability());
+    observer.observe(activeContainer, { childList: true, subtree: true });
+
     console.log('[CVAA] Watching for table updates...');
-  } else {
-    console.warn('[CVAA] Could not start observer, container missing.');
   }
+
+  // Wait until the container exists
+  const waitInterval = setInterval(() => {
+    waited += interval;
+    const containers = document.querySelectorAll('.table-container');
+
+    if (containers.length > targetIndex) {
+      clearInterval(waitInterval);
+      console.log('[CVAA] Table container found, starting injection...');
+      injectAvailability();
+      startObserver();
+    } else if (waited >= maxWait) {
+      clearInterval(waitInterval);
+      console.warn('[CVAA] Timed out waiting for table container.');
+    }
+  }, interval);
 })();
+
+
 
 
 
