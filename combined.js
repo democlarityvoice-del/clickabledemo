@@ -6562,153 +6562,95 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 // === ADD FOUR FAKE WIDGETS AS APPEND ===
-
 (function injectRefinedDemoWidgets() {
-  const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
-  const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+  const WIDGET_WIDTH = 300;
+  const WIDGET_HEIGHT = 275;
+  const HEADER_HEIGHT = 38;
 
-  const log = (...args) => console.log('[CV DEMO]', ...args);
-  const container = document.getElementById('sortable');
-  if (!container) return log('No sortable container found.');
-
-  if (document.querySelectorAll('.cv-demo-chart-injected').length) {
-    return log('Widgets already injected.');
+  function waitForElement(selector, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+      const start = performance.now();
+      const timer = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+          clearInterval(timer);
+          resolve(el);
+        } else if (performance.now() - start > timeout) {
+          clearInterval(timer);
+          reject(new Error('Timeout: Element not found'));
+        }
+      }, 100);
+    });
   }
 
-  const createWidget = (title, chartId) => {
-    const li = document.createElement('li');
-    li.className = 'dashboard-widget cv-demo-chart-injected';
-    li.style.width = '300px';
-    li.style.height = '275px';
-    li.style.margin = '10px';
+  function buildWidget(title, chartHtml, idSuffix) {
+    const container = document.createElement('div');
+    container.className = 'widget-container';
+    container.style.width = `${WIDGET_WIDTH}px`;
+    container.style.height = `${WIDGET_HEIGHT}px`;
+    container.style.border = '1px solid #ccc';
+    container.style.borderRadius = '6px';
+    container.style.margin = '10px';
+    container.style.overflow = 'hidden';
+    container.style.background = 'white';
+    container.style.boxShadow = '0 0 3px rgba(0,0,0,0.1)';
+    container.style.display = 'inline-block';
+    container.style.verticalAlign = 'top';
 
-    li.innerHTML = `
-      <div class="widget-container" style="
-        width:100%; height:100%;
-        border:1px solid #ccc;
-        border-radius:6px;
-        background:#fff;
-        box-shadow:0 1px 2px rgba(0,0,0,0.2);
-        display:flex;
-        flex-direction:column;
-      ">
-        <div class="widget-header" style="
-          background:#f79621;
-          color:#000;
-          font-weight:bold;
-          font-family:Helvetica, Arial, sans-serif;
-          padding:10px;
-          border-radius:6px 6px 0 0;
-          display:flex;
-          justify-content:space-between;
-          align-items:center;
-          font-size:13px;
-          height:40px;
-        ">
-          <span>${title}</span>
-          <span style="display:flex; gap:6px;">
-            <img src="${ICON_EDIT}" alt="Edit" style="height:14px; cursor:pointer;" />
-            <img src="${ICON_ZOOM}" alt="Zoom" style="height:14px; cursor:pointer;" />
-          </span>
-        </div>
-        <div class="widget-body" style="
-          flex:1;
-          padding:4px;
-          display:flex;
-          flex-direction:column;
-          justify-content:space-between;
-        ">
-          <div id="${chartId}" style="width:100%; height:85%;"></div>
-          <div style="font-size:11px; color:#333; text-align:right; padding-right:5px;">
-            1/17 <span style="color:#00f;">▸</span>
-          </div>
-        </div>
-      </div>
+    const header = document.createElement('div');
+    header.className = 'widget-header';
+    header.style.height = `${HEADER_HEIGHT}px`;
+    header.style.background = '#f7931e';
+    header.style.color = 'black';
+    header.style.fontWeight = 'bold';
+    header.style.padding = '10px';
+    header.style.display = 'flex';
+    header.style.alignItems = 'center';
+    header.style.justifyContent = 'space-between';
+    header.innerHTML = `
+      <span>${title}</span>
+      <span>
+        <i class="fa fa-expand" style="cursor:pointer"></i>
+        <i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>
+      </span>
     `;
-    return li;
-  };
 
-  const realWidget = container.querySelector('.dashboard-widget');
-  if (!realWidget) return log('No existing widget found to anchor after.');
+    const chart = document.createElement('div');
+    chart.className = 'widget-chart';
+    chart.style.padding = '20px';
+    chart.innerHTML = chartHtml;
 
-  const demoWidgets = [
-    createWidget('Summary by Hour for Today', 'chart-summary'),
-    createWidget('Inbound Calls This Week', 'chart-inbound'),
-    createWidget('Inbound by Employee This Week', 'chart-employee'),
-    createWidget('Outbound Calls This Week', 'chart-outbound')
-  ];
+    container.appendChild(header);
+    container.appendChild(chart);
+    container.id = `demo-widget-${idSuffix}`;
+    return container;
+  }
 
-  demoWidgets.forEach(widget => container.appendChild(widget));
+  function insertWidgets() {
+    const existing = document.querySelectorAll('.widget-container');
+    const lastWidget = existing[existing.length - 1];
+    if (!lastWidget || !lastWidget.parentElement) return;
 
-  // === Chart logic ===
-  const loadAndDrawCharts = () => {
-    if (!window.google || !google.charts) {
-      const script = document.createElement('script');
-      script.src = 'https://www.gstatic.com/charts/loader.js';
-      script.onload = () => {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(drawCharts);
-      };
-      document.head.appendChild(script);
-    } else {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(drawCharts);
-    }
-  };
+    const parent = lastWidget.parentElement;
 
-  const drawCharts = () => {
-    const lineData = google.visualization.arrayToDataTable([
-      ['Hour', 'All'],
-      ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
-    ]);
-    new google.visualization.LineChart(document.getElementById('chart-summary')).draw(lineData, {
-      legend: { position: 'bottom' },
-      chartArea: { width: '80%', height: '70%' },
-      hAxis: { title: 'Hours of Day' },
-      vAxis: { title: 'Number of Calls', minValue: 0 },
-      colors: ['#3366cc']
-    });
+    const w1 = buildWidget('Calls by Number- Can Edit', '<div style="text-align:center;"><svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg><div style="margin-top:10px;font-size:12px;">100%</div></div>', 'calls-by-number');
+    const w2 = buildWidget('Summary by Hour for Today', '<canvas height="100"></canvas>', 'summary-hour');
+    const w3 = buildWidget('Inbound Calls This Week', '<canvas height="100"></canvas>', 'inbound-week');
+    const w4 = buildWidget('Inbound by Employee This Week', '<canvas height="100"></canvas>', 'employee-week');
 
-    const inboundData = google.visualization.arrayToDataTable([
-      ['Day', 'Calls'],
-      ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
-    ]);
-    new google.visualization.ColumnChart(document.getElementById('chart-inbound')).draw(inboundData, {
-      legend: { position: 'bottom' },
-      chartArea: { width: '80%', height: '70%' },
-      hAxis: { title: 'Day of Week' },
-      vAxis: { title: 'Number of Calls', minValue: 0 },
-      colors: ['#5ba3cf']
-    });
+    parent.appendChild(w1);
+    parent.appendChild(w2);
+    parent.appendChild(w3);
+    parent.appendChild(w4);
+  }
 
-    const pieData = google.visualization.arrayToDataTable([
-      ['Employee', 'Calls'],
-      ['Mike Johnson', 70],
-      ['Others', 30]
-    ]);
-    new google.visualization.PieChart(document.getElementById('chart-employee')).draw(pieData, {
-      pieHole: 0,
-      is3D: true,
-      chartArea: { width: '90%', height: '80%' },
-      legend: { position: 'bottom' },
-      colors: ['#3c8dbc', '#dd4b39']
-    });
-
-    const outboundData = google.visualization.arrayToDataTable([
-      ['Day', 'Calls'],
-      ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
-    ]);
-    new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, {
-      legend: { position: 'bottom' },
-      chartArea: { width: '80%', height: '70%' },
-      hAxis: { title: 'Day of Week' },
-      vAxis: { title: 'Number of Calls', minValue: 0 },
-      colors: ['#d87f33']
-    });
-  };
-
-  loadAndDrawCharts();
+  waitForElement('.widget-container')
+    .then(() => {
+      insertWidgets();
+    })
+    .catch((err) => console.warn('[CV DEMO] Widget wait error:', err));
 })();
+
 
 
 
