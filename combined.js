@@ -6737,6 +6737,9 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 
+})(); // ✅ FINAL FIX — closes watchAndInjectAnalyticsWidgets
+
+
 
 
 
