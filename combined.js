@@ -6512,6 +6512,7 @@ function openAgentListenModal(agentExt, row, btn) {
 // === AGENT MODAL COMPLETION - END ===
 
 // === BEGIN ANALYTICS ===
+// Side bar destroy and replace
 (function watchSidebarAndInjectButton() {
   const log = (...args) => console.log('[CV Demo]', ...args);
 
@@ -6560,6 +6561,7 @@ function openAgentListenModal(agentExt, row, btn) {
   log('👀 Watching .home-sidebar.span for dashboard load...');
 })();
 
+// Widget section
 (function watchAndInjectAnalyticsWidgets() {
   const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
   const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
@@ -6724,14 +6726,16 @@ function openAgentListenModal(agentExt, row, btn) {
     );
 
     if (allFinalsPresent) {
-      observer.disconnect();
-      console.log('[CV DEMO] ✅ Final dashboard widgets rendered. Proceeding with injection.');
-      injectDemoWidgets(); // Replace with your actual function
+  observer.disconnect();
+  console.log('[CV DEMO] ✅ Final dashboard widgets rendered. Proceeding with injection.');
+  injectWidgets(); // ✅ Correct function name
     }
+
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
 })();
+
 
 
 
