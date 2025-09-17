@@ -6560,6 +6560,168 @@ function openAgentListenModal(agentExt, row, btn) {
   log('👀 Watching .home-sidebar.span for dashboard load...');
 })();
 
+(function watchAndInjectAnalyticsWidgets() {
+  const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
+  const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+  const log = (...args) => console.log('[CV DEMO]', ...args);
+
+  const alreadyInjected = () =>
+    !!document.querySelector('.cv-demo-chart-injected');
+
+  const injectWidgets = () => {
+    const container = document.getElementById('sortable');
+    if (!container || alreadyInjected()) return;
+
+    // Clear existing
+    container.querySelectorAll('.dashboard-widget').forEach(w => w.remove());
+
+    const createWidget = (title, chartId) => {
+      const li = document.createElement('li');
+      li.className = 'dashboard-widget cv-demo-chart-injected';
+      li.style.width = '300px';
+      li.style.height = '275px';
+      li.style.margin = '10px';
+
+      li.innerHTML = `
+        <div class="widget-container" style="
+          width:100%; height:100%;
+          border:1px solid #ccc;
+          border-radius:6px;
+          background:#fff;
+          box-shadow:0 1px 2px rgba(0,0,0,0.2);
+          display:flex;
+          flex-direction:column;
+        ">
+          <div class="widget-header" style="
+            background:#f79621;
+            color:#fff;
+            font-weight:bold;
+            font-family:Helvetica, Arial, sans-serif;
+            padding:6px 10px;
+            border-radius:6px 6px 0 0;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            font-size:13px;
+          ">
+            <span>${title}</span>
+            <span style="display:flex; gap:6px;">
+              <img src="${ICON_ZOOM}" alt="Zoom" style="height:14px; cursor:pointer;" />
+              <img src="${ICON_EDIT}" alt="Edit" style="height:14px; cursor:pointer;" />
+            </span>
+          </div>
+          <div class="widget-body" style="
+            flex:1;
+            padding:4px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+          ">
+            <div id="${chartId}" style="width:100%; height:85%;"></div>
+            <div style="font-size:11px; color:#333; text-align:right; padding-right:5px;">
+              1/17 <span style="color:#00f;">▸</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return li;
+    };
+
+    container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
+    container.appendChild(createWidget('Inbound Calls This Week', 'chart-inbound'));
+    container.appendChild(createWidget('Inbound by Employee This Week', 'chart-employee'));
+    container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
+
+    loadAndDrawCharts();
+  };
+
+  const loadAndDrawCharts = () => {
+    if (!window.google || !google.charts) {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+      };
+      document.head.appendChild(script);
+    } else {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawCharts);
+    }
+  };
+
+  const drawCharts = () => {
+    // Line Chart
+    const lineData = google.visualization.arrayToDataTable([
+      ['Hour', 'All'],
+      ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
+    ]);
+    const lineOptions = {
+      legend: { position: 'bottom' },
+      chartArea: { width: '80%', height: '70%' },
+      hAxis: { title: 'Hours of Day' },
+      vAxis: { title: 'Number of Calls', minValue: 0 },
+      colors: ['#3366cc']
+    };
+    new google.visualization.LineChart(document.getElementById('chart-summary')).draw(lineData, lineOptions);
+
+    // Inbound Column Chart
+    const inboundData = google.visualization.arrayToDataTable([
+      ['Day', 'Calls'],
+      ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
+    ]);
+    const inboundOptions = {
+      legend: { position: 'bottom' },
+      chartArea: { width: '80%', height: '70%' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0 },
+      colors: ['#3c8dbc']
+    };
+    new google.visualization.ColumnChart(document.getElementById('chart-inbound')).draw(inboundData, inboundOptions);
+
+    // Pie Chart
+    const pieData = google.visualization.arrayToDataTable([
+      ['Employee', 'Calls'],
+      ['Mike Johnson', 70],
+      ['Others', 30]
+    ]);
+    const pieOptions = {
+      pieHole: 0,
+      chartArea: { width: '90%', height: '80%' },
+      legend: { position: 'bottom' },
+      colors: ['#3c8dbc', '#dd4b39']
+    };
+    new google.visualization.PieChart(document.getElementById('chart-employee')).draw(pieData, pieOptions);
+
+    // Outbound Column Chart
+    const outboundData = google.visualization.arrayToDataTable([
+      ['Day', 'Calls'],
+      ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
+    ]);
+    const outboundOptions = {
+      legend: { position: 'bottom' },
+      chartArea: { width: '80%', height: '70%' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0 },
+      colors: ['#ff851b']
+    };
+    new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, outboundOptions);
+  };
+
+  // MutationObserver watches for #sortable injection
+  const observer = new MutationObserver(() => {
+    const sortable = document.getElementById('sortable');
+    if (sortable && !alreadyInjected()) {
+      injectWidgets();
+    }
+  });
+
+  observer.observe(document.body, { childList: true, subtree: true });
+
+  log('👀 Watching for Analytics widget container...');
+})();
+
 
 
 
