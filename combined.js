@@ -6561,18 +6561,33 @@ function openAgentListenModal(agentExt, row, btn) {
   log('👀 Watching .home-sidebar.span for dashboard load...');
 })();
 
-// === ADD FOUR FAKE WIDGETS AS APPEND ===
-(function injectRefinedDemoWidgets() {
+// === ADD FOUR FAKE WIDGETS AS APPEND ===(function injectRefinedDemoWidgets() {
   const WIDGET_WIDTH = 300;
   const WIDGET_HEIGHT = 275;
   const HEADER_HEIGHT = 38;
 
+  function waitForElement(selector, timeout = 5000) {
+    return new Promise((resolve, reject) => {
+      const start = performance.now();
+      const timer = setInterval(() => {
+        const el = document.querySelector(selector);
+        if (el) {
+          clearInterval(timer);
+          resolve(el);
+        } else if (performance.now() - start > timeout) {
+          clearInterval(timer);
+          reject(new Error('Timeout: Element not found'));
+        }
+      }, 100);
+    });
+  }
+
   function buildWidget(title, chartHtml, idSuffix) {
     const container = document.createElement('div');
     container.className = 'widget-container';
-    container.style.width = WIDGET_WIDTH + 'px';
-    container.style.height = WIDGET_HEIGHT + 'px';
-    container.style.border = '1px solid #ccc`;
+    container.style.width = `${WIDGET_WIDTH}px`;
+    container.style.height = `${WIDGET_HEIGHT}px`;
+    container.style.border = '1px solid #ccc';
     container.style.borderRadius = '6px';
     container.style.margin = '10px';
     container.style.overflow = 'hidden';
@@ -6583,7 +6598,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
     const header = document.createElement('div');
     header.className = 'widget-header';
-    header.style.height = HEADER_HEIGHT + 'px';
+    header.style.height = `${HEADER_HEIGHT}px`;
     header.style.background = '#f7931e';
     header.style.color = 'black';
     header.style.fontWeight = 'bold';
@@ -6591,13 +6606,13 @@ function openAgentListenModal(agentExt, row, btn) {
     header.style.display = 'flex';
     header.style.alignItems = 'center';
     header.style.justifyContent = 'space-between';
-    header.innerHTML =
-  '<span>' + title + '</span>' +
-  '<span>' +
-    '<i class="fa fa-expand" style="cursor:pointer"></i>' +
-    '<i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>' +
-  '</span>';
-
+    header.innerHTML = `
+      <span>${title}</span>
+      <span>
+        <i class="fa fa-expand" style="cursor:pointer"></i>
+        <i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>
+      </span>
+    `;
 
     const chart = document.createElement('div');
     chart.className = 'widget-chart';
@@ -6613,34 +6628,19 @@ function openAgentListenModal(agentExt, row, btn) {
   function insertWidgets() {
     const existing = document.querySelectorAll('.widget-container');
     const lastWidget = existing[existing.length - 1];
-    if (!lastWidget || !lastWidget.parentElement) {
-      console.warn('[CV DEMO] ❌ No existing widget container to append to.');
-      return;
-    }
+    if (!lastWidget || !lastWidget.parentElement) return;
 
     const parent = lastWidget.parentElement;
 
-    const w1 = buildWidget('Calls by Number - Can Edit',
-      `<div style="text-align:center;">
-        <svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg>
-        <div style="margin-top:10px;font-size:12px;">100%</div>
-      </div>`, 'calls-by-number');
-
-    const w2 = buildWidget('Summary by Hour for Today',
-      '<canvas height="100"></canvas>', 'summary-hour');
-
-    const w3 = buildWidget('Inbound Calls This Week',
-      '<canvas height="100"></canvas>', 'inbound-week');
-
-    const w4 = buildWidget('Inbound by Employee This Week',
-      '<canvas height="100"></canvas>', 'employee-week');
+    const w1 = buildWidget('Calls by Number- Can Edit', '<div style="text-align:center;"><svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg><div style="margin-top:10px;font-size:12px;">100%</div></div>', 'calls-by-number');
+    const w2 = buildWidget('Summary by Hour for Today', '<canvas height="100"></canvas>', 'summary-hour');
+    const w3 = buildWidget('Inbound Calls This Week', '<canvas height="100"></canvas>', 'inbound-week');
+    const w4 = buildWidget('Inbound by Employee This Week', '<canvas height="100"></canvas>', 'employee-week');
 
     parent.appendChild(w1);
     parent.appendChild(w2);
     parent.appendChild(w3);
     parent.appendChild(w4);
-
-    console.log('[CV DEMO] ✅ Appended 4 fake widgets after real ones.');
   }
 
   function waitForRealWidgetFullyRendered(timeout = 5000) {
@@ -6670,6 +6670,7 @@ function openAgentListenModal(agentExt, row, btn) {
     })
     .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
 })();
+
 
 
 
