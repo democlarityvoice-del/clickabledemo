@@ -6513,39 +6513,61 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === BEGIN ANALYTICS ===
 
-(function replaceSidebarWithCustomOrangeButton() {
+(function waitForSidebarAndInjectButton() {
   const log = (...args) => console.log('[CV Demo]', ...args);
-  const target = document.getElementById('home-dashboards-body');
 
-  if (!target) {
-    log('❌ Sidebar body not found.');
-    return;
-  }
+  const injectDefaultDashboard = (target) => {
+    // Clear existing
+    target.innerHTML = '';
 
-  // Clear old dashboards
-  target.innerHTML = '';
+    const btn = document.createElement('div');
+    btn.textContent = 'Default Dashboard';
 
-  // Create the new Default Dashboard button
-  const btn = document.createElement('div');
-  btn.textContent = 'Default Dashboard';
+    // Match Clarity-style with your custom orange
+    Object.assign(btn.style, {
+      backgroundColor: '#f79621',
+      color: '#fff',
+      padding: '8px 10px',
+      margin: '5px',
+      borderRadius: '4px',
+      textAlign: 'center',
+      fontWeight: 'bold',
+      fontFamily: 'Helvetica, Arial, sans-serif',
+      boxShadow: 'inset 0 0 0 1px #e67d0c',
+      cursor: 'default',
+      userSelect: 'none'
+    });
 
-  // Style it with your custom orange
-  btn.style.backgroundColor = '#f79621'; // Your specified orange
-  btn.style.color = '#fff';
-  btn.style.padding = '8px 10px';
-  btn.style.margin = '5px';
-  btn.style.borderRadius = '4px';
-  btn.style.textAlign = 'center';
-  btn.style.fontWeight = 'bold';
-  btn.style.cursor = 'default';
-  btn.style.fontFamily = 'Helvetica, Arial, sans-serif';
-  btn.style.boxShadow = 'inset 0 0 0 1px #e67d0c';
-  btn.style.userSelect = 'none';
+    target.appendChild(btn);
+    log('✅ Injected custom Default Dashboard button.');
+  };
 
-  // Inject
-  target.appendChild(btn);
-  log('✅ Default Dashboard button injected with custom orange.');
+  const tryInject = () => {
+    const target = document.getElementById('home-dashboards-body');
+    if (target) {
+      injectDefaultDashboard(target);
+      return true;
+    }
+    return false;
+  };
+
+  if (tryInject()) return;
+
+  // Set up a MutationObserver to wait for the sidebar
+  const observer = new MutationObserver((mutations, obs) => {
+    if (tryInject()) {
+      obs.disconnect(); // Stop watching once successful
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+
+  log('👀 Watching for sidebar to appear...');
 })();
+
 
 
 
