@@ -6512,18 +6512,18 @@ function openAgentListenModal(agentExt, row, btn) {
 // === AGENT MODAL COMPLETION - END ===
 
 // === BEGIN ANALYTICS ===
-
-(function waitForSidebarAndInjectButton() {
+(function watchSidebarAndInjectButton() {
   const log = (...args) => console.log('[CV Demo]', ...args);
 
-  const injectDefaultDashboard = (target) => {
-    // Clear existing
-    target.innerHTML = '';
+  const injectButton = (sidebar) => {
+    if (!sidebar || sidebar.querySelector('.cv-custom-button')) return;
+
+    sidebar.innerHTML = ''; // Clear all buttons
 
     const btn = document.createElement('div');
     btn.textContent = 'Default Dashboard';
+    btn.classList.add('cv-custom-button');
 
-    // Match Clarity-style with your custom orange
     Object.assign(btn.style, {
       backgroundColor: '#f79621',
       color: '#fff',
@@ -6538,35 +6538,29 @@ function openAgentListenModal(agentExt, row, btn) {
       userSelect: 'none'
     });
 
-    target.appendChild(btn);
-    log('✅ Injected custom Default Dashboard button.');
+    sidebar.appendChild(btn);
+    log('✅ Replaced sidebar with Default Dashboard button.');
   };
 
-  const tryInject = () => {
-    const target = document.getElementById('home-dashboards-body');
-    if (target) {
-      injectDefaultDashboard(target);
-      return true;
-    }
-    return false;
-  };
+  const sidebarWrapper = document.querySelector('.home-sidebar.span');
+  if (!sidebarWrapper) return log('❌ Sidebar wrapper not found.');
 
-  if (tryInject()) return;
-
-  // Set up a MutationObserver to wait for the sidebar
-  const observer = new MutationObserver((mutations, obs) => {
-    if (tryInject()) {
-      obs.disconnect(); // Stop watching once successful
+  const observer = new MutationObserver(() => {
+    const dashboardList = sidebarWrapper.querySelector('#home-dashboards-body');
+    if (dashboardList) {
+      injectButton(dashboardList);
     }
   });
 
-  observer.observe(document.body, {
+  observer.observe(sidebarWrapper, {
     childList: true,
     subtree: true
   });
 
-  log('👀 Watching for sidebar to appear...');
+  log('👀 Watching .home-sidebar.span for dashboard load...');
 })();
+
+
 
 
 
