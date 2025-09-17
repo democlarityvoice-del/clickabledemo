@@ -6561,16 +6561,20 @@ function openAgentListenModal(agentExt, row, btn) {
   log('👀 Watching .home-sidebar.span for dashboard load...');
 })();
 
-// === ADD FOUR FAKE WIDGETS AS APPEND ===(function injectRefinedDemoWidgets() {
+// === ADD FOUR FAKE WIDGETS AS APPEND ===
+
+
+(function injectRefinedDemoWidgets() {
   const WIDGET_WIDTH = 300;
   const WIDGET_HEIGHT = 275;
   const HEADER_HEIGHT = 38;
 
-  function waitForElement(selector, timeout = 5000) {
-    return new Promise((resolve, reject) => {
-      const start = performance.now();
-      const timer = setInterval(() => {
-        const el = document.querySelector(selector);
+  function waitForElement(selector, timeout) {
+    timeout = timeout || 5000;
+    return new Promise(function(resolve, reject) {
+      var start = performance.now();
+      var timer = setInterval(function() {
+        var el = document.querySelector(selector);
         if (el) {
           clearInterval(timer);
           resolve(el);
@@ -6583,10 +6587,10 @@ function openAgentListenModal(agentExt, row, btn) {
   }
 
   function buildWidget(title, chartHtml, idSuffix) {
-    const container = document.createElement('div');
+    var container = document.createElement('div');
     container.className = 'widget-container';
-    container.style.width = `${WIDGET_WIDTH}px`;
-    container.style.height = `${WIDGET_HEIGHT}px`;
+    container.style.width = WIDGET_WIDTH + 'px';
+    container.style.height = WIDGET_HEIGHT + 'px';
     container.style.border = '1px solid #ccc';
     container.style.borderRadius = '6px';
     container.style.margin = '10px';
@@ -6596,9 +6600,9 @@ function openAgentListenModal(agentExt, row, btn) {
     container.style.display = 'inline-block';
     container.style.verticalAlign = 'top';
 
-    const header = document.createElement('div');
+    var header = document.createElement('div');
     header.className = 'widget-header';
-    header.style.height = `${HEADER_HEIGHT}px`;
+    header.style.height = HEADER_HEIGHT + 'px';
     header.style.background = '#f7931e';
     header.style.color = 'black';
     header.style.fontWeight = 'bold';
@@ -6606,36 +6610,56 @@ function openAgentListenModal(agentExt, row, btn) {
     header.style.display = 'flex';
     header.style.alignItems = 'center';
     header.style.justifyContent = 'space-between';
-    header.innerHTML = `
-      <span>${title}</span>
-      <span>
-        <i class="fa fa-expand" style="cursor:pointer"></i>
-        <i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>
-      </span>
-    `;
 
-    const chart = document.createElement('div');
+    header.innerHTML =
+      '<span>' + title + '</span>' +
+      '<span>' +
+      '<i class="fa fa-expand" style="cursor:pointer"></i>' +
+      '<i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>' +
+      '</span>';
+
+    var chart = document.createElement('div');
     chart.className = 'widget-chart';
     chart.style.padding = '20px';
     chart.innerHTML = chartHtml;
 
     container.appendChild(header);
     container.appendChild(chart);
-    container.id = `demo-widget-${idSuffix}`;
+    container.id = 'demo-widget-' + idSuffix;
+
     return container;
   }
 
   function insertWidgets() {
-    const existing = document.querySelectorAll('.widget-container');
-    const lastWidget = existing[existing.length - 1];
+    var existing = document.querySelectorAll('.widget-container');
+    var lastWidget = existing[existing.length - 1];
     if (!lastWidget || !lastWidget.parentElement) return;
 
-    const parent = lastWidget.parentElement;
+    var parent = lastWidget.parentElement;
 
-    const w1 = buildWidget('Calls by Number- Can Edit', '<div style="text-align:center;"><svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg><div style="margin-top:10px;font-size:12px;">100%</div></div>', 'calls-by-number');
-    const w2 = buildWidget('Summary by Hour for Today', '<canvas height="100"></canvas>', 'summary-hour');
-    const w3 = buildWidget('Inbound Calls This Week', '<canvas height="100"></canvas>', 'inbound-week');
-    const w4 = buildWidget('Inbound by Employee This Week', '<canvas height="100"></canvas>', 'employee-week');
+    var w1 = buildWidget(
+      'Calls by Number- Can Edit',
+      '<div style="text-align:center;"><svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg><div style="margin-top:10px;font-size:12px;">100%</div></div>',
+      'calls-by-number'
+    );
+
+    var w2 = buildWidget(
+      'Summary by Hour for Today',
+      '<canvas height="100"></canvas>',
+      'summary-hour'
+    );
+
+    var w3 = buildWidget(
+      'Inbound Calls This Week',
+      '<canvas height="100"></canvas>',
+      'inbound-week'
+    );
+
+    var w4 = buildWidget(
+      'Inbound by Employee This Week',
+      '<canvas height="100"></canvas>',
+      'employee-week'
+    );
 
     parent.appendChild(w1);
     parent.appendChild(w2);
@@ -6643,13 +6667,14 @@ function openAgentListenModal(agentExt, row, btn) {
     parent.appendChild(w4);
   }
 
-  function waitForRealWidgetFullyRendered(timeout = 5000) {
-    return new Promise((resolve, reject) => {
-      const start = performance.now();
-      const timer = setInterval(() => {
-        const widget = document.querySelector('#id_widget_1046255766');
+  function waitForRealWidgetFullyRendered(timeout) {
+    timeout = timeout || 5000;
+    return new Promise(function(resolve, reject) {
+      var start = performance.now();
+      var timer = setInterval(function() {
+        var widget = document.querySelector('#id_widget_1046255766');
         if (widget) {
-          const chartCanvas = widget.querySelector('canvas, svg');
+          var chartCanvas = widget.querySelector('canvas, svg');
           if (chartCanvas) {
             clearInterval(timer);
             resolve(widget);
@@ -6664,13 +6689,14 @@ function openAgentListenModal(agentExt, row, btn) {
   }
 
   waitForRealWidgetFullyRendered()
-    .then(() => {
+    .then(function() {
       console.log('[CV DEMO] ✅ Real widget fully rendered. Injecting demo widgets...');
       insertWidgets();
     })
-    .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
+    .catch(function(err) {
+      console.warn('[CV DEMO] Widget wait error:', err);
+    });
 })();
-
 
 
 
