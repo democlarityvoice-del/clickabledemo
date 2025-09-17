@@ -6570,8 +6570,8 @@ function openAgentListenModal(agentExt, row, btn) {
   function buildWidget(title, chartHtml, idSuffix) {
     const container = document.createElement('div');
     container.className = 'widget-container';
-    container.style.width = `${WIDGET_WIDTH}px`;
-    container.style.height = `${WIDGET_HEIGHT}px`;
+    container.style.width = WIDGET_WIDTH + 'px';
+    container.style.height = WIDGET_HEIGHT + 'px';
     container.style.border = '1px solid #ccc`;
     container.style.borderRadius = '6px';
     container.style.margin = '10px';
@@ -6583,7 +6583,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
     const header = document.createElement('div');
     header.className = 'widget-header';
-    header.style.height = `${HEADER_HEIGHT}px`;
+    header.style.height = HEADER_HEIGHT + 'px';
     header.style.background = '#f7931e';
     header.style.color = 'black';
     header.style.fontWeight = 'bold';
@@ -6670,6 +6670,7 @@ function openAgentListenModal(agentExt, row, btn) {
     })
     .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
 })();
+
 
 
 
