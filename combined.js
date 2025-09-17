@@ -6644,23 +6644,14 @@ function openAgentListenModal(agentExt, row, btn) {
     console.log('[CV DEMO] ✅ Appended 4 fake widgets after real ones.');
   }
 
-  // --- Use MutationObserver to trigger when widget container exists ---
-  const observer = new MutationObserver((mutations, obs) => {
-    const anchor = document.querySelector('.widget-container');
-    if (anchor) {
-      obs.disconnect(); // stop watching
-      console.log('[CV DEMO] ✅ Found widget container. Injecting widgets...');
+waitForElement('#id_widget_1046255766')
+    .then(() => {
+      console.log('[CV DEMO] ✅ Real widget loaded, injecting fake widgets...');
       insertWidgets();
-    }
-  });
-
-  observer.observe(document.body, {
-    childList: true,
-    subtree: true
-  });
-
-  console.log('[CV DEMO] 🔍 Waiting for widget container...');
+    })
+    .catch((err) => console.warn('[CV DEMO] Widget wait error:', err));
 })();
+
 
 
 
