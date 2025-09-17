@@ -6511,6 +6511,41 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === AGENT MODAL COMPLETION - END ===
 
+// === BEGIN ANALYTICS ===
+
+(function replaceSidebarWithCustomOrangeButton() {
+  const log = (...args) => console.log('[CV Demo]', ...args);
+  const target = document.getElementById('home-dashboards-body');
+
+  if (!target) {
+    log('❌ Sidebar body not found.');
+    return;
+  }
+
+  // Clear old dashboards
+  target.innerHTML = '';
+
+  // Create the new Default Dashboard button
+  const btn = document.createElement('div');
+  btn.textContent = 'Default Dashboard';
+
+  // Style it with your custom orange
+  btn.style.backgroundColor = '#f79621'; // Your specified orange
+  btn.style.color = '#fff';
+  btn.style.padding = '8px 10px';
+  btn.style.margin = '5px';
+  btn.style.borderRadius = '4px';
+  btn.style.textAlign = 'center';
+  btn.style.fontWeight = 'bold';
+  btn.style.cursor = 'default';
+  btn.style.fontFamily = 'Helvetica, Arial, sans-serif';
+  btn.style.boxShadow = 'inset 0 0 0 1px #e67d0c';
+  btn.style.userSelect = 'none';
+
+  // Inject
+  target.appendChild(btn);
+  log('✅ Default Dashboard button injected with custom orange.');
+})();
 
 
 
