@@ -6591,13 +6591,13 @@ function openAgentListenModal(agentExt, row, btn) {
     header.style.display = 'flex';
     header.style.alignItems = 'center';
     header.style.justifyContent = 'space-between';
-    header.innerHTML = `
-      <span>${title}</span>
-      <span>
-        <i class="fa fa-expand" style="cursor:pointer"></i>
-        <i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>
-      </span>
-    `;
+    header.innerHTML =
+  '<span>' + title + '</span>' +
+  '<span>' +
+    '<i class="fa fa-expand" style="cursor:pointer"></i>' +
+    '<i class="fa fa-search" style="margin-left:10px; cursor:pointer"></i>' +
+  '</span>';
+
 
     const chart = document.createElement('div');
     chart.className = 'widget-chart';
@@ -6670,6 +6670,7 @@ function openAgentListenModal(agentExt, row, btn) {
     })
     .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
 })();
+
 
 
 
