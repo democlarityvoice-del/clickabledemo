@@ -6652,6 +6652,27 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 
+function waitForDashboardWidget(callback) {
+  const observer = new MutationObserver((mutations, obs) => {
+    const anchor = document.querySelector('.widget-container');
+    if (anchor) {
+      obs.disconnect(); // stop observing once we find it
+      callback(anchor);
+    }
+  });
+
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true
+  });
+}
+
+// Usage:
+waitForDashboardWidget((anchor) => {
+  console.log('[CV DEMO] ✅ Found widget container. Proceeding with injection...');
+  injectDemoWidgets(anchor); // replace this with your actual inject function
+});
+
 
 
 
