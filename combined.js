@@ -6575,7 +6575,6 @@ function openAgentListenModal(agentExt, row, btn) {
     const container = document.getElementById('sortable');
     if (!container || alreadyInjected()) return;
 
-    // Clear existing
     container.querySelectorAll('.dashboard-widget').forEach(w => w.remove());
 
     const createWidget = (title, chartId) => {
@@ -6654,7 +6653,6 @@ function openAgentListenModal(agentExt, row, btn) {
   };
 
   const drawCharts = () => {
-    // Line Chart
     const lineData = google.visualization.arrayToDataTable([
       ['Hour', 'All'],
       ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
@@ -6668,7 +6666,6 @@ function openAgentListenModal(agentExt, row, btn) {
     };
     new google.visualization.LineChart(document.getElementById('chart-summary')).draw(lineData, lineOptions);
 
-    // Inbound Column Chart
     const inboundData = google.visualization.arrayToDataTable([
       ['Day', 'Calls'],
       ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
@@ -6682,7 +6679,6 @@ function openAgentListenModal(agentExt, row, btn) {
     };
     new google.visualization.ColumnChart(document.getElementById('chart-inbound')).draw(inboundData, inboundOptions);
 
-    // Pie Chart
     const pieData = google.visualization.arrayToDataTable([
       ['Employee', 'Calls'],
       ['Mike Johnson', 70],
@@ -6696,7 +6692,6 @@ function openAgentListenModal(agentExt, row, btn) {
     };
     new google.visualization.PieChart(document.getElementById('chart-employee')).draw(pieData, pieOptions);
 
-    // Outbound Column Chart
     const outboundData = google.visualization.arrayToDataTable([
       ['Day', 'Calls'],
       ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
@@ -6711,7 +6706,7 @@ function openAgentListenModal(agentExt, row, btn) {
     new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, outboundOptions);
   };
 
-(function waitForFinalWidgetsToRender() {
+  // FINAL WIDGETS OBSERVER
   const FINAL_WIDGETS = [
     'Inbound by Employee This Week',
     'Outbound Calls This Week'
@@ -6726,18 +6721,26 @@ function openAgentListenModal(agentExt, row, btn) {
     );
 
     if (allFinalsPresent) {
-  observer.disconnect();
-  console.log('[CV DEMO] ✅ Final dashboard widgets rendered. Proceeding with injection.');
-  injectWidgets(); // ✅ Correct function name
+      observer.disconnect();
+      log('✅ Final dashboard widgets rendered. Proceeding with injection.');
+      injectWidgets();
     }
-
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
-})();
+
+  // ⏳ Optional fallback after 10s
+  setTimeout(() => {
+    log('⏰ Timeout reached. Forcing widget injection.');
+    injectWidgets();
+    observer.disconnect();
+  }, 10000);
+})(); // ✅ outer function closed
+
 
 
 })(); // ✅ FINAL FIX — closes watchAndInjectAnalyticsWidgets
+
 
 
 
