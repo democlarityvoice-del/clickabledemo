@@ -6562,7 +6562,6 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 // === ADD FOUR FAKE WIDGETS AS APPEND ===
-
 (function injectRefinedDemoWidgets() {
   const WIDGET_WIDTH = 300;
   const WIDGET_HEIGHT = 275;
@@ -6573,7 +6572,7 @@ function openAgentListenModal(agentExt, row, btn) {
     container.className = 'widget-container';
     container.style.width = `${WIDGET_WIDTH}px`;
     container.style.height = `${WIDGET_HEIGHT}px`;
-    container.style.border = '1px solid #ccc';
+    container.style.border = '1px solid #ccc`;
     container.style.borderRadius = '6px';
     container.style.margin = '10px';
     container.style.overflow = 'hidden';
@@ -6621,7 +6620,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
     const parent = lastWidget.parentElement;
 
-    const w1 = buildWidget('Calls by Number- Can Edit',
+    const w1 = buildWidget('Calls by Number - Can Edit',
       `<div style="text-align:center;">
         <svg><circle cx="50" cy="50" r="40" fill="#3373cc" /></svg>
         <div style="margin-top:10px;font-size:12px;">100%</div>
@@ -6644,31 +6643,35 @@ function openAgentListenModal(agentExt, row, btn) {
     console.log('[CV DEMO] ✅ Appended 4 fake widgets after real ones.');
   }
 
-function waitForRealWidgetFullyRendered(timeout = 5000) {
-  return new Promise((resolve, reject) => {
-    const start = performance.now();
-    const timer = setInterval(() => {
-      const widget = document.querySelector('#id_widget_1046255766');
-      if (widget) {
-        const chartCanvas = widget.querySelector('canvas, svg');
-        if (chartCanvas) {
-          clearInterval(timer);
-          resolve(widget);
+  function waitForRealWidgetFullyRendered(timeout = 5000) {
+    return new Promise((resolve, reject) => {
+      const start = performance.now();
+      const timer = setInterval(() => {
+        const widget = document.querySelector('#id_widget_1046255766');
+        if (widget) {
+          const chartCanvas = widget.querySelector('canvas, svg');
+          if (chartCanvas) {
+            clearInterval(timer);
+            resolve(widget);
+          }
         }
-      }
-      if (performance.now() - start > timeout) {
-        clearInterval(timer);
-        reject(new Error('Timeout: Real widget not fully rendered'));
-      }
-    }, 100);
-  });
-}
-waitForRealWidgetFullyRendered()
-  .then(() => {
-    console.log('[CV DEMO] ✅ Real widget fully rendered. Injecting demo widgets...');
-    insertWidgets();
-  })
-  .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
+        if (performance.now() - start > timeout) {
+          clearInterval(timer);
+          reject(new Error('Timeout: Real widget not fully rendered'));
+        }
+      }, 100);
+    });
+  }
+
+  waitForRealWidgetFullyRendered()
+    .then(() => {
+      console.log('[CV DEMO] ✅ Real widget fully rendered. Injecting demo widgets...');
+      insertWidgets();
+    })
+    .catch(err => console.warn('[CV DEMO] Widget wait error:', err));
+})();
+
+
 
 
 
