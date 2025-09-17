@@ -6709,18 +6709,31 @@ function openAgentListenModal(agentExt, row, btn) {
     new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, outboundOptions);
   };
 
-  // MutationObserver watches for #sortable injection
+(function waitForFinalWidgetsToRender() {
+  const FINAL_WIDGETS = [
+    'Inbound by Employee This Week',
+    'Outbound Calls This Week'
+  ];
+
   const observer = new MutationObserver(() => {
-    const sortable = document.getElementById('sortable');
-    if (sortable && !alreadyInjected()) {
-      injectWidgets();
+    const headers = Array.from(document.querySelectorAll('.widget-header'));
+    const titles = headers.map(h => h.textContent?.trim());
+
+    const allFinalsPresent = FINAL_WIDGETS.every(expected =>
+      titles.includes(expected)
+    );
+
+    if (allFinalsPresent) {
+      observer.disconnect();
+      console.log('[CV DEMO] ✅ Final dashboard widgets rendered. Proceeding with injection.');
+      injectDemoWidgets(); // Replace with your actual function
     }
   });
 
   observer.observe(document.body, { childList: true, subtree: true });
-
-  log('👀 Watching for Analytics widget container...');
 })();
+
+
 
 
 
