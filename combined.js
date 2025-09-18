@@ -6855,9 +6855,8 @@ function openAgentListenModal(agentExt, row, btn) {
     </div>
   `;
 
-  document.body.appendChild(modal);
-
-
+document.body.appendChild(modal);
+}
 
 
       // SUMMARY BY HOUR MODAL OPEN
@@ -6993,6 +6992,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
