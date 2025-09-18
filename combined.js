@@ -6789,7 +6789,8 @@ function openAgentListenModal(agentExt, row, btn) {
 }
 
     // CALL QUEUE SUMMARY MODAL
- (function cvSummaryModal() {
+ function cvSummaryModal() {
+
   // Remove any existing modal first
   const existing = document.querySelector('#cv-summary-modal');
   if (existing) existing.remove();
@@ -6998,6 +6999,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
