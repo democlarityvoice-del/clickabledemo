@@ -6562,6 +6562,190 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 // === ADD FOUR FAKE WIDGETS LOGIC ===
+// === CV DEMO DASHBOARD MODES ===
+(function () {
+  const log = (...args) => console.log('[CV DEMO]', ...args);
+  const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
+  const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+  const FINAL_WIDGETS = [
+    'Inbound by Employee This Week',
+    'Outbound Calls This Week'
+  ];
+
+  function injectSidebarButtons() {
+    const sidebar = document.querySelector('#home-dashboards-body');
+    if (!sidebar || sidebar.querySelector('.cv-mode-toggle')) return;
+
+    const createBtn = (label, onClick) => {
+      const btn = document.createElement('div');
+      btn.textContent = label;
+      btn.className = 'cv-mode-toggle';
+      Object.assign(btn.style, {
+        backgroundColor: '#f79621',
+        color: '#fff',
+        padding: '6px 10px',
+        margin: '5px',
+        borderRadius: '4px',
+        textAlign: 'center',
+        fontWeight: 'bold',
+        fontFamily: 'Helvetica, Arial, sans-serif',
+        boxShadow: 'inset 0 0 0 1px #e67d0c',
+        cursor: 'pointer',
+        userSelect: 'none',
+        fontSize: '12px'
+      });
+      btn.onclick = onClick;
+      return btn;
+    };
+
+    const liveBtn = createBtn('Live Mode', () => {
+      removeFakeWidgets();
+      forceReloadOriginalDashboard();
+    });
+
+    const demoBtn = createBtn('Return to Demo Mode', () => {
+      injectDemoWidgets();
+    });
+
+    sidebar.appendChild(liveBtn);
+    sidebar.appendChild(demoBtn);
+    log('✅ Injected Live/Demo mode buttons into sidebar.');
+  }
+
+  function removeFakeWidgets() {
+    document.querySelectorAll('.cv-demo-chart-injected').forEach(el => el.remove());
+    log('🧼 Removed all fake demo widgets.');
+  }
+
+  function forceReloadOriginalDashboard() {
+    location.reload(); // safest reset (if you want to soft-rebuild, you can use MutationObserver fallback)
+  }
+
+  function injectDemoWidgets() {
+    const container = document.getElementById('sortable');
+    if (!container || document.querySelector('.cv-demo-chart-injected')) return;
+
+    container.querySelectorAll('.dashboard-widget').forEach(w => w.remove());
+
+    const createWidget = (title, chartId) => {
+      const li = document.createElement('li');
+      li.className = 'dashboard-widget cv-demo-chart-injected';
+      li.style.width = '300px';
+      li.style.height = '275px';
+      li.style.margin = '10px';
+
+      li.innerHTML = `
+        <div class="widget-container" style="
+          width:100%; height:100%;
+          border:1px solid #ccc;
+          border-radius:6px;
+          background:#fff;
+          box-shadow:0 1px 2px rgba(0,0,0,0.2);
+          display:flex;
+          flex-direction:column;
+        ">
+          <div class="widget-header" style="
+            background:#f79621;
+            color:#fff;
+            font-weight:bold;
+            font-family:Helvetica, Arial, sans-serif;
+            padding:6px 10px;
+            border-radius:6px 6px 0 0;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            font-size:13px;
+          ">
+            <span>${title}</span>
+            <span style="display:flex; gap:6px;">
+              <img src="${ICON_ZOOM}" alt="Zoom" style="height:14px; cursor:pointer;" />
+              <img src="${ICON_EDIT}" alt="Edit" style="height:14px; cursor:pointer;" onclick="alert('Switch to Live Mode to edit this widget.');" />
+            </span>
+          </div>
+          <div class="widget-body" style="
+            flex:1;
+            padding:4px;
+            display:flex;
+            flex-direction:column;
+            justify-content:space-between;
+          ">
+            <div id="${chartId}" style="width:100%; height:85%;"></div>
+            <div style="font-size:11px; color:#333; text-align:right; padding-right:5px;">
+              1/17 <span style="color:#00f;">▸</span>
+            </div>
+          </div>
+        </div>
+      `;
+      return li;
+    };
+
+    container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
+    container.appendChild(createWidget('Inbound Calls This Week', 'chart-inbound'));
+    container.appendChild(createWidget('Inbound by Employee This Week', 'chart-employee'));
+    container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
+
+    loadAndDrawCharts();
+    log('✅ Demo widgets injected.');
+  }
+
+  function loadAndDrawCharts() {
+    if (!window.google || !google.charts) {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+      };
+      document.head.appendChild(script);
+    } else {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawCharts);
+    }
+  }
+
+  function drawCharts() {
+    const lineData = google.visualization.arrayToDataTable([
+      ['Hour', 'All'],
+      ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
+    ]);
+    new google.visualization.LineChart(document.getElementById('chart-summary'))
+      .draw(lineData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Hours of Day' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#3366cc'] });
+
+    const inboundData = google.visualization.arrayToDataTable([
+      ['Day', 'Calls'],
+      ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
+    ]);
+    new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
+      .draw(inboundData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Day of Week' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#3c8dbc'] });
+
+    const pieData = google.visualization.arrayToDataTable([
+      ['Employee', 'Calls'],
+      ['Mike Johnson', 70],
+      ['Others', 30]
+    ]);
+    new google.visualization.PieChart(document.getElementById('chart-employee'))
+      .draw(pieData, { chartArea: { width: '90%', height: '80%' }, legend: { position: 'bottom' }, pieHole: 0, colors: ['#3c8dbc', '#dd4b39'] });
+
+    const outboundData = google.visualization.arrayToDataTable([
+      ['Day', 'Calls'],
+      ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
+    ]);
+    new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
+      .draw(outboundData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Day of Week' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#ff851b'] });
+  }
+
+  // BEGIN injection
+  const sidebarReady = setInterval(() => {
+    const sidebar = document.querySelector('#home-dashboards-body');
+    if (sidebar) {
+      clearInterval(sidebarReady);
+      injectSidebarButtons();
+      injectDemoWidgets(); // inject immediately on load
+    }
+  }, 300);
+})();
+
 
 
 
