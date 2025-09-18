@@ -6583,7 +6583,7 @@ function openAgentListenModal(agentExt, row, btn) {
       btn.className = 'cv-mode-toggle';
       Object.assign(btn.style, {
           backgroundColor: '#f79621',
-          color: 'black',
+          color: '#fff', // ✅ Restore white text
           padding: '8px 12px',
           margin: '5px',
           borderRadius: '4px',
@@ -6660,26 +6660,37 @@ function openAgentListenModal(agentExt, row, btn) {
           ">
             <span>${title}</span>
             <span style="display:flex; gap:6px;">
-              <img src="${ICON_ZOOM}" alt="Zoom" style="height:14px; cursor:pointer;" />
-              <img src="${ICON_EDIT}" alt="Edit" style="height:14px; cursor:pointer;" onclick="alert('Switch to Live Mode to edit this widget.');" />
-            </span>
-          </div>
-          <div class="widget-body" style="
-            flex:1;
-            padding:4px;
-            display:flex;
-            flex-direction:column;
-            justify-content:space-between;
-          ">
-            <div id="${chartId}" style="width:100%; height:85%;"></div>
-            <div style="font-size:11px; color:#333; text-align:right; padding-right:5px;">
-              1/17 <span style="color:#00f;">▸</span>
+              <span style="display:flex; gap:6px;">
+                  <img
+                    src="${ICON_ZOOM}"
+                    alt="Zoom"
+                    style="height:14px; cursor:pointer;"
+                  />
+                  <img
+                    src="${ICON_EDIT}"
+                    alt="Edit"
+                    title='To demo Edit Widget, please click "Live Mode". To return to View Chart Details, please click "Return to Demo Mode".'
+                    style="height:14px; cursor:pointer;"
+                    onclick="alert('Switch to Live Mode to edit this widget.');"
+                  />           
+                </span>
+              </div>
+              <div class="widget-body" style="
+                flex:1;
+                padding:4px;
+                display:flex;
+                flex-direction:column;
+                justify-content:space-between;
+              ">
+                <div id="${chartId}" style="width:100%; height:85%;"></div>
+                <div style="font-size:11px; color:#333; text-align:right; padding-right:5px;">
+                  1/17 <span style="color:#00f;">▸</span>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      `;
-      return li;
-    };
+          `;
+          return li;
+        };
 
     container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
     container.appendChild(createWidget('Inbound Calls This Week', 'chart-inbound'));
@@ -6780,6 +6791,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
