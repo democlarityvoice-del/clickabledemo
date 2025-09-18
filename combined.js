@@ -6708,7 +6708,50 @@ function openAgentListenModal(agentExt, row, btn) {
     loadAndDrawCharts();
     log('✅ Demo widgets injected.');
   }
+    
+    // GOOGLE CHART HELPER for Call Queue by Hour
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
+    googleScript.onload = () => {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(() => renderSummaryChart('cv-summary-chart'));
+    };
+    document.head.appendChild(googleScript);
+    
+    // Replace the old renderSummaryChart with this version
+    function renderSummaryChart(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '<div id="summary-chart-google" style="width:100%; height:400px;"></div>';
+    
+      const data = google.visualization.arrayToDataTable([
+        ['Hour', 'Main Routing (300)', 'New Sales (301)', 'Existing Cust (302)', 'Billing (303)'],
+        ['8am', 0, 3, 0, 0],
+        ['9am', 3, 2, 3, 0],
+        ['10am', 2, 3, 2, 1],
+        ['11am', 0, 4, 0, 1],
+        ['12pm', 0, 1, 0, 0],
+        ['1pm', 0, 5, 0, 1],
+        ['2pm', 0, 3, 0, 0],
+      ]);
+    
+      const options = {
+        title: '',
+        curveType: 'function',
+        legend: { position: 'right' },
+        colors: ['#f00', '#0a0', '#00f', '#f90'],
+        chartArea: { width: '75%', height: '70%' },
+        hAxis: { title: 'Hour' },
+        vAxis: { title: 'Calls', viewWindow: { min: 0 } },
+        lineWidth: 3,
+        pointSize: 5,
+      };
+    
+      const chart = new google.visualization.LineChart(document.getElementById('summary-chart-google'));
+      chart.draw(data, options);
+    }
 
+    
   function loadAndDrawCharts() {
     if (!window.google || !google.charts) {
       const script = document.createElement('script');
@@ -6857,92 +6900,6 @@ function cvSummaryModal() {
 
 
 
-      // SUMMARY BY HOUR MODAL OPEN
-   function renderSummaryChart(containerId) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-
-  const canvas = document.createElement('canvas');
-  canvas.width = 900;
-  canvas.height = 400;
-  container.innerHTML = '';
-  container.appendChild(canvas);
-
-  const ctx = canvas.getContext('2d');
-
-  const queues = {
-    'Main Routing (300)': [3, 2, 0, 0, 0, 0],
-    'New Sales (301)': [0, 2, 3, 4, 1, 5],
-    'Existing Cust (302)': [3, 2, 0, 0, 0, 0],
-    'Billing (303)': [0, 1, 1, 0, 1, 0],
-  };
-  const colors = ['#f00', '#0a0', '#00f', '#f90'];
-  const hours = ['9am', '10am', '11am', '12pm', '1pm', '2pm'];
-
-  const chartLeft = 50;
-  const chartBottom = 360;
-  const chartRight = 850;
-  const chartTop = 40;
-  const chartHeight = chartBottom - chartTop;
-  const chartWidth = chartRight - chartLeft;
-
-  // Axes
-  ctx.strokeStyle = '#aaa';
-  ctx.beginPath();
-  ctx.moveTo(chartLeft, chartTop);
-  ctx.lineTo(chartLeft, chartBottom);
-  ctx.lineTo(chartRight, chartBottom);
-  ctx.stroke();
-
-  // Y-axis lines and labels
-  ctx.fillStyle = '#000';
-  ctx.font = '14px sans-serif';
-  for (let i = 0; i <= 6; i++) {
-    const y = chartBottom - i * (chartHeight / 6);
-    ctx.fillText(i.toString(), chartLeft - 20, y + 5);
-    ctx.beginPath();
-    ctx.moveTo(chartLeft, y);
-    ctx.lineTo(chartRight, y);
-    ctx.strokeStyle = '#eee';
-    ctx.stroke();
-  }
-
-  // X-axis labels
-  for (let i = 0; i < hours.length; i++) {
-    const x = chartLeft + i * (chartWidth / (hours.length - 1));
-    ctx.fillText(hours[i], x - 10, chartBottom + 20);
-  }
-
-  // Lines
-  let idx = 0;
-  for (let [label, data] of Object.entries(queues)) {
-    ctx.beginPath();
-    ctx.strokeStyle = colors[idx % colors.length];
-    for (let i = 0; i < data.length; i++) {
-      const x = chartLeft + i * (chartWidth / (data.length - 1));
-      const y = chartBottom - data[i] * (chartHeight / 6);
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.stroke();
-    idx++;
-  }
-
-  // Legend (expanded)
-  let legX = chartRight - 160;
-  let legY = chartTop;
-  idx = 0;
-  for (let [label] of Object.entries(queues)) {
-    ctx.fillStyle = colors[idx % colors.length];
-    ctx.fillRect(legX, legY, 12, 12);
-    ctx.fillStyle = '#000';
-    ctx.fillText(label, legX + 16, legY + 10);
-    legY += 20;
-    idx++;
-  }
-}
-
-
     
  // INBOUND MODAL 
         function cvInboundModal() {
@@ -7008,6 +6965,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
