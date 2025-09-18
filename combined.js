@@ -6840,10 +6840,13 @@ function cvSummaryModal() {
         <span style="cursor: pointer; font-size: 18px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
       </div>
     </div>
-    <div style="padding: 20px; display: flex; gap: 20px; overflow: auto;">
-      ${summaryChart}
-      ${queueTable}
+        <div style="padding: 0 20px 20px; flex: 1; overflow: hidden;">
+      <div style="display: flex; gap: 20px; overflow: auto; max-height: 100%;">
+        ${summaryChart}
+        ${queueTable}
+      </div>
     </div>
+
   `;
 
   document.body.appendChild(modal);
@@ -6985,6 +6988,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
