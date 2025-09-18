@@ -6780,6 +6780,139 @@ function openAgentListenModal(agentExt, row, btn) {
     });
 }
 
+function cvSummaryModal() {
+  const modal = document.createElement('div');
+  modal.className = 'cv-modal cv-summary-modal';
+  modal.style = `
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+    padding: 20px;
+    max-width: 1100px;
+    margin: 40px auto;
+    font-family: sans-serif;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+  `;
+
+  modal.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+      <div style="font-size: 22px; font-weight: bold;">Summary by Hour</div>
+      <div>
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="width:22px;height:22px;margin-right:10px;cursor:pointer;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="width:22px;height:22px;cursor:pointer;">
+      </div>
+    </div>
+
+    <div style="display: flex; margin-top: 25px; gap: 20px;">
+      <div id="cv-summary-chart" style="width: 65%; height: 300px; background: #f9f9f9; border: 1px solid #ddd;"></div>
+      <div style="flex-grow: 1;">
+        <table style="width: 100%; border-collapse: collapse;">
+          <thead>
+            <tr style="background:#f0f0f0;">
+              <th style="padding:8px;border:1px solid #ccc;">Hour</th>
+              <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+            <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
+            <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
+            <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
+            <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+            <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  `;
+    
+      // Inject the chart after the DOM is added
+      setTimeout(() => renderSummaryChart('cv-summary-chart'), 10);
+    
+      // Replace any existing modal or content
+      const container = document.querySelector('#sortable');
+      container.innerHTML = '';
+      container.appendChild(modal);
+    }
+
+
+      // SUMMARY BY HOUR MODAL OPEN
+    function renderSummaryChart(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+    
+      const canvas = document.createElement('canvas');
+      canvas.width = 600;
+      canvas.height = 300;
+      container.innerHTML = '';
+      container.appendChild(canvas);
+    
+      const ctx = canvas.getContext('2d');
+    
+      const queues = {
+        'Main Routing (300)': [3, 2, 0, 0, 0, 0],
+        'New Sales (301)':    [0, 2, 3, 4, 1, 5],
+        'Existing Cust (302)':[3, 2, 0, 0, 0, 0],
+        'Billing (303)':      [0, 1, 1, 0, 1, 0],
+      };
+      const colors = ['#f00', '#0a0', '#00f', '#f90'];
+      const hours = ['9am', '10am', '11am', '12pm', '1pm', '2pm'];
+    
+      ctx.strokeStyle = '#aaa';
+      ctx.beginPath();
+      ctx.moveTo(40, 10); ctx.lineTo(40, 290);
+      ctx.lineTo(590, 290);
+      ctx.stroke();
+    
+      ctx.fillStyle = '#000';
+      ctx.font = '12px sans-serif';
+      for (let i = 0; i <= 6; i++) {
+        let y = 290 - i * 45;
+        ctx.fillText(i, 20, y + 5);
+        ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(590, y); ctx.strokeStyle = '#eee'; ctx.stroke();
+      }
+    
+      for (let i = 0; i < hours.length; i++) {
+        let x = 40 + i * 90;
+        ctx.fillText(hours[i], x + 20, 305);
+      }
+    
+      let idx = 0;
+      for (let [label, data] of Object.entries(queues)) {
+        ctx.beginPath();
+        ctx.strokeStyle = colors[idx % colors.length];
+        for (let i = 0; i < data.length; i++) {
+          let x = 40 + i * 90;
+          let y = 290 - data[i] * 45;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        idx++;
+      }
+    
+      let legY = 10;
+      idx = 0;
+      for (let [label] of Object.entries(queues)) {
+        ctx.fillStyle = colors[idx % colors.length];
+        ctx.fillRect(500, legY, 10, 10);
+        ctx.fillStyle = '#000';
+        ctx.fillText(label, 515, legY + 10);
+        legY += 15;
+        idx++;
+      }
+    }
+    
+    document.addEventListener('click', function (e) {
+      const icon = e.target.closest('.cvas-action-icon[data-action="magnify"]');
+      if (!icon) return;
+    
+      e.preventDefault();
+      e.stopPropagation();
+      cvSummaryModal();
+    }, true);
+        
+    
 
   // BEGIN injection
   const sidebarReady = setInterval(() => {
@@ -6791,6 +6924,8 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
+
 
 
 
