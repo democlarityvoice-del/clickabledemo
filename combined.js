@@ -6819,7 +6819,7 @@ function openAgentListenModal(agentExt, row, btn) {
   // PURPLE COLUMN CHART (Outbound)
   const outboundData = google.visualization.arrayToDataTable([
     ['Day', 'Calls'],
-    ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
+    ['Sun', 13], ['Mon', 25], ['Tue', 22], ['Wed', 40], ['Thu', 31], ['Fri', 14]
   ]);
   new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
     .draw(outboundData, {
@@ -6885,7 +6885,7 @@ function cvSummaryModal() {
   `;
 
   modal.innerHTML = `
-    <div style="background: #f7931e; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+    <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
       <span>Summary by Hour</span>
       <div style="display: flex; align-items: center; gap: 10px;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
@@ -7056,6 +7056,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
