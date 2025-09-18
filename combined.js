@@ -6582,19 +6582,20 @@ function openAgentListenModal(agentExt, row, btn) {
       btn.textContent = label;
       btn.className = 'cv-mode-toggle';
       Object.assign(btn.style, {
-        backgroundColor: '#f79621',
-        color: '#fff',
-        padding: '6px 10px',
-        margin: '5px',
-        borderRadius: '4px',
-        textAlign: 'center',
-        fontWeight: 'bold',
-        fontFamily: 'Helvetica, Arial, sans-serif',
-        boxShadow: 'inset 0 0 0 1px #e67d0c',
-        cursor: 'pointer',
-        userSelect: 'none',
-        fontSize: '12px'
-      });
+          backgroundColor: '#f79621',
+          color: 'black',
+          padding: '8px 12px',
+          margin: '5px',
+          borderRadius: '4px',
+          textAlign: 'center',
+          fontWeight: 'bold',
+          fontFamily: 'Helvetica, Arial, sans-serif',
+          fontSize: '13px',
+          boxShadow: '0 1px 2px rgba(0,0,0,0.2)',
+          cursor: 'pointer',
+          userSelect: 'none'
+        });
+
       btn.onclick = onClick;
       return btn;
     };
@@ -6641,13 +6642,13 @@ function openAgentListenModal(agentExt, row, btn) {
           border:1px solid #ccc;
           border-radius:6px;
           background:#fff;
-          box-shadow:0 1px 2px rgba(0,0,0,0.2);
+          box-shadow: 0 0 3px rgba(0,0,0,0.1);
           display:flex;
           flex-direction:column;
         ">
           <div class="widget-header" style="
-            background:#f79621;
-            color:#fff;
+            background:#f7931e;
+            color:black;
             font-weight:bold;
             font-family:Helvetica, Arial, sans-serif;
             padding:6px 10px;
@@ -6705,35 +6706,69 @@ function openAgentListenModal(agentExt, row, btn) {
   }
 
   function drawCharts() {
-    const lineData = google.visualization.arrayToDataTable([
-      ['Hour', 'All'],
-      ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
-    ]);
-    new google.visualization.LineChart(document.getElementById('chart-summary'))
-      .draw(lineData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Hours of Day' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#3366cc'] });
+  // LINE CHART
+  const lineData = google.visualization.arrayToDataTable([
+    ['Hour', 'All'],
+    ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
+  ]);
+  new google.visualization.LineChart(document.getElementById('chart-summary'))
+    .draw(lineData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Hours of Day' },
+      vAxis: { title: 'Number of Calls', minValue: 0 },
+      colors: ['#3366cc'],
+      lineWidth: 3,
+      pointSize: 5,
+      tooltip: { textStyle: { fontSize: 12 } }
+    });
 
-    const inboundData = google.visualization.arrayToDataTable([
-      ['Day', 'Calls'],
-      ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
-    ]);
-    new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
-      .draw(inboundData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Day of Week' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#3c8dbc'] });
+  // GREEN COLUMN CHART (Inbound)
+  const inboundData = google.visualization.arrayToDataTable([
+    ['Day', 'Calls'],
+    ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
+  ]);
+  new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
+    .draw(inboundData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+      bar: { groupWidth: '65%' },
+      colors: ['#3cb371'] // MediumSeaGreen
+    });
 
-    const pieData = google.visualization.arrayToDataTable([
-      ['Employee', 'Calls'],
-      ['Mike Johnson', 70],
-      ['Others', 30]
-    ]);
-    new google.visualization.PieChart(document.getElementById('chart-employee'))
-      .draw(pieData, { chartArea: { width: '90%', height: '80%' }, legend: { position: 'bottom' }, pieHole: 0, colors: ['#3c8dbc', '#dd4b39'] });
+  // PIE CHART (Employee)
+  const pieData = google.visualization.arrayToDataTable([
+    ['Employee', 'Calls'],
+    ['Mike Johnson', 70],
+    ['Others', 30]
+  ]);
+  new google.visualization.PieChart(document.getElementById('chart-employee'))
+    .draw(pieData, {
+      chartArea: { width: '95%', height: '85%' },
+      legend: { position: 'bottom' },
+      pieHole: 0.4,
+      is3D: true,
+      colors: ['#3c8dbc', '#dd4b39']
+    });
 
-    const outboundData = google.visualization.arrayToDataTable([
-      ['Day', 'Calls'],
-      ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
-    ]);
-    new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
-      .draw(outboundData, { chartArea: { width: '80%', height: '70%' }, legend: { position: 'bottom' }, hAxis: { title: 'Day of Week' }, vAxis: { title: 'Number of Calls', minValue: 0 }, colors: ['#ff851b'] });
-  }
+  // PURPLE COLUMN CHART (Outbound)
+  const outboundData = google.visualization.arrayToDataTable([
+    ['Day', 'Calls'],
+    ['Sun', 3], ['Mon', 5], ['Tue', 2], ['Wed', 0], ['Thu', 1], ['Fri', 4]
+  ]);
+  new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
+    .draw(outboundData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+      bar: { groupWidth: '65%' },
+      colors: ['#8a2be2'] // BlueViolet
+    });
+}
+
 
   // BEGIN injection
   const sidebarReady = setInterval(() => {
@@ -6745,6 +6780,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
