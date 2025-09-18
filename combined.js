@@ -6628,13 +6628,19 @@ function openAgentListenModal(agentExt, row, btn) {
     if (!container || document.querySelector('.cv-demo-chart-injected')) return;
 
     container.querySelectorAll('.dashboard-widget').forEach(w => w.remove());
+    
+      const createWidget = (title, chartId) => {
+          let widgetType = 'unknown';
+          if (title.includes('Summary')) widgetType = 'summary';
+          else if (title.includes('Inbound Calls')) widgetType = 'inbound';
+          else if (title.includes('Outbound')) widgetType = 'outbound';
+          else if (title.includes('Employee')) widgetType = 'employee';
+        
+          const li = document.createElement('li');
+          li.className = 'dashboard-widget cv-demo-chart-injected';
+          li.setAttribute('data-widget', widgetType);
+     
 
-    const createWidget = (title, chartId) => {
-      const li = document.createElement('li');
-      li.className = 'dashboard-widget cv-demo-chart-injected';
-      li.style.width = '300px';
-      li.style.height = '275px';
-      li.style.margin = '10px';
 
       li.innerHTML = `
         <div class="widget-container" style="
@@ -6904,17 +6910,59 @@ function cvSummaryModal() {
         idx++;
       }
     }
+
+    
+ // INBOUND MODAL 
+        function cvInboundModal() {
+          alert('🟩 Inbound modal coming soon!');
+        }
+
+    
+    // OUTBOUND MODAL
+        function cvOutboundModal() {
+          alert('🟪 Outbound modal coming soon!');
+    }
+
+    
+     // EMPLOYEE MODAL  
+        function cvEmployeeModal() {
+          alert('🟦 Employee modal coming soon!');
+        }
+
+
     
     document.addEventListener('click', function (e) {
       const icon = e.target.closest('.cvas-action-icon[data-action="magnify"]');
       if (!icon) return;
     
+      const widget = icon.closest('[data-widget]');
+      const widgetType = widget?.getAttribute('data-widget');
+    
+      if (!widgetType) return;
+    
       e.preventDefault();
       e.stopPropagation();
     
-      console.log('🔍 Zoom icon clicked — opening modal...');
-      cvSummaryModal();
+      console.log(`🔍 Opening modal for: ${widgetType}`);
+    
+      switch (widgetType) {
+        case 'summary':
+          cvSummaryModal();
+          break;
+        case 'inbound':
+          cvInboundModal();
+          break;
+        case 'outbound':
+          cvOutboundModal();
+          break;
+        case 'employee':
+          cvEmployeeModal();
+          break;
+        default:
+          console.warn('No modal defined for widget type:', widgetType);
+      }
     }, true);
+
 
         
     
@@ -6929,6 +6977,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
