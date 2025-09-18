@@ -6789,20 +6789,11 @@ function openAgentListenModal(agentExt, row, btn) {
 }
 
     // CALL QUEUE SUMMARY MODAL
- function cvSummaryModal() {
-
-  // Remove any existing modal first
+function cvSummaryModal() {
   const existing = document.querySelector('#cv-summary-modal');
   if (existing) existing.remove();
 
-  // Dummy data for chart and table
-  const summaryChart = `<div id="cv-summary-chart" style="flex: 1;">
-    <svg width="100%" height="300px">
-      <!-- Fake Line Chart Placeholder -->
-      <line x1="60" y1="200" x2="100" y2="100" stroke="blue" stroke-width="2"/>
-      <line x1="100" y1="100" x2="140" y2="160" stroke="blue" stroke-width="2"/>
-    </svg>
-  </div>`;
+  const summaryChart = `<div id="cv-summary-chart" style="flex: 1;"></div>`;
 
   const queueTable = `
     <div id="cv-summary-table-container" style="flex: 1; overflow-x: auto;">
@@ -6846,7 +6837,7 @@ function openAgentListenModal(agentExt, row, btn) {
       <div style="display: flex; gap: 10px; align-items: center;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
-        <span style="cursor: pointer; font-size: 18px;" onclick="document.querySelector('#cv-summary-modal').remove()">&times;</span>
+        <span style="cursor: pointer; font-size: 18px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
       </div>
     </div>
     <div style="padding: 20px; display: flex; gap: 20px; overflow: auto;">
@@ -6855,8 +6846,10 @@ function openAgentListenModal(agentExt, row, btn) {
     </div>
   `;
 
-document.body.appendChild(modal);
+  document.body.appendChild(modal);
+  renderSummaryChart('cv-summary-chart');
 }
+
 
 
       // SUMMARY BY HOUR MODAL OPEN
@@ -6992,6 +6985,7 @@ document.body.appendChild(modal);
     }
   }, 300);
 })();
+
 
 
 
