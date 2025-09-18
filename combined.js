@@ -6857,71 +6857,90 @@ function cvSummaryModal() {
 
 
       // SUMMARY BY HOUR MODAL OPEN
-    function renderSummaryChart(containerId) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-    
-      const canvas = document.createElement('canvas');
-      canvas.width = 600;
-      canvas.height = 300;
-      container.innerHTML = '';
-      container.appendChild(canvas);
-    
-      const ctx = canvas.getContext('2d');
-    
-      const queues = {
-        'Main Routing (300)': [3, 2, 0, 0, 0, 0],
-        'New Sales (301)':    [0, 2, 3, 4, 1, 5],
-        'Existing Cust (302)':[3, 2, 0, 0, 0, 0],
-        'Billing (303)':      [0, 1, 1, 0, 1, 0],
-      };
-      const colors = ['#f00', '#0a0', '#00f', '#f90'];
-      const hours = ['9am', '10am', '11am', '12pm', '1pm', '2pm'];
-    
-      ctx.strokeStyle = '#aaa';
-      ctx.beginPath();
-      ctx.moveTo(40, 10); ctx.lineTo(40, 290);
-      ctx.lineTo(590, 290);
-      ctx.stroke();
-    
-      ctx.fillStyle = '#000';
-      ctx.font = '12px sans-serif';
-      for (let i = 0; i <= 6; i++) {
-        let y = 290 - i * 45;
-        ctx.fillText(i, 20, y + 5);
-        ctx.beginPath(); ctx.moveTo(40, y); ctx.lineTo(590, y); ctx.strokeStyle = '#eee'; ctx.stroke();
-      }
-    
-      for (let i = 0; i < hours.length; i++) {
-        let x = 40 + i * 90;
-        ctx.fillText(hours[i], x + 20, 305);
-      }
-    
-      let idx = 0;
-      for (let [label, data] of Object.entries(queues)) {
-        ctx.beginPath();
-        ctx.strokeStyle = colors[idx % colors.length];
-        for (let i = 0; i < data.length; i++) {
-          let x = 40 + i * 90;
-          let y = 290 - data[i] * 45;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.stroke();
-        idx++;
-      }
-    
-      let legY = 10;
-      idx = 0;
-      for (let [label] of Object.entries(queues)) {
-        ctx.fillStyle = colors[idx % colors.length];
-        ctx.fillRect(500, legY, 10, 10);
-        ctx.fillStyle = '#000';
-        ctx.fillText(label, 515, legY + 10);
-        legY += 15;
-        idx++;
-      }
+   function renderSummaryChart(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const canvas = document.createElement('canvas');
+  canvas.width = 900;
+  canvas.height = 400;
+  container.innerHTML = '';
+  container.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  const queues = {
+    'Main Routing (300)': [3, 2, 0, 0, 0, 0],
+    'New Sales (301)': [0, 2, 3, 4, 1, 5],
+    'Existing Cust (302)': [3, 2, 0, 0, 0, 0],
+    'Billing (303)': [0, 1, 1, 0, 1, 0],
+  };
+  const colors = ['#f00', '#0a0', '#00f', '#f90'];
+  const hours = ['9am', '10am', '11am', '12pm', '1pm', '2pm'];
+
+  const chartLeft = 50;
+  const chartBottom = 360;
+  const chartRight = 850;
+  const chartTop = 40;
+  const chartHeight = chartBottom - chartTop;
+  const chartWidth = chartRight - chartLeft;
+
+  // Axes
+  ctx.strokeStyle = '#aaa';
+  ctx.beginPath();
+  ctx.moveTo(chartLeft, chartTop);
+  ctx.lineTo(chartLeft, chartBottom);
+  ctx.lineTo(chartRight, chartBottom);
+  ctx.stroke();
+
+  // Y-axis lines and labels
+  ctx.fillStyle = '#000';
+  ctx.font = '14px sans-serif';
+  for (let i = 0; i <= 6; i++) {
+    const y = chartBottom - i * (chartHeight / 6);
+    ctx.fillText(i.toString(), chartLeft - 20, y + 5);
+    ctx.beginPath();
+    ctx.moveTo(chartLeft, y);
+    ctx.lineTo(chartRight, y);
+    ctx.strokeStyle = '#eee';
+    ctx.stroke();
+  }
+
+  // X-axis labels
+  for (let i = 0; i < hours.length; i++) {
+    const x = chartLeft + i * (chartWidth / (hours.length - 1));
+    ctx.fillText(hours[i], x - 10, chartBottom + 20);
+  }
+
+  // Lines
+  let idx = 0;
+  for (let [label, data] of Object.entries(queues)) {
+    ctx.beginPath();
+    ctx.strokeStyle = colors[idx % colors.length];
+    for (let i = 0; i < data.length; i++) {
+      const x = chartLeft + i * (chartWidth / (data.length - 1));
+      const y = chartBottom - data[i] * (chartHeight / 6);
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
     }
+    ctx.stroke();
+    idx++;
+  }
+
+  // Legend (expanded)
+  let legX = chartRight - 160;
+  let legY = chartTop;
+  idx = 0;
+  for (let [label] of Object.entries(queues)) {
+    ctx.fillStyle = colors[idx % colors.length];
+    ctx.fillRect(legX, legY, 12, 12);
+    ctx.fillStyle = '#000';
+    ctx.fillText(label, legX + 16, legY + 10);
+    legY += 20;
+    idx++;
+  }
+}
+
 
     
  // INBOUND MODAL 
@@ -6988,6 +7007,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
