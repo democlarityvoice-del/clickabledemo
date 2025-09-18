@@ -6840,18 +6840,20 @@ function cvSummaryModal() {
   const summaryChart = `<div id="cv-summary-chart" style="flex: 1; min-width: 900px;"></div>`;
 
   const queueTable = `
-    <div id="cv-summary-table-container" style="min-width: 450px; overflow-x: auto;">
+    <div id="cv-summary-table-container" style="max-height: 360px; overflow-x: auto; overflow-y: auto;">
     <table style="min-width: 700px;">
-      <table style="border-collapse: collapse; width: 100%;">
-        <thead>
-          <tr style="background-color: #f2f2f2;">
-            <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Queue</th>
+      <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
+       <thead>
+         <tr>
+            <th style="text-align: left; padding: 4px 8px;">Queue</th
             <th>8:00</th><th>9:00</th><th>10:00</th><th>11:00</th><th>12:00</th>
             <th>1:00</th><th>2:00</th>
           </tr>
         </thead>
         <tbody>
-          <tr><td>Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr>
+          <td style="padding: 4px 8px;"
+          <td>Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
           <tr><td>New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td></tr>
           <tr><td>Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
           <tr><td>Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
@@ -6880,7 +6882,10 @@ function cvSummaryModal() {
   modal.innerHTML = `
     <div style="background: #f7931e; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
       <span>Summary by Hour</span>
-      <div style="display: flex; gap: 10px; align-items: center;">
+          <div style="display: flex; gap: 20px; height: 360px;">
+           <div id="cv-summary-chart" style="flex: 2;"></div>
+           <div id="cv-summary-table-container" style="flex: 1; overflow: auto; max-height: 360px;"></div>
+          </div>
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
         <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
@@ -6966,6 +6971,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
