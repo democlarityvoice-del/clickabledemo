@@ -6841,7 +6841,7 @@ function cvSummaryModal() {
       </div>
     </div>
         <div style="padding: 0 20px 20px; flex: 1; overflow: hidden;">
-      <div style="display: flex; gap: 20px; overflow: auto; max-height: 100%;">
+      <div style="display: flex; gap: 20px; overflow: auto; height: 360px;">
         ${summaryChart}
         ${queueTable}
       </div>
@@ -6988,6 +6988,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
