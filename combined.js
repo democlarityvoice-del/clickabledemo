@@ -6629,17 +6629,16 @@ function openAgentListenModal(agentExt, row, btn) {
 
     container.querySelectorAll('.dashboard-widget').forEach(w => w.remove());
     
-      const createWidget = (title, chartId) => {
-          let widgetType = 'unknown';
-          if (title.includes('Summary')) widgetType = 'summary';
-          else if (title.includes('Inbound Calls')) widgetType = 'inbound';
-          else if (title.includes('Outbound')) widgetType = 'outbound';
-          else if (title.includes('Employee')) widgetType = 'employee';
-        
-          const li = document.createElement('li');
-          li.className = 'dashboard-widget cv-demo-chart-injected';
-          li.setAttribute('data-widget', widgetType);
-     
+  const createWidget = (title, chartId) => {
+      let widgetType = 'unknown';
+      if (title.includes('Summary')) widgetType = 'summary';
+      else if (title.includes('Inbound Calls')) widgetType = 'inbound';
+      else if (title.includes('Outbound')) widgetType = 'outbound';
+      else if (title.includes('Employee')) widgetType = 'employee';
+    
+      const li = document.createElement('li');
+      li.className = 'dashboard-widget cv-demo-chart-injected';
+      li.setAttribute('data-widget', widgetType);     
 
 
       li.innerHTML = `
@@ -6699,6 +6698,7 @@ function openAgentListenModal(agentExt, row, btn) {
           `;
           return li;
         };
+
 
     container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
     container.appendChild(createWidget('Inbound Calls This Week', 'chart-inbound'));
@@ -6788,51 +6788,52 @@ function openAgentListenModal(agentExt, row, btn) {
     });
 }
 
-function cvSummaryModal() {
-  const modal = document.createElement('div');
-  modal.className = 'cv-modal cv-summary-modal';
-  modal.style = `
-    background: #fff;
-    border: 1px solid #ccc;
-    border-radius: 10px;
-    padding: 20px;
-    max-width: 1100px;
-    margin: 40px auto;
-    font-family: sans-serif;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
-  `;
-
-  modal.innerHTML = `
-    <div style="display:flex; justify-content:space-between; align-items:center;">
-      <div style="font-size: 22px; font-weight: bold;">Summary by Hour</div>
-      <div>
-        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="width:22px;height:22px;margin-right:10px;cursor:pointer;">
-        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="width:22px;height:22px;cursor:pointer;">
-      </div>
-    </div>
-
-    <div style="display: flex; margin-top: 25px; gap: 20px;">
-      <div id="cv-summary-chart" style="width: 65%; height: 300px; background: #f9f9f9; border: 1px solid #ddd;"></div>
-      <div style="flex-grow: 1;">
-        <table style="width: 100%; border-collapse: collapse;">
-          <thead>
-            <tr style="background:#f0f0f0;">
-              <th style="padding:8px;border:1px solid #ccc;">Hour</th>
-              <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-            <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
-            <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
-            <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
-            <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-            <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  `;
+    // CALL QUEUE SUMMARY MODAL
+    function cvSummaryModal() {
+      const modal = document.createElement('div');
+      modal.className = 'cv-modal cv-summary-modal';
+      modal.style = `
+        background: #fff;
+        border: 1px solid #ccc;
+        border-radius: 10px;
+        padding: 20px;
+        max-width: 1100px;
+        margin: 40px auto;
+        font-family: sans-serif;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+      `;
+    
+      modal.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div style="font-size: 22px; font-weight: bold;">Summary by Hour</div>
+          <div>
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="width:22px;height:22px;margin-right:10px;cursor:pointer;">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="width:22px;height:22px;cursor:pointer;">
+          </div>
+        </div>
+    
+        <div style="display: flex; margin-top: 25px; gap: 20px;">
+          <div id="cv-summary-chart" style="width: 65%; height: 300px; background: #f9f9f9; border: 1px solid #ddd;"></div>
+          <div style="flex-grow: 1;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background:#f0f0f0;">
+                  <th style="padding:8px;border:1px solid #ccc;">Hour</th>
+                  <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+                <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
     
       // Inject the chart after the DOM is added
       setTimeout(() => renderSummaryChart('cv-summary-chart'), 10);
@@ -6977,6 +6978,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
