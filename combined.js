@@ -6844,7 +6844,7 @@ function cvSummaryModal() {
       <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
         <thead>
           <tr>
-            <th style="text-align: left; padding: 4px 8px;">Queue</th>
+            <th style="text-align: center; padding: 4px 8px;">Queue</th>
             <th>8:00</th><th>9:00</th><th>10:00</th><th>11:00</th><th>12:00</th>
             <th>1:00</th><th>2:00</th>
           </tr>
@@ -6926,7 +6926,7 @@ function cvInboundModal() {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 1300px;
-    height: 750px;
+    height: 540px;
     background: white;
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
     z-index: 9999;
@@ -6937,7 +6937,7 @@ function cvInboundModal() {
   `;
 
   modal.innerHTML = `
-    <div style="background: #f7931e; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+    <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
       <span>Inbound This Week</span>
       <div style="display: flex; gap: 20px;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
@@ -6952,7 +6952,7 @@ function cvInboundModal() {
           <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
             <thead>
               <tr style="background: #eee;">
-                <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                <th style="padding: 4px 8px; text-align: center;">Marketing Number</th>
                 <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
               </tr>
             </thead>
@@ -6986,7 +6986,7 @@ function renderInboundChart(containerId) {
   const options = {
     title: 'Inbound This Week',
     legend: { position: 'none' },
-    colors: ['#4f81bd'],
+    colors: ['#3cb371'],
     chartArea: { width: '75%', height: '65%' },
     height: 600,
     hAxis: { title: 'Day of Week', titleTextStyle: { italic: true } },
@@ -7056,6 +7056,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
