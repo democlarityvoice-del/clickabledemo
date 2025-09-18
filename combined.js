@@ -6843,12 +6843,18 @@ function cvSummaryModal() {
     <div id="cv-summary-table-container" style="flex: 1; max-height: 360px; overflow: auto;">
       <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
         <thead>
-          <tr>
-            <th style="text-align: center; padding: 4px 8px;">Queue</th>
-            <th>8:00</th><th>9:00</th><th>10:00</th><th>11:00</th><th>12:00</th>
-            <th>1:00</th><th>2:00</th>
+          <tr style="background: #eee;">
+            <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+            <th style="transform: translateX(-4px);">8:00</th>
+            <th style="transform: translateX(-4px);">9:00</th>
+            <th style="transform: translateX(-4px);">10:00</th>
+            <th style="transform: translateX(-4px);">11:00</th>
+            <th style="transform: translateX(-4px);">12:00</th>
+            <th style="transform: translateX(-4px);">1:00</th>
+            <th style="transform: translateX(-4px);">2:00</th>
           </tr>
         </thead>
+
         <tbody>
           <tr>
             <td style="padding: 4px 8px;">Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
@@ -6947,15 +6953,25 @@ function cvInboundModal() {
     </div>
     <div style="flex: 1; padding: 15px 20px; overflow: auto;">
       <div style="display: flex; gap: 30px; min-width: 1000px;">
-        <div id="${chartId}" style="flex: 2; height: 600px;"></div>
+        <div id="${chartId}" style="flex: 2; height: 300px;"></div>
         <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
           <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
             <thead>
               <tr style="background: #eee;">
-                <th style="padding: 4px 8px; text-align: center;">Marketing Number</th>
-                <th>Sun</th><th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th>
-              </tr>
-            </thead>
+                <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                <thead>
+                  <tr style="background: #eee;">
+                    <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                    <th style="transform: translateX(-4px);">Sun</th>
+                    <th style="transform: translateX(-4px);">Mon</th>
+                    <th style="transform: translateX(-4px);">Tue</th>
+                    <th style="transform: translateX(-4px);">Wed</th>
+                    <th style="transform: translateX(-4px);">Thu</th>
+                    <th style="transform: translateX(-4px);">Fri</th>
+                    <th style="transform: translateX(-4px);">Sat</th>
+                  </tr>
+                </thead>
+
             <tbody>
               <tr><td>(248) 436-3443 (300)</td><td>0</td><td>3</td><td>5</td><td>10</td><td>8</td><td>7</td><td>2</td></tr>
               <tr><td>(248) 436-3449 (700)</td><td>0</td><td>3</td><td>3</td><td>22</td><td>13</td><td>18</td><td>6</td></tr>
@@ -7056,6 +7072,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
