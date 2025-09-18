@@ -6725,15 +6725,16 @@ function openAgentListenModal(agentExt, row, btn) {
       container.innerHTML = '<div id="summary-chart-google" style="width:100%; height:400px;"></div>';
     
       const data = google.visualization.arrayToDataTable([
-        ['Hour', 'Main Routing (300)', 'New Sales (301)', 'Existing Cust (302)', 'Billing (303)'],
-        ['8am', 0, 3, 0, 0],
-        ['9am', 3, 2, 3, 0],
-        ['10am', 2, 3, 2, 1],
-        ['11am', 0, 4, 0, 1],
-        ['12pm', 0, 1, 0, 0],
-        ['1pm', 0, 5, 0, 1],
-        ['2pm', 0, 3, 0, 0],
-      ]);
+          ['Hour', 'New Sales (301)', 'Existing Cust (302)', 'Billing (303)', 'Main Routing (300)'],
+          ['8am', 3, 0, 0, 0],
+          ['9am', 2, 3, 0, 0],       // Existing Cust visible here
+          ['10am', 3, 2, 1, 0],      // Shared slot (leave 0 for Main Routing)
+          ['11am', 4, 0, 1, 2],      // Add Main Routing here
+          ['12pm', 1, 0, 0, 3],      // And again here
+          ['1pm', 5, 0, 1, 0],
+          ['2pm', 3, 0, 0, 0]
+        ]);
+
     
       const options = {
         title: '',
@@ -6965,6 +6966,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
