@@ -6856,13 +6856,7 @@ function openAgentListenModal(agentExt, row, btn) {
   `;
 
   document.body.appendChild(modal);
-})();
-   
-      // Close handler
-      document.getElementById('cv-summary-close')?.addEventListener('click', () => {
-        modal.remove();
-      });
-    }
+
 
 
 
@@ -6999,6 +6993,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
