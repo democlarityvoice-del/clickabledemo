@@ -6662,10 +6662,12 @@ function openAgentListenModal(agentExt, row, btn) {
             <span style="display:flex; gap:6px;">
               <span style="display:flex; gap:6px;">
                   <img
-                    src="${ICON_ZOOM}"
-                    alt="Zoom"
-                    style="height:14px; cursor:pointer;"
-                  />
+                      src="${ICON_ZOOM}"
+                      alt="Zoom"
+                      class="cvas-action-icon"
+                      data-action="magnify"
+                      style="height:14px; cursor:pointer;"
+                    />
                   <img
                     src="${ICON_EDIT}"
                     alt="Edit"
@@ -6909,8 +6911,11 @@ function cvSummaryModal() {
     
       e.preventDefault();
       e.stopPropagation();
+    
+      console.log('🔍 Zoom icon clicked — opening modal...');
       cvSummaryModal();
     }, true);
+
         
     
 
@@ -6924,6 +6929,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
