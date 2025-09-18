@@ -2019,7 +2019,7 @@ if (!window.__cvAgentsPanelInit) {
         '#',ROOT_ID,' .cvhf-axis-label{font:11px Arial;fill:#666;text-anchor:end}',
 
         /* bars */
-        '#',ROOT_ID,' .cvhf-bar{fill:#e57027}',
+        '#',ROOT_ID,' .cvhf-bar{fill:#f7931e}',
 
         /* donut pie with centered % */
         '#',ROOT_ID,' .cvhf-pie{position:relative;width:var(--size);height:var(--size);margin:8px auto;border-radius:50%;',
@@ -6832,7 +6832,7 @@ function cvSummaryModal() {
   `;
 
   modal.innerHTML = `
-    <div style="background: #e57027; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+    <div style="background: #f7931e; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
       <span>Summary by Hour</span>
       <div style="display: flex; gap: 10px; align-items: center;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
@@ -6974,8 +6974,7 @@ function cvSummaryModal() {
       }
     }, true);
 
-
-        
+       
     
 
   // BEGIN injection
@@ -6988,6 +6987,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
