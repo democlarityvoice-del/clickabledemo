@@ -6793,10 +6793,11 @@ function cvSummaryModal() {
   const existing = document.querySelector('#cv-summary-modal');
   if (existing) existing.remove();
 
-  const summaryChart = `<div id="cv-summary-chart" style="min-width: 800px; height: 300px;"></div>`;
+  const summaryChart = `<div id="cv-summary-chart" style="flex: 1; min-width: 900px;"></div>`;
 
   const queueTable = `
     <div id="cv-summary-table-container" style="min-width: 450px; overflow-x: auto;">
+    <table style="min-width: 700px;">
       <table style="border-collapse: collapse; width: 100%;">
         <thead>
           <tr style="background-color: #f2f2f2;">
@@ -7007,6 +7008,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
