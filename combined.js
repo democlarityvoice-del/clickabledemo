@@ -6789,79 +6789,74 @@ function openAgentListenModal(agentExt, row, btn) {
 }
 
     // CALL QUEUE SUMMARY MODAL
-        function cvSummaryModal() {
-      // Remove any existing modal
-      const existing = document.getElementById('cv-summary-modal');
-      if (existing) existing.remove();
-    
-      const modal = document.createElement('div');
-      modal.id = 'cv-summary-modal';
-      modal.style = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1000px;
-        max-width: 95vw;
-        background: white;
-        border-radius: 6px;
-        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-        z-index: 9999;
-        font-family: Helvetica, Arial, sans-serif;
-      `;
-    
-      modal.innerHTML = `
-        <div style="
-          background: #f79621;
-          color: white;
-          font-weight: bold;
-          font-size: 16px;
-          padding: 10px 16px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          border-top-left-radius: 6px;
-          border-top-right-radius: 6px;
-        ">
-          <span>Summary by Hour</span>
-          <span style="cursor: pointer; font-size: 20px;" id="cv-summary-close">&times;</span>
-        </div>
-    
-        <div style="padding: 20px;">
-          <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between;">
-            <div id="cv-summary-chart" style="
-              flex: 1 1 600px;
-              min-width: 300px;
-              height: 300px;
-              background: #f9f9f9;
-              border: 1px solid #ddd;
-            "></div>
-    
-            <div style="flex: 0 1 300px; min-width: 250px; max-width: 100%; overflow-x: auto;">
-              <table style="width: 100%; border-collapse: collapse;">
-                <thead>
-                  <tr style="background:#f0f0f0;">
-                    <th style="padding:8px;border:1px solid #ccc;">Hour</th>
-                    <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-                  <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    
-      document.body.appendChild(modal);
-      setTimeout(() => renderSummaryChart('cv-summary-chart'), 10);
-    
+ (function cvSummaryModal() {
+  // Remove any existing modal first
+  const existing = document.querySelector('#cv-summary-modal');
+  if (existing) existing.remove();
+
+  // Dummy data for chart and table
+  const summaryChart = `<div id="cv-summary-chart" style="flex: 1;">
+    <svg width="100%" height="300px">
+      <!-- Fake Line Chart Placeholder -->
+      <line x1="60" y1="200" x2="100" y2="100" stroke="blue" stroke-width="2"/>
+      <line x1="100" y1="100" x2="140" y2="160" stroke="blue" stroke-width="2"/>
+    </svg>
+  </div>`;
+
+  const queueTable = `
+    <div id="cv-summary-table-container" style="flex: 1; overflow-x: auto;">
+      <table style="border-collapse: collapse; width: 100%; min-width: 600px;">
+        <thead>
+          <tr style="background-color: #f2f2f2;">
+            <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Queue</th>
+            <th>8:00</th><th>9:00</th><th>10:00</th><th>11:00</th><th>12:00</th>
+            <th>1:00</th><th>2:00</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td></tr>
+          <tr><td>Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+          <tr><td>Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td></tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  const modal = document.createElement('div');
+  modal.id = 'cv-summary-modal';
+  modal.style = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1000px;
+    max-height: 600px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+  `;
+
+  modal.innerHTML = `
+    <div style="background: #e57027; color: white; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+      <span>Summary by Hour</span>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+        <span style="cursor: pointer; font-size: 18px;" onclick="document.querySelector('#cv-summary-modal').remove()">&times;</span>
+      </div>
+    </div>
+    <div style="padding: 20px; display: flex; gap: 20px; overflow: auto;">
+      ${summaryChart}
+      ${queueTable}
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+})();
+   
       // Close handler
       document.getElementById('cv-summary-close')?.addEventListener('click', () => {
         modal.remove();
@@ -7003,6 +6998,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
