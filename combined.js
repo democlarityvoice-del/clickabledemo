@@ -6793,11 +6793,11 @@ function cvSummaryModal() {
   const existing = document.querySelector('#cv-summary-modal');
   if (existing) existing.remove();
 
-  const summaryChart = `<div id="cv-summary-chart" style="flex: 1;"></div>`;
+  const summaryChart = `<div id="cv-summary-chart" style="min-width: 800px; height: 300px;"></div>`;
 
   const queueTable = `
-    <div id="cv-summary-table-container" style="flex: 1; overflow-x: auto;">
-      <table style="border-collapse: collapse; width: 100%; min-width: 600px;">
+    <div id="cv-summary-table-container" style="min-width: 450px; overflow-x: auto;">
+      <table style="border-collapse: collapse; width: 100%;">
         <thead>
           <tr style="background-color: #f2f2f2;">
             <th style="padding: 8px; border: 1px solid #ccc; text-align: left;">Queue</th>
@@ -6821,14 +6821,15 @@ function cvSummaryModal() {
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    width: 1000px;
-    max-height: 600px;
+    width: 1300px;
+    height: 750px;
     background: white;
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
     z-index: 9999;
     border: 1px solid #ccc;
     display: flex;
     flex-direction: column;
+    font-family: Helvetica, Arial, sans-serif;
   `;
 
   modal.innerHTML = `
@@ -6837,21 +6838,21 @@ function cvSummaryModal() {
       <div style="display: flex; gap: 10px; align-items: center;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
         <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
-        <span style="cursor: pointer; font-size: 18px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
+        <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
       </div>
     </div>
-        <div style="padding: 0 20px 20px; flex: 1; overflow: hidden;">
-      <div style="display: flex; gap: 20px; overflow: auto; height: 360px;">
+    <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+      <div style="display: flex; gap: 30px; min-width: 1000px;">
         ${summaryChart}
         ${queueTable}
       </div>
     </div>
-
   `;
 
   document.body.appendChild(modal);
   renderSummaryChart('cv-summary-chart');
 }
+
 
 
 
@@ -6987,6 +6988,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
