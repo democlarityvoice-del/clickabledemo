@@ -6874,7 +6874,7 @@ function cvSummaryModal() {
     left: 50%;
     transform: translate(-50%, -50%);
     width: 1300px;
-    height: 750px;
+    height: 540px;
     background: white;
     box-shadow: 0 0 15px rgba(0,0,0,0.3);
     z-index: 9999;
@@ -6973,6 +6973,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
