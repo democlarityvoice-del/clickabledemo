@@ -6789,60 +6789,85 @@ function openAgentListenModal(agentExt, row, btn) {
 }
 
     // CALL QUEUE SUMMARY MODAL
-    function cvSummaryModal() {
+        function cvSummaryModal() {
+      // Remove any existing modal
+      const existing = document.getElementById('cv-summary-modal');
+      if (existing) existing.remove();
+    
       const modal = document.createElement('div');
-      modal.className = 'cv-modal cv-summary-modal';
+      modal.id = 'cv-summary-modal';
       modal.style = `
-        background: #fff;
-        border: 1px solid #ccc;
-        border-radius: 10px;
-        padding: 20px;
-        max-width: 1100px;
-        margin: 40px auto;
-        font-family: sans-serif;
-        box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1000px;
+        max-width: 95vw;
+        background: white;
+        border-radius: 6px;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+        z-index: 9999;
+        font-family: Helvetica, Arial, sans-serif;
       `;
     
       modal.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div style="font-size: 22px; font-weight: bold;">Summary by Hour</div>
-          <div>
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="width:22px;height:22px;margin-right:10px;cursor:pointer;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="width:22px;height:22px;cursor:pointer;">
-          </div>
+        <div style="
+          background: #f79621;
+          color: white;
+          font-weight: bold;
+          font-size: 16px;
+          padding: 10px 16px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          border-top-left-radius: 6px;
+          border-top-right-radius: 6px;
+        ">
+          <span>Summary by Hour</span>
+          <span style="cursor: pointer; font-size: 20px;" id="cv-summary-close">&times;</span>
         </div>
     
-        <div style="display: flex; margin-top: 25px; gap: 20px;">
-          <div id="cv-summary-chart" style="width: 65%; height: 300px; background: #f9f9f9; border: 1px solid #ddd;"></div>
-          <div style="flex-grow: 1;">
-            <table style="width: 100%; border-collapse: collapse;">
-              <thead>
-                <tr style="background:#f0f0f0;">
-                  <th style="padding:8px;border:1px solid #ccc;">Hour</th>
-                  <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-                <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
-                <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
-                <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
-                <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
-                <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
-              </tbody>
-            </table>
+        <div style="padding: 20px;">
+          <div style="display: flex; flex-wrap: wrap; gap: 20px; justify-content: space-between;">
+            <div id="cv-summary-chart" style="
+              flex: 1 1 600px;
+              min-width: 300px;
+              height: 300px;
+              background: #f9f9f9;
+              border: 1px solid #ddd;
+            "></div>
+    
+            <div style="flex: 0 1 300px; min-width: 250px; max-width: 100%; overflow-x: auto;">
+              <table style="width: 100%; border-collapse: collapse;">
+                <thead>
+                  <tr style="background:#f0f0f0;">
+                    <th style="padding:8px;border:1px solid #ccc;">Hour</th>
+                    <th style="padding:8px;border:1px solid #ccc;">Total Calls</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">9:00 AM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">10:00 AM</td><td style="padding:8px;border:1px solid #ccc;">8</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">11:00 AM</td><td style="padding:8px;border:1px solid #ccc;">5</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">12:00 PM</td><td style="padding:8px;border:1px solid #ccc;">1</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">1:00 PM</td><td style="padding:8px;border:1px solid #ccc;">6</td></tr>
+                  <tr><td style="padding:8px;border:1px solid #ccc;">2:00 PM</td><td style="padding:8px;border:1px solid #ccc;">3</td></tr>
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       `;
     
-      // Inject the chart after the DOM is added
+      document.body.appendChild(modal);
       setTimeout(() => renderSummaryChart('cv-summary-chart'), 10);
     
-      // Replace any existing modal or content
-      const container = document.querySelector('#sortable');
-      container.innerHTML = '';
-      container.appendChild(modal);
+      // Close handler
+      document.getElementById('cv-summary-close')?.addEventListener('click', () => {
+        modal.remove();
+      });
     }
+
 
 
       // SUMMARY BY HOUR MODAL OPEN
@@ -6978,6 +7003,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
