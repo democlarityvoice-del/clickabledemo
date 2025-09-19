@@ -6739,21 +6739,7 @@ function openAgentListenModal(agentExt, row, btn) {
         google.charts.setOnLoadCallback(callback);
       }
     }
-    
-   // Draw all charts
-function loadGoogleCharts(callback) {
-  if (typeof google === 'undefined' || !google.charts) {
-    const googleScript = document.createElement('script');
-    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
-    googleScript.onload = () => {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(callback);
-    };
-    document.head.appendChild(googleScript);
-  } else {
-    google.charts.setOnLoadCallback(callback);
-  }
-}
+
 
     
       // BLUE COLUMN CHART: Inbound Calls
@@ -7121,6 +7107,7 @@ function loadGoogleCharts(callback) {
     }
   }, 300);
 })();
+
 
 
 
