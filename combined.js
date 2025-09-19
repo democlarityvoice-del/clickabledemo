@@ -7418,13 +7418,19 @@ function cvSummaryModal() {
         table { width: 100%; border-collapse: collapse; }
         tr { background: white; }
         tr:hover { background: #f2f2f2; cursor: pointer; }
-        td { padding: 6px 8px; border-bottom: 1px solid #ccc; vertical-align: middle; }
+        td {
+              padding: 3px 6px;
+              border-bottom: 1px solid #ccc;
+              vertical-align: middle;
+              line-height: 1.1;
+              font-size: 12px;
+            }
         td.nowrap { white-space: nowrap; }
         td.actions { text-align: right; }
         .circle {
           display: inline-block;
-          width: 24px;
-          height: 24px;
+          width: 20px;
+          height: 20px;
           border-radius: 50%;
           background: #e0e0e0;
           text-align: center;
@@ -7432,8 +7438,8 @@ function cvSummaryModal() {
           margin-left: 4px;
         }
         .circle img {
-          width: 12px;
-          height: 12px;
+          width: 10px;
+          height: 10px;
           vertical-align: middle;
         }
         .circle img.delete-icon {
@@ -7475,6 +7481,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
