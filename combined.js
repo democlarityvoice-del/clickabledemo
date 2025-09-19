@@ -6820,7 +6820,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
   // PURPLE COLUMN CHART (Outbound)
 function swapOutboundChart() {
-  const chartContainer = document.querySelector('#omp-active-body #chart_div');
+  const chartContainer = document.querySelector('#chart-outbound');
   if (!chartContainer) return;
 
   // Clear current chart
@@ -7139,88 +7139,6 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
