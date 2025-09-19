@@ -6893,7 +6893,8 @@ function swapOutboundChart() {
       }
     }
   });
-})();
+}  // ✅ Function closes cleanly
+
 
 
 
@@ -7134,6 +7135,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
