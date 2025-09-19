@@ -7308,159 +7308,194 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI
-(function injectDemoMessages() {
-  const INTERVAL_MS = 500;
-  const MAX_ATTEMPTS = 20;
-  let attempt = 0;
+  // MESSAGES/TEXT RESPONDER AI(function injectDemoMessages() {
+  const existing = document.getElementById('cv-demo-messages-iframe');
+  if (existing) return;
 
-  const safeAreaCodes = ['313', '248', '616', '586', '734', '231', '810']; // from prior builds
-  const names = ['Joel', 'Natalie', 'Cathy', 'Jake'];
-  const internalUsers = { Cathy: "Cathy", Jake: "Jake" };
+  const areaCodes = ['313', '248', '586', '214', '469', '972'];
+  const fakeNames = ['John S.', 'Mary P.', 'Jake L.', 'Theresa W.', 'Alan R.', 'Sophie D.', 'Carlos V.', 'Cathy T.', 'Nick M.', 'Olivia H.', 'Grant B.', 'Ella K.', 'Marcus J.', 'Tina C.', 'Roger F.'];
+  const surveyTexts = [
+    "Thank you for your visit! Please complete our survey: www.mrservicetoday.com/survey",
+    "We’d love your feedback. Tell us how we did: www.mrservicetoday.com/survey",
+    "Help us improve! Take our quick survey: www.mrservicetoday.com/survey",
+    "Rate your experience: www.mrservicetoday.com/survey"
+  ];
+  const confirmTexts = [
+    "Your appointment is confirmed for tomorrow. www.mrservicetoday.com",
+    "Just a reminder: We’re scheduled to visit you soon. www.mrservicetoday.com",
+    "Thanks for booking with us! See your details here: www.mrservicetoday.com",
+    "Reminder: Your Mr. Service appointment is upcoming. www.mrservicetoday.com",
+    "You’re all set! View appointment info: www.mrservicetoday.com",
+    "One last check — see your visit details here: www.mrservicetoday.com"
+  ];
+  const customerReplies = [
+    "Yes, I will tell your tech when they arrive.",
+    "Sounds good, see you tomorrow.",
+    "Thanks — I’ll be home all day."
+  ];
+  const internalMessages = [
+    { to: "Cathy", msg: "Hey Cathy, can you look at Robert's account?" },
+    { to: "Jake", msg: "I see a note on that account for you. Take a look." }
+  ];
 
-  function randomPhone() {
-    const ac = safeAreaCodes[Math.floor(Math.random() * safeAreaCodes.length)];
-    const mid = String(Math.floor(200 + Math.random() * 800)).padStart(3, '0');
-    const end = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0');
-    return `(${ac}) ${mid}-${end}`;
+  function getRandomTime() {
+    const hour = Math.floor(Math.random() * 12) + 8; // 8AM–7PM
+    const minute = Math.floor(Math.random() * 60);
+    const period = hour >= 12 ? "PM" : "AM";
+    const formattedHour = hour > 12 ? hour - 12 : hour;
+    const formattedMin = minute < 10 ? `0${minute}` : minute;
+    return `${formattedHour}:${formattedMin} ${period}`;
   }
 
-  function randomDate() {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  function buildDateList() {
+    const today = new Date();
+    const dateList = [];
+    for (let i = 0; i < 10;) {
+      const offset = i === 0 ? 1 : Math.floor(Math.random() * 2) + 1;
+      const date = new Date(today);
+      date.setDate(today.getDate() - offset - i);
+      const options = { month: 'short', day: 'numeric' };
+      const dateStr = date.toLocaleDateString('en-US', options);
+      const msgCount = Math.floor(Math.random() * 2) + 3; // 3–4 messages per day
+      for (let j = 0; j < msgCount && i < 10; j++, i++) {
+        dateList.push(dateStr);
+      }
+    }
+    return dateList;
   }
 
-  function getMessageRows() {
-    const messages = [];
+  const allMessages = [];
+  const dateList = buildDateList();
 
-    // 4 Survey Links
-    for (let i = 0; i < 4; i++) {
-      messages.push({
-        type: 'auto',
-        number: randomPhone(),
-        message: `Thank you for your visit! Please leave feedback:\nwww.mrservice.com/survey?location=tampa${100 + i}`,
-        date: randomDate()
-      });
-    }
+  for (let i = 0; i < 10; i++) {
+    allMessages.push({ type: "survey", text: surveyTexts[i % surveyTexts.length] });
+  }
+  for (let i = 0; i < 6; i++) {
+    allMessages.push({ type: "confirm", text: confirmTexts[i % confirmTexts.length] });
+  }
+  for (let i = 0; i < 3; i++) {
+    allMessages.push({ type: "reply", text: customerReplies[i] });
+  }
+  internalMessages.forEach(m => allMessages.push({ type: "internal", text: m.msg, to: m.to }));
 
-    // 6 Appointment Reminders
-    for (let i = 0; i < 6; i++) {
-      messages.push({
-        type: 'auto',
-        number: randomPhone(),
-        message: `Reminder: Your Mr. Service appointment is scheduled for tomorrow.\nwww.mrservice.com/appointments?id=xyz${i + 1}`,
-        date: randomDate()
-      });
-    }
-
-    // 3 Customer Replies
-    const replies = [
-      "Yes, I will tell your tech when they arrive.",
-      "Sounds good, thank you.",
-      "Can I confirm the time again?"
-    ];
-    for (let i = 0; i < 3; i++) {
-      messages.push({
-        type: 'customer',
-        number: randomPhone(),
-        message: replies[i],
-        date: randomDate()
-      });
-    }
-
-    // 2 Internal Messages
-    messages.push({
-      type: 'internal',
-      sender: 'Cathy',
-      message: "Hey Cathy, can you look at Robert’s account?",
-      date: randomDate()
-    });
-    messages.push({
-      type: 'internal',
-      sender: 'Jake',
-      message: "I see a note on that account for you. Take a look.",
-      date: randomDate()
-    });
-
-    return messages;
+  function randomNumber() {
+    const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+    const part1 = Math.floor(Math.random() * 900 + 100);
+    const part2 = Math.floor(Math.random() * 9000 + 1000);
+    return `(${area}) ${part1}-${part2}`;
   }
 
-  function buildSrcdoc(messages) {
-    const rows = messages.map((msg, i) => {
-      const iconUrl = msg.type === 'internal'
-        ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
-        : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+  function getName(index, type) {
+    if (type === "internal") return internalMessages[index % 2].to;
+    return fakeNames[index % fakeNames.length];
+  }
 
-      const replyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
-      const deleteIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg';
-
-      const sender = msg.type === 'internal' ? msg.sender : msg.number;
-      const messagePreview = msg.message.replace(/\n/g, "<br>");
-      const rowClass = i % 2 === 0 ? 'even' : 'odd';
-
-      return `
-        <tr class="${rowClass}" onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
-          <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-          <td>${sender}</td>
-          <td>${messagePreview}</td>
-          <td>${msg.date}</td>
-          <td>
-            <img src="${replyIcon}" class="reply" data-idx="${i}" title="Reply">
-            <img src="${deleteIcon}" class="delete" title="Delete (Visual Only)">
-          </td>
-        </tr>`;
-    }).join("\n");
+  const tableRows = allMessages.map((msg, idx) => {
+    const name = getName(idx, msg.type);
+    const number = randomNumber();
+    const date = dateList[idx];
+    const time = getRandomTime();
 
     return `
-      <html>
-      <head>
-        <style>
-          body { font-family: sans-serif; margin: 0; }
-          table { width: 100%; border-collapse: collapse; font-size: 14px; }
-          tr.even { background: #f9f9f9; }
-          tr:hover { background: #e6f0ff; cursor: pointer; }
-          td { padding: 8px; vertical-align: top; border-bottom: 1px solid #ccc; }
-          td img.reply, td img.delete { height: 16px; margin-right: 10px; cursor: pointer; float: right; }
-          td:last-child { white-space: nowrap; width: 80px; }
-        </style>
-      </head>
-      <body>
-        <table>
-          ${rows}
-        </table>
-      </body>
-      </html>
+      <tr>
+        <td>${name}</td>
+        <td>${number}</td>
+        <td class="cv-demo-message-text">${msg.text}</td>
+        <td>${date}</td>
+        <td>${time}</td>
+        <td>
+          <button class="listen-btn reply-btn" title="Reply">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg" />
+          </button>
+        </td>
+        <td>
+          <button class="listen-btn delete-btn" title="Delete">
+            <img style="filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg" />
+          </button>
+        </td>
+      </tr>
     `;
-  }
+  }).join('');
 
-  function inject() {
-    const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-    if (!container) return false;
-
-    container.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.id = 'cv-demo-messages-iframe';
-    iframe.style.width = '100%';
-    iframe.style.height = '600px';
-    iframe.style.border = 'none';
-    iframe.srcdoc = buildSrcdoc(getMessageRows());
-
-    document.addEventListener('message', e => {
-      if (e.data.type === 'rowClick') {
-        container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+  const styles = `
+    <style>
+      #cv-demo-messages-iframe {
+        width: 100%;
+        border: none;
+        margin-top: 20px;
       }
-    });
+      .cv-demo-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-family: sans-serif;
+        font-size: 14px;
+      }
+      .cv-demo-table th, .cv-demo-table td {
+        border-bottom: 1px solid #e0e0e0;
+        padding: 8px 10px;
+        text-align: left;
+      }
+      .cv-demo-table tr {
+        background: #fff;
+        transition: background 0.2s ease-in-out;
+      }
+      .cv-demo-table tr:hover {
+        background: #f3f3f3;
+      }
+      .cv-demo-message-text {
+        font-weight: 500;
+        color: #333;
+        font-size: 13.5px;
+      }
+      .listen-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: #f0f0f0;
+        border-radius: 50%;
+        border: 1px solid #cfcfcf;
+        cursor: pointer;
+      }
+      .listen-btn img {
+        width: 16px;
+        height: 16px;
+        opacity: 0.35;
+        transition: opacity 0.2s ease-in-out;
+      }
+      .listen-btn:hover img,
+      tr:hover .listen-btn img {
+        opacity: 1;
+      }
+    </style>
+  `;
 
-    container.appendChild(iframe);
-    return true;
-  }
-
-  const poll = setInterval(() => {
-    attempt++;
-    if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
-  }, INTERVAL_MS);
+  const iframe = document.createElement('iframe');
+  iframe.id = 'cv-demo-messages-iframe';
+  iframe.srcdoc = `
+    ${styles}
+    <table class="cv-demo-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Number</th>
+          <th>Message</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th></th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        ${tableRows}
+      </tbody>
+    </table>
+  `;
+  document.querySelector('#omp-active-body')?.appendChild(iframe);
 })();
+
+
 
 
 
