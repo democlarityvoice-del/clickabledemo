@@ -7144,7 +7144,7 @@ function cvSummaryModal() {
 
         
      // EMPLOYEE MODAL  
-     function cvEmployeeModal() {
+     function cvEmployeeModal(containerId) {
       const existing = document.querySelector('#cv-employee-modal');
       if (existing) existing.remove();
     
@@ -7289,6 +7289,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
