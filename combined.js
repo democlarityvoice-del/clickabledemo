@@ -7308,9 +7308,10 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI(function injectDemoMessages() {
-  const existing = document.getElementById('cv-demo-messages-iframe');
-  if (existing) return;
+  // MESSAGES/TEXT RESPONDER AI
+function injectDemoMessagesV10() {
+  const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+  if (!container) return console.error("Container not found.");
 
   const areaCodes = ['313', '248', '586', '214', '469', '972'];
   const fakeNames = ['John S.', 'Mary P.', 'Jake L.', 'Theresa W.', 'Alan R.', 'Sophie D.', 'Carlos V.', 'Cathy T.', 'Nick M.', 'Olivia H.', 'Grant B.', 'Ella K.', 'Marcus J.', 'Tina C.', 'Roger F.'];
@@ -7494,6 +7495,7 @@ function cvSummaryModal() {
   `;
   document.querySelector('#omp-active-body')?.appendChild(iframe);
 })();
+
 
 
 
