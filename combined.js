@@ -7217,17 +7217,17 @@ function cvSummaryModal() {
            
                 
            function renderEmployeeChart(containerId) {
-          const data = google.visualization.arrayToDataTable([
-            ['Employee', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
-            ['Mike Johnson', 3, 11, 9, 10, 10, 11, 6],
-            ['Cathy Thomas', 2, 8, 7, 6, 6, 9, 3],
-            ['Jake Lee', 1, 9, 8, 8, 8, 10, 5],
-            ['Bob Andersen', 1, 3, 3, 3, 4, 3, 2],
-            ['Brittany Lawrence', 0, 5, 5, 6, 6, 7, 2],
-            ['Alex Roberts', 3, 11, 13, 11, 10, 11, 7],
-            ['Mark Sanchez', 1, 4, 4, 3, 4, 5, 3],
-          ]);
-        
+         const data = google.visualization.arrayToDataTable([
+              ['Employee', 'Calls'],
+              ['Mike Johnson', 60],
+              ['Cathy Thomas', 42],
+              ['Jake Lee', 49],
+              ['Bob Andersen', 19],
+              ['Brittany Lawrence', 31],
+              ['Alex Roberts', 66],
+              ['Mark Sanchez', 24],
+            ]);
+
          const options = {
               chartArea: { width: '85%', height: '85%' },
               legend: { position: 'right' },
@@ -7238,8 +7238,8 @@ function cvSummaryModal() {
 
         
           const chart = new google.visualization.PieChart(document.getElementById(containerId));
-
-           }
+          chart.draw(data, options);
+            }
 
     
     document.addEventListener('click', function (e) {
@@ -7287,6 +7287,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
