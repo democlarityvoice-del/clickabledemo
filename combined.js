@@ -7308,13 +7308,19 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI(function injectDemoMessages() {
-  // 1. Target the real messages table
+  // MESSAGES/TEXT RESPONDER AI(
+
+(function() {
   const tbody = document.querySelector('.conversation-list-table tbody');
   if (!tbody) {
     console.error('Message table <tbody> not found');
-    return;
+    return; // ✅ now legal, because it's inside a function
   }
+
+  // Your injection code goes here
+  console.log('Found the table!', tbody);
+})();
+
 
   // 2. Generate random time between 8:00 AM and 7:59 PM
   function randomTime() {
@@ -7457,6 +7463,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
