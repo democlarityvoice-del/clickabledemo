@@ -6805,20 +6805,36 @@ function openAgentListenModal(agentExt, row, btn) {
       colors: ['#3cb371'] // MediumSeaGreen
     });
 
-  // PIE CHART (Employee)
+  
+    // PIE CHART (Employee - real totals)
   const pieData = google.visualization.arrayToDataTable([
     ['Employee', 'Calls'],
-    ['Mike Johnson', 70],
-    ['Others', 30]
+    ['Mike Johnson', 60],
+    ['Cathy Thomas', 42],
+    ['Jake Lee', 56],
+    ['Bob Andersen', 13],
+    ['Brittany Lawrence', 28],
+    ['Alex Roberts', 62],
+    ['Mark Sanchez', 29]
   ]);
+
   new google.visualization.PieChart(document.getElementById('chart-employee'))
     .draw(pieData, {
       chartArea: { width: '95%', height: '85%' },
       legend: { position: 'bottom' },
       pieHole: 0.4,
       is3D: true,
-      colors: ['#3c8dbc', '#dd4b39']
+      colors: [
+        '#4c78a8', // Mike
+        '#f58518', // Cathy
+        '#54a24b', // Jake
+        '#b279a2', // Bob
+        '#e57027', // Brittany
+        '#9c755f', // Alex
+        '#edc948'  // Mark
+      ]
     });
+
 
   // PURPLE COLUMN CHART (Outbound)
     // OUTBOUND CHART (Fixed version using Google Charts only)
@@ -7179,6 +7195,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
