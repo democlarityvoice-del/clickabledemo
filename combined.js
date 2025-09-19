@@ -7400,19 +7400,21 @@ function cvSummaryModal() {
       const sender = msg.type === 'internal' ? msg.sender : msg.number;
       const preview = msg.message.replace(/\n/g, "<br>");
       return `
-        <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
-          <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-          <td>${sender}</td>
-          <td>${preview}</td>
-          <td class="nowrap">${msg.date}</td>
-          <td class="nowrap actions">
-            <span class="reply-btn iconReply">
-              <img src="${iconReply}" title="Reply">
-            </span>
-            <span class="reply-btn iconReply">
-              <img src="${iconDelete}" title="Delete">      
-              </td>
-            </tr>`;
+          <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+            <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+            <td>${sender}</td>
+            <td>${preview}</td>
+            <td class="nowrap">${msg.date}</td>
+            <td class="nowrap actions">
+              <span class="msg-btn iconReply">
+                <img src="${iconReply}" title="Reply">
+              </span>
+              <span class="msg-btn iconDelete">
+                <img src="${iconDelete}" title="Delete">
+              </span>
+            </td>
+          </tr>`;
+
         }).join("\n");
 
     return `
@@ -7495,6 +7497,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
