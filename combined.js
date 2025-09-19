@@ -7145,7 +7145,7 @@ function cvSummaryModal() {
         
  // EMPLOYEE MODAL  
   function cvEmployeeModal() {
-      const modal = cvAiEnsureModal();
+      const modal = cvEmployeeEnsureModal();
       modal.querySelector('#cv-ai-title').textContent = 'Employee Call Breakdown';
       modal.querySelector('#cv-ai-summary').innerHTML = `
         <p>This chart shows the total number of calls handled by each employee over the week.</p>
@@ -7250,6 +7250,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
