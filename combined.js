@@ -7409,8 +7409,7 @@ function cvSummaryModal() {
     // Message text
     const msgTd = document.createElement('td');
     msgTd.className = 'conversation-recent-msg';
-    msgTd.style.maxWidth = '500px';
-    msgTd.style.width = '100%';
+    msgTd.style.maxWidth = '500px';   
     msgTd.textContent = msg.text;
 
     // Date / time
@@ -7461,6 +7460,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
