@@ -7406,11 +7406,14 @@ function cvSummaryModal() {
           <td>${preview}</td>
           <td class="nowrap">${msg.date}</td>
           <td class="nowrap actions">
-            <span class="circle iconReply"><img src="${iconReply}" title="Reply"></span>
-            <span class="circle iconDelete"><img src="${iconDelete}" title="Delete"></span>
-          </td>
-        </tr>`;
-    }).join("\n");
+            <span class="reply-btn iconReply">
+              <img src="${iconReply}" title="Reply">
+            </span>
+            <span class="reply-btn iconReply">
+              <img src="${iconDelete}" title="Delete">      
+              </td>
+            </tr>`;
+        }).join("\n");
 
     return `
       <html><head><style>
@@ -7427,24 +7430,35 @@ function cvSummaryModal() {
             }
         td.nowrap { white-space: nowrap; }
         td.actions { text-align: right; }
-        .circle {
-          display: inline-block;
-          width: 20px;
-          height: 20px;
+
+        .msg-btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          width: 26px;
+          height: 26px;
+          background: #f0f0f0;
           border-radius: 50%;
-          background: #e0e0e0;
-          text-align: center;
-          line-height: 24px;
-          margin-left: 4px;
+          border: 1px solid #cfcfcf;
+          cursor: pointer;
         }
-        .circle img {
-          width: 10px;
-          height: 10px;
-          vertical-align: middle;
+        
+        .msg-btn:focus {
+          outline: none;
         }
-        .circle img.delete-icon {
-          filter: brightness(0) saturate(100%) sepia(100%) hue-rotate(-10deg) brightness(0.85);
+        
+        .msg-btn img {
+          width: 18px;
+          height: 18px;
+          display: block;
+          opacity: 0.35;
+          transition: opacity 0.2s ease-in-out;
         }
+        
+        .msg-btn:hover img {
+          opacity: 1;
+        }
+
       </style></head><body>
         <table>${rows}</table>
       </body></html>
@@ -7481,6 +7495,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
