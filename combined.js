@@ -6563,6 +6563,8 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === ADD FOUR FAKE WIDGETS LOGIC ===
 // === CV DEMO DASHBOARD MODES ===
+// === ADD FOUR FAKE WIDGETS LOGIC ===
+// === CV DEMO DASHBOARD MODES ===
 (function () {
   const log = (...args) => console.log('[CV DEMO]', ...args);
   const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
@@ -6705,338 +6707,373 @@ function openAgentListenModal(agentExt, row, btn) {
     container.appendChild(createWidget('Inbound by Employee This Week', 'chart-employee'));
     container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
 
-    loadGoogleCharts(drawAllCharts);
-
+    loadAndDrawCharts();
     log('✅ Demo widgets injected.');
   }
-        
-        // Load Google Charts only once
-    function loadGoogleCharts(callback) {
-      if (typeof google === 'undefined' || !google.charts) {
-        const googleScript = document.createElement('script');
-        googleScript.src = 'https://www.gstatic.com/charts/loader.js';
-        googleScript.onload = () => {
-          google.charts.load('current', { packages: ['corechart'] });
-          google.charts.setOnLoadCallback(callback);
-        };
-        document.head.appendChild(googleScript);
-      } else {
-        google.charts.load('current', { packages: ['corechart'] });
-        google.charts.setOnLoadCallback(callback);
-      }
-    }
     
-    // Draw all charts
-    function drawAllCharts() {
-      // BLUE COLUMN CHART: Inbound Calls
-      const inboundData = google.visualization.arrayToDataTable([
-        ['Day', 'Calls'],
-        ['Sun', 21], ['Mon', 32], ['Tue', 27], ['Wed', 35], ['Thu', 29], ['Fri', 17]
-      ]);
-      new google.visualization.ColumnChart(document.getElementById('chart-inbound')).draw(inboundData, {
-        chartArea: { width: '80%', height: '70%' },
-        legend: { position: 'bottom' },
-        hAxis: { title: 'Day of Week' },
-        vAxis: { title: 'Number of Calls', minValue: 0 },
-        bar: { groupWidth: '60%' },
-        colors: ['#007bff']
-      });
+    // GOOGLE CHART HELPER for Call Queue by Hour
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
+    googleScript.onload = () => {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(() => renderSummaryChart('cv-summary-chart'));
+    };
+    document.head.appendChild(googleScript);
     
-      // LINE CHART: Inbound by Employee
-      const agentInboundData = google.visualization.arrayToDataTable([
-        ['Day', 'Gary M.', 'Joe T.', 'Renn S.'],
-        ['Sun', 3, 5, 5],
-        ['Mon', 7, 11, 9],
-        ['Tue', 6, 10, 6],
-        ['Wed', 9, 13, 13],
-        ['Thu', 8, 12, 9],
-        ['Fri', 3, 7, 6]
-      ]);
-      new google.visualization.LineChart(document.getElementById('chart-employee')).draw(agentInboundData, {
-        chartArea: { width: '80%', height: '70%' },
-        legend: { position: 'bottom' },
-        hAxis: { title: 'Day of Week' },
-        vAxis: { title: 'Calls by Agent', minValue: 0 },
-        lineWidth: 3,
-        pointSize: 6,
-        colors: ['#1f77b4', '#ff7f0e', '#2ca02c']
-      });
+    // Replace the old renderSummaryChart with this version
+    function renderSummaryChart(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '<div id="summary-chart-google" style="width:100%; height:400px;"></div>';
     
-      // PURPLE COLUMN CHART: Outbound
-      const outboundData = google.visualization.arrayToDataTable([
-        ['Day', 'Calls'],
-        ['Sun', 13], ['Mon', 25], ['Tue', 22], ['Wed', 40], ['Thu', 31], ['Fri', 14]
-      ]);
-      new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, {
-        chartArea: { width: '80%', height: '70%' },
-        legend: { position: 'bottom' },
-        hAxis: { title: 'Day of Week' },
-        vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
-        bar: { groupWidth: '65%' },
-        colors: ['#8a2be2']
-      });
-    }
-    
-    // Trigger it
-    loadGoogleCharts(drawAllCharts);
-
-    
-        // CALL QUEUE SUMMARY MODAL
-    function cvSummaryModal() {
-      const existing = document.querySelector('#cv-summary-modal');
-      if (existing) existing.remove();
-    
-      const summaryChart = `<div id="cv-summary-chart" style="flex: 2; min-width: 700px;"></div>`;
-    
-      const queueTable = `
-        <div id="cv-summary-table-container" style="flex: 1; max-height: 360px; overflow: auto;">
-          <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
-            <thead>
-              <tr style="background: #eee;">
-                <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-                <th style="transform: translateX(-4px);">8:00</th>
-                <th style="transform: translateX(-4px);">9:00</th>
-                <th style="transform: translateX(-4px);">10:00</th>
-                <th style="transform: translateX(-4px);">11:00</th>
-                <th style="transform: translateX(-4px);">12:00</th>
-                <th style="transform: translateX(-4px);">1:00</th>
-                <th style="transform: translateX(-4px);">2:00</th>
-              </tr>
-            </thead>
-    
-            <tbody>
-              <tr>
-                <td style="padding: 4px 8px;">Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 8px;">New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 8px;">Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
-              </tr>
-              <tr>
-                <td style="padding: 4px 8px;">Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>`;
-    
-      const modal = document.createElement('div');
-      modal.id = 'cv-summary-modal';
-      modal.style = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1300px;
-        height: 540px;
-        background: white;
-        box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        z-index: 9999;
-        border: 1px solid #ccc;
-        display: flex;
-        flex-direction: column;
-        font-family: Helvetica, Arial, sans-serif;
-      `;
-    
-      modal.innerHTML = `
-        <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
-          <span>Summary by Hour</span>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
-            <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
-          </div>
-        </div>
-        <div style="flex: 1; padding: 15px 20px; overflow: auto;">
-          <div style="display: flex; gap: 30px; align-items: flex-start;">
-            ${summaryChart}
-            ${queueTable}
-          </div>
-        </div>
-      `;
-    
-      document.body.appendChild(modal);
-      renderSummaryChart('cv-summary-chart');
-    }
-
-
-        
-     // INBOUND MODAL       
-    function cvInboundModal() {
-      const existing = document.querySelector('#cv-inbound-modal');
-      if (existing) existing.remove();
-    
-      const chartId = 'cv-inbound-chart';
-      const tableId = 'cv-inbound-table-container';
-    
-      const modal = document.createElement('div');
-      modal.id = 'cv-inbound-modal';
-      modal.style = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1300px;
-        height: 540px;
-        background: white;
-        box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        z-index: 9999;
-        border: 1px solid #ccc;
-        display: flex;
-        flex-direction: column;
-        font-family: Helvetica, Arial, sans-serif;
-      `;
-    
-      modal.innerHTML = `
-        <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
-          <span>Inbound This Week</span>
-          <div style="display: flex; gap: 20px;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
-            <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-inbound-modal')?.remove()">&times;</span>
-          </div>
-        </div>
-        <div style="flex: 1; padding: 15px 20px; overflow: auto;">
-          <div style="display: flex; gap: 30px; min-width: 1000px;">
-            <div id="${chartId}" style="flex: 2; height: 300px;"></div>
-            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
-              <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
-                <thead>
-                  <tr style="background: #eee;">
-                    <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-                    <thead>
-                      <tr style="background: #eee;">
-                        <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-                        <th style="transform: translateX(-4px);">Sun</th>
-                        <th style="transform: translateX(-4px);">Mon</th>
-                        <th style="transform: translateX(-4px);">Tue</th>
-                        <th style="transform: translateX(-4px);">Wed</th>
-                        <th style="transform: translateX(-4px);">Thu</th>
-                        <th style="transform: translateX(-4px);">Fri</th>
-                        <th style="transform: translateX(-4px);">Sat</th>
-                      </tr>
-                    </thead>
-    
-                <tbody>
-                  <tr><td>(248) 436-3443 (300)</td><td>0</td><td>3</td><td>5</td><td>10</td><td>8</td><td>7</td><td>2</td></tr>
-                  <tr><td>(248) 436-3449 (700)</td><td>0</td><td>3</td><td>3</td><td>22</td><td>13</td><td>18</td><td>6</td></tr>
-                  <tr><td>(313) 995-9080 (301)</td><td>0</td><td>6</td><td>12</td><td>11</td><td>5</td><td>6</td><td>12</td></tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </div>
-      `;
-    
-      document.body.appendChild(modal);
-      renderInboundChart(chartId);
-    }
-    
-    function renderInboundChart(containerId) {
       const data = google.visualization.arrayToDataTable([
-        ['Day', 'Calls'],
-        ['Sun', 0],
-        ['Mon', 12],
-        ['Tue', 20],
-        ['Wed', 43],
-        ['Thu', 26],
-        ['Fri', 31],
-        ['Sat', 20],
-      ]);
+          ['Hour', 'New Sales (301)', 'Existing Cust (302)', 'Billing (303)', 'Main Routing (300)'],
+          ['8am', 3, 0, 0, 0],
+          ['9am', 2, 3, 0, 0],       // Existing Cust visible here
+          ['10am', 3, 2, 1, 0],      // Shared slot (leave 0 for Main Routing)
+          ['11am', 4, 0, 1, 2],      // Add Main Routing here
+          ['12pm', 1, 0, 0, 3],      // And again here
+          ['1pm', 5, 0, 1, 0],
+          ['2pm', 3, 0, 0, 0]
+        ]);
+
     
       const options = {
-        title: 'Inbound This Week',
-        legend: { position: 'none' },
-        colors: ['#3cb371'],
-        chartArea: { width: '75%', height: '65%' },
-        height: 600,
-        hAxis: { title: 'Day of Week', titleTextStyle: { italic: true } },
-        vAxis: { title: 'Number of Calls' },
+        title: '',
+        curveType: 'function',
+        legend: { position: 'right' },
+        colors: ['#f00', '#0a0', '#00f', '#f90'],
+        chartArea: { width: '75%', height: '70%' },
+        hAxis: { title: 'Hour' },
+        vAxis: { title: 'Calls', viewWindow: { min: 0 } },
+        lineWidth: 3,
+        pointSize: 5,
       };
     
-      const chart = new google.visualization.ColumnChart(document.getElementById(containerId));
+      const chart = new google.visualization.LineChart(document.getElementById('summary-chart-google'));
       chart.draw(data, options);
     }
 
     
-    // OUTBOUND MODAL
-   function cvOutboundModal() {
-  // Prevent duplicate injection
-  if (document.getElementById(OUTBOUND_MODAL_WRAPPER_ID)) return;
+    // GOOGLE CHART HELPER for Outbound Calls
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
+    googleScript.onload = () => {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(() => renderSummaryChart('cv-summary-chart'));
+    };
+    document.head.appendChild(googleScript);
+    
+    function renderSummaryChart(containerId) {
+      const container = document.getElementById(containerId);
+      if (!container) return;
+      container.innerHTML = '<div id="summary-chart-google" style="width:100%; height:400px;"></div>';
+    
+      const data = google.visualization.arrayToDataTable([
+        ['Day', 'Mike Johnson', 'Cathy Thomas', 'Jake Lee', 'Bob Andersen', 'Brittany Lawrence', 'Alex Roberts', 'Mark Sanchez'],
+        ['Sun', 2, 1, 2, 0, 1, 2, 1],
+        ['Mon', 10, 7, 9, 2, 4, 10, 5],
+        ['Tue', 12, 8, 10, 2, 4, 12, 5],
+        ['Wed', 9, 7, 10, 2, 5, 10, 4],
+        ['Thu', 10, 7, 9, 3, 5, 9, 4],
+        ['Fri', 12, 8, 10, 3, 6, 12, 6],
+        ['Sat', 5, 4, 6, 1, 3, 7, 4]
+      ]);
+    
+      const options = {
+        title: '',
+        curveType: 'function',
+        legend: { position: 'right' },
+        colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477'],
+        chartArea: { width: '75%', height: '70%' },
+        hAxis: { title: 'Day of Week' },
+        vAxis: { title: 'Calls', viewWindow: { min: 0 } },
+        lineWidth: 3,
+        pointSize: 5,
+      };
+    
+      const chart = new google.visualization.LineChart(document.getElementById('summary-chart-google'));
+      chart.draw(data, options);
+    }
 
-  const modalWrapper = document.createElement('div');
-  modalWrapper.id = OUTBOUND_MODAL_WRAPPER_ID;
-  modalWrapper.innerHTML = `
-    <div class="cv-modal-wide">
-      <div class="cv-modal-header">
-        <span class="cv-modal-title">Outbound Calls This Week</span>
-        <div class="cv-modal-icons">
-          <img src="${ICON_SPREADSHEET}" title="Export CSV" class="cv-modal-icon" />
-          <img src="${ICON_PRINT}" title="Print Table" class="cv-modal-icon" />
-        </div>
+    
+    
+  function loadAndDrawCharts() {
+    if (!window.google || !google.charts) {
+      const script = document.createElement('script');
+      script.src = 'https://www.gstatic.com/charts/loader.js';
+      script.onload = () => {
+        google.charts.load('current', { packages: ['corechart'] });
+        google.charts.setOnLoadCallback(drawCharts);
+      };
+      document.head.appendChild(script);
+    } else {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(drawCharts);
+    }
+  }
+
+  function drawCharts() {
+  // LINE CHART
+  const lineData = google.visualization.arrayToDataTable([
+    ['Hour', 'All'],
+    ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
+  ]);
+  new google.visualization.LineChart(document.getElementById('chart-summary'))
+    .draw(lineData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Hours of Day' },
+      vAxis: { title: 'Number of Calls', minValue: 0 },
+      colors: ['#3366cc'],
+      lineWidth: 3,
+      pointSize: 5,
+      tooltip: { textStyle: { fontSize: 12 } }
+    });
+
+  // GREEN COLUMN CHART (Inbound)
+  const inboundData = google.visualization.arrayToDataTable([
+    ['Day', 'Calls'],
+    ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
+  ]);
+  new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
+    .draw(inboundData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+      bar: { groupWidth: '65%' },
+      colors: ['#3cb371'] // MediumSeaGreen
+    });
+
+  // PIE CHART (Employee)
+  const pieData = google.visualization.arrayToDataTable([
+    ['Employee', 'Calls'],
+    ['Mike Johnson', 70],
+    ['Others', 30]
+  ]);
+  new google.visualization.PieChart(document.getElementById('chart-employee'))
+    .draw(pieData, {
+      chartArea: { width: '95%', height: '85%' },
+      legend: { position: 'bottom' },
+      pieHole: 0.4,
+      is3D: true,
+      colors: ['#3c8dbc', '#dd4b39']
+    });
+
+ 
+    // REPLACED OUTBOUND CHART: Line Chart by Agent
+  const agentInboundData = google.visualization.arrayToDataTable([
+    ['Day', 'Mike Johnson', 'Cathy Thomas', 'Jake Lee', 'Bob Andersen', 'Brittany Lawrence', 'Alex Roberts', 'Mark Sanchez'],
+    ['Sun', 6, 4, 6, 1, 3, 6, 2],
+    ['Mon', 10, 8, 10, 3, 5, 11, 5],
+    ['Tue', 10, 7, 9, 2, 5, 10, 5],
+    ['Wed', 9, 6, 8, 2, 4, 10, 5],
+    ['Thu', 9, 6, 7, 2, 4, 9, 4],
+    ['Fri', 10, 7, 9, 2, 4, 10, 5],
+    ['Sat', 6, 4, 7, 1, 3, 6, 3]
+  ]);
+
+  const options = {
+    title: '',
+    chartArea: { width: '80%', height: '70%' },
+    legend: { position: 'right' },
+    hAxis: { title: 'Day of Week' },
+    vAxis: { title: 'Number of Inbound Calls', minValue: 0 },
+    lineWidth: 3,
+    pointSize: 5,
+    colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477']
+  };
+
+  new google.visualization.LineChart(document.getElementById('chart-outbound')).draw(agentInboundData, options);
+}
+
+    // CALL QUEUE SUMMARY MODAL
+function cvSummaryModal() {
+  const existing = document.querySelector('#cv-summary-modal');
+  if (existing) existing.remove();
+
+  const summaryChart = `<div id="cv-summary-chart" style="flex: 2; min-width: 700px;"></div>`;
+
+  const queueTable = `
+    <div id="cv-summary-table-container" style="flex: 1; max-height: 360px; overflow: auto;">
+      <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
+        <thead>
+          <tr style="background: #eee;">
+            <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+            <th style="transform: translateX(-4px);">8:00</th>
+            <th style="transform: translateX(-4px);">9:00</th>
+            <th style="transform: translateX(-4px);">10:00</th>
+            <th style="transform: translateX(-4px);">11:00</th>
+            <th style="transform: translateX(-4px);">12:00</th>
+            <th style="transform: translateX(-4px);">1:00</th>
+            <th style="transform: translateX(-4px);">2:00</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <tr>
+            <td style="padding: 4px 8px;">Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 8px;">New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 8px;">Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
+          </tr>
+          <tr>
+            <td style="padding: 4px 8px;">Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+
+  const modal = document.createElement('div');
+  modal.id = 'cv-summary-modal';
+  modal.style = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1300px;
+    height: 540px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    font-family: Helvetica, Arial, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+      <span>Summary by Hour</span>
+      <div style="display: flex; align-items: center; gap: 10px;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+        <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
       </div>
-      <div class="cv-modal-content">
-        <div class="cv-modal-chart" id="cv-outbound-chart">
-          <!-- Chart goes here -->
-        </div>
-        <div class="cv-modal-table">
-          <table>
-            <thead>
-              <tr>
-                <th>Rep</th>
-                <th>Calls</th>
-                <th>Avg Duration</th>
-                <th>Connected</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td>Kate D.</td>
-                <td>14</td>
-                <td>00:03:48</td>
-                <td>11</td>
-              </tr>
-              <tr>
-                <td>Alex N.</td>
-                <td>11</td>
-                <td>00:02:59</td>
-                <td>9</td>
-              </tr>
-              <tr>
-                <td>Mark W.</td>
-                <td>10</td>
-                <td>00:04:10</td>
-                <td>8</td>
-              </tr>
-              <tr>
-                <td>Sara B.</td>
-                <td>8</td>
-                <td>00:02:44</td>
-                <td>6</td>
-              </tr>
-              <tr>
-                <td>Tom R.</td>
-                <td>6</td>
-                <td>00:03:12</td>
-                <td>4</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-      <div class="cv-modal-footer">
-        <button onclick="document.getElementById('${OUTBOUND_MODAL_WRAPPER_ID}').remove()">Close</button>
+    </div>
+    <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+      <div style="display: flex; gap: 30px; align-items: flex-start;">
+        ${summaryChart}
+        ${queueTable}
       </div>
     </div>
   `;
 
-  document.body.appendChild(modalWrapper);
-
-
-
+  document.body.appendChild(modal);
+  renderSummaryChart('cv-summary-chart');
 }
 
+
+
+
+    
+ // INBOUND MODAL 
+      
+function cvInboundModal() {
+  const existing = document.querySelector('#cv-inbound-modal');
+  if (existing) existing.remove();
+
+  const chartId = 'cv-inbound-chart';
+  const tableId = 'cv-inbound-table-container';
+
+  const modal = document.createElement('div');
+  modal.id = 'cv-inbound-modal';
+  modal.style = `
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 1300px;
+    height: 540px;
+    background: white;
+    box-shadow: 0 0 15px rgba(0,0,0,0.3);
+    z-index: 9999;
+    border: 1px solid #ccc;
+    display: flex;
+    flex-direction: column;
+    font-family: Helvetica, Arial, sans-serif;
+  `;
+
+  modal.innerHTML = `
+    <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+      <span>Inbound This Week</span>
+      <div style="display: flex; gap: 20px;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+        <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+        <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-inbound-modal')?.remove()">&times;</span>
+      </div>
+    </div>
+    <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+      <div style="display: flex; gap: 30px; min-width: 1000px;">
+        <div id="${chartId}" style="flex: 2; height: 300px;"></div>
+        <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+          <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
+            <thead>
+              <tr style="background: #eee;">
+                <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                <thead>
+                  <tr style="background: #eee;">
+                    <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                    <th style="transform: translateX(-4px);">Sun</th>
+                    <th style="transform: translateX(-4px);">Mon</th>
+                    <th style="transform: translateX(-4px);">Tue</th>
+                    <th style="transform: translateX(-4px);">Wed</th>
+                    <th style="transform: translateX(-4px);">Thu</th>
+                    <th style="transform: translateX(-4px);">Fri</th>
+                    <th style="transform: translateX(-4px);">Sat</th>
+                  </tr>
+                </thead>
+
+            <tbody>
+              <tr><td>(248) 436-3443 (300)</td><td>0</td><td>3</td><td>5</td><td>10</td><td>8</td><td>7</td><td>2</td></tr>
+              <tr><td>(248) 436-3449 (700)</td><td>0</td><td>3</td><td>3</td><td>22</td><td>13</td><td>18</td><td>6</td></tr>
+              <tr><td>(313) 995-9080 (301)</td><td>0</td><td>6</td><td>12</td><td>11</td><td>5</td><td>6</td><td>12</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  renderInboundChart(chartId);
+}
+
+function renderInboundChart(containerId) {
+  const data = google.visualization.arrayToDataTable([
+    ['Day', 'Calls'],
+    ['Sun', 0],
+    ['Mon', 12],
+    ['Tue', 20],
+    ['Wed', 43],
+    ['Thu', 26],
+    ['Fri', 31],
+    ['Sat', 20],
+  ]);
+
+  const options = {
+    title: 'Inbound This Week',
+    legend: { position: 'none' },
+    colors: ['#3cb371'],
+    chartArea: { width: '75%', height: '65%' },
+    height: 600,
+    hAxis: { title: 'Day of Week', titleTextStyle: { italic: true } },
+    vAxis: { title: 'Number of Calls' },
+  };
+
+  const chart = new google.visualization.ColumnChart(document.getElementById(containerId));
+  chart.draw(data, options);
+}
+
+    
+    // OUTBOUND MODAL
+        function cvOutboundModal() {
+          alert('🟪 Outbound modal coming soon!');
+    }
 
     
      // EMPLOYEE MODAL  
@@ -7078,19 +7115,6 @@ function openAgentListenModal(agentExt, row, btn) {
       }
     }, true);
 
-       
-    
-
-  // BEGIN injection
-  const sidebarReady = setInterval(() => {
-    const sidebar = document.querySelector('#home-dashboards-body');
-    if (sidebar) {
-      clearInterval(sidebarReady);
-      injectSidebarButtons();
-      injectDemoWidgets(); // inject immediately on load
-    }
-  }, 300);
-})();
 
 
 
