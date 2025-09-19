@@ -7367,13 +7367,13 @@ function cvSummaryModal() {
     { name: "Jake", text: "I see a note on that account for you. Take a look." }
   ];
 
-  const phoneAreaCodes = ['313','248','586','214','469','972'];
-  function randomPhone() {
-    const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
-    const mid = Math.floor(Math.random() * 900 + 100);
-    const end = Math.floor(Math.random() * 9000 + 1000);
-    return `(${area}) ${mid}-${end}`;
-  }
+  function safePhone() {
+  const areaCodes = ["989", "517", "248", "810", "313"];
+  const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
+  const exchange = "555";
+  const line = Math.floor(Math.random() * 100) + 100; // 0100–0199 range
+  return `(${area}) ${exchange}-0${line}`;
+}
 
   // 5. Build message list
   const messages = [];
@@ -7460,6 +7460,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
