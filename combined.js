@@ -7310,13 +7310,13 @@ function cvSummaryModal() {
 
   // MESSAGES/TEXT RESPONDER AI(
     
-    (function injectDemoMessagesV3() {
-  const INTERVAL_MS = 500;
-  const MAX_ATTEMPTS = 20;
-  let attempt = 0;
+ (function injectDemoMessagesV3() {
+      const INTERVAL_MS = 500;
+      const MAX_ATTEMPTS = 20;
+      let attempt = 0;
 
-  const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
-  const cities = ['detroit', 'dallas'];
+      const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+      const cities = ['detroit', 'dallas'];
 
   function randomPhone() {
     const ac = safeAreaCodes[Math.floor(Math.random() * safeAreaCodes.length)];
@@ -7393,7 +7393,7 @@ function cvSummaryModal() {
     const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
     const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
     const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
-    const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg';
+    const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
 
     const rows = messages.map((msg, i) => {
       const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
@@ -7406,8 +7406,8 @@ function cvSummaryModal() {
           <td>${preview}</td>
           <td class="nowrap">${msg.date}</td>
           <td class="nowrap actions">
-            <span class="circle"><img src="${iconReply}" title="Reply"></span>
-            <span class="circle"><img src="${iconDelete}" class="delete-icon" title="Delete (Visual Only)"></span>
+            <span class="circle iconReply"><img src="${iconReply}" title="Reply"></span>
+            <span class="circle iconDelete"><img src="${iconDelete}" title="Delete"></span>
           </td>
         </tr>`;
     }).join("\n");
@@ -7481,6 +7481,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
