@@ -6705,7 +6705,8 @@ function openAgentListenModal(agentExt, row, btn) {
     container.appendChild(createWidget('Inbound by Employee This Week', 'chart-employee'));
     container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
 
-    loadAndDrawCharts();
+    loadGoogleCharts(drawAllCharts);
+
     log('✅ Demo widgets injected.');
   }
         
@@ -7090,6 +7091,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
