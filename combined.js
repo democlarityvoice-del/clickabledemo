@@ -6704,7 +6704,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
     container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
     container.appendChild(createWidget('Inbound Calls This Week by Marketing Number', 'chart-inbound'));
-    container.appendChild(createWidget('Inbound Calls by Employee This Week', 'chart-employee'));
+    container.appendChild(createWidget('Calls by Employee This Week', 'chart-employee'));
     container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
 
     loadAndDrawCharts();
@@ -7171,7 +7171,7 @@ function cvSummaryModal() {
     
       modal.innerHTML = `
         <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
-          <span>Inbound Calls by Employee This Week</span>
+          <span>Calls by Employee This Week</span>
           <div style="display: flex; gap: 20px;">
             <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
             <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
@@ -7289,6 +7289,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
