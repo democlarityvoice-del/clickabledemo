@@ -6703,9 +6703,9 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
     container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
-    container.appendChild(createWidget('Inbound Calls This Week', 'chart-inbound'));
-    container.appendChild(createWidget('Inbound by Employee This Week', 'chart-employee'));
-    container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
+    container.appendChild(createWidget('Inbound Calls This Week by Marketing Number', 'chart-inbound'));
+    container.appendChild(createWidget('Inbound Calls by Employee This Week', 'chart-employee'));
+    container.appendChild(createWidget('Outbound Calls This Week by Employee', 'chart-outbound'));
 
     loadAndDrawCharts();
     log('✅ Demo widgets injected.');
@@ -7179,6 +7179,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
