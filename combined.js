@@ -6985,7 +6985,7 @@ function cvSummaryModal() {
         <div style="flex: 1; padding: 15px 20px; overflow: auto;">
           <div style="display: flex; gap: 30px; min-width: 1000px;">
             <div id="${chartId}" style="flex: 2; height: 300px;"></div>
-            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 360px;">
               <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
                 <thead>
                   <tr style="background: #eee;">
@@ -7080,7 +7080,7 @@ function cvSummaryModal() {
         <div style="flex: 1; padding: 15px 20px; overflow: auto;">
           <div style="display: flex; gap: 30px; min-width: 1000px;">
             <div id="${chartId}" style="flex: 2; height: 300px;"></div>
-            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 360px;">
               <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
                 <thead>
                   <tr style="background: #eee;">
@@ -7181,7 +7181,7 @@ function cvSummaryModal() {
         <div style="flex: 1; padding: 15px 20px; overflow: auto;">
           <div style="display: flex; gap: 30px; min-width: 1000px;">
             <div id="${chartId}" style="flex: 2; height: 300px;"></div>
-            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 360px;">
               <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
                 <thead>
                   <tr style="background: #eee;">
@@ -7289,6 +7289,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
