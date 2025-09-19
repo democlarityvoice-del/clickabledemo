@@ -7407,7 +7407,7 @@ function cvSummaryModal() {
     // Message text
     const msgTd = document.createElement('td');
     msgTd.className = 'conversation-recent-msg';
-    msgTd.style.maxWidth = '500px';
+    msgTd.style.maxWidth = '300px';
     msgTd.style.whiteSpace = 'nowrap';
     msgTd.style.overflow = 'hidden';
     msgTd.style.textOverflow = 'ellipsis';
@@ -7462,6 +7462,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
