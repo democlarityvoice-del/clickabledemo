@@ -7229,18 +7229,16 @@ function cvSummaryModal() {
           ]);
         
          const options = {
-            chartArea: { width: '80%', height: '70%' },
-            legend: { position: 'right' },
-            isStacked: false,
-            seriesType: 'bars',
-            bar: { groupWidth: '6%' }, // Skinny bars
-            hAxis: { title: 'Day of Week' },
-            vAxis: { title: 'Number of Calls', viewWindow: { min: 0 } },
-            colors: ['#4c78a8','#f58518','#54a24b','#b279a2','#e57027','#9c755f','#edc948']
-          };
+              chartArea: { width: '85%', height: '85%' },
+              legend: { position: 'right' },
+              pieHole: 0.4,       // Makes it a donut chart
+              is3D: true,         // 3D style like your front widget
+              colors: ['#4c78a8', '#f58518', '#54a24b', '#b279a2', '#e57027', '#9c755f', '#edc948']
+            };
+
         
-          const chart = new google.visualization.ComboChart(document.getElementById(containerId));
-          chart.draw(data, options);
+          const chart = new google.visualization.PieChart(document.getElementById(containerId));
+
            }
 
     
@@ -7289,6 +7287,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
