@@ -7143,65 +7143,106 @@ function cvSummaryModal() {
     }
 
         
- // EMPLOYEE MODAL  
-  function cvEmployeeModal() {
-      const modal = cvEmployeeEnsureModal();
-      modal.querySelector('#cv-ai-title').textContent = 'Employee Call Breakdown';
-      modal.querySelector('#cv-ai-summary').innerHTML = `
-        <p>This chart shows the total number of calls handled by each employee over the week.</p>
+     // EMPLOYEE MODAL  
+     function cvEmployeeModal() {
+      const existing = document.querySelector('#cv-employee-modal');
+      if (existing) existing.remove();
+    
+      const chartId = 'cv-employee-chart';
+      const tableId = 'cv-employee-table-container';
+    
+      const modal = document.createElement('div');
+      modal.id = 'cv-employee-modal';
+      modal.style = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1300px;
+        height: 540px;
+        background: white;
+        box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        z-index: 9999;
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        font-family: Helvetica, Arial, sans-serif;
       `;
     
-      const chips = modal.querySelector('#cv-ai-chips');
-      chips.innerHTML = '';
+      modal.innerHTML = `
+        <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+          <span>Inbound Calls by Employee This Week</span>
+          <div style="display: flex; gap: 20px;">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+            <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-employee-modal')?.remove()">&times;</span>
+          </div>
+        </div>
+        <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+          <div style="display: flex; gap: 30px; min-width: 1000px;">
+            <div id="${chartId}" style="flex: 2; height: 300px;"></div>
+            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+              <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
+                <thead>
+                  <tr style="background: #eee;">
+                    <th style="padding: 4px 8px; text-align: left;">Employee</th>
+                    <th>Sun</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Mike Johnson</td><td>3</td><td>11</td><td>9</td><td>10</td><td>10</td><td>11</td><td>6</td><td>60</td></tr>
+                  <tr><td>Cathy Thomas</td><td>2</td><td>8</td><td>7</td><td>6</td><td>6</td><td>9</td><td>3</td><td>41</td></tr>
+                  <tr><td>Jake Lee</td><td>1</td><td>9</td><td>8</td><td>8</td><td>8</td><td>10</td><td>5</td><td>49</td></tr>
+                  <tr><td>Bob Andersen</td><td>1</td><td>3</td><td>3</td><td>3</td><td>4</td><td>3</td><td>2</td><td>19</td></tr>
+                  <tr><td>Brittany Lawrence</td><td>0</td><td>5</td><td>5</td><td>6</td><td>6</td><td>7</td><td>2</td><td>31</td></tr>
+                  <tr><td>Alex Roberts</td><td>3</td><td>11</td><td>13</td><td>11</td><td>10</td><td>11</td><td>7</td><td>66</td></tr>
+                  <tr><td>Mark Sanchez</td><td>1</td><td>4</td><td>4</td><td>3</td><td>4</td><td>5</td><td>3</td><td>24</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
     
-      const employees = [
-        ['Mike Johnson', 60],
-        ['Cathy Thomas', 42],
-        ['Jake Lee', 56],
-        ['Bob Andersen', 13],
-        ['Brittany Lawrence', 28],
-        ['Alex Roberts', 62],
-        ['Mark Sanchez', 29]
-      ];
-    
-      employees.forEach(([name, total]) => {
-        const chip = document.createElement('div');
-        chip.className = 'cv-chip';
-        chip.textContent = `${name}: ${total} calls`;
-        chips.appendChild(chip);
-      });
-    
-      const chartContainer = modal.querySelector('#cv-ai-chart');
-      chartContainer.innerHTML = '<div id="chart-employee-modal" style="width:100%; height:400px;"></div>';
-    
-      renderEmployeeModalChart(employees);
+      document.body.appendChild(modal);
+      renderEmployeeChart(chartId);
     }
+           
+                
+           function renderEmployeeChart(containerId) {
+          const data = google.visualization.arrayToDataTable([
+            ['Employee', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
+            ['Mike Johnson', 3, 11, 9, 10, 10, 11, 6],
+            ['Cathy Thomas', 2, 8, 7, 6, 6, 9, 3],
+            ['Jake Lee', 1, 9, 8, 8, 8, 10, 5],
+            ['Bob Andersen', 1, 3, 3, 3, 4, 3, 2],
+            ['Brittany Lawrence', 0, 5, 5, 6, 6, 7, 2],
+            ['Alex Roberts', 3, 11, 13, 11, 10, 11, 7],
+            ['Mark Sanchez', 1, 4, 4, 3, 4, 5, 3],
+          ]);
         
-   function renderEmployeeModalChart(data) {
-      const pieData = google.visualization.arrayToDataTable([
-        ['Employee', 'Calls'],
-        ...data
-      ]);
-    
-      const options = {
-        chartArea: { width: '95%', height: '85%' },
-        legend: { position: 'bottom' },
-        pieHole: 0.4,
-        is3D: true,
-        colors: [
-          '#3366cc', // Mike - blue
-          '#dc3912', // Cathy - red
-          '#109618', // Jake - green
-          '#ff9900', // Bob - orange
-          '#990099', // Brittany - purple
-          '#0099c6', // Alex - cyan
-          '#dd4477'  // Mark - pink
-        ]
-      };
-    
-      const chart = new google.visualization.PieChart(document.getElementById('chart-employee-modal'));
-      chart.draw(pieData, options);
-    }
+          const options = {
+            title: '',
+            legend: { position: 'top', textStyle: { fontSize: 12 } },
+            chartArea: { width: '85%', height: '70%' },
+            bar: { groupWidth: '75%' },
+            hAxis: { title: 'Employee', slantedText: true },
+            vAxis: { title: 'Call Volume', minValue: 0 },
+            colors: ['#007bff', '#dc3545', '#ffc107', '#28a745', '#6610f2', '#fd7e14', '#20c997'],
+            isStacked: true
+          };
+        
+          const chart = new google.visualization.ColumnChart(document.getElementById(containerId));
+          chart.draw(data, options);
+        }
+
 
 
     
@@ -7250,6 +7291,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
