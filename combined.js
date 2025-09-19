@@ -7318,8 +7318,6 @@ function cvSummaryModal() {
   }
 
 
-
-
   // 2. Generate random time between 8:00 AM and 7:59 PM
   function randomTime() {
     const hour = Math.floor(Math.random() * 12) + 8; // 8 - 19
@@ -7409,8 +7407,12 @@ function cvSummaryModal() {
     // Message text
     const msgTd = document.createElement('td');
     msgTd.className = 'conversation-recent-msg';
-    msgTd.style.maxWidth = '500px';   
+    msgTd.style.maxWidth = '500px';
+    msgTd.style.whiteSpace = 'nowrap';
+    msgTd.style.overflow = 'hidden';
+    msgTd.style.textOverflow = 'ellipsis';
     msgTd.textContent = msg.text;
+
 
     // Date / time
     const dateTd = document.createElement('td');
@@ -7460,6 +7462,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
