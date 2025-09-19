@@ -7309,14 +7309,39 @@ function cvSummaryModal() {
 
 
   // MESSAGES/TEXT RESPONDER AI
-            
-         (function injectDemoMessagesV3() {
-              const INTERVAL_MS = 500;
-              const MAX_ATTEMPTS = 20;
-              let attempt = 0;
+
+
+
+  // MESSAGES/TEXT RESPONDER AI
         
-              const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
-              const cities = ['detroit', 'dallas'];
+        if (!window.__cvDemoMessagesInit) {
+          window.__cvDemoMessagesInit = true;
+
+            
+        (function injectDemoMessagesV3() {
+          const INTERVAL_MS = 500;
+          const MAX_ATTEMPTS = 20;
+          let attempt = 0;
+        
+          const MSGS_REGEX = /\/portal\/messages(?:[\/?#]|$)/;
+          const SLOT_SELECTOR = '.conversation-list-table';
+        
+          const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+          const cities = ['detroit', 'dallas'];
+        
+          const interval = setInterval(() => {
+            if (window.__cvDemoMessagesInit) return;
+            if (!MSGS_REGEX.test(location.pathname)) return;
+        
+            const container = document.querySelector(SLOT_SELECTOR);
+            if (!container) {
+              attempt++;
+              if (attempt >= MAX_ATTEMPTS) clearInterval(interval);
+              return;
+            }
+        
+            clearInterval(interval);
+           
         
           // 2. Generate random time between 8:00 AM and 7:59 PM
           function randomTime() {
@@ -7425,13 +7450,8 @@ function cvSummaryModal() {
           });
         });
 
-
-
-    const srcdoc = buildSrcdoc(messages);
-
     
-        // SOURCE DOC
-        
+        // SOURCE DOC        
           function buildSrcdoc(messages) {
             const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
             const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
@@ -7549,6 +7569,14 @@ function cvSummaryModal() {
 
     
     
+
+
+
+
+
+    
+    
+
 
 
 
