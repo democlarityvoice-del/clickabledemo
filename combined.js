@@ -6563,7 +6563,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === ADD FOUR FAKE WIDGETS LOGIC ===
 // === CV DEMO DASHBOARD MODES ===
-// === ADD FOUR FAKE WIDGETS LOGIC ===
+
 // === CV DEMO DASHBOARD MODES ===
 (function () {
   const log = (...args) => console.log('[CV DEMO]', ...args);
@@ -6755,49 +6755,6 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
-    // GOOGLE CHART HELPER for Outbound Calls
-    const googleScript = document.createElement('script');
-    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
-    googleScript.onload = () => {
-      google.charts.load('current', { packages: ['corechart'] });
-      google.charts.setOnLoadCallback(() => renderSummaryChart('cv-summary-chart'));
-    };
-    document.head.appendChild(googleScript);
-    
-    function renderSummaryChart(containerId) {
-      const container = document.getElementById(containerId);
-      if (!container) return;
-      container.innerHTML = '<div id="summary-chart-google" style="width:100%; height:400px;"></div>';
-    
-      const data = google.visualization.arrayToDataTable([
-        ['Day', 'Mike Johnson', 'Cathy Thomas', 'Jake Lee', 'Bob Andersen', 'Brittany Lawrence', 'Alex Roberts', 'Mark Sanchez'],
-        ['Sun', 2, 1, 2, 0, 1, 2, 1],
-        ['Mon', 10, 7, 9, 2, 4, 10, 5],
-        ['Tue', 12, 8, 10, 2, 4, 12, 5],
-        ['Wed', 9, 7, 10, 2, 5, 10, 4],
-        ['Thu', 10, 7, 9, 3, 5, 9, 4],
-        ['Fri', 12, 8, 10, 3, 6, 12, 6],
-        ['Sat', 5, 4, 6, 1, 3, 7, 4]
-      ]);
-    
-      const options = {
-        title: '',
-        curveType: 'function',
-        legend: { position: 'right' },
-        colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477'],
-        chartArea: { width: '75%', height: '70%' },
-        hAxis: { title: 'Day of Week' },
-        vAxis: { title: 'Calls', viewWindow: { min: 0 } },
-        lineWidth: 3,
-        pointSize: 5,
-      };
-    
-      const chart = new google.visualization.LineChart(document.getElementById('summary-chart-google'));
-      chart.draw(data, options);
-    }
-
-    
-    
   function loadAndDrawCharts() {
     if (!window.google || !google.charts) {
       const script = document.createElement('script');
@@ -6861,31 +6818,20 @@ function openAgentListenModal(agentExt, row, btn) {
       colors: ['#3c8dbc', '#dd4b39']
     });
 
- 
-    // REPLACED OUTBOUND CHART: Line Chart by Agent
-  const agentInboundData = google.visualization.arrayToDataTable([
-    ['Day', 'Mike Johnson', 'Cathy Thomas', 'Jake Lee', 'Bob Andersen', 'Brittany Lawrence', 'Alex Roberts', 'Mark Sanchez'],
-    ['Sun', 6, 4, 6, 1, 3, 6, 2],
-    ['Mon', 10, 8, 10, 3, 5, 11, 5],
-    ['Tue', 10, 7, 9, 2, 5, 10, 5],
-    ['Wed', 9, 6, 8, 2, 4, 10, 5],
-    ['Thu', 9, 6, 7, 2, 4, 9, 4],
-    ['Fri', 10, 7, 9, 2, 4, 10, 5],
-    ['Sat', 6, 4, 7, 1, 3, 6, 3]
+  // PURPLE COLUMN CHART (Outbound)
+  const outboundData = google.visualization.arrayToDataTable([
+    ['Day', 'Calls'],
+    ['Sun', 13], ['Mon', 25], ['Tue', 22], ['Wed', 40], ['Thu', 31], ['Fri', 14]
   ]);
-
-  const options = {
-    title: '',
-    chartArea: { width: '80%', height: '70%' },
-    legend: { position: 'right' },
-    hAxis: { title: 'Day of Week' },
-    vAxis: { title: 'Number of Inbound Calls', minValue: 0 },
-    lineWidth: 3,
-    pointSize: 5,
-    colors: ['#3366cc', '#dc3912', '#ff9900', '#109618', '#990099', '#0099c6', '#dd4477']
-  };
-
-  new google.visualization.LineChart(document.getElementById('chart-outbound')).draw(agentInboundData, options);
+  new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
+    .draw(outboundData, {
+      chartArea: { width: '80%', height: '70%' },
+      legend: { position: 'bottom' },
+      hAxis: { title: 'Day of Week' },
+      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+      bar: { groupWidth: '65%' },
+      colors: ['#8a2be2'] // BlueViolet
+    });
 }
 
     // CALL QUEUE SUMMARY MODAL
@@ -7114,6 +7060,21 @@ function renderInboundChart(containerId) {
           console.warn('No modal defined for widget type:', widgetType);
       }
     }, true);
+
+       
+    
+
+  // BEGIN injection
+  const sidebarReady = setInterval(() => {
+    const sidebar = document.querySelector('#home-dashboards-body');
+    if (sidebar) {
+      clearInterval(sidebarReady);
+      injectSidebarButtons();
+      injectDemoWidgets(); // inject immediately on load
+    }
+  }, 300);
+})();
+
 
 
 
