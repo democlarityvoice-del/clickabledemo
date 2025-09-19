@@ -6740,22 +6740,21 @@ function openAgentListenModal(agentExt, row, btn) {
       }
     }
     
-    function drawAllCharts() {
-      // COLUMN CHART: Summary by Hour for Today
-      const summaryData = google.visualization.arrayToDataTable([
-        ['Hour', 'Calls'],
-        ['8 AM', 4], ['9 AM', 5], ['10 AM', 6], ['11 AM', 5],
-        ['12 PM', 4], ['1 PM', 3], ['2 PM', 4], ['3 PM', 2]
-      ]);
-      new google.visualization.ColumnChart(document.getElementById('chart-summary'))
-        .draw(summaryData, {
-          chartArea: { width: '80%', height: '70%' },
-          legend: { position: 'bottom' },
-          hAxis: { title: 'Hour of Day' },
-          vAxis: { title: 'Call Volume', minValue: 0 },
-          bar: { groupWidth: '70%' },
-          colors: ['#f7931e']
-        });
+   // Draw all charts
+function loadGoogleCharts(callback) {
+  if (typeof google === 'undefined' || !google.charts) {
+    const googleScript = document.createElement('script');
+    googleScript.src = 'https://www.gstatic.com/charts/loader.js';
+    googleScript.onload = () => {
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(callback);
+    };
+    document.head.appendChild(googleScript);
+  } else {
+    google.charts.setOnLoadCallback(callback);
+  }
+}
+
     
       // BLUE COLUMN CHART: Inbound Calls
       const inboundData = google.visualization.arrayToDataTable([
@@ -7122,6 +7121,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
