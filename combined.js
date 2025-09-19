@@ -7308,193 +7308,156 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI
-function injectDemoMessagesV10() {
-  const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-  if (!container) return console.error("Container not found.");
+  // MESSAGES/TEXT RESPONDER AI(function injectDemoMessages() {
+  // 1. Target the real messages table
+  const tbody = document.querySelector('.conversation-list-table tbody');
+  if (!tbody) {
+    console.error('Message table <tbody> not found');
+    return;
+  }
 
-  const areaCodes = ['313', '248', '586', '214', '469', '972'];
-  const fakeNames = ['John S.', 'Mary P.', 'Jake L.', 'Theresa W.', 'Alan R.', 'Sophie D.', 'Carlos V.', 'Cathy T.', 'Nick M.', 'Olivia H.', 'Grant B.', 'Ella K.', 'Marcus J.', 'Tina C.', 'Roger F.'];
-  const surveyTexts = [
-    "Thank you for your visit! Please complete our survey: www.mrservicetoday.com/survey",
-    "We’d love your feedback. Tell us how we did: www.mrservicetoday.com/survey",
-    "Help us improve! Take our quick survey: www.mrservicetoday.com/survey",
-    "Rate your experience: www.mrservicetoday.com/survey"
+  // 2. Generate random time between 8:00 AM and 7:59 PM
+  function randomTime() {
+    const hour = Math.floor(Math.random() * 12) + 8; // 8 - 19
+    const minute = Math.floor(Math.random() * 60);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour > 12 ? hour - 12 : hour;
+    const minStr = minute < 10 ? `0${minute}` : minute;
+    return `${hour12}:${minStr} ${ampm}`;
+  }
+
+  // 3. Stagger dates like Call History
+  const today = new Date();
+  const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7]; // 15 messages
+  function formatDate(daysAgo) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - daysAgo);
+    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+  }
+
+  // 4. Fake message sets
+  const survey = [
+    "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
+    "We value your feedback! www.mrservicetoday.com/survey",
+    "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
+    "Your opinion matters! www.mrservicetoday.com/survey"
   ];
-  const confirmTexts = [
-    "Your appointment is confirmed for tomorrow. www.mrservicetoday.com",
-    "Just a reminder: We’re scheduled to visit you soon. www.mrservicetoday.com",
-    "Thanks for booking with us! See your details here: www.mrservicetoday.com",
-    "Reminder: Your Mr. Service appointment is upcoming. www.mrservicetoday.com",
-    "You’re all set! View appointment info: www.mrservicetoday.com",
-    "One last check — see your visit details here: www.mrservicetoday.com"
+
+  const confirmations = [
+    "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
+    "Confirming your appointment for Friday at 1:30pm.",
+    "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
+    "Appointment reminder: Wednesday at 3:00pm.",
+    "Mr. Service will see you tomorrow morning at 8:30am.",
+    "We're scheduled to visit you Friday at 2:15pm."
   ];
+
   const customerReplies = [
     "Yes, I will tell your tech when they arrive.",
-    "Sounds good, see you tomorrow.",
-    "Thanks — I’ll be home all day."
-  ];
-  const internalMessages = [
-    { to: "Cathy", msg: "Hey Cathy, can you look at Robert's account?" },
-    { to: "Jake", msg: "I see a note on that account for you. Take a look." }
+    "Thanks, I’ll be home all day.",
+    "Okay, see you then."
   ];
 
-  function getRandomTime() {
-    const hour = Math.floor(Math.random() * 12) + 8; // 8AM–7PM
-    const minute = Math.floor(Math.random() * 60);
-    const period = hour >= 12 ? "PM" : "AM";
-    const formattedHour = hour > 12 ? hour - 12 : hour;
-    const formattedMin = minute < 10 ? `0${minute}` : minute;
-    return `${formattedHour}:${formattedMin} ${period}`;
+  const internalMsgs = [
+    { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
+    { name: "Jake", text: "I see a note on that account for you. Take a look." }
+  ];
+
+  const phoneAreaCodes = ['313','248','586','214','469','972'];
+  function randomPhone() {
+    const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
+    const mid = Math.floor(Math.random() * 900 + 100);
+    const end = Math.floor(Math.random() * 9000 + 1000);
+    return `(${area}) ${mid}-${end}`;
   }
 
-  function buildDateList() {
-    const today = new Date();
-    const dateList = [];
-    for (let i = 0; i < 10;) {
-      const offset = i === 0 ? 1 : Math.floor(Math.random() * 2) + 1;
-      const date = new Date(today);
-      date.setDate(today.getDate() - offset - i);
-      const options = { month: 'short', day: 'numeric' };
-      const dateStr = date.toLocaleDateString('en-US', options);
-      const msgCount = Math.floor(Math.random() * 2) + 3; // 3–4 messages per day
-      for (let j = 0; j < msgCount && i < 10; j++, i++) {
-        dateList.push(dateStr);
-      }
-    }
-    return dateList;
-  }
+  // 5. Build message list
+  const messages = [];
+  for (let i = 0; i < 4; i++) messages.push({ type: 'survey', text: survey[i] });
+  for (let i = 0; i < 6; i++) messages.push({ type: 'confirm', text: confirmations[i] });
+  for (let i = 0; i < 3; i++) messages.push({ type: 'reply', text: customerReplies[i] });
+  internalMsgs.forEach(m => messages.push({ type: 'internal', text: m.text, name: m.name }));
 
-  const allMessages = [];
-  const dateList = buildDateList();
+  // 6. Clear current table
+  tbody.innerHTML = '';
 
-  for (let i = 0; i < 10; i++) {
-    allMessages.push({ type: "survey", text: surveyTexts[i % surveyTexts.length] });
-  }
-  for (let i = 0; i < 6; i++) {
-    allMessages.push({ type: "confirm", text: confirmTexts[i % confirmTexts.length] });
-  }
-  for (let i = 0; i < 3; i++) {
-    allMessages.push({ type: "reply", text: customerReplies[i] });
-  }
-  internalMessages.forEach(m => allMessages.push({ type: "internal", text: m.msg, to: m.to }));
+  // 7. Inject rows
+  messages.forEach((msg, idx) => {
+    const date = formatDate(dateOffsets[idx]);
+    const time = randomTime();
 
-  function randomNumber() {
-    const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-    const part1 = Math.floor(Math.random() * 900 + 100);
-    const part2 = Math.floor(Math.random() * 9000 + 1000);
-    return `(${area}) ${part1}-${part2}`;
-  }
+    const tr = document.createElement('tr');
+    tr.classList.add('read');
 
-  function getName(index, type) {
-    if (type === "internal") return internalMessages[index % 2].to;
-    return fakeNames[index % fakeNames.length];
-  }
+    // Icon cell
+    const iconTd = document.createElement('td');
+    const icon = document.createElement('img');
+    icon.src = msg.type === 'internal'
+      ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
+      : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+    icon.style.height = '16px';
+    iconTd.appendChild(icon);
 
-  const tableRows = allMessages.map((msg, idx) => {
-    const name = getName(idx, msg.type);
-    const number = randomNumber();
-    const date = dateList[idx];
-    const time = getRandomTime();
+    // Phone / name cell
+    const nameTd = document.createElement('td');
+    nameTd.textContent = msg.type === 'internal' ? msg.name : randomPhone();
 
-    return `
-      <tr>
-        <td>${name}</td>
-        <td>${number}</td>
-        <td class="cv-demo-message-text">${msg.text}</td>
-        <td>${date}</td>
-        <td>${time}</td>
-        <td>
-          <button class="listen-btn reply-btn" title="Reply">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg" />
-          </button>
-        </td>
-        <td>
-          <button class="listen-btn delete-btn" title="Delete">
-            <img style="filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg" />
-          </button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+    // Message text
+    const msgTd = document.createElement('td');
+    msgTd.className = 'conversation-recent-msg';
+    msgTd.style.maxWidth = '500px';
+    msgTd.style.width = '100%';
+    msgTd.textContent = msg.text;
 
-  const styles = `
-    <style>
-      #cv-demo-messages-iframe {
-        width: 100%;
-        border: none;
-        margin-top: 20px;
-      }
-      .cv-demo-table {
-        width: 100%;
-        border-collapse: collapse;
-        font-family: sans-serif;
-        font-size: 14px;
-      }
-      .cv-demo-table th, .cv-demo-table td {
-        border-bottom: 1px solid #e0e0e0;
-        padding: 8px 10px;
-        text-align: left;
-      }
-      .cv-demo-table tr {
-        background: #fff;
-        transition: background 0.2s ease-in-out;
-      }
-      .cv-demo-table tr:hover {
-        background: #f3f3f3;
-      }
-      .cv-demo-message-text {
-        font-weight: 500;
-        color: #333;
-        font-size: 13.5px;
-      }
-      .listen-btn {
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        width: 24px;
-        height: 24px;
-        background: #f0f0f0;
-        border-radius: 50%;
-        border: 1px solid #cfcfcf;
-        cursor: pointer;
-      }
-      .listen-btn img {
-        width: 16px;
-        height: 16px;
-        opacity: 0.35;
-        transition: opacity 0.2s ease-in-out;
-      }
-      .listen-btn:hover img,
-      tr:hover .listen-btn img {
-        opacity: 1;
-      }
-    </style>
-  `;
+    // Date / time
+    const dateTd = document.createElement('td');
+    dateTd.className = 'text-right';
+    dateTd.textContent = `${date} ${time}`;
 
-  const iframe = document.createElement('iframe');
-  iframe.id = 'cv-demo-messages-iframe';
-  iframe.srcdoc = `
-    ${styles}
-    <table class="cv-demo-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Number</th>
-          <th>Message</th>
-          <th>Date</th>
-          <th>Time</th>
-          <th></th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        ${tableRows}
-      </tbody>
-    </table>
-  `;
-  document.querySelector('#omp-active-body')?.appendChild(iframe);
+    // Action buttons
+    const actionTd = document.createElement('td');
+    actionTd.className = 'action-buttons';
+
+    const replyBtn = document.createElement('span');
+    replyBtn.className = 'listen-btn';
+    replyBtn.style.display = 'inline-flex';
+    replyBtn.style.justifyContent = 'center';
+    replyBtn.style.alignItems = 'center';
+    replyBtn.style.width = '24px';
+    replyBtn.style.height = '24px';
+    replyBtn.style.borderRadius = '50%';
+    replyBtn.style.border = '1px solid #cfcfcf';
+    replyBtn.style.background = '#f0f0f0';
+    replyBtn.style.marginRight = '4px';
+    replyBtn.innerHTML = `<img style="width:16px;height:16px;opacity:0.35;" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg">`;
+
+    const deleteBtn = document.createElement('span');
+    deleteBtn.className = 'listen-btn';
+    deleteBtn.style.display = 'inline-flex';
+    deleteBtn.style.justifyContent = 'center';
+    deleteBtn.style.alignItems = 'center';
+    deleteBtn.style.width = '24px';
+    deleteBtn.style.height = '24px';
+    deleteBtn.style.borderRadius = '50%';
+    deleteBtn.style.border = '1px solid #cfcfcf';
+    deleteBtn.style.background = '#f0f0f0';
+    deleteBtn.innerHTML = `<img style="width:16px;height:16px;filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg">`;
+
+    actionTd.appendChild(replyBtn);
+    actionTd.appendChild(deleteBtn);
+
+    tr.appendChild(iconTd);
+    tr.appendChild(nameTd);
+    tr.appendChild(msgTd);
+    tr.appendChild(dateTd);
+    tr.appendChild(actionTd);
+
+    tbody.appendChild(tr);
+  });
+
+  console.log('Demo messages injected successfully!');
 })();
+
 
 
 
