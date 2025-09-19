@@ -6819,7 +6819,7 @@ function openAgentListenModal(agentExt, row, btn) {
     });
 
   // PURPLE COLUMN CHART (Outbound)
-(function swapOutboundChart() {
+function swapOutboundChart() {
   const chartContainer = document.querySelector('#omp-active-body #chart_div');
   if (!chartContainer) return;
 
@@ -7134,6 +7134,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
