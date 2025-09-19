@@ -6931,8 +6931,7 @@ function cvSummaryModal() {
 
 
     
- // INBOUND MODAL 
-      
+ // INBOUND MODAL       
     function cvInboundModal() {
       const existing = document.querySelector('#cv-inbound-modal');
       if (existing) existing.remove();
@@ -7027,10 +7026,105 @@ function cvSummaryModal() {
     }
     
         
-        // OUTBOUND MODAL
-            function cvOutboundModal() {
-              alert('🟪 Outbound modal coming soon!');
-        }
+       // OUTBOUND MODAL
+    function cvOutboundModal() {
+      const existing = document.querySelector('#cv-outbound-modal');
+      if (existing) existing.remove();
+    
+      const chartId = 'cv-outbound-chart';
+      const tableId = 'cv-outbound-table-container';
+    
+      const modal = document.createElement('div');
+      modal.id = 'cv-outbound-modal';
+      modal.style = `
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        width: 1300px;
+        height: 540px;
+        background: white;
+        box-shadow: 0 0 15px rgba(0,0,0,0.3);
+        z-index: 9999;
+        border: 1px solid #ccc;
+        display: flex;
+        flex-direction: column;
+        font-family: Helvetica, Arial, sans-serif;
+      `;
+    
+      modal.innerHTML = `
+        <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+          <span>Agent Call Breakdown by Day</span>
+          <div style="display: flex; gap: 20px;">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+            <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-outbound-modal')?.remove()">&times;</span>
+          </div>
+        </div>
+        <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+          <div style="display: flex; gap: 30px; min-width: 1000px;">
+            <div id="${chartId}" style="flex: 2; height: 300px;"></div>
+            <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
+              <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
+                <thead>
+                  <tr style="background: #eee;">
+                    <th style="padding: 4px 8px; text-align: left;">Agent</th>
+                    <th>Sun</th>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr><td>Mike Johnson</td><td>2</td><td>10</td><td>12</td><td>9</td><td>10</td><td>12</td><td>5</td><td>60</td></tr>
+                  <tr><td>Cathy Thomas</td><td>1</td><td>7</td><td>8</td><td>7</td><td>7</td><td>8</td><td>4</td><td>42</td></tr>
+                  <tr><td>Jake Lee</td><td>2</td><td>9</td><td>10</td><td>10</td><td>9</td><td>10</td><td>6</td><td>56</td></tr>
+                  <tr><td>Bob Andersen</td><td>0</td><td>2</td><td>2</td><td>2</td><td>3</td><td>3</td><td>1</td><td>13</td></tr>
+                  <tr><td>Brittany Lawrence</td><td>1</td><td>4</td><td>4</td><td>5</td><td>5</td><td>6</td><td>3</td><td>28</td></tr>
+                  <tr><td>Alex Roberts</td><td>2</td><td>10</td><td>12</td><td>10</td><td>9</td><td>12</td><td>7</td><td>62</td></tr>
+                  <tr><td>Mark Sanchez</td><td>1</td><td>5</td><td>5</td><td>4</td><td>4</td><td>6</td><td>4</td><td>29</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    
+      document.body.appendChild(modal);
+      renderOutboundChart(chartId);
+    }
+
+    function renderOutboundChart(containerId) {
+      const data = google.visualization.arrayToDataTable([
+        ['Day','Mike Johnson','Cathy Thomas','Jake Lee','Bob Andersen','Brittany Lawrence','Alex Roberts','Mark Sanchez'],
+        ['Sun', 2, 1, 2, 0, 1, 2, 1],
+        ['Mon',10, 7, 9, 2, 4,10, 5],
+        ['Tue',12, 8,10, 2, 4,12, 5],
+        ['Wed', 9, 7,10, 2, 5,10, 4],
+        ['Thu',10, 7, 9, 3, 5, 9, 4],
+        ['Fri',12, 8,10, 3, 6,12, 6],
+        ['Sat', 5, 4, 6, 1, 3, 7, 4],
+      ]);
+    
+      const options = {
+        title: 'Outbound Agent Breakdown',
+        legend: { position: 'right' },
+        seriesType: 'bars',
+        bar: { groupWidth: '6%' },
+        chartArea: { width: '75%', height: '65%' },
+        height: 600,
+        hAxis: { title: 'Day of Week' },
+        vAxis: { title: 'Number of Calls' },
+        colors: ['#4c78a8','#f58518','#54a24b','#b279a2','#e57027','#9c755f','#edc948']
+      };
+    
+      const chart = new google.visualization.ComboChart(document.getElementById(containerId));
+      chart.draw(data, options);
+    }
 
     
      // EMPLOYEE MODAL  
@@ -7085,6 +7179,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
