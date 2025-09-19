@@ -6957,22 +6957,19 @@ function cvInboundModal() {
       <div style="display: flex; gap: 30px; min-width: 1000px;">
         <div id="${chartId}" style="flex: 2; height: 300px;"></div>
         <div id="${tableId}" style="flex: 1; overflow: auto; max-height: 600px;">
-          <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
+          <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">            
             <thead>
               <tr style="background: #eee;">
                 <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-                <thead>
-                  <tr style="background: #eee;">
-                    <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-                    <th style="transform: translateX(-4px);">Sun</th>
-                    <th style="transform: translateX(-4px);">Mon</th>
-                    <th style="transform: translateX(-4px);">Tue</th>
-                    <th style="transform: translateX(-4px);">Wed</th>
-                    <th style="transform: translateX(-4px);">Thu</th>
-                    <th style="transform: translateX(-4px);">Fri</th>
-                    <th style="transform: translateX(-4px);">Sat</th>
-                  </tr>
-                </thead>
+                <th style="transform: translateX(-4px);">Sun</th>
+                <th style="transform: translateX(-4px);">Mon</th>
+                <th style="transform: translateX(-4px);">Tue</th>
+                <th style="transform: translateX(-4px);">Wed</th>
+                <th style="transform: translateX(-4px);">Thu</th>
+                <th style="transform: translateX(-4px);">Fri</th>
+                <th style="transform: translateX(-4px);">Sat</th>
+              </tr>
+            </thead>
 
             <tbody>
               <tr><td>(248) 436-3443 (300)</td><td>0</td><td>3</td><td>5</td><td>10</td><td>8</td><td>7</td><td>2</td></tr>
@@ -7074,6 +7071,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
