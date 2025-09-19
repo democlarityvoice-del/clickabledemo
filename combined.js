@@ -7317,9 +7317,7 @@ function cvSummaryModal() {
     return; // ✅ now legal, because it's inside a function
   }
 
-  // Your injection code goes here
-  console.log('Found the table!', tbody);
-})();
+
 
 
   // 2. Generate random time between 8:00 AM and 7:59 PM
@@ -7463,6 +7461,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
