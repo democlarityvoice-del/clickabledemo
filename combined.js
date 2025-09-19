@@ -6889,11 +6889,15 @@ function swapOutboundChart() {
       elements: {
         line: {
           borderWidth: 1
+               }
         }
       }
-    }
-  });
-}  // ✅ Function closes cleanly
+    });
+  }
+
+  // ✅ CALL IT, THEN CLOSE drawCharts PROPERLY
+  swapOutboundChart();
+} // <-- THIS closes drawCharts completely
 
 
 
@@ -7135,6 +7139,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
