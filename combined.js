@@ -7435,8 +7435,8 @@ function cvSummaryModal() {
           display: inline-flex;
           align-items: center;
           justify-content: center;
-          width: 26px;
-          height: 26px;
+          width: 20px;
+          height: 20px;
           background: #f0f0f0;
           border-radius: 50%;
           border: 1px solid #cfcfcf;
@@ -7448,8 +7448,8 @@ function cvSummaryModal() {
         }
         
         .msg-btn img {
-          width: 18px;
-          height: 18px;
+          width: 10px;
+          height: 10px;
           display: block;
           opacity: 0.35;
           transition: opacity 0.2s ease-in-out;
@@ -7495,6 +7495,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
