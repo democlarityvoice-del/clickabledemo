@@ -6819,20 +6819,83 @@ function openAgentListenModal(agentExt, row, btn) {
     });
 
   // PURPLE COLUMN CHART (Outbound)
-  const outboundData = google.visualization.arrayToDataTable([
-    ['Day', 'Calls'],
-    ['Sun', 13], ['Mon', 25], ['Tue', 22], ['Wed', 40], ['Thu', 31], ['Fri', 14]
-  ]);
-  new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
-    .draw(outboundData, {
-      chartArea: { width: '80%', height: '70%' },
-      legend: { position: 'bottom' },
-      hAxis: { title: 'Day of Week' },
-      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
-      bar: { groupWidth: '65%' },
-      colors: ['#8a2be2'] // BlueViolet
-    });
-}
+(function swapOutboundChart() {
+  const chartContainer = document.querySelector('#omp-active-body #chart_div');
+  if (!chartContainer) return;
+
+  // Clear current chart
+  chartContainer.innerHTML = '';
+
+  // Create a canvas for the new chart
+  const canvas = document.createElement('canvas');
+  canvas.id = 'outboundSkinnyChart';
+  chartContainer.appendChild(canvas);
+
+  const ctx = canvas.getContext('2d');
+
+  // Dummy data for now — replace with your live outbound data
+  const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const agents = [
+    { name: 'Mike Johnson', data: [2, 10, 12, 9, 10, 12, 5] },
+    { name: 'Cathy Thomas', data: [1, 7, 8, 7, 7, 8, 4] },
+    { name: 'Jake Lee', data: [2, 9, 10, 10, 9, 10, 6] },
+    { name: 'Bob Andersen', data: [0, 2, 2, 2, 3, 3, 1] },
+    { name: 'Brittany Lawrence', data: [1, 4, 4, 5, 5, 6, 3] },
+    { name: 'Alex Roberts', data: [2, 10, 12, 10, 9, 12, 7] },
+    { name: 'Mark Sanchez', data: [1, 5, 5, 4, 4, 6, 4] }
+  ];
+
+  // Build datasets with skinny line style
+  const datasets = agents.map(agent => ({
+    label: agent.name,
+    data: agent.data,
+    borderColor: `rgba(${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, ${Math.floor(Math.random()*255)}, 1)`,
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    pointRadius: 0,
+    type: 'line', // skinny vertical lines
+    stepped: false,
+    tension: 0
+  }));
+
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: days,
+      datasets: datasets
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'right',
+          labels: { color: '#000' }
+        },
+        tooltip: { enabled: true }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          ticks: { color: '#000' }
+        },
+        y: {
+          beginAtZero: true,
+          grid: { color: '#ccc' },
+          ticks: { color: '#000' }
+        }
+      },
+      elements: {
+        line: {
+          borderWidth: 1
+        }
+      }
+    }
+  });
+})();
+
+
 
     // CALL QUEUE SUMMARY MODAL
 function cvSummaryModal() {
@@ -7071,6 +7134,7 @@ function renderInboundChart(containerId) {
     }
   }, 300);
 })();
+
 
 
 
