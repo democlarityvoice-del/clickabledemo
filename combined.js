@@ -7308,172 +7308,217 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI(
+  // MESSAGES/TEXT RESPONDER AI
+            
+         (function injectDemoMessagesV3() {
+              const INTERVAL_MS = 500;
+              const MAX_ATTEMPTS = 20;
+              let attempt = 0;
+        
+              const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+              const cities = ['detroit', 'dallas'];
+        
+          // 2. Generate random time between 8:00 AM and 7:59 PM
+          function randomTime() {
+            const hour = Math.floor(Math.random() * 12) + 8; // 8 - 19
+            const minute = Math.floor(Math.random() * 60);
+            const ampm = hour >= 12 ? 'PM' : 'AM';
+            const hour12 = hour > 12 ? hour - 12 : hour;
+            const minStr = minute < 10 ? `0${minute}` : minute;
+            return `${hour12}:${minStr} ${ampm}`;
+          }
+        
+          // 3. Stagger dates like Call History
+          const today = new Date();
+          const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7]; // 15 messages
+          function formatDate(daysAgo) {
+            const d = new Date(today);
+            d.setDate(d.getDate() - daysAgo);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+          }
+        
+        // 4. Fake message sets
+          const survey = [
+            "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
+            "We value your feedback! www.mrservicetoday.com/survey",
+            "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
+            "Your opinion matters! www.mrservicetoday.com/survey"
+          ];
+        
+          const confirmations = [
+            "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
+            "Confirming your appointment for Friday at 1:30pm.",
+            "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
+            "Appointment reminder: Wednesday at 3:00pm.",
+            "Mr. Service will see you tomorrow morning at 8:30am.",
+            "We're scheduled to visit you Friday at 2:15pm."
+          ];
+        
+          const customerReplies = [
+            "Yes, I will tell your tech when they arrive.",
+            "Thanks, I’ll be home all day.",
+            "Okay, see you then."
+          ];
+        
+          const internalMsgs = [
+            { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
+            { name: "Jake", text: "I see a note on that account for you. Take a look." }
+          ];
+        
+          const phoneAreaCodes = ['313','248','586','214','469','972'];
+          function randomPhone() {
+            const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
+            const mid = Math.floor(Math.random() * 900 + 100);
+            const end = Math.floor(Math.random() * 9000 + 1000);
+            return `(${area}) ${mid}-${end}`;
+          }
+
+
+        // 5. Build structured messages
+        const messages = [];
+        
+        // Push surveys
+        for (let i = 0; i < 4; i++) {
+          messages.push({
+            type: 'survey',
+            message: survey[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+        
+        // Push confirmations
+        for (let i = 0; i < 6; i++) {
+          messages.push({
+            type: 'confirm',
+            message: confirmations[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+        
+        // Push customer replies
+        for (let i = 0; i < 3; i++) {
+          messages.push({
+            type: 'reply',
+            message: customerReplies[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+        
+        // Push internal messages
+        internalMsgs.forEach((m) => {
+          messages.push({
+            type: 'internal',
+            message: m.text,
+            number: null,
+            sender: m.name,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        });
+
+
+
+    const srcdoc = buildSrcdoc(messages);
+
     
- (function injectDemoMessagesV3() {
-      const INTERVAL_MS = 500;
-      const MAX_ATTEMPTS = 20;
-      let attempt = 0;
-
-      const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
-      const cities = ['detroit', 'dallas'];
-
-  function randomPhone() {
-    const ac = safeAreaCodes[Math.floor(Math.random() * safeAreaCodes.length)];
-    const mid = String(Math.floor(200 + Math.random() * 800)).padStart(3, '0');
-    const end = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0');
-    return `(${ac}) ${mid}-${end}`;
-  }
-
-  function randomDate() {
-    const date = new Date();
-    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
-    const opts = { month: "short", day: "numeric", hour: "numeric", minute: "numeric" };
-    return date.toLocaleString("en-US", opts).replace(',', '');
-  }
-
-  function getMessageRows() {
-    const messages = [];
-
-    // 4 Survey Links
-    for (let i = 0; i < 4; i++) {
-      const city = cities[i % cities.length];
-      messages.push({
-        type: 'auto',
-        number: randomPhone(),
-        message: `Thank you for your visit! Please leave feedback:\nwww.mrservicetoday.com/survey?location=${city}123`,
-        date: randomDate()
-      });
-    }
-
-    // 6 Appointment Reminders
-    for (let i = 0; i < 6; i++) {
-      const city = cities[i % cities.length];
-      messages.push({
-        type: 'auto',
-        number: randomPhone(),
-        message: `Reminder: Your Mr. Service appointment is scheduled for tomorrow.\nwww.mrservicetoday.com/appointments?id=${city}xyz${i + 1}`,
-        date: randomDate()
-      });
-    }
-
-    // 3 Customer Replies
-    const replies = [
-      "Yes, I will tell your tech when they arrive.",
-      "Sounds good, thank you.",
-      "Can I confirm the time again?"
-    ];
-    for (let i = 0; i < 3; i++) {
-      messages.push({
-        type: 'customer',
-        number: randomPhone(),
-        message: replies[i],
-        date: randomDate()
-      });
-    }
-
-    // 2 Internal Messages
-    messages.push({
-      type: 'internal',
-      sender: 'Cathy',
-      message: "Hey Cathy, can you look at Robert’s account?",
-      date: randomDate()
-    });
-    messages.push({
-      type: 'internal',
-      sender: 'Jake',
-      message: "I see a note on that account for you. Take a look.",
-      date: randomDate()
-    });
-
-    return messages;
-  }
-
-  function buildSrcdoc(messages) {
-    const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
-    const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-    const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
-    const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
-
-    const rows = messages.map((msg, i) => {
-      const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
-      const sender = msg.type === 'internal' ? msg.sender : msg.number;
-      const preview = msg.message.replace(/\n/g, "<br>");
-      return `
-          <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
-            <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-            <td>${sender}</td>
-            <td>${preview}</td>
-            <td class="nowrap">${msg.date}</td>
-            <td class="nowrap actions">
-              <span class="msg-btn iconReply">
-                <img src="${iconReply}" title="Reply">
-              </span>
-              <span class="msg-btn iconDelete">
-                <img src="${iconDelete}" title="Delete">
-              </span>
-            </td>
-          </tr>`;
-
-        }).join("\n");
-
-    return `
-      <html><head><style>
-        body {
-          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-          margin: 0;
-          font-size: 13px;
-          color: #222; /* darker text */
-          font-weight: 400;
-        }
-
-        table { width: 100%; border-collapse: collapse; }
-        tr { background: white; }
-        tr:hover { background: #f2f2f2; cursor: pointer; }
-        td {
-              padding: 3px 6px;
-              border-bottom: 1px solid #ccc;
-              vertical-align: middle;
-              line-height: 1.1;
-              font-size: 12px;
-            }
-        td.nowrap { white-space: nowrap; }
-        td.actions { text-align: right; }
-
-        .msg-btn {
-          display: inline-flex;
-          align-items: center;
-          justify-content: center;
-          width: 20px;
-          height: 20px;
-          background: #f0f0f0;
-          border-radius: 50%;
-          border: 1px solid #cfcfcf;
-          cursor: pointer;
-        }
+        // SOURCE DOC
         
-        .msg-btn:focus {
-          outline: none;
-        }
+          function buildSrcdoc(messages) {
+            const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+            const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+            const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
+            const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
         
-        .msg-btn img {
-          width: 10px;
-          height: 10px;
-          display: block;
-          opacity: 0.35;
-          transition: opacity 0.2s ease-in-out;
-        }
+            const rows = messages.map((msg, i) => {
+              const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
+              const sender = msg.type === 'internal' ? msg.sender : msg.number;
+              const preview = msg.message.replace(/\n/g, "<br>");
+              return `
+                  <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+                    <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+                    <td>${sender}</td>
+                    <td>${preview}</td>
+                    <td class="nowrap">${msg.date} ${msg.time}</td>
+                    <td class="nowrap actions">
+                      <span class="msg-btn iconReply">
+                        <img src="${iconReply}" title="Reply">
+                      </span>
+                      <span class="msg-btn iconDelete">
+                        <img src="${iconDelete}" title="Delete">
+                      </span>
+                    </td>
+                  </tr>`;
         
-        .msg-btn:hover img {
-          opacity: 1;
-        }
+                }).join("\n");
+        
+            return `
+              <html><head><style>
+                body {
+                  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                  margin: 0;
+                  font-size: 13px;
+                  color: #222; /* darker text */
+                  font-weight: 400;
+                }
+        
+                table { width: 100%; border-collapse: collapse; }
+                tr { background: white; }
+                tr:hover { background: #f2f2f2; cursor: pointer; }
+                td {
+                      padding: 3px 6px;
+                      border-bottom: 1px solid #ccc;
+                      vertical-align: middle;
+                      line-height: 1.1;
+                      font-size: 12px;
+                    }
+                td.nowrap { white-space: nowrap; }
+                td.actions { text-align: right; }
+        
+                .msg-btn {
+                  display: inline-flex;
+                  align-items: center;
+                  justify-content: center;
+                  width: 20px;
+                  height: 20px;
+                  background: #f0f0f0;
+                  border-radius: 50%;
+                  border: 1px solid #cfcfcf;
+                  cursor: pointer;
+                }
+                
+                .msg-btn:focus {
+                  outline: none;
+                }
+                
+                .msg-btn img {
+                  width: 10px;
+                  height: 10px;
+                  display: block;
+                  opacity: 0.35;
+                  transition: opacity 0.2s ease-in-out;
+                }
+                
+                .msg-btn:hover img {
+                  opacity: 1;
+                }
+        
+              </style></head><body>
+                <table>${rows}</table>
+              </body></html>
+            `;
+          }
 
-      </style></head><body>
-        <table>${rows}</table>
-      </body></html>
-    `;
-  }
-
+ 
+             
   function inject() {
     const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
     if (!container) return false;
@@ -7504,6 +7549,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
