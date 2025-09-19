@@ -7142,11 +7142,66 @@ function cvSummaryModal() {
       chart.draw(data, options);
     }
 
+        
+ // EMPLOYEE MODAL  
+  function cvEmployeeModal() {
+      const modal = cvAiEnsureModal();
+      modal.querySelector('#cv-ai-title').textContent = 'Employee Call Breakdown';
+      modal.querySelector('#cv-ai-summary').innerHTML = `
+        <p>This chart shows the total number of calls handled by each employee over the week.</p>
+      `;
     
-     // EMPLOYEE MODAL  
-        function cvEmployeeModal() {
-          alert('🟦 Employee modal coming soon!');
-        }
+      const chips = modal.querySelector('#cv-ai-chips');
+      chips.innerHTML = '';
+    
+      const employees = [
+        ['Mike Johnson', 60],
+        ['Cathy Thomas', 42],
+        ['Jake Lee', 56],
+        ['Bob Andersen', 13],
+        ['Brittany Lawrence', 28],
+        ['Alex Roberts', 62],
+        ['Mark Sanchez', 29]
+      ];
+    
+      employees.forEach(([name, total]) => {
+        const chip = document.createElement('div');
+        chip.className = 'cv-chip';
+        chip.textContent = `${name}: ${total} calls`;
+        chips.appendChild(chip);
+      });
+    
+      const chartContainer = modal.querySelector('#cv-ai-chart');
+      chartContainer.innerHTML = '<div id="chart-employee-modal" style="width:100%; height:400px;"></div>';
+    
+      renderEmployeeModalChart(employees);
+    }
+        
+   function renderEmployeeModalChart(data) {
+      const pieData = google.visualization.arrayToDataTable([
+        ['Employee', 'Calls'],
+        ...data
+      ]);
+    
+      const options = {
+        chartArea: { width: '95%', height: '85%' },
+        legend: { position: 'bottom' },
+        pieHole: 0.4,
+        is3D: true,
+        colors: [
+          '#6c8ebf', // Mike Johnson
+          '#f4a261', // Cathy Thomas
+          '#7cb342', // Jake Lee
+          '#a1887f', // Bob Andersen
+          '#f9c74f', // Brittany Lawrence
+          '#90be6d', // Alex Roberts
+          '#b56576'  // Mark Sanchez
+        ]
+      };
+    
+      const chart = new google.visualization.PieChart(document.getElementById('chart-employee-modal'));
+      chart.draw(pieData, options);
+    }
 
 
     
@@ -7195,6 +7250,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
