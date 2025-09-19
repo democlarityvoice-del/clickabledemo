@@ -6634,7 +6634,7 @@ function openAgentListenModal(agentExt, row, btn) {
   const createWidget = (title, chartId) => {
       let widgetType = 'unknown';
       if (title.includes('Summary')) widgetType = 'summary';
-      else if (title.includes('Inbound Calls')) widgetType = 'inbound';
+      else if (title.includes('Marketing')) widgetType = 'inbound';
       else if (title.includes('Outbound')) widgetType = 'outbound';
       else if (title.includes('Employee')) widgetType = 'employee';
     
@@ -6705,7 +6705,7 @@ function openAgentListenModal(agentExt, row, btn) {
     container.appendChild(createWidget('Summary by Hour for Today', 'chart-summary'));
     container.appendChild(createWidget('Inbound Calls This Week by Marketing Number', 'chart-inbound'));
     container.appendChild(createWidget('Inbound Calls by Employee This Week', 'chart-employee'));
-    container.appendChild(createWidget('Outbound Calls This Week by Employee', 'chart-outbound'));
+    container.appendChild(createWidget('Outbound Calls This Week', 'chart-outbound'));
 
     loadAndDrawCharts();
     log('✅ Demo widgets injected.');
@@ -6825,13 +6825,13 @@ function openAgentListenModal(agentExt, row, btn) {
       pieHole: 0.4,
       is3D: true,
       colors: [
-        '#4c78a8', // Mike
-        '#f58518', // Cathy
-        '#54a24b', // Jake
-        '#b279a2', // Bob
-        '#e57027', // Brittany
-        '#9c755f', // Alex
-        '#edc948'  // Mark
+        '#6c8ebf', // Mike Johnson (calm blue)
+        '#f4a261', // Cathy Thomas (muted orange)
+        '#7cb342', // Jake Lee (softer green)
+        '#a1887f', // Bob Andersen (cool brown/gray)
+        '#f9c74f', // Brittany Lawrence (goldenrod)
+        '#90be6d', // Alex Roberts (fresh green)
+        '#b56576'  // Mark Sanchez (muted rose)
       ]
     });
 
@@ -7195,6 +7195,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
