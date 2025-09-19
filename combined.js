@@ -6708,25 +6708,9 @@ function openAgentListenModal(agentExt, row, btn) {
     loadAndDrawCharts();
     log('✅ Demo widgets injected.');
   }
-    
-    
-      // Load Google Charts only once
-      function loadGoogleCharts(callback) {
-        if (!window.google || !google.charts) {
-          const googleScript = document.createElement('script');
-          googleScript.src = 'https://www.gstatic.com/charts/loader.js';
-          googleScript.onload = () => {
-            google.charts.load('current', { packages: ['corechart'] });
-            google.charts.setOnLoadCallback(callback);
-          };
-          document.head.appendChild(googleScript);
-        } else {
-          google.charts.load('current', { packages: ['corechart'] });
-          google.charts.setOnLoadCallback(callback);
-        }
-      }
-    
-      // Draw all chartsfunction loadGoogleCharts(callback) {
+        
+        // Load Google Charts only once
+    function loadGoogleCharts(callback) {
       if (typeof google === 'undefined' || !google.charts) {
         const googleScript = document.createElement('script');
         googleScript.src = 'https://www.gstatic.com/charts/loader.js';
@@ -6736,26 +6720,26 @@ function openAgentListenModal(agentExt, row, btn) {
         };
         document.head.appendChild(googleScript);
       } else {
+        google.charts.load('current', { packages: ['corechart'] });
         google.charts.setOnLoadCallback(callback);
       }
     }
-
-
     
+    // Draw all charts
+    function drawAllCharts() {
       // BLUE COLUMN CHART: Inbound Calls
       const inboundData = google.visualization.arrayToDataTable([
         ['Day', 'Calls'],
         ['Sun', 21], ['Mon', 32], ['Tue', 27], ['Wed', 35], ['Thu', 29], ['Fri', 17]
       ]);
-      new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
-        .draw(inboundData, {
-          chartArea: { width: '80%', height: '70%' },
-          legend: { position: 'bottom' },
-          hAxis: { title: 'Day of Week' },
-          vAxis: { title: 'Number of Calls', minValue: 0 },
-          bar: { groupWidth: '60%' },
-          colors: ['#007bff']
-        });
+      new google.visualization.ColumnChart(document.getElementById('chart-inbound')).draw(inboundData, {
+        chartArea: { width: '80%', height: '70%' },
+        legend: { position: 'bottom' },
+        hAxis: { title: 'Day of Week' },
+        vAxis: { title: 'Number of Calls', minValue: 0 },
+        bar: { groupWidth: '60%' },
+        colors: ['#007bff']
+      });
     
       // LINE CHART: Inbound by Employee
       const agentInboundData = google.visualization.arrayToDataTable([
@@ -6767,35 +6751,34 @@ function openAgentListenModal(agentExt, row, btn) {
         ['Thu', 8, 12, 9],
         ['Fri', 3, 7, 6]
       ]);
-      new google.visualization.LineChart(document.getElementById('chart-employee'))
-        .draw(agentInboundData, {
-          chartArea: { width: '80%', height: '70%' },
-          legend: { position: 'bottom' },
-          hAxis: { title: 'Day of Week' },
-          vAxis: { title: 'Calls by Agent', minValue: 0 },
-          lineWidth: 3,
-          pointSize: 6,
-          colors: ['#1f77b4', '#ff7f0e', '#2ca02c']
-        });
+      new google.visualization.LineChart(document.getElementById('chart-employee')).draw(agentInboundData, {
+        chartArea: { width: '80%', height: '70%' },
+        legend: { position: 'bottom' },
+        hAxis: { title: 'Day of Week' },
+        vAxis: { title: 'Calls by Agent', minValue: 0 },
+        lineWidth: 3,
+        pointSize: 6,
+        colors: ['#1f77b4', '#ff7f0e', '#2ca02c']
+      });
     
       // PURPLE COLUMN CHART: Outbound
       const outboundData = google.visualization.arrayToDataTable([
         ['Day', 'Calls'],
         ['Sun', 13], ['Mon', 25], ['Tue', 22], ['Wed', 40], ['Thu', 31], ['Fri', 14]
       ]);
-      new google.visualization.ColumnChart(document.getElementById('chart-outbound'))
-        .draw(outboundData, {
-          chartArea: { width: '80%', height: '70%' },
-          legend: { position: 'bottom' },
-          hAxis: { title: 'Day of Week' },
-          vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
-          bar: { groupWidth: '65%' },
-          colors: ['#8a2be2']
-        });
+      new google.visualization.ColumnChart(document.getElementById('chart-outbound')).draw(outboundData, {
+        chartArea: { width: '80%', height: '70%' },
+        legend: { position: 'bottom' },
+        hAxis: { title: 'Day of Week' },
+        vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+        bar: { groupWidth: '65%' },
+        colors: ['#8a2be2']
+      });
     }
     
     // Trigger it
     loadGoogleCharts(drawAllCharts);
+
     
         // CALL QUEUE SUMMARY MODAL
     function cvSummaryModal() {
@@ -7107,6 +7090,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
   }, 300);
 })();
+
 
 
 
