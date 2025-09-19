@@ -7308,6 +7308,161 @@ function cvSummaryModal() {
 
 
 
+  // MESSAGES/TEXT RESPONDER AI
+(function injectDemoMessages() {
+  const INTERVAL_MS = 500;
+  const MAX_ATTEMPTS = 20;
+  let attempt = 0;
+
+  const safeAreaCodes = ['313', '248', '616', '586', '734', '231', '810']; // from prior builds
+  const names = ['Joel', 'Natalie', 'Cathy', 'Jake'];
+  const internalUsers = { Cathy: "Cathy", Jake: "Jake" };
+
+  function randomPhone() {
+    const ac = safeAreaCodes[Math.floor(Math.random() * safeAreaCodes.length)];
+    const mid = String(Math.floor(200 + Math.random() * 800)).padStart(3, '0');
+    const end = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0');
+    return `(${ac}) ${mid}-${end}`;
+  }
+
+  function randomDate() {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+    return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
+  }
+
+  function getMessageRows() {
+    const messages = [];
+
+    // 4 Survey Links
+    for (let i = 0; i < 4; i++) {
+      messages.push({
+        type: 'auto',
+        number: randomPhone(),
+        message: `Thank you for your visit! Please leave feedback:\nwww.mrservice.com/survey?location=tampa${100 + i}`,
+        date: randomDate()
+      });
+    }
+
+    // 6 Appointment Reminders
+    for (let i = 0; i < 6; i++) {
+      messages.push({
+        type: 'auto',
+        number: randomPhone(),
+        message: `Reminder: Your Mr. Service appointment is scheduled for tomorrow.\nwww.mrservice.com/appointments?id=xyz${i + 1}`,
+        date: randomDate()
+      });
+    }
+
+    // 3 Customer Replies
+    const replies = [
+      "Yes, I will tell your tech when they arrive.",
+      "Sounds good, thank you.",
+      "Can I confirm the time again?"
+    ];
+    for (let i = 0; i < 3; i++) {
+      messages.push({
+        type: 'customer',
+        number: randomPhone(),
+        message: replies[i],
+        date: randomDate()
+      });
+    }
+
+    // 2 Internal Messages
+    messages.push({
+      type: 'internal',
+      sender: 'Cathy',
+      message: "Hey Cathy, can you look at Robert’s account?",
+      date: randomDate()
+    });
+    messages.push({
+      type: 'internal',
+      sender: 'Jake',
+      message: "I see a note on that account for you. Take a look.",
+      date: randomDate()
+    });
+
+    return messages;
+  }
+
+  function buildSrcdoc(messages) {
+    const rows = messages.map((msg, i) => {
+      const iconUrl = msg.type === 'internal'
+        ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
+        : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+
+      const replyIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
+      const deleteIcon = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg';
+
+      const sender = msg.type === 'internal' ? msg.sender : msg.number;
+      const messagePreview = msg.message.replace(/\n/g, "<br>");
+      const rowClass = i % 2 === 0 ? 'even' : 'odd';
+
+      return `
+        <tr class="${rowClass}" onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+          <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+          <td>${sender}</td>
+          <td>${messagePreview}</td>
+          <td>${msg.date}</td>
+          <td>
+            <img src="${replyIcon}" class="reply" data-idx="${i}" title="Reply">
+            <img src="${deleteIcon}" class="delete" title="Delete (Visual Only)">
+          </td>
+        </tr>`;
+    }).join("\n");
+
+    return `
+      <html>
+      <head>
+        <style>
+          body { font-family: sans-serif; margin: 0; }
+          table { width: 100%; border-collapse: collapse; font-size: 14px; }
+          tr.even { background: #f9f9f9; }
+          tr:hover { background: #e6f0ff; cursor: pointer; }
+          td { padding: 8px; vertical-align: top; border-bottom: 1px solid #ccc; }
+          td img.reply, td img.delete { height: 16px; margin-right: 10px; cursor: pointer; float: right; }
+          td:last-child { white-space: nowrap; width: 80px; }
+        </style>
+      </head>
+      <body>
+        <table>
+          ${rows}
+        </table>
+      </body>
+      </html>
+    `;
+  }
+
+  function inject() {
+    const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+    if (!container) return false;
+
+    container.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.id = 'cv-demo-messages-iframe';
+    iframe.style.width = '100%';
+    iframe.style.height = '600px';
+    iframe.style.border = 'none';
+    iframe.srcdoc = buildSrcdoc(getMessageRows());
+
+    document.addEventListener('message', e => {
+      if (e.data.type === 'rowClick') {
+        container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+      }
+    });
+
+    container.appendChild(iframe);
+    return true;
+  }
+
+  const poll = setInterval(() => {
+    attempt++;
+    if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
+  }, INTERVAL_MS);
+})();
+
+
 
 
 
