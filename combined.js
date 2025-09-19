@@ -6825,13 +6825,13 @@ function openAgentListenModal(agentExt, row, btn) {
       pieHole: 0.4,
       is3D: true,
       colors: [
-        '#6c8ebf', // Mike Johnson (calm blue)
-        '#f4a261', // Cathy Thomas (muted orange)
-        '#7cb342', // Jake Lee (softer green)
-        '#a1887f', // Bob Andersen (cool brown/gray)
-        '#f9c74f', // Brittany Lawrence (goldenrod)
-        '#90be6d', // Alex Roberts (fresh green)
-        '#b56576'  // Mark Sanchez (muted rose)
+          '#3366cc', // Mike - blue
+          '#dc3912', // Cathy - red
+          '#109618', // Jake - green
+          '#ff9900', // Bob - orange
+          '#990099', // Brittany - purple
+          '#0099c6', // Alex - cyan
+          '#dd4477'  // Mark - pink
       ]
     });
 
@@ -7189,13 +7189,13 @@ function cvSummaryModal() {
         pieHole: 0.4,
         is3D: true,
         colors: [
-          '#6c8ebf', // Mike Johnson
-          '#f4a261', // Cathy Thomas
-          '#7cb342', // Jake Lee
-          '#a1887f', // Bob Andersen
-          '#f9c74f', // Brittany Lawrence
-          '#90be6d', // Alex Roberts
-          '#b56576'  // Mark Sanchez
+          '#3366cc', // Mike - blue
+          '#dc3912', // Cathy - red
+          '#109618', // Jake - green
+          '#ff9900', // Bob - orange
+          '#990099', // Brittany - purple
+          '#0099c6', // Alex - cyan
+          '#dd4477'  // Mark - pink
         ]
       };
     
@@ -7250,6 +7250,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
