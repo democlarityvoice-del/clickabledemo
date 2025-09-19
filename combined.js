@@ -7310,156 +7310,172 @@ function cvSummaryModal() {
 
   // MESSAGES/TEXT RESPONDER AI(
     
-     function injectDemoMessagesV3() {
-      const tbody = document.querySelector('.conversation-list-table tbody');
-      if (!tbody) {
-        console.error('Message table <tbody> not found');
-        return;
-      }
-    
-      // Utility: generate safe phone number
-      function safePhone() {
-        const areaCodes = ["989", "517", "248", "810", "313"];
-        const area = areaCodes[Math.floor(Math.random() * areaCodes.length)];
-        const exchange = "555";
-        const line = Math.floor(Math.random() * 100) + 100;
-        return `(${area}) ${exchange}-0${line}`;
-      }
-    
-      // Generate random time between 8:00 AM and 7:59 PM
-      function randomTime() {
-        const hour = Math.floor(Math.random() * 12) + 8;
-        const minute = Math.floor(Math.random() * 60);
-        const ampm = hour >= 12 ? 'PM' : 'AM';
-        const hour12 = hour > 12 ? hour - 12 : hour;
-        const minStr = minute < 10 ? `0${minute}` : minute;
-        return `${hour12}:${minStr} ${ampm}`;
-      }
-    
-      // Date staggering
-      const today = new Date();
-      const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7];
-      function formatDate(daysAgo) {
-        const d = new Date(today);
-        d.setDate(d.getDate() - daysAgo);
-        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      }
-    
-      // Message categories
-      const survey = [
-        "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
-        "We value your feedback! www.mrservicetoday.com/survey",
-        "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
-        "Your opinion matters! www.mrservicetoday.com/survey"
-      ];
-    
-      const confirmations = [
-        "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
-        "Confirming your appointment for Friday at 1:30pm.",
-        "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
-        "Appointment reminder: Wednesday at 3:00pm.",
-        "Mr. Service will see you tomorrow morning at 8:30am.",
-        "We're scheduled to visit you Friday at 2:15pm."
-      ];
-    
-      const customerReplies = [
-        "Yes, I will tell your tech when they arrive.",
-        "Thanks, I’ll be home all day.",
-        "Okay, see you then."
-      ];
-    
-      const internalMsgs = [
-        { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
-        { name: "Jake", text: "I see a note on that account for you. Take a look." }
-      ];
-    
-      // Combine and assign types
-      const messages = [];
-      for (let i = 0; i < 4; i++) messages.push({ type: 'survey', text: survey[i] });
-      for (let i = 0; i < 6; i++) messages.push({ type: 'confirm', text: confirmations[i] });
-      for (let i = 0; i < 3; i++) messages.push({ type: 'reply', text: customerReplies[i] });
-      internalMsgs.forEach(m => messages.push({ type: 'internal', text: m.text, name: m.name }));
-    
-      // Clear current content
-      tbody.innerHTML = '';
-    
-      // Inject new rows
-      messages.forEach((msg, idx) => {
-        const date = formatDate(dateOffsets[idx]);
-        const time = randomTime();
-    
-        const tr = document.createElement('tr');
-        tr.classList.add('read');
-    
-        // --- Icon
-        const iconTd = document.createElement('td');
-        const icon = document.createElement('img');
-        icon.src = msg.type === 'internal'
-          ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
-          : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
-        icon.style.height = '16px';
-        iconTd.appendChild(icon);
-    
-        // --- Name or phone
-        const nameTd = document.createElement('td');
-        nameTd.textContent = msg.type === 'internal' ? msg.name : safePhone();
-    
-        // --- Message text
-        const msgTd = document.createElement('td');
-        msgTd.className = 'conversation-recent-msg';
-        msgTd.style.maxWidth = '300px';
-        msgTd.style.whiteSpace = 'nowrap';
-        msgTd.style.overflow = 'hidden';
-        msgTd.style.textOverflow = 'ellipsis';
-        msgTd.textContent = msg.text;
-    
-        // --- Date/time
-        const dateTd = document.createElement('td');
-        dateTd.className = 'text-right';
-        dateTd.textContent = `${date} ${time}`;
-    
-        // --- Actions
-        const actionTd = document.createElement('td');
-        actionTd.className = 'action-buttons';
-    
-        const replyBtn = document.createElement('span');
-        replyBtn.className = 'listen-btn';
-        replyBtn.style.cssText = `
-          display: inline-flex;
-          justify-content: center;
-          align-items: center;
+    (function injectDemoMessagesV3() {
+  const INTERVAL_MS = 500;
+  const MAX_ATTEMPTS = 20;
+  let attempt = 0;
+
+  const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+  const cities = ['detroit', 'dallas'];
+
+  function randomPhone() {
+    const ac = safeAreaCodes[Math.floor(Math.random() * safeAreaCodes.length)];
+    const mid = String(Math.floor(200 + Math.random() * 800)).padStart(3, '0');
+    const end = String(Math.floor(1000 + Math.random() * 9000)).padStart(4, '0');
+    return `(${ac}) ${mid}-${end}`;
+  }
+
+  function randomDate() {
+    const date = new Date();
+    date.setDate(date.getDate() - Math.floor(Math.random() * 30));
+    const opts = { month: "short", day: "numeric", hour: "numeric", minute: "numeric" };
+    return date.toLocaleString("en-US", opts).replace(',', '');
+  }
+
+  function getMessageRows() {
+    const messages = [];
+
+    // 4 Survey Links
+    for (let i = 0; i < 4; i++) {
+      const city = cities[i % cities.length];
+      messages.push({
+        type: 'auto',
+        number: randomPhone(),
+        message: `Thank you for your visit! Please leave feedback:\nwww.mrservicetoday.com/survey?location=${city}123`,
+        date: randomDate()
+      });
+    }
+
+    // 6 Appointment Reminders
+    for (let i = 0; i < 6; i++) {
+      const city = cities[i % cities.length];
+      messages.push({
+        type: 'auto',
+        number: randomPhone(),
+        message: `Reminder: Your Mr. Service appointment is scheduled for tomorrow.\nwww.mrservicetoday.com/appointments?id=${city}xyz${i + 1}`,
+        date: randomDate()
+      });
+    }
+
+    // 3 Customer Replies
+    const replies = [
+      "Yes, I will tell your tech when they arrive.",
+      "Sounds good, thank you.",
+      "Can I confirm the time again?"
+    ];
+    for (let i = 0; i < 3; i++) {
+      messages.push({
+        type: 'customer',
+        number: randomPhone(),
+        message: replies[i],
+        date: randomDate()
+      });
+    }
+
+    // 2 Internal Messages
+    messages.push({
+      type: 'internal',
+      sender: 'Cathy',
+      message: "Hey Cathy, can you look at Robert’s account?",
+      date: randomDate()
+    });
+    messages.push({
+      type: 'internal',
+      sender: 'Jake',
+      message: "I see a note on that account for you. Take a look.",
+      date: randomDate()
+    });
+
+    return messages;
+  }
+
+  function buildSrcdoc(messages) {
+    const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+    const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+    const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
+    const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg';
+
+    const rows = messages.map((msg, i) => {
+      const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
+      const sender = msg.type === 'internal' ? msg.sender : msg.number;
+      const preview = msg.message.replace(/\n/g, "<br>");
+      return `
+        <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+          <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+          <td>${sender}</td>
+          <td>${preview}</td>
+          <td class="nowrap">${msg.date}</td>
+          <td class="nowrap actions">
+            <span class="circle"><img src="${iconReply}" title="Reply"></span>
+            <span class="circle"><img src="${iconDelete}" class="delete-icon" title="Delete (Visual Only)"></span>
+          </td>
+        </tr>`;
+    }).join("\n");
+
+    return `
+      <html><head><style>
+        body { font-family: sans-serif; margin: 0; font-size: 13px; }
+        table { width: 100%; border-collapse: collapse; }
+        tr { background: white; }
+        tr:hover { background: #f2f2f2; cursor: pointer; }
+        td { padding: 6px 8px; border-bottom: 1px solid #ccc; vertical-align: middle; }
+        td.nowrap { white-space: nowrap; }
+        td.actions { text-align: right; }
+        .circle {
+          display: inline-block;
           width: 24px;
           height: 24px;
           border-radius: 50%;
-          border: 1px solid #cfcfcf;
-          background: #f0f0f0;
-          margin-right: 4px;
-        `;
-        replyBtn.innerHTML = `<img style="width:16px;height:16px;opacity:0.35;" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg">`;
+          background: #e0e0e0;
+          text-align: center;
+          line-height: 24px;
+          margin-left: 4px;
+        }
+        .circle img {
+          width: 12px;
+          height: 12px;
+          vertical-align: middle;
+        }
+        .circle img.delete-icon {
+          filter: brightness(0) saturate(100%) sepia(100%) hue-rotate(-10deg) brightness(0.85);
+        }
+      </style></head><body>
+        <table>${rows}</table>
+      </body></html>
+    `;
+  }
+
+  function inject() {
+    const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+    if (!container) return false;
+
+    container.innerHTML = '';
+    const iframe = document.createElement('iframe');
+    iframe.id = 'cv-demo-messages-iframe';
+    iframe.style.width = '100%';
+    iframe.style.height = '600px';
+    iframe.style.border = 'none';
+    iframe.srcdoc = buildSrcdoc(getMessageRows());
+
+    window.addEventListener('message', e => {
+      if (e.data.type === 'rowClick') {
+        container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+      }
+    });
+
+    container.appendChild(iframe);
+    return true;
+  }
+
+  const poll = setInterval(() => {
+    attempt++;
+    if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
+  }, INTERVAL_MS);
+})();
+
     
-        const deleteBtn = document.createElement('span');
-        deleteBtn.className = 'listen-btn';
-        deleteBtn.style.cssText = replyBtn.style.cssText;
-        deleteBtn.innerHTML = `<img style="width:16px;height:16px;filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg">`;
     
-        actionTd.appendChild(replyBtn);
-        actionTd.appendChild(deleteBtn);
-    
-        // Append all
-        tr.appendChild(iconTd);
-        tr.appendChild(nameTd);
-        tr.appendChild(msgTd);
-        tr.appendChild(dateTd);
-        tr.appendChild(actionTd);
-    
-        tbody.appendChild(tr);
-      });
-    
-      console.log('✅ injectDemoMessagesV3: Message table populated');
-    }
-    
-    
-    
+
 
 
 
