@@ -7518,37 +7518,38 @@ function cvSummaryModal() {
           }
 
  
-             
-  function inject() {
-    const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-    if (!container) return false;
-
-    container.innerHTML = '';
-    const iframe = document.createElement('iframe');
-    iframe.id = 'cv-demo-messages-iframe';
-    iframe.style.width = '100%';
-    iframe.style.height = '600px';
-    iframe.style.border = 'none';
-    iframe.srcdoc = buildSrcdoc(getMessageRows());
-
-    window.addEventListener('message', e => {
-      if (e.data.type === 'rowClick') {
-        container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
-      }
-    });
-
-    container.appendChild(iframe);
-    return true;
-  }
-
-  const poll = setInterval(() => {
-    attempt++;
-    if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
-  }, INTERVAL_MS);
-})();
+                     
+          function inject() {
+            const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+            if (!container) return false;
+        
+            container.innerHTML = '';
+            const iframe = document.createElement('iframe');
+            iframe.id = 'cv-demo-messages-iframe';
+            iframe.style.width = '100%';
+            iframe.style.height = '600px';
+            iframe.style.border = 'none';
+            iframe.srcdoc = buildSrcdoc(messages);
+        
+            window.addEventListener('message', e => {
+              if (e.data.type === 'rowClick') {
+                container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+              }
+            });
+        
+            container.appendChild(iframe);
+            return true;
+          }
+        
+          const poll = setInterval(() => {
+            attempt++;
+            if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
+          }, INTERVAL_MS);
+        })();
 
     
     
+
 
 
 
