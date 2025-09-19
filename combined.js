@@ -7410,7 +7410,7 @@ function cvSummaryModal() {
         </td>
         <td>
           <button class="listen-btn delete-btn" title="Delete">
-            <img style="filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/x-solid-full.svg" />
+            <img style="filter: brightness(0) saturate(100%) invert(14%) sepia(85%) saturate(7456%) hue-rotate(1deg) brightness(94%) contrast(116%);" src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg" />
           </button>
         </td>
       </tr>
@@ -7494,6 +7494,7 @@ function cvSummaryModal() {
   `;
   document.querySelector('#omp-active-body')?.appendChild(iframe);
 })();
+
 
 
 
