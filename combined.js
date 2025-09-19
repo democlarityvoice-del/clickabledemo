@@ -6858,7 +6858,16 @@ function openAgentListenModal(agentExt, row, btn) {
       bar: { groupWidth: '6%' }, // Skinny bars
       hAxis: { title: 'Day of Week' },
       vAxis: { title: 'Number of Calls', viewWindow: { min: 0 } },
-      colors: ['#4c78a8','#f58518','#54a24b','#b279a2','#e57027','#9c755f','#edc948']
+      colors: [
+          '#007bff', // Blue
+          '#dc3545', // Red
+          '#ffc107', // Yellow
+          '#28a745', // Green
+          '#6610f2', // Purple
+          '#fd7e14', // Orange
+          '#20c997'  // Teal
+        ]
+
     });
 
 }
@@ -7233,7 +7242,16 @@ function cvSummaryModal() {
               legend: { position: 'right' },
               pieHole: 0.4,       // Makes it a donut chart
               is3D: true,         // 3D style like your front widget
-              colors: ['#4c78a8', '#f58518', '#54a24b', '#b279a2', '#e57027', '#9c755f', '#edc948']
+              colors: [
+                  '#007bff', // Blue
+                  '#dc3545', // Red
+                  '#ffc107', // Yellow
+                  '#28a745', // Green
+                  '#6610f2', // Purple
+                  '#fd7e14', // Orange
+                  '#20c997'  // Teal
+                ]
+
             };
 
         
@@ -7287,6 +7305,7 @@ function cvSummaryModal() {
     }
   }, 300);
 })();
+
 
 
 
