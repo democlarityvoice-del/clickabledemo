@@ -7402,7 +7402,8 @@ function cvSummaryModal() {
 
     // Phone / name cell
     const nameTd = document.createElement('td');
-    nameTd.textContent = msg.type === 'internal' ? msg.name : randomPhone();
+    nameTd.textContent = msg.type === 'internal' ? msg.name : safePhone();
+
 
     // Message text
     const msgTd = document.createElement('td');
@@ -7462,6 +7463,7 @@ function cvSummaryModal() {
 
   console.log('Demo messages injected successfully!');
 })();
+
 
 
 
