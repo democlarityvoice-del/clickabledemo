@@ -7419,7 +7419,14 @@ function cvSummaryModal() {
 
     return `
       <html><head><style>
-        body { font-family: sans-serif; margin: 0; font-size: 13px; }
+        body {
+          font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+          margin: 0;
+          font-size: 13px;
+          color: #222; /* darker text */
+          font-weight: 400;
+        }
+
         table { width: 100%; border-collapse: collapse; }
         tr { background: white; }
         tr:hover { background: #f2f2f2; cursor: pointer; }
@@ -7497,6 +7504,7 @@ function cvSummaryModal() {
 
     
     
+
 
 
 
