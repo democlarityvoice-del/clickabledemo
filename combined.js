@@ -7312,94 +7312,74 @@ function cvSummaryModal() {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI
-        
-         if (!window.__cvDemoMessagesInit) {
-          (function injectDemoMessagesV3() {
-            const INTERVAL_MS = 500;
-            const MAX_ATTEMPTS = 20;
-            let attempt = 0;
-        
-          const MSGS_REGEX = /\/portal\/messages(?:[\/?#]|$)/;
-          const SLOT_SELECTOR = '.conversation-list-table';
-        
-          const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
-          const cities = ['detroit', 'dallas'];
-        
-          const interval = setInterval(() => {
-            if (window.__cvDemoMessagesInit) return;
-            if (!MSGS_REGEX.test(location.pathname)) return;
-        
-            const container = document.querySelector(SLOT_SELECTOR);
-            if (!container) {
-              attempt++;
-              if (attempt >= MAX_ATTEMPTS) clearInterval(interval);
-              return;
-            }
-        
-            clearInterval(interval);
-           
-        
-          // 2. Generate random time between 8:00 AM and 7:59 PM
-          function randomTime() {
-            const hour = Math.floor(Math.random() * 12) + 8; // 8 - 19
-            const minute = Math.floor(Math.random() * 60);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour > 12 ? hour - 12 : hour;
-            const minStr = minute < 10 ? `0${minute}` : minute;
-            return `${hour12}:${minStr} ${ampm}`;
-          }
-        
-          // 3. Stagger dates like Call History
-          const today = new Date();
-          const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7]; // 15 messages
-          function formatDate(daysAgo) {
-            const d = new Date(today);
-            d.setDate(d.getDate() - daysAgo);
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-          }
-        
-        // 4. Fake message sets
-          const survey = [
-            "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
-            "We value your feedback! www.mrservicetoday.com/survey",
-            "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
-            "Your opinion matters! www.mrservicetoday.com/survey"
-          ];
-        
-          const confirmations = [
-            "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
-            "Confirming your appointment for Friday at 1:30pm.",
-            "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
-            "Appointment reminder: Wednesday at 3:00pm.",
-            "Mr. Service will see you tomorrow morning at 8:30am.",
-            "We're scheduled to visit you Friday at 2:15pm."
-          ];
-        
-          const customerReplies = [
-            "Yes, I will tell your tech when they arrive.",
-            "Thanks, I’ll be home all day.",
-            "Okay, see you then."
-          ];
-        
-          const internalMsgs = [
-            { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
-            { name: "Jake", text: "I see a note on that account for you. Take a look." }
-          ];
-        
-          const phoneAreaCodes = ['313','248','586','214','469','972'];
-          function randomPhone() {
-            const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
-            const mid = Math.floor(Math.random() * 900 + 100);
-            const end = Math.floor(Math.random() * 9000 + 1000);
-            return `(${area}) ${mid}-${end}`;
-          }
-
-
-        // 5. Build structured messages
+      // MESSAGES/TEXT RESPONDER AI
+    
+    if (!window.__cvDemoMessagesInit) {
+      (function injectDemoMessagesV3() {
+        const INTERVAL_MS = 500;
+        const MAX_ATTEMPTS = 20;
+        let attempt = 0;
+    
+        const MSGS_REGEX = /\/portal\/messages(?:[\/?#]|$)/;
+        const SLOT_SELECTOR = '.conversation-list-table';
+    
+        const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+        const cities = ['detroit', 'dallas'];
+    
+        const survey = [
+          "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
+          "We value your feedback! www.mrservicetoday.com/survey",
+          "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
+          "Your opinion matters! www.mrservicetoday.com/survey"
+        ];
+    
+        const confirmations = [
+          "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
+          "Confirming your appointment for Friday at 1:30pm.",
+          "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
+          "Appointment reminder: Wednesday at 3:00pm.",
+          "Mr. Service will see you tomorrow morning at 8:30am.",
+          "We're scheduled to visit you Friday at 2:15pm."
+        ];
+    
+        const customerReplies = [
+          "Yes, I will tell your tech when they arrive.",
+          "Thanks, I’ll be home all day.",
+          "Okay, see you then."
+        ];
+    
+        const internalMsgs = [
+          { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
+          { name: "Jake", text: "I see a note on that account for you. Take a look." }
+        ];
+    
+        const phoneAreaCodes = ['313','248','586','214','469','972'];
+        function randomPhone() {
+          const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
+          const mid = Math.floor(Math.random() * 900 + 100);
+          const end = Math.floor(Math.random() * 9000 + 1000);
+          return `(${area}) ${mid}-${end}`;
+        }
+    
+        function randomTime() {
+          const hour = Math.floor(Math.random() * 12) + 8;
+          const minute = Math.floor(Math.random() * 60);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour > 12 ? hour - 12 : hour;
+          const minStr = minute < 10 ? `0${minute}` : minute;
+          return `${hour12}:${minStr} ${ampm}`;
+        }
+    
+        const today = new Date();
+        const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7];
+        function formatDate(daysAgo) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - daysAgo);
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    
         const messages = [];
-        
-        // Push surveys
+    
         for (let i = 0; i < 4; i++) {
           messages.push({
             type: 'survey',
@@ -7410,8 +7390,7 @@ function cvSummaryModal() {
             date: formatDate(dateOffsets[messages.length])
           });
         }
-        
-        // Push confirmations
+    
         for (let i = 0; i < 6; i++) {
           messages.push({
             type: 'confirm',
@@ -7422,8 +7401,7 @@ function cvSummaryModal() {
             date: formatDate(dateOffsets[messages.length])
           });
         }
-        
-        // Push customer replies
+    
         for (let i = 0; i < 3; i++) {
           messages.push({
             type: 'reply',
@@ -7434,8 +7412,7 @@ function cvSummaryModal() {
             date: formatDate(dateOffsets[messages.length])
           });
         }
-        
-        // Push internal messages
+    
         internalMsgs.forEach((m) => {
           messages.push({
             type: 'internal',
@@ -7446,128 +7423,81 @@ function cvSummaryModal() {
             date: formatDate(dateOffsets[messages.length])
           });
         });
-
     
-        // SOURCE DOC        
-          function buildSrcdoc(messages) {
-            const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
-            const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-            const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
-            const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
-        
-            const rows = messages.map((msg, i) => {
-              const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
-              const sender = msg.type === 'internal' ? msg.sender : msg.number;
-              const preview = msg.message.replace(/\n/g, "<br>");
-              return `
-                  <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
-                    <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-                    <td>${sender}</td>
-                    <td>${preview}</td>
-                    <td class="nowrap">${msg.date} ${msg.time}</td>
-                    <td class="nowrap actions">
-                      <span class="msg-btn iconReply">
-                        <img src="${iconReply}" title="Reply">
-                      </span>
-                      <span class="msg-btn iconDelete">
-                        <img src="${iconDelete}" title="Delete">
-                      </span>
-                    </td>
-                  </tr>`;
-        
-                }).join("\n");
-        
+        function buildSrcdoc(messages) {
+          const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+          const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+          const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
+          const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
+    
+          const rows = messages.map((msg, i) => {
+            const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
+            const sender = msg.type === 'internal' ? msg.sender : msg.number;
+            const preview = msg.message.replace(/\n/g, "<br>");
             return `
-              <html><head><style>
-                body {
-                  font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-                  margin: 0;
-                  font-size: 13px;
-                  color: #222; /* darker text */
-                  font-weight: 400;
-                }
-        
-                table { width: 100%; border-collapse: collapse; }
-                tr { background: white; }
-                tr:hover { background: #f2f2f2; cursor: pointer; }
-                td {
-                      padding: 3px 6px;
-                      border-bottom: 1px solid #ccc;
-                      vertical-align: middle;
-                      line-height: 1.1;
-                      font-size: 12px;
-                    }
-                td.nowrap { white-space: nowrap; }
-                td.actions { text-align: right; }
-        
-                .msg-btn {
-                  display: inline-flex;
-                  align-items: center;
-                  justify-content: center;
-                  width: 20px;
-                  height: 20px;
-                  background: #f0f0f0;
-                  border-radius: 50%;
-                  border: 1px solid #cfcfcf;
-                  cursor: pointer;
-                }
-                
-                .msg-btn:focus {
-                  outline: none;
-                }
-                
-                .msg-btn img {
-                  width: 10px;
-                  height: 10px;
-                  display: block;
-                  opacity: 0.35;
-                  transition: opacity 0.2s ease-in-out;
-                }
-                
-                .msg-btn:hover img {
-                  opacity: 1;
-                }
-        
-              </style></head><body>
-                <table>${rows}</table>
-              </body></html>
-            `;
-          }
+              <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+                <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+                <td>${sender}</td>
+                <td>${preview}</td>
+                <td class="nowrap">${msg.date} ${msg.time}</td>
+                <td class="nowrap actions">
+                  <span class="msg-btn iconReply"><img src="${iconReply}" title="Reply"></span>
+                  <span class="msg-btn iconDelete"><img src="${iconDelete}" title="Delete"></span>
+                </td>
+              </tr>`;
+          }).join("\n");
+    
+          return `
+            <html><head><style>
+              body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; }
+              table { width: 100%; border-collapse: collapse; }
+              tr { background: white; }
+              tr:hover { background: #f2f2f2; cursor: pointer; }
+              td { padding: 3px 6px; border-bottom: 1px solid #ccc; vertical-align: middle; line-height: 1.1; font-size: 12px; }
+              td.nowrap { white-space: nowrap; }
+              td.actions { text-align: right; }
+              .msg-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #f0f0f0; border-radius: 50%; border: 1px solid #cfcfcf; cursor: pointer; }
+              .msg-btn img { width: 10px; height: 10px; opacity: 0.35; transition: opacity 0.2s ease-in-out; }
+              .msg-btn:hover img { opacity: 1; }
+            </style></head><body>
+              <table>${rows}</table>
+            </body></html>`;
+        }
+    
+        function inject() {
+          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+          if (!container) return false;
+    
+          container.innerHTML = '';
+          const iframe = document.createElement('iframe');
+          iframe.id = 'cv-demo-messages-iframe';
+          iframe.style.width = '100%';
+          iframe.style.height = '600px';
+          iframe.style.border = 'none';
+          iframe.srcdoc = buildSrcdoc(messages);
+    
+          window.addEventListener('message', e => {
+            if (e.data.type === 'rowClick') {
+              container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+            }
+          });
+    
+          container.appendChild(iframe);
+          return true;
+        }
+    
+        const poll = setInterval(() => {
+          attempt++;
+          if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
+        }, INTERVAL_MS);
+    
+      })(); // ✅ IIFE body closed and called properly
+    }       // ✅ Outer IF closed
 
- 
-                     
-          function inject() {
-            const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-            if (!container) return false;
-        
-            container.innerHTML = '';
-            const iframe = document.createElement('iframe');
-            iframe.id = 'cv-demo-messages-iframe';
-            iframe.style.width = '100%';
-            iframe.style.height = '600px';
-            iframe.style.border = 'none';
-            iframe.srcdoc = buildSrcdoc(messages);
-        
-            window.addEventListener('message', e => {
-              if (e.data.type === 'rowClick') {
-                container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
-              }
-            });
-        
-            container.appendChild(iframe);
-            return true;
-          }
-        
-          const poll = setInterval(() => {
-            attempt++;
-            if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
-          }, INTERVAL_MS);
-        } // <--- this one was MISSING: closes the IIFE body
-      })(); // <--- this one is CORRECT: invokes the function
-}         // <--- this one is CORRECT: closes the `if`
 
 
     
+
 
 
 
