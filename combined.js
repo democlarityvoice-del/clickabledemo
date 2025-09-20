@@ -7510,7 +7510,7 @@ function openAgentListenModal(agentExt, row, btn) {
         }, INTERVAL_MS);
     
       })(); // ✅ IIFE body closed and called
-    }
+    
 
            // Live Mode toggle Logic
         (function injectDemoModeToggleButtonStandalone() {
@@ -7561,6 +7561,7 @@ function openAgentListenModal(agentExt, row, btn) {
             log('✅ Demo toggle button injected beside New Conversation');
           }, 500);
         })();
+
 
 
 
