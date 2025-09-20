@@ -7562,10 +7562,12 @@ function cvSummaryModal() {
             attempt++;
             if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
           }, INTERVAL_MS);
-      })();
-    }
+        } // <--- this one was MISSING: closes the IIFE body
+      })(); // <--- this one is CORRECT: invokes the function
+}         // <--- this one is CORRECT: closes the `if`
 
 
     
+
 
 
