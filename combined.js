@@ -7486,23 +7486,6 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(messages);
     
-          // Add click handler for Reply icons
-        document.querySelectorAll('.iconReply').forEach(btn => {
-          btn.addEventListener('click', event => {
-            const row = btn.closest('tr');
-            const numberCell = row?.querySelector('td:first-child')?.textContent || '';
-            const messageCell = row?.querySelector('td:nth-child(2)')?.textContent || '';
-        
-            // Optional: console.log for debugging
-            console.log('Opening modal for:', numberCell, messageCell);
-        
-            // Call your modal function (you may need to customize the name)
-            injectMessageModal(numberCell, messageCell);  // ← you replace this with your real function
-          });
-    
-          container.appendChild(iframe);
-          return true;
-        }
     
         const poll = setInterval(() => {
           attempt++;
@@ -7561,6 +7544,7 @@ function openAgentListenModal(agentExt, row, btn) {
             log('✅ Demo toggle button injected beside New Conversation');
           }, 500);
         })();
+
 
 
 
