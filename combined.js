@@ -7316,7 +7316,7 @@ function cvSummaryModal() {
         
         if (!window.__cvDemoMessagesInit) {
           window.__cvDemoMessagesInit = true;
-        } // <-- FIXED: close the if block here
+
             
         (function injectDemoMessagesV3() {
           const INTERVAL_MS = 500;
@@ -7567,15 +7567,16 @@ function cvSummaryModal() {
           }, INTERVAL_MS);
         })();
 
+} // <-- close the outer if    
+    
+
+
+
+
+
     
     
 
-
-
-
-
-    
-    
 
 
 
