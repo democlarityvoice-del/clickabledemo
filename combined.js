@@ -7316,7 +7316,7 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 
-  // MESSAGES/TEXT RESPONDER AI
+
     
     // ✅ MESSAGES/TEXT RESPONDER AI (Strictly scoped to /portal/messages only)
     if (
@@ -7512,7 +7512,56 @@ function openAgentListenModal(agentExt, row, btn) {
       })(); // ✅ IIFE body closed and called
     }
 
-    
+           // Live Mode toggle Logic
+        (function injectDemoModeToggleButtonStandalone() {
+          const log = (...args) => console.log('[CV Demo]', ...args);
+        
+          const waitForActionContainer = setInterval(() => {
+            const container = document.querySelector('.action-container-row .action-container');
+            if (!container) return;
+        
+            const existing = container.querySelector('.cv-toggle-demo-btn');
+            if (existing) {
+              clearInterval(waitForActionContainer);
+              return;
+            }
+        
+            const refBtn = container.querySelector('button'); // Assumes 'New Conversation' is a <button>
+            if (!refBtn) return;
+        
+            const toggleBtn = refBtn.cloneNode(true);
+            toggleBtn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
+            toggleBtn.classList.add('cv-toggle-demo-btn');
+            toggleBtn.style.marginLeft = '12px';
+        
+            toggleBtn.addEventListener('click', () => {
+              window.__cvMessagesLiveMode = !window.__cvMessagesLiveMode;
+        
+              // Update label
+              toggleBtn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
+        
+              const demoTable = document.querySelector('#cv-messages-container');
+              if (window.__cvMessagesLiveMode) {
+                // Live mode: remove the injected demo
+                if (demoTable) demoTable.remove();
+                log('🧼 Switched to LIVE mode. Demo messages removed.');
+              } else {
+                // Demo mode: reinject the demo
+                if (typeof injectDemoMessagesTable === 'function') {
+                  injectDemoMessagesTable();
+                  log('🎭 Switched to DEMO mode. Demo messages re-injected.');
+                } else {
+                  log('⚠️ injectDemoMessagesTable() not found.');
+                }
+              }
+            });
+        
+            container.appendChild(toggleBtn);
+            clearInterval(waitForActionContainer);
+            log('✅ Demo toggle button injected beside New Conversation');
+          }, 500);
+        })();
+
 
 
 
