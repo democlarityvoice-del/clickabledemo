@@ -7314,14 +7314,11 @@ function cvSummaryModal() {
 
   // MESSAGES/TEXT RESPONDER AI
         
-        if (!window.__cvDemoMessagesInit) {
-          window.__cvDemoMessagesInit = true;
-        }
-            
-        (function injectDemoMessagesV3() {
-          const INTERVAL_MS = 500;
-          const MAX_ATTEMPTS = 20;
-          let attempt = 0;
+         if (!window.__cvDemoMessagesInit) {
+          (function injectDemoMessagesV3() {
+            const INTERVAL_MS = 500;
+            const MAX_ATTEMPTS = 20;
+            let attempt = 0;
         
           const MSGS_REGEX = /\/portal\/messages(?:[\/?#]|$)/;
           const SLOT_SELECTOR = '.conversation-list-table';
@@ -7565,8 +7562,10 @@ function cvSummaryModal() {
             attempt++;
             if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
           }, INTERVAL_MS);
-        })();
+      })();
+    }
 
-} // <-- close the outer if    
+
     
+
 
