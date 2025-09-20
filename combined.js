@@ -7506,67 +7506,6 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
-    // ✅ STANDALONE Demo Mode Toggle Button for /portal/messages(function injectCvFakeButton() {
-      (function injectCvDemoToggle() {
-          const log = (...args) => console.log('[CV Demo]', ...args);
-        
-          const poll = setInterval(() => {
-            const row = document.querySelector('.action-container-row');
-            if (!row) return;
-        
-            clearInterval(poll);
-        
-            if (document.querySelector('#cv-demo-toggle-btn')) {
-              log('⚠️ Demo toggle already exists');
-              return;
-            }
-        
-            const btn = document.createElement('button');
-            btn.id = 'cv-demo-toggle-btn';
-            btn.textContent = 'Return to Live Mode'; // or 'Return to Demo Mode' if needed
-        
-            // ✨ Polished styling
-            btn.style.padding = '4px 10px';
-            btn.style.marginRight = '10px';
-            btn.style.fontSize = '12px';
-            btn.style.border = '1px solid #ccc';
-            btn.style.borderRadius = '4px';
-            btn.style.background = '#f8f8f8';
-            btn.style.color = '#333';
-            btn.style.fontFamily = 'inherit';
-            btn.style.cursor = 'pointer';
-            btn.style.boxShadow = 'inset 0 1px 0 #fff';
-        
-            btn.addEventListener('mouseenter', () => {
-              btn.style.background = '#eee';
-            });
-            btn.addEventListener('mouseleave', () => {
-              btn.style.background = '#f8f8f8';
-            });
-        
-            btn.addEventListener('click', () => {
-              window.__cvMessagesLiveMode = !window.__cvMessagesLiveMode;
-              btn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
-        
-              const demoTable = document.querySelector('#cv-messages-container');
-              if (window.__cvMessagesLiveMode) {
-                if (demoTable) demoTable.remove();
-                log('🧼 Switched to LIVE mode. Demo messages removed.');
-              } else {
-                if (typeof injectDemoMessagesTable === 'function') {
-                  injectDemoMessagesTable();
-                  log('🎭 Switched to DEMO mode. Demo messages re-injected.');
-                } else {
-                  log('⚠️ injectDemoMessagesTable() not found.');
-                }
-              }
-            });
-        
-            // Inject it into the row
-            row.prepend(btn);
-            log('✅ Demo toggle button injected.');
-          }, 500);
-        })();
 
 
 
