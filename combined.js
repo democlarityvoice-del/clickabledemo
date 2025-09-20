@@ -7309,19 +7309,20 @@ function cvSummaryModal() {
 
 
   // MESSAGES/TEXT RESPONDER AI
-
-
-
-      // MESSAGES/TEXT RESPONDER AI
     
-    if (!window.__cvDemoMessagesInit) {
+    // ✅ MESSAGES/TEXT RESPONDER AI (Strictly scoped to /portal/messages only)
+    if (
+      window.__cvDemoMessagesInit ||
+      !/\/portal\/messages(?:[\/?#]|$)/.test(location.pathname)
+    ) {
+      //  Do nothing unless on /portal/messages and not already injected
+    } else {
+      window.__cvDemoMessagesInit = true;
+    
       (function injectDemoMessagesV3() {
         const INTERVAL_MS = 500;
         const MAX_ATTEMPTS = 20;
         let attempt = 0;
-    
-        const MSGS_REGEX = /\/portal\/messages(?:[\/?#]|$)/;
-        const SLOT_SELECTOR = '.conversation-list-table';
     
         const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
         const cities = ['detroit', 'dallas'];
@@ -7491,12 +7492,11 @@ function cvSummaryModal() {
           if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
         }, INTERVAL_MS);
     
-      })(); // ✅ IIFE body closed and called properly
-    }       // ✅ Outer IF closed
-
-
+      })(); // ✅ IIFE body closed and called
+    }
 
     
+
 
 
 
