@@ -7334,7 +7334,51 @@ function openAgentListenModal(agentExt, row, btn) {
     
         const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
         const cities = ['detroit', 'dallas'];
-    
+                          
+      (function injectToggleDemoButton() {
+          const container = document.querySelector('.action-container-row');
+          if (!container) return;
+        
+          const existingBtn = container.querySelector('button');
+          if (!existingBtn) return;
+        
+          // Create a new toggle button from scratch
+          const toggleBtn = document.createElement('button');
+          toggleBtn.className = existingBtn.className; // Match style
+          toggleBtn.style.marginLeft = '10px';
+          toggleBtn.classList.add('cv-toggle-demo-btn');
+        
+          // Track demo/live state globally if not already
+          if (typeof window.cvIsDemoMode === 'undefined') {
+            window.cvIsDemoMode = true;
+          }
+        
+          const updateLabel = () => {
+            toggleBtn.textContent = window.cvIsDemoMode
+              ? 'Return to Live Mode'
+              : 'Return to Demo Mode';
+          };
+          updateLabel();
+        
+          // Click = toggle mode + relabel + inject/remove rows
+          toggleBtn.addEventListener('click', () => {
+            window.cvIsDemoMode = !window.cvIsDemoMode;
+            updateLabel();
+        
+            if (window.cvIsDemoMode) {
+              injectDemoMessages?.();
+            } else {
+              document.querySelectorAll('.cv-demo-message-row')?.forEach(el => el.remove());
+            }
+          });
+        
+          // Insert next to New Conversation
+          existingBtn.insertAdjacentElement('afterend', toggleBtn);
+        })();
+
+        
+       
+
         const survey = [
           "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
           "We value your feedback! www.mrservicetoday.com/survey",
@@ -7512,6 +7556,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
