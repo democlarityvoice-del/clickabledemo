@@ -6566,13 +6566,14 @@ function openAgentListenModal(agentExt, row, btn) {
 
 // === CV DEMO DASHBOARD MODES ===
 // === CV DEMO DASHBOARD MODES ===
-if (
-  window.__cvDemoAnalyticsInit || 
-  !/\/portal\/clarity\/analytics(?:[\/?#]|$)/.test(location.pathname)
-) {
-  // 🛑 Already injected or wrong page — do nothing
-} else {
-  window.__cvDemoAnalyticsInit = true;
+    if (
+      window.__cvDemoAnalyticsInit || 
+      !/\/portal\/clarity\/analytics(?:[\/?#]|$)/.test(location.pathname)
+    ) {
+      return; // ✅ Stop right here if condition matches
+    }
+    
+    window.__cvDemoAnalyticsInit = true;
 
   (function () {
     const log = (...args) => console.log('[CV DEMO]', ...args);
@@ -6780,187 +6781,186 @@ if (
     }
   }
 
-// LINE CHART
-  function drawCharts() {
- 
-  const lineData = google.visualization.arrayToDataTable([
-    ['Hour', 'All'],
-    ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
-  ]);
-  new google.visualization.LineChart(document.getElementById('chart-summary'))
-    .draw(lineData, {
-      chartArea: { width: '80%', height: '70%' },
-      legend: { position: 'bottom' },
-      hAxis: { title: 'Hours of Day' },
-      vAxis: { title: 'Number of Calls', minValue: 0 },
-      colors: ['#3366cc'],
-      lineWidth: 3,
-      pointSize: 5,
-      tooltip: { textStyle: { fontSize: 12 } }
-    });
-
-  // GREEN COLUMN CHART (Inbound)
-  const inboundData = google.visualization.arrayToDataTable([
-    ['Day', 'Calls'],
-    ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
-  ]);
-  new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
-    .draw(inboundData, {
-      chartArea: { width: '80%', height: '70%' },
-      legend: { position: 'bottom' },
-      hAxis: { title: 'Day of Week' },
-      vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
-      bar: { groupWidth: '65%' },
-      colors: ['#3cb371'] // MediumSeaGreen
-    });
-
-  
-    // PIE CHART (Employee - real totals)
-  const pieData = google.visualization.arrayToDataTable([
-    ['Employee', 'Calls'],
-    ['Mike Johnson', 60],
-    ['Cathy Thomas', 42],
-    ['Jake Lee', 56],
-    ['Bob Andersen', 13],
-    ['Brittany Lawrence', 28],
-    ['Alex Roberts', 62],
-    ['Mark Sanchez', 29]
-  ]);
-
-  new google.visualization.PieChart(document.getElementById('chart-employee'))
-    .draw(pieData, {
-      chartArea: { width: '95%', height: '85%' },
-      legend: { position: 'bottom' },
-      pieHole: 0.4,
-      is3D: true,
-      colors: [
-          '#3366cc', // Mike - blue
-          '#dc3912', // Cathy - red
-          '#109618', // Jake - green
-          '#ff9900', // Bob - orange
-          '#990099', // Brittany - purple
-          '#0099c6', // Alex - cyan
-          '#dd4477'  // Mark - pink
-      ]
-    });
-
-
-  // PURPLE COLUMN CHART (Outbound)
-    // OUTBOUND CHART (Fixed version using Google Charts only)
-  const outboundData = google.visualization.arrayToDataTable([
-    ['Day','Mike Johnson','Cathy Thomas','Jake Lee','Bob Andersen','Brittany Lawrence','Alex Roberts','Mark Sanchez'],
-    ['Sun', 2, 1, 2, 0, 1, 2, 1],
-    ['Mon',10, 7, 9, 2, 4,10, 5],
-    ['Tue',12, 8,10, 2, 4,12, 5],
-    ['Wed', 9, 7,10, 2, 5,10, 4],
-    ['Thu',10, 7, 9, 3, 5, 9, 4],
-    ['Fri',12, 8,10, 3, 6,12, 6],
-    ['Sat', 5, 4, 6, 1, 3, 7, 4],
-  ]);
-
-  new google.visualization.ComboChart(document.getElementById('chart-outbound'))
-    .draw(outboundData, {
-      chartArea: { width: '80%', height: '70%' },
-      legend: { position: 'right' },
-      isStacked: false,
-      seriesType: 'bars',
-      bar: { groupWidth: '6%' }, // Skinny bars
-      hAxis: { title: 'Day of Week' },
-      vAxis: { title: 'Number of Calls', viewWindow: { min: 0 } },
-      colors: [
-          '#007bff', // Blue
-          '#dc3545', // Red
-          '#ffc107', // Yellow
-          '#28a745', // Green
-          '#6610f2', // Purple
-          '#fd7e14', // Orange
-          '#20c997'  // Teal
-        ]
-
-    });
-
-}
-
-
-
-    // CALL QUEUE SUMMARY MODAL
-function cvSummaryModal() {
-  const existing = document.querySelector('#cv-summary-modal');
-  if (existing) existing.remove();
-
-  const summaryChart = `<div id="cv-summary-chart" style="flex: 2; min-width: 700px;"></div>`;
-
-  const queueTable = `
-    <div id="cv-summary-table-container" style="flex: 1; max-height: 360px; overflow: auto;">
-      <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
-        <thead>
-          <tr style="background: #eee;">
-            <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
-            <th style="transform: translateX(-4px);">8:00</th>
-            <th style="transform: translateX(-4px);">9:00</th>
-            <th style="transform: translateX(-4px);">10:00</th>
-            <th style="transform: translateX(-4px);">11:00</th>
-            <th style="transform: translateX(-4px);">12:00</th>
-            <th style="transform: translateX(-4px);">1:00</th>
-            <th style="transform: translateX(-4px);">2:00</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          <tr>
-            <td style="padding: 4px 8px;">Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
-          </tr>
-          <tr>
-            <td style="padding: 4px 8px;">New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td>
-          </tr>
-          <tr>
-            <td style="padding: 4px 8px;">Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
-          </tr>
-          <tr>
-            <td style="padding: 4px 8px;">Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>`;
+    // LINE CHART
+      function drawCharts() {
+     
+      const lineData = google.visualization.arrayToDataTable([
+        ['Hour', 'All'],
+        ['0:00', 0], ['4:00', 2], ['8:00', 5], ['12:00', 9], ['16:00', 6], ['20:00', 3]
+      ]);
+      new google.visualization.LineChart(document.getElementById('chart-summary'))
+        .draw(lineData, {
+          chartArea: { width: '80%', height: '70%' },
+          legend: { position: 'bottom' },
+          hAxis: { title: 'Hours of Day' },
+          vAxis: { title: 'Number of Calls', minValue: 0 },
+          colors: ['#3366cc'],
+          lineWidth: 3,
+          pointSize: 5,
+          tooltip: { textStyle: { fontSize: 12 } }
+        });
     
-      const modal = document.createElement('div');
-      modal.id = 'cv-summary-modal';
-      modal.style = `
-        position: fixed;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 1300px;
-        height: 540px;
-        background: white;
-        box-shadow: 0 0 15px rgba(0,0,0,0.3);
-        z-index: 9999;
-        border: 1px solid #ccc;
-        display: flex;
-        flex-direction: column;
-        font-family: Helvetica, Arial, sans-serif;
-      `;
+      // GREEN COLUMN CHART (Inbound)
+      const inboundData = google.visualization.arrayToDataTable([
+        ['Day', 'Calls'],
+        ['Sun', 12], ['Mon', 20], ['Tue', 32], ['Wed', 24], ['Thu', 28], ['Fri', 18]
+      ]);
+      new google.visualization.ColumnChart(document.getElementById('chart-inbound'))
+        .draw(inboundData, {
+          chartArea: { width: '80%', height: '70%' },
+          legend: { position: 'bottom' },
+          hAxis: { title: 'Day of Week' },
+          vAxis: { title: 'Number of Calls', minValue: 0, gridlines: { count: 4 } },
+          bar: { groupWidth: '65%' },
+          colors: ['#3cb371'] // MediumSeaGreen
+        });
     
-      modal.innerHTML = `
-        <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
-          <span>Summary by Hour</span>
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
-            <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
-            <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
-          </div>
-        </div>
-        <div style="flex: 1; padding: 15px 20px; overflow: auto;">
-          <div style="display: flex; gap: 30px; align-items: flex-start;">
-            ${summaryChart}
-            ${queueTable}
-          </div>
-        </div>
-      `;
+      
+        // PIE CHART (Employee - real totals)
+      const pieData = google.visualization.arrayToDataTable([
+        ['Employee', 'Calls'],
+        ['Mike Johnson', 60],
+        ['Cathy Thomas', 42],
+        ['Jake Lee', 56],
+        ['Bob Andersen', 13],
+        ['Brittany Lawrence', 28],
+        ['Alex Roberts', 62],
+        ['Mark Sanchez', 29]
+      ]);
     
-      document.body.appendChild(modal);
-      renderSummaryChart('cv-summary-chart');
+      new google.visualization.PieChart(document.getElementById('chart-employee'))
+        .draw(pieData, {
+          chartArea: { width: '95%', height: '85%' },
+          legend: { position: 'bottom' },
+          pieHole: 0.4,
+          is3D: true,
+          colors: [
+              '#3366cc', // Mike - blue
+              '#dc3912', // Cathy - red
+              '#109618', // Jake - green
+              '#ff9900', // Bob - orange
+              '#990099', // Brittany - purple
+              '#0099c6', // Alex - cyan
+              '#dd4477'  // Mark - pink
+          ]
+        });
+
+
+        // OUTBOUND CHART (Fixed version using Google Charts only)
+      const outboundData = google.visualization.arrayToDataTable([
+        ['Day','Mike Johnson','Cathy Thomas','Jake Lee','Bob Andersen','Brittany Lawrence','Alex Roberts','Mark Sanchez'],
+        ['Sun', 2, 1, 2, 0, 1, 2, 1],
+        ['Mon',10, 7, 9, 2, 4,10, 5],
+        ['Tue',12, 8,10, 2, 4,12, 5],
+        ['Wed', 9, 7,10, 2, 5,10, 4],
+        ['Thu',10, 7, 9, 3, 5, 9, 4],
+        ['Fri',12, 8,10, 3, 6,12, 6],
+        ['Sat', 5, 4, 6, 1, 3, 7, 4],
+      ]);
+
+      new google.visualization.ComboChart(document.getElementById('chart-outbound'))
+        .draw(outboundData, {
+          chartArea: { width: '80%', height: '70%' },
+          legend: { position: 'right' },
+          isStacked: false,
+          seriesType: 'bars',
+          bar: { groupWidth: '6%' }, // Skinny bars
+          hAxis: { title: 'Day of Week' },
+          vAxis: { title: 'Number of Calls', viewWindow: { min: 0 } },
+          colors: [
+              '#007bff', // Blue
+              '#dc3545', // Red
+              '#ffc107', // Yellow
+              '#28a745', // Green
+              '#6610f2', // Purple
+              '#fd7e14', // Orange
+              '#20c997'  // Teal
+            ]
+    
+        });
+    
     }
+
+
+    
+        // CALL QUEUE SUMMARY MODAL
+    function cvSummaryModal() {
+      const existing = document.querySelector('#cv-summary-modal');
+      if (existing) existing.remove();
+    
+      const summaryChart = `<div id="cv-summary-chart" style="flex: 2; min-width: 700px;"></div>`;
+    
+      const queueTable = `
+        <div id="cv-summary-table-container" style="flex: 1; max-height: 360px; overflow: auto;">
+          <table style="border-collapse: collapse; font-size: 13px; min-width: 500px;">
+            <thead>
+              <tr style="background: #eee;">
+                <th style="padding: 4px 8px; text-align: left;">Marketing Number</th>
+                <th style="transform: translateX(-4px);">8:00</th>
+                <th style="transform: translateX(-4px);">9:00</th>
+                <th style="transform: translateX(-4px);">10:00</th>
+                <th style="transform: translateX(-4px);">11:00</th>
+                <th style="transform: translateX(-4px);">12:00</th>
+                <th style="transform: translateX(-4px);">1:00</th>
+                <th style="transform: translateX(-4px);">2:00</th>
+              </tr>
+            </thead>
+    
+            <tbody>
+              <tr>
+                <td style="padding: 4px 8px;">Main Routing (300)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 8px;">New Sales (301)</td><td>3</td><td>2</td><td>3</td><td>4</td><td>1</td><td>5</td><td>3</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 8px;">Existing Customer (302)</td><td>0</td><td>3</td><td>2</td><td>0</td><td>0</td><td>0</td><td>0</td>
+              </tr>
+              <tr>
+                <td style="padding: 4px 8px;">Billing (303)</td><td>0</td><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>`;
+        
+          const modal = document.createElement('div');
+          modal.id = 'cv-summary-modal';
+          modal.style = `
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 1300px;
+            height: 540px;
+            background: white;
+            box-shadow: 0 0 15px rgba(0,0,0,0.3);
+            z-index: 9999;
+            border: 1px solid #ccc;
+            display: flex;
+            flex-direction: column;
+            font-family: Helvetica, Arial, sans-serif;
+          `;
+        
+          modal.innerHTML = `
+            <div style="background: #f7931e; color: black; font-weight: bold; display: flex; justify-content: space-between; align-items: center; padding: 10px 15px;">
+              <span>Summary by Hour</span>
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/file-excel-solid-full.svg" title="Export to Excel" style="height: 18px; cursor: pointer;">
+                <img src="https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/print-solid-full.svg" title="Print" style="height: 18px; cursor: pointer;">
+                <span style="cursor: pointer; font-size: 20px;" onclick="document.querySelector('#cv-summary-modal')?.remove()">&times;</span>
+              </div>
+            </div>
+            <div style="flex: 1; padding: 15px 20px; overflow: auto;">
+              <div style="display: flex; gap: 30px; align-items: flex-start;">
+                ${summaryChart}
+                ${queueTable}
+              </div>
+            </div>
+          `;
+        
+          document.body.appendChild(modal);
+          renderSummaryChart('cv-summary-chart');
+        }
 
 
 
@@ -7314,7 +7314,7 @@ function cvSummaryModal() {
         }
       }, 300);
     })();
-
+}               // closes the outer else
 
 
   // MESSAGES/TEXT RESPONDER AI
@@ -7505,6 +7505,7 @@ function cvSummaryModal() {
     }
 
     
+
 
 
 
