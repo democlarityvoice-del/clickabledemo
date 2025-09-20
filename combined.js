@@ -7486,6 +7486,16 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(messages);
     
+           window.addEventListener('message', e => {
+            if (e.data.type === 'rowClick') {
+              container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+            }
+          });
+    
+          container.appendChild(iframe);
+          return true;
+        }
+
     
         const poll = setInterval(() => {
           attempt++;
@@ -7544,6 +7554,7 @@ function openAgentListenModal(agentExt, row, btn) {
             log('✅ Demo toggle button injected beside New Conversation');
           }, 500);
         })();
+
 
 
 
