@@ -7506,49 +7506,48 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
-    // ✅ STANDALONE Demo Mode Toggle Button for /portal/messages
-    (function injectDemoModeToggleButtonStandalone() {
-      const log = (...args) => console.log('[CV Demo]', ...args);
-    
-      const waitForActionContainer = setInterval(() => {
-        const container = document.querySelector('.action-container-row .action-container');
-        if (!container) return;
-    
-        const existing = container.querySelector('.cv-toggle-demo-btn');
-        if (existing) {
-          clearInterval(waitForActionContainer);
-          return;
-        }
-    
-        const refBtn = container.querySelector('button');
-        if (!refBtn) return;
-    
-        const toggleBtn = refBtn.cloneNode(true);
-        toggleBtn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
-        toggleBtn.classList.add('cv-toggle-demo-btn');
-        toggleBtn.style.marginLeft = '12px';
-    
-        toggleBtn.addEventListener('click', () => {
-          window.__cvMessagesLiveMode = !window.__cvMessagesLiveMode;
-          toggleBtn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
-    
-          const demoTable = document.querySelector('#cv-messages-container');
-          if (window.__cvMessagesLiveMode) {
-            if (demoTable) demoTable.remove();
-            log('🧼 Switched to LIVE mode. Demo messages removed.');
-          } else {
-            if (typeof injectDemoMessagesTable === 'function') {
-              injectDemoMessagesTable();
-              log('🎭 Switched to DEMO mode. Demo messages re-injected.');
-            } else {
-              log('⚠️ injectDemoMessagesTable() not found.');
-            }
+    // ✅ STANDALONE Demo Mode Toggle Button for /portal/messages(function injectCvFakeButton() {
+      (function injectCvFakeButton() {
+          const row = document.querySelector('.action-container-row');
+          if (!row) {
+            console.warn('⚠️ .action-container-row not found');
+            return;
           }
-        });
-    
-        container.appendChild(toggleBtn);
-        clearInterval(waitForActionContainer);
-        log('✅ Demo toggle button injected beside New Conversation');
-      }, 500);
-    })();
+        
+          // Avoid duplicates
+          const existing = document.getElementById('cv-fake-btn');
+          if (existing) existing.remove();
+        
+          const fakeBtn = document.createElement('button');
+          fakeBtn.id = 'cv-fake-btn';
+          fakeBtn.textContent = 'Fake Action'; // Label can be changed
+        
+          // Better styling — blends in with existing UI
+          fakeBtn.style.padding = '4px 10px';
+          fakeBtn.style.marginLeft = '8px';
+          fakeBtn.style.fontSize = '12px';
+          fakeBtn.style.border = '1px solid #ccc';
+          fakeBtn.style.borderRadius = '4px';
+          fakeBtn.style.background = '#f8f8f8';
+          fakeBtn.style.color = '#333';
+          fakeBtn.style.boxShadow = 'inset 0 1px 0 #fff';
+          fakeBtn.style.fontFamily = 'inherit';
+          fakeBtn.style.cursor = 'pointer';
+        
+          fakeBtn.addEventListener('mouseenter', () => {
+            fakeBtn.style.background = '#eee';
+          });
+          fakeBtn.addEventListener('mouseleave', () => {
+            fakeBtn.style.background = '#f8f8f8';
+          });
+        
+          fakeBtn.addEventListener('click', () => {
+            alert('🔥 Clicked the fake button!');
+          });
+        
+          row.appendChild(fakeBtn);
+          console.log('✅ Subtle cv-fake-btn injected into .action-container-row');
+        })();
+
+
 
