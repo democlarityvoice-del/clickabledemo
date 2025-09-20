@@ -6565,15 +6565,24 @@ function openAgentListenModal(agentExt, row, btn) {
 // === CV DEMO DASHBOARD MODES ===
 
 // === CV DEMO DASHBOARD MODES ===
-(function () {
-  const log = (...args) => console.log('[CV DEMO]', ...args);
-  const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
-  const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+// === CV DEMO DASHBOARD MODES ===
+if (
+  window.__cvDemoAnalyticsInit || 
+  !/\/portal\/clarity\/analytics(?:[\/?#]|$)/.test(location.pathname)
+) {
+  // 🛑 Already injected or wrong page — do nothing
+} else {
+  window.__cvDemoAnalyticsInit = true;
 
-  const FINAL_WIDGETS = [
-    'Inbound by Employee This Week',
-    'Outbound Calls This Week'
-  ];
+  (function () {
+    const log = (...args) => console.log('[CV DEMO]', ...args);
+    const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
+    const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+    const FINAL_WIDGETS = [
+      'Inbound by Employee This Week',
+      'Outbound Calls This Week'
+    ];
 
   function injectSidebarButtons() {
     const sidebar = document.querySelector('#home-dashboards-body');
@@ -7294,17 +7303,17 @@ function cvSummaryModal() {
 
        
     
-
-  // BEGIN injection
-  const sidebarReady = setInterval(() => {
-    const sidebar = document.querySelector('#home-dashboards-body');
-    if (sidebar) {
-      clearInterval(sidebarReady);
-      injectSidebarButtons();
-      injectDemoWidgets(); // inject immediately on load
-    }
-  }, 300);
-})();
+        
+    // BEGIN injection
+      const sidebarReady = setInterval(() => {
+        const sidebar = document.querySelector('#home-dashboards-body');
+        if (sidebar) {
+          clearInterval(sidebarReady);
+          injectSidebarButtons();
+          injectDemoWidgets(); // inject immediately on load
+        }
+      }, 300);
+    })();
 
 
 
@@ -7496,6 +7505,7 @@ function cvSummaryModal() {
     }
 
     
+
 
 
 
