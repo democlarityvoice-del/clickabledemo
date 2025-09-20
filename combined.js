@@ -7365,9 +7365,9 @@ function openAgentListenModal(agentExt, row, btn) {
         const phoneAreaCodes = ['313','248','586','214','469','972'];
         function randomPhone() {
           const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
-          const mid = Math.floor(Math.random() * 900 + 100);
+          const prefix = '555'; // Safe demo prefix
           const end = Math.floor(Math.random() * 9000 + 1000);
-          return `(${area}) ${mid}-${end}`;
+          return `(${area}) ${prefix}-${end}`;
         }
     
         function randomTime() {
@@ -7485,10 +7485,18 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(messages);
     
-          window.addEventListener('message', e => {
-            if (e.data.type === 'rowClick') {
-              container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
-            }
+          // Add click handler for Reply icons
+        document.querySelectorAll('.iconReply').forEach(btn => {
+          btn.addEventListener('click', event => {
+            const row = btn.closest('tr');
+            const numberCell = row?.querySelector('td:first-child')?.textContent || '';
+            const messageCell = row?.querySelector('td:nth-child(2)')?.textContent || '';
+        
+            // Optional: console.log for debugging
+            console.log('Opening modal for:', numberCell, messageCell);
+        
+            // Call your modal function (you may need to customize the name)
+            injectMessageModal(numberCell, messageCell);  // ← you replace this with your real function
           });
     
           container.appendChild(iframe);
@@ -7504,6 +7512,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
