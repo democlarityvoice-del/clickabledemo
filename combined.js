@@ -7507,47 +7507,68 @@ function openAgentListenModal(agentExt, row, btn) {
 
     
     // ✅ STANDALONE Demo Mode Toggle Button for /portal/messages(function injectCvFakeButton() {
-      (function injectCvFakeButton() {
-          const row = document.querySelector('.action-container-row');
-          if (!row) {
-            console.warn('⚠️ .action-container-row not found');
-            return;
-          }
+      (function injectCvDemoToggle() {
+          const log = (...args) => console.log('[CV Demo]', ...args);
         
-          // Avoid duplicates
-          const existing = document.getElementById('cv-fake-btn');
-          if (existing) existing.remove();
+          const poll = setInterval(() => {
+            const row = document.querySelector('.action-container-row');
+            if (!row) return;
         
-          const fakeBtn = document.createElement('button');
-          fakeBtn.id = 'cv-fake-btn';
-          fakeBtn.textContent = 'Fake Action'; // Label can be changed
+            clearInterval(poll);
         
-          // Better styling — blends in with existing UI
-          fakeBtn.style.padding = '4px 10px';
-          fakeBtn.style.marginLeft = '8px';
-          fakeBtn.style.fontSize = '12px';
-          fakeBtn.style.border = '1px solid #ccc';
-          fakeBtn.style.borderRadius = '4px';
-          fakeBtn.style.background = '#f8f8f8';
-          fakeBtn.style.color = '#333';
-          fakeBtn.style.boxShadow = 'inset 0 1px 0 #fff';
-          fakeBtn.style.fontFamily = 'inherit';
-          fakeBtn.style.cursor = 'pointer';
+            if (document.querySelector('#cv-demo-toggle-btn')) {
+              log('⚠️ Demo toggle already exists');
+              return;
+            }
         
-          fakeBtn.addEventListener('mouseenter', () => {
-            fakeBtn.style.background = '#eee';
-          });
-          fakeBtn.addEventListener('mouseleave', () => {
-            fakeBtn.style.background = '#f8f8f8';
-          });
+            const btn = document.createElement('button');
+            btn.id = 'cv-demo-toggle-btn';
+            btn.textContent = 'Return to Live Mode'; // or 'Return to Demo Mode' if needed
         
-          fakeBtn.addEventListener('click', () => {
-            alert('🔥 Clicked the fake button!');
-          });
+            // ✨ Polished styling
+            btn.style.padding = '4px 10px';
+            btn.style.marginRight = '10px';
+            btn.style.fontSize = '12px';
+            btn.style.border = '1px solid #ccc';
+            btn.style.borderRadius = '4px';
+            btn.style.background = '#f8f8f8';
+            btn.style.color = '#333';
+            btn.style.fontFamily = 'inherit';
+            btn.style.cursor = 'pointer';
+            btn.style.boxShadow = 'inset 0 1px 0 #fff';
         
-          row.appendChild(fakeBtn);
-          console.log('✅ Subtle cv-fake-btn injected into .action-container-row');
+            btn.addEventListener('mouseenter', () => {
+              btn.style.background = '#eee';
+            });
+            btn.addEventListener('mouseleave', () => {
+              btn.style.background = '#f8f8f8';
+            });
+        
+            btn.addEventListener('click', () => {
+              window.__cvMessagesLiveMode = !window.__cvMessagesLiveMode;
+              btn.textContent = window.__cvMessagesLiveMode ? 'Return to Demo Mode' : 'Return to Live Mode';
+        
+              const demoTable = document.querySelector('#cv-messages-container');
+              if (window.__cvMessagesLiveMode) {
+                if (demoTable) demoTable.remove();
+                log('🧼 Switched to LIVE mode. Demo messages removed.');
+              } else {
+                if (typeof injectDemoMessagesTable === 'function') {
+                  injectDemoMessagesTable();
+                  log('🎭 Switched to DEMO mode. Demo messages re-injected.');
+                } else {
+                  log('⚠️ injectDemoMessagesTable() not found.');
+                }
+              }
+            });
+        
+            // Inject it into the row
+            row.prepend(btn);
+            log('✅ Demo toggle button injected.');
+          }, 500);
         })();
+
+
 
 
 
