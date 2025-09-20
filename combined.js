@@ -6562,28 +6562,26 @@ function openAgentListenModal(agentExt, row, btn) {
 })();
 
 // === ADD FOUR FAKE WIDGETS LOGIC ===
-// === CV DEMO DASHBOARD MODES ===
 
 // === CV DEMO DASHBOARD MODES ===
-// === CV DEMO DASHBOARD MODES ===
-    if (
-      window.__cvDemoAnalyticsInit || 
-      !/\/portal\/clarity\/analytics(?:[\/?#]|$)/.test(location.pathname)
-    ) {
-      return; // ✅ Stop right here if condition matches
-    }
-    
-    window.__cvDemoAnalyticsInit = true;
+ (function injectDemoAnalyticsV3() {
+  if (
+    window.__cvDemoAnalyticsInit ||
+    !/\/portal\/clarity\/analytics(?:[\/?#]|$)/.test(location.pathname)
+  ) {
+    return;
+  }
 
-  (function () {
-    const log = (...args) => console.log('[CV DEMO]', ...args);
-    const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
-    const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+  window.__cvDemoAnalyticsInit = true;
 
-    const FINAL_WIDGETS = [
-      'Inbound by Employee This Week',
-      'Outbound Calls This Week'
-    ];
+  const log = (...args) => console.log('[CV DEMO]', ...args);
+  const ICON_EDIT = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/pen-to-square-regular-full.svg';
+  const ICON_ZOOM = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/magnifying-glass-solid-full.svg';
+
+  const FINAL_WIDGETS = [
+    'Inbound by Employee This Week',
+    'Outbound Calls This Week'
+  ];
 
   function injectSidebarButtons() {
     const sidebar = document.querySelector('#home-dashboards-body');
@@ -7305,6 +7303,7 @@ function openAgentListenModal(agentExt, row, btn) {
     
         
     // BEGIN injection
+   
       const sidebarReady = setInterval(() => {
         const sidebar = document.querySelector('#home-dashboards-body');
         if (sidebar) {
@@ -7314,7 +7313,7 @@ function openAgentListenModal(agentExt, row, btn) {
         }
       }, 300);
     })();
-}               // closes the outer else
+
 
 
   // MESSAGES/TEXT RESPONDER AI
@@ -7505,6 +7504,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
