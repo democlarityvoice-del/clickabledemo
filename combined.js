@@ -1810,9 +1810,14 @@ if (!window.__cvAgentsPanelInit) {
     '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
     '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
 
-    '#',PANEL_ID,' .is-busy .cv-glyph{background:#dc3545}',  // red
-    '#',PANEL_ID,' .is-busy .cv-name{color:#dc3545}',
-    '#',PANEL_ID,' .is-busy .cv-sub-label,#',PANEL_ID,' .is-busy .cv-sub-time{color:#dc3545}',
+    '#',PANEL_ID,' .is-online  .cv-glyph{background:#167a32}',  // green
+    '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',  // gray
+    '#',PANEL_ID,' .is-busy    .cv-glyph{background:#dc3545}',  // red
+    
+    '#',PANEL_ID,' .is-online  .cv-name{color:#167a32}',         // green
+    '#',PANEL_ID,' .is-offline .cv-name{color:#6b7280}',         // gray
+    '#',PANEL_ID,' .is-busy    .cv-name{color:#dc3545}',         // red
+
 
   ].join('');
   s.textContent = css;
@@ -1829,8 +1834,9 @@ if (!window.__cvAgentsPanelInit) {
     for (var i=0;i<AGENTS.length;i++){
       var a = AGENTS[i];
       var row = doc.createElement('div');
-      var status = a.lunch ? 'lunch' : a.status || (a.online ? 'online' : 'offline');
-      row.className = 'cv-row is-' + status;
+      var status = a.lunch ? 'offline' : (a.status || (a.online ? 'online' : 'offline'));
+        row.className = 'cv-row is-' + status;
+
 
 
       var top = doc.createElement('div');
@@ -7756,6 +7762,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
