@@ -7596,7 +7596,8 @@ function openAgentListenModal(agentExt, row, btn) {
             showMessageModal(event.data.index, demoMessages);
           } else if (event.data.type === 'returnToList') {
             const iframe = document.getElementById('cv-demo-messages-iframe');
-            if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
+            iframe.srcdoc = buildSrcdoc(window.demoMessages);
+
           }
         });
 
@@ -7610,6 +7611,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
