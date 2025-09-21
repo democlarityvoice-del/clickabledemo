@@ -7504,22 +7504,27 @@ function openAgentListenModal(agentExt, row, btn) {
           const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
           const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
     
-          const rows = messages.map((msg, i) => {
-            const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
-            const sender = msg.type === 'internal' ? msg.sender : msg.number;
-            const preview = msg.message.replace(/\n/g, "<br>");
-            return `
-              <tr onclick="parent.viewSingleMessage(${i})">
-                <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-                <td>${sender}</td>
-                <td>${preview}</td>
-                <td class="nowrap">${msg.date} ${msg.time}</td>
-                <td class="nowrap actions">
-                  <span class="msg-btn iconReply"><img src="${iconReply}" title="Reply"></span>
-                  <span class="msg-btn iconDelete"><img src="${iconDelete}" title="Delete"></span>
-                </td>
-              </tr>`;
-          }).join("\n");
+        
+        
+      const rows = window.demoMessages.map((msg, i) => {
+          const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
+          const sender = msg.type === 'internal' ? msg.sender : msg.number;
+          const preview = msg.message.replace(/\n/g, "<br>");
+        
+          return `
+            <tr onclick="parent.viewSingleMessage(${i})">
+              <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+              <td>${sender}</td>
+              <td>${preview}</td>
+              <td class="nowrap">${msg.date} ${msg.time}</td>
+              <td class="nowrap actions">
+                <span class="msg-btn iconReply"><img src="${iconReply}" title="Reply"></span>
+                <span class="msg-btn iconDelete"><img src="${iconDelete}" title="Delete"></span>
+              </td>
+            </tr>
+          `;
+        }).join("\n");
+
     
           return `
             <html><head><style>
@@ -7605,6 +7610,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
