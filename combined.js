@@ -7382,36 +7382,45 @@ function openAgentListenModal(agentExt, row, btn) {
         
           const cleanMessage = selected.message.replace(/\n/g, "<br>");
         
-          iframe.srcdoc = `
-              <html>
-                <body style="font-family: sans-serif; padding: 20px;">
-            
-                  <!-- Timestamp -->
-                  <div class="center-text" style="text-align: center; font-size: 11px; color: #888; margin: 12px 0;">
+                  iframe.srcdoc = `
+          <html>
+            <body style="font-family: sans-serif; padding: 0; margin: 0; background: #fdfdfd;">
+        
+              <!-- Container to simulate layout -->
+              <div style="display: flex; flex-direction: column; height: 100vh; justify-content: space-between; padding: 40px 60px 20px 60px; box-sizing: border-box;">
+        
+                <!-- Main message area -->
+                <div style="align-self: flex-start; max-width: 600px; background: #DFF6DD; padding: 14px 18px; border-radius: 10px; font-size: 14px; line-height: 1.4; color: #000; position: relative;">
+                  ${cleanMessage}
+                  <div style="font-size: 11px; color: #666; text-align: right; margin-top: 8px;">
                     ${selected.date} ${selected.time}
                   </div>
-            
-                  <!-- Outbound message bubble using real Clarity style -->
-                  <div class="chat-outbound chat-message-container clearfix" style="max-width: 90%; padding: 2px 10px; clear: both;">
-                    <div class="chat-message" style="padding: 10px 14px; border-radius: 12px; font-size: 14px; display: inline-block; max-width: 70%; word-wrap: break-word; background-color: #d2f0dc; float: right; text-align: left;">
-                      ${cleanMessage}
-                    </div>
+                </div>
+        
+                <!-- Bottom section -->
+                <div style="margin-top: 40px;">
+                  <div style="font-weight: bold; font-size: 14px;">
+                    ${selected.number || selected.sender || 'Unknown'}
                   </div>
-            
-                  <!-- Sender info -->
-                  <div style="margin-top: 16px;">
-                    <strong>${selected.number || selected.sender || 'Unknown'}</strong>
-                  </div>
-                  <div style="margin-top: 6px; font-size: 12px; color: #888;">
+                  <div style="font-size: 12px; color: #888; margin-bottom: 10px;">
                     Messages sent using (248) 331-9492
                   </div>
-            
+        
                   <!-- Button -->
-                  <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
-            
-                </body>
-              </html>
-            `;
+                  <button onclick="parent.returnToMessageList()" style="
+                    padding: 6px 12px;
+                    font-size: 13px;
+                    border: 1px solid #ccc;
+                    background: #fff;
+                    border-radius: 4px;
+                    cursor: pointer;
+                  ">View All</button>
+                </div>
+        
+              </div>
+            </body>
+          </html>
+        `;
 
         
           container.innerHTML = '';
@@ -7670,6 +7679,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
