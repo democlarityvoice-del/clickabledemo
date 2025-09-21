@@ -7353,9 +7353,10 @@ function viewSingleMessage(originalText, phoneNumber) {
               ${originalText}
             </div>
     
-            <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
-              Hi Pat, it's Martha from Clarity Voice. Can he go to store 44 now and work on the board?
+            <<div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
+              ${selected.message.replace(/\n/g, "<br>")}
             </div>
+
     
             <div style="margin-top: 16px;">
               <strong>${phoneNumber}</strong>
@@ -7491,7 +7492,7 @@ function viewSingleMessage(originalText, phoneNumber) {
           });
         });
 
-        const demoMessages = messages;
+        window.demoMessages = messages;
 
     
         function buildSrcdoc(messages) {
@@ -7505,7 +7506,7 @@ function viewSingleMessage(originalText, phoneNumber) {
             const sender = msg.type === 'internal' ? msg.sender : msg.number;
             const preview = msg.message.replace(/\n/g, "<br>");
             return `
-              <tr onclick="document.body.innerHTML = '<div style=&quot;padding:20px;&quot;>ROW ' + ${i} + ' CLICKED</div>'">
+              <tr onclick="parent.viewSingleMessage('${msg.message}', '${msg.number}')">
                 <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
                 <td>${sender}</td>
                 <td>${preview}</td>
@@ -7581,7 +7582,7 @@ function viewSingleMessage(originalText, phoneNumber) {
           return true;
         }
 
-        window.addEventListener('message', (event) => {
+       window.addEventListener('message', (event) => {
           if (!event.data || !event.data.type) return;
           if (event.data.type === 'rowClick') {
             showMessageModal(event.data.index, demoMessages);
@@ -7590,6 +7591,7 @@ function viewSingleMessage(originalText, phoneNumber) {
             if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
           }
         });
+
     
         const poll = setInterval(() => {
           attempt++;
@@ -7600,6 +7602,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
