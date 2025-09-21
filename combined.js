@@ -7505,7 +7505,7 @@ function viewSingleMessage(originalText, phoneNumber) {
             const sender = msg.type === 'internal' ? msg.sender : msg.number;
             const preview = msg.message.replace(/\n/g, "<br>");
             return `
-              <tr onclick="window.handleRowClick(${i})">
+              <tr onclick="document.body.innerHTML = '<div style=&quot;padding:20px;&quot;>ROW ' + ${i} + ' CLICKED</div>'">
                 <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
                 <td>${sender}</td>
                 <td>${preview}</td>
@@ -7574,6 +7574,7 @@ function viewSingleMessage(originalText, phoneNumber) {
           iframe.style.width = '100%';
           iframe.style.height = '600px';
           iframe.style.border = 'none';
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
           iframe.srcdoc = buildSrcdoc(demoMessages); // use your global array
           
           container.appendChild(iframe);
@@ -7599,6 +7600,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
