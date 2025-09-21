@@ -74,7 +74,7 @@ function buildSrcdoc() {
   height: 24px;
   background: #ffffff;
   border-radius: 50%;
-  border: 1px solid #cfcfcf;
+  border: 1px solid #00000;
   cursor: pointer;
 }
 
@@ -7629,6 +7629,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
