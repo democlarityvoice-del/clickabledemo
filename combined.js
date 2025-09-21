@@ -7553,15 +7553,6 @@ function viewSingleMessage(originalText, phoneNumber) {
           iframe.srcdoc = modalHtml;
         }
         
-        window.addEventListener('message', (event) => {
-          if (!event.data || !event.data.type) return;
-          if (event.data.type === 'rowClick') {
-            showMessageModal(event.data.index, demoMessages);
-          } else if (event.data.type === 'returnToList') {
-            const iframe = document.getElementById('cv-demo-messages-iframe');
-            if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
-          }
-        });
 
       function inject() {
           const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
@@ -7574,6 +7565,17 @@ function viewSingleMessage(originalText, phoneNumber) {
           iframe.style.height = '600px';
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(demoMessages); // use your global array
+
+
+        window.addEventListener('message', (event) => {
+          if (!event.data || !event.data.type) return;
+          if (event.data.type === 'rowClick') {
+            showMessageModal(event.data.index, demoMessages);
+          } else if (event.data.type === 'returnToList') {
+            const iframe = document.getElementById('cv-demo-messages-iframe');
+            if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
+          }
+        });
         
           container.appendChild(iframe);
           return true;
@@ -7590,6 +7592,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
