@@ -1730,16 +1730,17 @@ if (!window.__cvAgentsPanelInit) {
 
   // Agents (Bob on lunch; Mike/Brittany/Mark show phone icon)
   var AGENTS = [
-    { name:'Mike Johnson',      ext:200, online:true,  icon:'phone' },
-    { name:'Cathy Thomas',      ext:201, online:true,  icon:'user'  },
-    { name:'Jake Lee',          ext:202, online:false, icon:'user'  },
-    { name:'Bob Andersen',      ext:203, online:false, icon:'user'  },
+  { name: 'Mike Johnson',      ext: 200, status: 'online',  icon: 'phone' },
+  { name: 'Cathy Thomas',      ext: 201, status: 'busy',    icon: 'user'  },
+  { name: 'Jake Lee',          ext: 202, status: 'offline', icon: 'user'  },
+  { name: 'Bob Andersen',      ext: 203, status: 'offline', icon: 'user'  },
 
-    { name:'Brittany Lawrence', ext:204, online:true,  icon:'phone' },
-    { name:'Alex Roberts',      ext:205, online:true,  icon:'user'  },
-    { name:'Mark Sanchez',      ext:206, online:true,  icon:'phone' },
-    { name:'John Smith',        ext:207, online:true,  icon:'user'  }
-  ];
+  { name: 'Brittany Lawrence', ext: 204, status: 'busy',    icon: 'phone' },
+  { name: 'Alex Roberts',      ext: 205, status: 'online',  icon: 'user'  },
+  { name: 'Mark Sanchez',      ext: 206, status: 'online',  icon: 'phone' },
+  { name: 'John Smith',        ext: 207, status: 'online',  icon: 'user'  }
+ ];
+
 
   // Helpers
   function pad2(n){ return ('0'+n).slice(-2); }
@@ -1809,9 +1810,10 @@ if (!window.__cvAgentsPanelInit) {
     '#',PANEL_ID,' .cv-sub-label{font:600 12px/1 Arial;color:#9aa0a6}',
     '#',PANEL_ID,' .cv-sub-time{font:600 12px/1 Arial;color:#9aa0a6}',
 
-    '#',PANEL_ID,' .is-offline .cv-glyph{background:#9ca3af}',
-    '#',PANEL_ID,' .is-offline .cv-name{color:#9aa0a6}',
-    '#',PANEL_ID,' .is-offline .cv-sub-label,#',PANEL_ID,' .is-offline .cv-sub-time{color:#b3b8bf}'
+    '#',PANEL_ID,' .is-busy .cv-glyph{background:#dc3545}',  // red
+    '#',PANEL_ID,' .is-busy .cv-name{color:#dc3545}',
+    '#',PANEL_ID,' .is-busy .cv-sub-label,#',PANEL_ID,' .is-busy .cv-sub-time{color:#dc3545}',
+
   ].join('');
   s.textContent = css;
   (doc.head || doc.documentElement).appendChild(s);
@@ -1827,8 +1829,9 @@ if (!window.__cvAgentsPanelInit) {
     for (var i=0;i<AGENTS.length;i++){
       var a = AGENTS[i];
       var row = doc.createElement('div');
-      var offline = a.lunch ? true : !a.online;
-      row.className = 'cv-row' + (offline ? ' is-offline' : '');
+      var status = a.lunch ? 'lunch' : a.status || (a.online ? 'online' : 'offline');
+      row.className = 'cv-row is-' + status;
+
 
       var top = doc.createElement('div');
       top.className = 'cv-top';
@@ -7753,6 +7756,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
