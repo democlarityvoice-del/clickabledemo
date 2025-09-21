@@ -7523,87 +7523,62 @@ function viewSingleMessage(originalText, phoneNumber) {
               <table>${rows}</table>
             </body></html>`;
         }
+        
+       function showMessageModal(index, messages) {
+          const iframe = document.getElementById('cv-demo-messages-iframe');
+          if (!iframe) return;
+        
+          const selected = messages[index];
+          const preview = selected.message.replace(/\n/g, "<br>");
+          const icon = selected.type === 'internal'
+            ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
+            : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+        
+          const modalHtml = `
+            <html><head><style>
+              body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; padding: 10px; }
+              .msg-box { border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #f9f9f9; }
+              .from { font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+              .text { white-space: pre-wrap; margin-top: 4px; }
+              button { margin-top: 12px; padding: 6px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+            </style></head><body>
+              <div class="msg-box">
+                <div class="from"><img src="${icon}" style="height:16px;">${selected.type === 'internal' ? selected.sender : selected.number}</div>
+                <div class="text">${preview}</div>
+                <button onclick="parent.postMessage({ type: 'returnToList' }, '*')">Return to Message List</button>
+              </div>
+            </body></html>
+          `;
+        
+          iframe.srcdoc = modalHtml;
+        }
+        
+        window.addEventListener('message', (event) => {
+          if (!event.data || !event.data.type) return;
+          if (event.data.type === 'rowClick') {
+            showMessageModal(event.data.index, demoMessages);
+          } else if (event.data.type === 'returnToList') {
+            const iframe = document.getElementById('cv-demo-messages-iframe');
+            if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
+          }
+        });
 
-       
-    
-        function inject() {
+      function inject() {
           const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
           if (!container) return false;
-    
+        
           container.innerHTML = '';
           const iframe = document.createElement('iframe');
           iframe.id = 'cv-demo-messages-iframe';
           iframe.style.width = '100%';
           iframe.style.height = '600px';
           iframe.style.border = 'none';
-          iframe.srcdoc = buildSrcdoc(messages);
-            
-         function showMessageModal(msg) {
-              const container = document.querySelector('#cv-demo-messages');
-              if (!container) return;
-            
-              const iframe = document.createElement('iframe');
-              iframe.id = 'cv-message-modal';
-              iframe.style.width = '100%';
-              iframe.style.height = '600px';
-              iframe.style.border = 'none';
-            
-              const srcdoc = `
-                <html>
-                  <body style="font-family: sans-serif; padding: 20px;">
-                    <div style="font-size: 12px; color: #888;">${msg.date} ${msg.time}</div>
-                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                      ${msg.message.replace(/\n/g, "<br>")}
-                    </div>
-            
-                    <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
-                      Hi Pat, it's Martha from Clarity Voice. Can he go to store 44 now and work on the board?
-                    </div>
-            
-                    <div style="margin-top: 16px;">
-                      <strong>${msg.number}</strong>
-                    </div>
-            
-                    <div style="margin-top: 6px; font-size: 12px; color: #888;">
-                      Messages sent using (248) 331-9492
-                    </div>
-            
-                    <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
-                  </body>
-                </html>
-              `;
-            
-              iframe.srcdoc = srcdoc;
-              container.innerHTML = '';
-              container.appendChild(iframe);
-            }
-
-            function returnToList() {
-                  container.innerHTML = '';
-                  const iframe = document.createElement('iframe');
-                  iframe.id = 'cv-demo-messages-iframe';
-                  iframe.style.width = '100%';
-                  iframe.style.height = '600px';
-                  iframe.style.border = 'none';
-                  iframe.srcdoc = buildSrcdoc(DEMO_MESSAGES); // reuse your global
-                  container.appendChild(iframe);
-                }
-
-            
-    
-           window.addEventListener('message', (event) => {
-              if (!event.data || event.data.type !== 'rowClick') return;
-            
-              const msg = DEMO_MESSAGES?.[event.data.index]; // Use your global array
-              if (!msg) return;
-            
-              showMessageModal(msg);
-            });
-
-    
+          iframe.srcdoc = buildSrcdoc(demoMessages); // use your global array
+        
           container.appendChild(iframe);
           return true;
         }
+
 
     
         const poll = setInterval(() => {
@@ -7615,6 +7590,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
