@@ -7381,46 +7381,122 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
         
           const cleanMessage = selected.message.replace(/\n/g, "<br>");
-        
-                  iframe.srcdoc = `
-          <html>
-            <body style="font-family: sans-serif; padding: 0; margin: 0; background: #fdfdfd;">
-        
-              <!-- Container to simulate layout -->
-              <div style="display: flex; flex-direction: column; height: 100vh; justify-content: space-between; padding: 40px 60px 20px 60px; box-sizing: border-box;">
-        
-                <!-- Main message area -->
-                <div style="align-self: flex-start; max-width: 600px; background: #DFF6DD; padding: 14px 18px; border-radius: 10px; font-size: 14px; line-height: 1.4; color: #000; position: relative;">
-                  ${cleanMessage}
-                  <div style="font-size: 11px; color: #666; text-align: right; margin-top: 8px;">
-                    ${selected.date} ${selected.time}
+         iframe.srcdoc = `
+              <html>
+                <head>
+                  <style>
+                    html, body {
+                      margin: 0;
+                      padding: 0;
+                      height: 100%;
+                      background: #fff;
+                      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                    }
+            
+                    .wrapper {
+                      display: grid;
+                      grid-template-columns: 1fr 200px;
+                      grid-template-rows: auto 1fr auto;
+                      height: 100%;
+                      padding: 20px 30px;
+                      box-sizing: border-box;
+                    }
+            
+                    .view-all {
+                      grid-column: 1;
+                      grid-row: 1;
+                      align-self: start;
+                      font-size: 13px;
+                    }
+            
+                    .number {
+                      grid-column: 2;
+                      grid-row: 1;
+                      justify-self: end;
+                      font-weight: bold;
+                      font-size: 14px;
+                    }
+            
+                    .message-box {
+                      grid-column: 1 / span 2;
+                      grid-row: 2;
+                      display: flex;
+                      flex-direction: column;
+                      justify-content: flex-end;
+                      align-items: flex-end;
+                      padding-bottom: 60px;
+                    }
+            
+                    .bubble {
+                      background-color: #DFF6DD;
+                      border-radius: 10px;
+                      padding: 14px 18px;
+                      font-size: 14px;
+                      color: #000;
+                      max-width: 400px;
+                      align-self: flex-end;
+                    }
+            
+                    .timestamp {
+                      text-align: right;
+                      font-size: 11px;
+                      color: #666;
+                      margin-top: 6px;
+                    }
+            
+                    .footer-left {
+                      grid-column: 1;
+                      grid-row: 3;
+                      font-size: 13px;
+                    }
+            
+                    .footer-right {
+                      grid-column: 2;
+                      grid-row: 3;
+                      justify-self: end;
+                      font-size: 12px;
+                      color: #888;
+                    }
+            
+                    button {
+                      padding: 4px 10px;
+                      font-size: 13px;
+                      border: 1px solid #ccc;
+                      background: #fff;
+                      border-radius: 4px;
+                      cursor: pointer;
+                    }
+                  </style>
+                </head>
+                <body>
+                  <div class="wrapper">
+            
+                    <div class="view-all">
+                      <button onclick="parent.returnToMessageList()">View All</button>
+                    </div>
+            
+                    <div class="number">${selected.number || selected.sender || 'Unknown'}</div>
+            
+                    <div class="message-box">
+                      <div class="bubble">
+                        ${cleanMessage}
+                        <div class="timestamp">${selected.date} ${selected.time}</div>
+                      </div>
+                    </div>
+            
+                    <div class="footer-left">
+                      <button>Reply</button>
+                    </div>
+            
+                    <div class="footer-right">
+                      Messages sent using (248) 331-9492
+                    </div>
+            
                   </div>
-                </div>
-        
-                <!-- Bottom section -->
-                <div style="margin-top: 40px;">
-                  <div style="font-weight: bold; font-size: 14px;">
-                    ${selected.number || selected.sender || 'Unknown'}
-                  </div>
-                  <div style="font-size: 12px; color: #888; margin-bottom: 10px;">
-                    Messages sent using (248) 331-9492
-                  </div>
-        
-                  <!-- Button -->
-                  <button onclick="parent.returnToMessageList()" style="
-                    padding: 6px 12px;
-                    font-size: 13px;
-                    border: 1px solid #ccc;
-                    background: #fff;
-                    border-radius: 4px;
-                    cursor: pointer;
-                  ">View All</button>
-                </div>
-        
-              </div>
-            </body>
-          </html>
-        `;
+                </body>
+              </html>
+            `;
+
 
         
           container.innerHTML = '';
@@ -7679,6 +7755,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
