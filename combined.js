@@ -1263,6 +1263,12 @@ tr:hover .cvq-icon{ opacity:.85; }
 .cvq-icon:focus{ outline:2px solid #0b84ff33; outline-offset:2px; }
 .cvq-icon img{ width:14px; height:14px; display:block; pointer-events:none; }
 
+/* ✅ NEW: Dark border on hover */
+.cvq-icon:hover,
+tr:hover .cvq-icon {
+  border-color: #000;
+}
+
 /* --- CVQ MODAL: CALL CENTER default hidden; open with .is-open --- */
 .cvq-modal-backdrop{
   position:fixed; inset:0; background:rgba(0,0,0,.35);
@@ -7636,6 +7642,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
