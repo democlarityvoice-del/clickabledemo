@@ -70,9 +70,9 @@ function buildSrcdoc() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 26px;
-  height: 26px;
-  background: #f0f0f0;
+  width: 24px;
+  height: 24px;
+  background: #ffffff;
   border-radius: 50%;
   border: 1px solid #cfcfcf;
   cursor: pointer;
@@ -83,8 +83,8 @@ function buildSrcdoc() {
 }
 
 .listen-btn img {
-  width: 18px;
-  height: 18px;
+  width: 14px;
+  height: 14px;
   display: block;
   opacity: 0.35; /* default faint */
   transition: opacity 0.2s ease-in-out;
@@ -7629,6 +7629,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
