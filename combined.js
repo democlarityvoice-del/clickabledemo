@@ -7418,14 +7418,13 @@ function openAgentListenModal(agentExt, row, btn) {
                     }
             
                     .message-box {
-                      grid-column: 1 / span 2;
-                      grid-row: 2;
                       display: flex;
                       flex-direction: column;
                       justify-content: flex-end;
-                      align-items: flex-end;
+                      align-items: flex-start; /* Align left inside the box */
                       padding-bottom: 60px;
                     }
+
             
                     .bubble {
                       background-color: #DFF6DD;
@@ -7433,8 +7432,7 @@ function openAgentListenModal(agentExt, row, btn) {
                       padding: 14px 18px;
                       font-size: 14px;
                       color: #000;
-                      max-width: 400px;
-                      align-self: flex-end;
+                      max-width: 400px;                      
                     }
             
                     .timestamp {
@@ -7755,6 +7753,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
