@@ -7334,47 +7334,50 @@ function openAgentListenModal(agentExt, row, btn) {
 
         
 
-       // === MODAL VIEW ===
-function viewSingleMessage(originalText, phoneNumber) {
-  const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-      if (!container) return;
-    
-      const iframe = document.createElement('iframe');
-      iframe.id = 'cv-message-modal';
-      iframe.style.width = '100%';
-      iframe.style.height = '600px';
-      iframe.style.border = 'none';
-    
-      const srcdoc = `
-        <html>
-          <body style="font-family: sans-serif; padding: 20px;">
-            <div style="font-size: 12px; color: #888;">Jul 19th 2021 7:39 pm</div>
-            <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-              ${originalText}
-            </div>
-    
-            <<div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
-              ${selected.message.replace(/\n/g, "<br>")}
-            </div>
+       // === MODAL VIEW ===function viewSingleMessage(index) {
+      function viewSingleMessage(index) {
+          index = Number(index); // Ensure it's a number
+          const selected = window.demoMessages?.[index];
+          if (!selected) return console.error('Invalid index:', index);
+        
+          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+          if (!container) return;
+        
+          const iframe = document.createElement('iframe');
+          iframe.id = 'cv-message-modal';
+          iframe.style.width = '100%';
+          iframe.style.height = '500px';
+          iframe.style.border = 'none';
+          iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+        
+          const cleanMessage = selected.message.replace(/\n/g, "<br>");
+        
+          iframe.srcdoc = `
+            <html>
+              <body style="font-family: sans-serif; padding: 20px;">
+                <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
+                <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                  ${cleanMessage}
+                </div>
+                <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
+                  ${cleanMessage}
+                </div>
+                <div style="margin-top: 16px;">
+                  <strong>${selected.number || selected.sender || 'Unknown'}</strong>
+                </div>
+                <div style="margin-top: 6px; font-size: 12px; color: #888;">
+                  Messages sent using (248) 331-9492
+                </div>
+                <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
+              </body>
+            </html>
+          `;
+        
+          container.innerHTML = '';
+          container.appendChild(iframe);
+        }
 
-    
-            <div style="margin-top: 16px;">
-              <strong>${phoneNumber}</strong>
-            </div>
-    
-            <div style="margin-top: 6px; font-size: 12px; color: #888;">
-              Messages sent using (248) 331-9492
-            </div>
-    
-            <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
-          </body>
-        </html>
-      `;
-    
-      iframe.srcdoc = srcdoc;
-      container.innerHTML = '';
-      container.appendChild(iframe);
-    }
+
     
     // === RESTORE MESSAGE LIST ===
     window.returnToMessageList = function () {
@@ -7506,7 +7509,7 @@ function viewSingleMessage(originalText, phoneNumber) {
             const sender = msg.type === 'internal' ? msg.sender : msg.number;
             const preview = msg.message.replace(/\n/g, "<br>");
             return `
-              <tr onclick="parent.viewSingleMessage('${msg.message}', '${msg.number}')">
+              <tr onclick="parent.viewSingleMessage(${i})">
                 <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
                 <td>${sender}</td>
                 <td>${preview}</td>
@@ -7602,6 +7605,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
