@@ -7326,6 +7326,56 @@ function openAgentListenModal(agentExt, row, btn) {
       //  Do nothing unless on /portal/messages and not already injected
     } else {
       window.__cvDemoMessagesInit = true;
+
+       // === MODAL VIEW ===
+function viewSingleMessage(originalText, phoneNumber) {
+  const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+      if (!container) return;
+    
+      const iframe = document.createElement('iframe');
+      iframe.id = 'cv-message-modal';
+      iframe.style.width = '100%';
+      iframe.style.height = '600px';
+      iframe.style.border = 'none';
+    
+      const srcdoc = `
+        <html>
+          <body style="font-family: sans-serif; padding: 20px;">
+            <div style="font-size: 12px; color: #888;">Jul 19th 2021 7:39 pm</div>
+            <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+              ${originalText}
+            </div>
+    
+            <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
+              Hi Pat, it's Martha from Clarity Voice. Can he go to store 44 now and work on the board?
+            </div>
+    
+            <div style="margin-top: 16px;">
+              <strong>${phoneNumber}</strong>
+            </div>
+    
+            <div style="margin-top: 6px; font-size: 12px; color: #888;">
+              Messages sent using (248) 331-9492
+            </div>
+    
+            <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
+          </body>
+        </html>
+      `;
+    
+      iframe.srcdoc = srcdoc;
+      container.innerHTML = '';
+      container.appendChild(iframe);
+    }
+    
+    // === RESTORE MESSAGE LIST ===
+    window.returnToMessageList = function () {
+      const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+      container.innerHTML = '';
+      inject(); // your existing function that rebuilds the fake message list
+    };
+
+        
     
       (function injectDemoMessagesV3() {
         const INTERVAL_MS = 500;
@@ -7473,6 +7523,8 @@ function openAgentListenModal(agentExt, row, btn) {
               <table>${rows}</table>
             </body></html>`;
         }
+
+       
     
         function inject() {
           const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
@@ -7485,12 +7537,69 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.style.height = '600px';
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(messages);
-    
-           window.addEventListener('message', e => {
-            if (e.data.type === 'rowClick') {
-              container.innerHTML = `<div style="padding:2rem;">📞 This is where the full conversation view will be injected for row #${e.data.index}.</div>`;
+            
+         function showMessageModal(msg) {
+              const container = document.querySelector('#cv-demo-messages');
+              if (!container) return;
+            
+              const iframe = document.createElement('iframe');
+              iframe.id = 'cv-message-modal';
+              iframe.style.width = '100%';
+              iframe.style.height = '600px';
+              iframe.style.border = 'none';
+            
+              const srcdoc = `
+                <html>
+                  <body style="font-family: sans-serif; padding: 20px;">
+                    <div style="font-size: 12px; color: #888;">${msg.date} ${msg.time}</div>
+                    <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                      ${msg.message.replace(/\n/g, "<br>")}
+                    </div>
+            
+                    <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
+                      Hi Pat, it's Martha from Clarity Voice. Can he go to store 44 now and work on the board?
+                    </div>
+            
+                    <div style="margin-top: 16px;">
+                      <strong>${msg.number}</strong>
+                    </div>
+            
+                    <div style="margin-top: 6px; font-size: 12px; color: #888;">
+                      Messages sent using (248) 331-9492
+                    </div>
+            
+                    <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
+                  </body>
+                </html>
+              `;
+            
+              iframe.srcdoc = srcdoc;
+              container.innerHTML = '';
+              container.appendChild(iframe);
             }
-          });
+
+            function returnToList() {
+                  container.innerHTML = '';
+                  const iframe = document.createElement('iframe');
+                  iframe.id = 'cv-demo-messages-iframe';
+                  iframe.style.width = '100%';
+                  iframe.style.height = '600px';
+                  iframe.style.border = 'none';
+                  iframe.srcdoc = buildSrcdoc(DEMO_MESSAGES); // reuse your global
+                  container.appendChild(iframe);
+                }
+
+            
+    
+           window.addEventListener('message', (event) => {
+              if (!event.data || event.data.type !== 'rowClick') return;
+            
+              const msg = DEMO_MESSAGES?.[event.data.index]; // Use your global array
+              if (!msg) return;
+            
+              showMessageModal(msg);
+            });
+
     
           container.appendChild(iframe);
           return true;
@@ -7506,6 +7615,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
