@@ -7579,23 +7579,57 @@ function openAgentListenModal(agentExt, row, btn) {
           iframe.srcdoc = modalHtml;
         }
         
-
-      function inject() {
-          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-          if (!container) return false;
         
-          container.innerHTML = '';
-          const iframe = document.createElement('iframe');
-          iframe.id = 'cv-demo-messages-iframe';
-          iframe.style.width = '100%';
-          iframe.style.height = '600px';
-          iframe.style.border = 'none';
-          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-          iframe.srcdoc = buildSrcdoc(demoMessages); // use your global array
-          
-          container.appendChild(iframe);
+       function inject() {
+          // Find the existing table where the messages live
+          const table = document.querySelector('.conversation-list-table');
+          if (!table) {
+            console.error('No table found for inject()');
+            return false;
+          }
+        
+          // Target ONLY the tbody so we don't wipe out the table or container
+          let tbody = table.querySelector('tbody');
+        
+          // If no tbody exists, create one
+          if (!tbody) {
+            tbody = document.createElement('tbody');
+            table.appendChild(tbody);
+          }
+        
+          // Clear just the tbody contents
+          tbody.innerHTML = '';
+        
+          // Build message rows dynamically
+          const rows = window.demoMessages.map((msg, i) => {
+            const iconUrl = msg.type === 'internal'
+              ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
+              : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+        
+            const sender = msg.type === 'internal' ? msg.sender : msg.number;
+            const preview = msg.message.replace(/\n/g, "<br>");
+        
+            return `
+              <tr onclick="parent.viewSingleMessage(${i})">
+                <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+                <td>${sender}</td>
+                <td>${preview}</td>
+                <td class="nowrap">${msg.date} ${msg.time}</td>
+                <td class="nowrap actions">
+                  <span class="msg-btn iconReply">↩</span>
+                  <span class="msg-btn iconDelete">✖</span>
+                </td>
+              </tr>
+            `;
+          }).join('\n');
+        
+          // Insert new rows into tbody
+          tbody.innerHTML = rows;
+        
+          console.log('Message list injected successfully into tbody.');
           return true;
         }
+
 
        window.addEventListener('message', (event) => {
           if (!event.data || !event.data.type) return;
@@ -7618,6 +7652,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
