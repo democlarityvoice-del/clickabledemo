@@ -7581,54 +7581,33 @@ function openAgentListenModal(agentExt, row, btn) {
         
         
        function inject() {
-          // Find the existing table where the messages live
           const table = document.querySelector('.conversation-list-table');
           if (!table) {
-            console.error('No table found for inject()');
+            console.error('inject(): No table found');
             return false;
           }
         
-          // Target ONLY the tbody so we don't wipe out the table or container
+          // Target only the tbody so we don't destroy the table itself
           let tbody = table.querySelector('tbody');
-        
-          // If no tbody exists, create one
           if (!tbody) {
             tbody = document.createElement('tbody');
             table.appendChild(tbody);
           }
         
-          // Clear just the tbody contents
-          tbody.innerHTML = '';
+          // Build rows using your existing buildSrcdoc()
+          const tableHTML = buildSrcdoc(window.demoMessages);
         
-          // Build message rows dynamically
-          const rows = window.demoMessages.map((msg, i) => {
-            const iconUrl = msg.type === 'internal'
-              ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
-              : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+          // Extract just the <tr> rows out of buildSrcdoc's output
+          const temp = document.createElement('div');
+          temp.innerHTML = tableHTML;
         
-            const sender = msg.type === 'internal' ? msg.sender : msg.number;
-            const preview = msg.message.replace(/\n/g, "<br>");
+          const newRows = temp.querySelector('table')?.innerHTML || '';
+          tbody.innerHTML = newRows;
         
-            return `
-              <tr onclick="parent.viewSingleMessage(${i})">
-                <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-                <td>${sender}</td>
-                <td>${preview}</td>
-                <td class="nowrap">${msg.date} ${msg.time}</td>
-                <td class="nowrap actions">
-                  <span class="msg-btn iconReply">↩</span>
-                  <span class="msg-btn iconDelete">✖</span>
-                </td>
-              </tr>
-            `;
-          }).join('\n');
-        
-          // Insert new rows into tbody
-          tbody.innerHTML = rows;
-        
-          console.log('Message list injected successfully into tbody.');
+          console.log('inject(): message list rebuilt inside tbody');
           return true;
         }
+
 
 
        window.addEventListener('message', (event) => {
@@ -7652,6 +7631,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
