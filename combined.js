@@ -3858,8 +3858,7 @@ if (summaryBox) {
     const chips = chipWrap.querySelectorAll('span');
     chips[0].textContent = 'From: ' + AIFrom;
     chips[1].textContent = 'To: ' + AITo;
-    chips[2].textContent = '⏱ ' + AIDuration;
-    chips[3].textContent = '📅 ' + AIDate;
+    chips[2].textContent = '⏱ ' + AIDuration;    
   }
   
 // ---- New: Simulated Transcript Injection ----
@@ -7762,6 +7761,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
