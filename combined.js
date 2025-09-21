@@ -2938,20 +2938,21 @@ function buildCallHistorySrcdoc() {
   /* --- Icon sizing + visibility (circles by default) --- */
   .icon-cell{ display:flex; gap:6px; }
   .icon-btn{
-    width:26px; height:26px; border-radius:50%;
+    width:24px; height:24px; border-radius:50%;
     background:#f5f5f5; border:1px solid #cfcfcf;
     display:inline-flex; align-items:center; justify-content:center;
     padding:0; cursor:pointer;
   }
-  .icon-btn img{ width:16px; height:16px; opacity:.35; transition:opacity .12s; }
+  .icon-btn img{ width:14px; height:14px; opacity:.35; transition:opacity .12s; }
   .icon-btn:hover img, tr:hover .icon-btn img{ opacity:1; }
-  .icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#bdbdbd; }
+  .icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#00000; }
 
   /* Listen = plain (no circle) */
   .icon-btn--plain{ background:transparent; border:0; width:24px; height:24px; }
   .icon-btn--plain:hover, tr:hover .icon-btn--plain{ background:transparent; border:0; }
   .icon-btn--plain img{ opacity:.55; }
   .icon-btn--plain:hover img, tr:hover .icon-btn--plain img{ opacity:1; }
+  
 
   /* Dropped audio row (visual only) */
   .cv-audio-row td{ background:#f3f6f8; padding:10px 12px; border-top:0; }
@@ -5030,6 +5031,14 @@ const rowsForQueue = getRowsForQueue(queueNameOnly, queueNumber);
       tr:hover .cvqs-icon-btn img {
         opacity: 1;
       }
+
+    /* NEW: black ring on hover */
+    .cvqs-icon-btn:hover,
+    tr:hover .cvqs-icon-btn {
+      border-color: #000;
+    }
+
+      
       .cv-audio-row td {
         background: #f3f6f8;
         padding: 10px 12px;
@@ -5810,6 +5819,13 @@ function buildAgentDetailsSrcdoc(agentExt, stat, rowsHTML) {
     vertical-align: middle;
   }
   .cvqs-icon-btn:hover img, tr:hover .cvqs-icon-btn img{ opacity:1; }
+
+      /* NEW: black ring on hover */
+    .cvqs-icon-btn:hover,
+    tr:hover .cvqs-icon-btn {
+      border-color: #000;
+    }
+
 
   /* some themes set table imgs to block; force inline */
   .cv-agent-table img{ display:inline-block; vertical-align:middle; }
@@ -7642,6 +7658,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
