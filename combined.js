@@ -7379,18 +7379,27 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
     
-    // === RESTORE MESSAGE LIST ===
-    window.returnToMessageList = function () {
-      const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-      if (!container) {
-        console.error('No container found for returnToMessageList');
-        return;
-      }
-    
-      console.log('Restoring full message list...');
-      container.innerHTML = '';   // Wipe detail view
-      inject();                   // Rebuild using the original logic
-    };
+
+    // === RESTORE MESSAGE LIST (force refresh) ===
+        window.returnToMessageList = function () {
+          const MSG_PATH = '/portal/messages';
+        
+          // Clean up the inline modal iframe if present (optional)
+          try { document.getElementById('cv-message-modal')?.remove(); } catch (e) {}
+        
+          // If we're not on /portal/messages, navigate there
+          if (!/\/portal\/messages(?:[\/?#]|$)/.test(location.pathname)) {
+            location.assign(MSG_PATH);
+            return;
+          }
+        
+          // We are on /portal/messages — force a full rerender
+          // (use replace so we don't clutter history)
+          location.replace(location.href);
+          // Fallback if replace is blocked:
+          // history.go(0);
+        };
+
 
 
         
@@ -7581,30 +7590,19 @@ function openAgentListenModal(agentExt, row, btn) {
         
         
        function inject() {
-          const table = document.querySelector('.conversation-list-table');
-          if (!table) {
-            console.error('inject(): No table found');
-            return false;
-          }
+          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+          if (!container) return false;
         
-          // Target only the tbody so we don't destroy the table itself
-          let tbody = table.querySelector('tbody');
-          if (!tbody) {
-            tbody = document.createElement('tbody');
-            table.appendChild(tbody);
-          }
-        
-          // Build rows using your existing buildSrcdoc()
-          const tableHTML = buildSrcdoc(window.demoMessages);
-        
-          // Extract just the <tr> rows out of buildSrcdoc's output
-          const temp = document.createElement('div');
-          temp.innerHTML = tableHTML;
-        
-          const newRows = temp.querySelector('table')?.innerHTML || '';
-          tbody.innerHTML = newRows;
-        
-          console.log('inject(): message list rebuilt inside tbody');
+          container.innerHTML = '';
+          const iframe = document.createElement('iframe');
+          iframe.id = 'cv-demo-messages-iframe';
+          iframe.style.width = '100%';
+          iframe.style.height = '600px';
+          iframe.style.border = 'none';
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+          iframe.srcdoc = buildSrcdoc(window.demoMessages); // use global array
+          
+          container.appendChild(iframe);
           return true;
         }
 
@@ -7631,6 +7629,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
