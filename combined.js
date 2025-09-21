@@ -7565,7 +7565,10 @@ function viewSingleMessage(originalText, phoneNumber) {
           iframe.style.height = '600px';
           iframe.style.border = 'none';
           iframe.srcdoc = buildSrcdoc(demoMessages); // use your global array
-
+          
+          container.appendChild(iframe);
+          return true;
+        }
 
         window.addEventListener('message', (event) => {
           if (!event.data || !event.data.type) return;
@@ -7576,12 +7579,6 @@ function viewSingleMessage(originalText, phoneNumber) {
             if (iframe) iframe.srcdoc = buildSrcdoc(demoMessages);
           }
         });
-        
-          container.appendChild(iframe);
-          return true;
-        }
-
-
     
         const poll = setInterval(() => {
           attempt++;
@@ -7592,6 +7589,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
