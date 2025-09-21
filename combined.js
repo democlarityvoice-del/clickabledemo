@@ -7383,25 +7383,36 @@ function openAgentListenModal(agentExt, row, btn) {
           const cleanMessage = selected.message.replace(/\n/g, "<br>");
         
           iframe.srcdoc = `
-            <html>
-              <body style="font-family: sans-serif; padding: 20px;">
-                <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
-                <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                  ${cleanMessage}
-                </div>
-                <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
-                  ${cleanMessage}
-                </div>
-                <div style="margin-top: 16px;">
-                  <strong>${selected.number || selected.sender || 'Unknown'}</strong>
-                </div>
-                <div style="margin-top: 6px; font-size: 12px; color: #888;">
-                  Messages sent using (248) 331-9492
-                </div>
-                <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
-              </body>
-            </html>
-          `;
+              <html>
+                <body style="font-family: sans-serif; padding: 20px;">
+            
+                  <!-- Timestamp -->
+                  <div class="center-text" style="text-align: center; font-size: 11px; color: #888; margin: 12px 0;">
+                    ${selected.date} ${selected.time}
+                  </div>
+            
+                  <!-- Outbound message bubble using real Clarity style -->
+                  <div class="chat-outbound chat-message-container clearfix" style="max-width: 90%; padding: 2px 10px; clear: both;">
+                    <div class="chat-message" style="padding: 10px 14px; border-radius: 12px; font-size: 14px; display: inline-block; max-width: 70%; word-wrap: break-word; background-color: #d2f0dc; float: right; text-align: left;">
+                      ${cleanMessage}
+                    </div>
+                  </div>
+            
+                  <!-- Sender info -->
+                  <div style="margin-top: 16px;">
+                    <strong>${selected.number || selected.sender || 'Unknown'}</strong>
+                  </div>
+                  <div style="margin-top: 6px; font-size: 12px; color: #888;">
+                    Messages sent using (248) 331-9492
+                  </div>
+            
+                  <!-- Button -->
+                  <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
+            
+                </body>
+              </html>
+            `;
+
         
           container.innerHTML = '';
           container.appendChild(iframe);
@@ -7659,6 +7670,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
