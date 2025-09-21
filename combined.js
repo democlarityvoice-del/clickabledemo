@@ -7483,6 +7483,9 @@ function viewSingleMessage(originalText, phoneNumber) {
             date: formatDate(dateOffsets[messages.length])
           });
         });
+
+        const demoMessages = messages;
+
     
         function buildSrcdoc(messages) {
           const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
@@ -7589,6 +7592,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
