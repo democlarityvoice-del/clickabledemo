@@ -74,7 +74,7 @@ function buildSrcdoc() {
   height: 24px;
   background: #ffffff;
   border-radius: 50%;
-  border: 1px solid #00000;
+  border: 1px solid #e1e1e1;
   cursor: pointer;
 }
 
@@ -90,11 +90,18 @@ function buildSrcdoc() {
   transition: opacity 0.2s ease-in-out;
 }
 
-/* NEW hover effect for either row OR button */
+/* Fade in the icon image on hover */
 .listen-btn:hover img,
 tr:hover .listen-btn img {
   opacity: 1;
 }
+
+/* Add black border on hover (either row or button) */
+.listen-btn:hover,
+tr:hover .listen-btn {
+  border-color: #000;
+}
+
 
 
 /* --- STATS BLOCK --- */
@@ -7629,6 +7636,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
