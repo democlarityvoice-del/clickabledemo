@@ -7326,6 +7326,13 @@ function openAgentListenModal(agentExt, row, btn) {
       //  Do nothing unless on /portal/messages and not already injected
     } else {
       window.__cvDemoMessagesInit = true;
+        
+      window.handleRowClick = function(index) {
+          console.log('Row clicked directly, index:', index);
+          showMessageModal(index, demoMessages);
+        };
+
+        
 
        // === MODAL VIEW ===
 function viewSingleMessage(originalText, phoneNumber) {
@@ -7498,7 +7505,7 @@ function viewSingleMessage(originalText, phoneNumber) {
             const sender = msg.type === 'internal' ? msg.sender : msg.number;
             const preview = msg.message.replace(/\n/g, "<br>");
             return `
-              <tr onclick="parent.postMessage({ type: 'rowClick', index: ${i} }, '*')">
+              <tr onclick="window.handleRowClick(${i})">
                 <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
                 <td>${sender}</td>
                 <td>${preview}</td>
@@ -7592,6 +7599,7 @@ function viewSingleMessage(originalText, phoneNumber) {
     }
 
     
+
 
 
 
