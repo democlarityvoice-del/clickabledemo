@@ -7381,29 +7381,32 @@ function openAgentListenModal(agentExt, row, btn) {
         
           const cleanMessage = selected.message.replace(/\n/g, "<br>");
         
-          iframe.srcdoc = `
-            <html>
-              <body style="font-family: sans-serif; padding: 20px;">
-                <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
-                <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
-                  ${cleanMessage}
-                </div>
-                <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
-                  ${cleanMessage}
-                </div>
-                <div style="margin-top: 16px;">
-                  <strong>${selected.number || selected.sender || 'Unknown'}</strong>
-                </div>
-                <div style="margin-top: 6px; font-size: 12px; color: #888;">
-                  Messages sent using (248) 331-9492
-                </div>
-                <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
-              </body>
-            </html>
-          `;
+      iframe.srcdoc = `
+        <html>
+          <body style="font-family: Helvetica, Arial, sans-serif; padding: 20px; font-size: 13px; color: #222;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+              <button onclick="parent.returnToMessageList()" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">View All</button>
+              <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
+            </div>
+            
+            <div style="max-width: 80%; background-color: #DFF6DD; padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; line-height: 1.4;">
+              ${cleanMessage}
+            </div>
         
-          container.innerHTML = '';
-          container.appendChild(iframe);
+            <div style="margin-top: 18px; font-size: 13px; font-weight: bold;">
+              ${selected.number || selected.sender || 'Unknown'}
+            </div>
+        
+            <div style="margin-top: 6px; font-size: 12px; color: #888;">
+              Messages sent using (248) 331-9492
+            </div>
+          </body>
+        </html>
+        `;
+        
+        container.innerHTML = '';
+        container.appendChild(iframe);
+
         }
 
 
@@ -7599,22 +7602,59 @@ function openAgentListenModal(agentExt, row, btn) {
             : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
         
           const modalHtml = `
-            <html><head><style>
-              body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; padding: 10px; }
-              .msg-box { border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #f9f9f9; }
-              .from { font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-              .text { white-space: pre-wrap; margin-top: 4px; }
-              button { margin-top: 12px; padding: 6px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
-            </style></head><body>
-              <div class="msg-box">
-                <div class="from"><img src="${icon}" style="height:16px;">${selected.type === 'internal' ? selected.sender : selected.number}</div>
-                <div class="text">${preview}</div>
-                <button onclick="parent.postMessage({ type: 'returnToList' }, '*')">Return to Message List</button>
-              </div>
-            </body></html>
-          `;
-        
-          iframe.srcdoc = modalHtml;
+            <html>
+              <head>
+                <style>
+                  body {
+                    font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+                    margin: 0;
+                    font-size: 13px;
+                    color: #222;
+                    font-weight: 400;
+                    padding: 10px;
+                  }
+                  .msg-box {
+                    border: 1px solid #ccc;
+                    padding: 14px;
+                    border-radius: 6px;
+                    background: #f9f9f9;
+                  }
+                  .from {
+                    font-weight: bold;
+                    margin-bottom: 6px;
+                    display: flex;
+                    align-items: center;
+                    gap: 6px;
+                  }
+                  .text {
+                    white-space: pre-wrap;
+                    margin-top: 8px;
+                    line-height: 1.4;
+                  }
+                  button {
+                    margin-top: 14px;
+                    padding: 6px 10px;
+                    border: 1px solid #ccc;
+                    background: #fff;
+                    border-radius: 4px;
+                    cursor: pointer;
+                  }
+                </style>
+              </head>
+              <body>
+                <div class="msg-box">
+                  <div class="from">
+                    <img src="${icon}" style="height:16px;">${selected.type === 'internal' ? selected.sender : selected.number}
+                  </div>
+                  <div class="text">${preview}</div>
+                  <button onclick="parent.postMessage({ type: 'returnToList' }, '*')">Return to Message List</button>
+                </div>
+              </body>
+            </html>
+            `;
+            
+            iframe.srcdoc = modalHtml;
+
         }
         
         
@@ -7658,6 +7698,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
