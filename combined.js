@@ -7346,338 +7346,320 @@ function openAgentListenModal(agentExt, row, btn) {
 
 
 
+
     
-    // ✅ MESSAGES/TEXT RESPONDER AI (Strictly scoped to /portal/messages only)// ✅ MESSAGES/TEXT RESPONDER AI (Strictly scoped to /portal/messages only)
-if (
-  window.__cvDemoMessagesInit ||
-  !/\/portal\/messages(?:[\/?#]|$)/.test(location.pathname)
-) {
-  //  Do nothing unless on /portal/messages and not already injected
-} else {
-  window.__cvDemoMessagesInit = true;
+    // ✅ MESSAGES/TEXT RESPONDER AI (Strictly scoped to /portal/messages only)
+    if (
+      window.__cvDemoMessagesInit ||
+      !/\/portal\/messages(?:[\/?#]|$)/.test(location.pathname)
+    ) {
+      //  Do nothing unless on /portal/messages and not already injected
+    } else {
+      window.__cvDemoMessagesInit = true;
+        
+      window.handleRowClick = function(index) {
+          console.log('Row clicked directly, index:', index);
+          showMessageModal(index, demoMessages);
+        };
 
-  // 🧱 Create persistent wrapper container (for messages + modal)
-  const WRAPPER_ID = 'cv-message-wrapper';
-  const PARENT = document.querySelector('#omp-active-body');
-  if (PARENT && !document.getElementById(WRAPPER_ID)) {
-    const wrapper = document.createElement('div');
-    wrapper.id = WRAPPER_ID;
-    PARENT.appendChild(wrapper);
-  }
+        
 
-  window.handleRowClick = function(index) {
-    console.log('Row clicked directly, index:', index);
-    showMessageModal(index, demoMessages);
-  };
+       // === MODAL VIEW ===function viewSingleMessage(index) {
+      function viewSingleMessage(index) {
+          index = Number(index); // Ensure it's a number
+          const selected = window.demoMessages?.[index];
+          if (!selected) return console.error('Invalid index:', index);
+        
+          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+          if (!container) return;
+        
+          const iframe = document.createElement('iframe');
+          iframe.id = 'cv-message-modal';
+          iframe.style.width = '100%';
+          iframe.style.height = '500px';
+          iframe.style.border = 'none';
+          iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+        
+          const cleanMessage = selected.message.replace(/\n/g, "<br>");
+        
+          iframe.srcdoc = `
+            <html>
+              <body style="font-family: sans-serif; padding: 20px;">
+                <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
+                <div style="margin: 10px 0; padding: 10px; border: 1px solid #ddd; border-radius: 5px;">
+                  ${cleanMessage}
+                </div>
+                <div style="background-color: #DFF6DD; padding: 12px; border-radius: 8px; width: fit-content; margin-bottom: 8px;">
+                  ${cleanMessage}
+                </div>
+                <div style="margin-top: 16px;">
+                  <strong>${selected.number || selected.sender || 'Unknown'}</strong>
+                </div>
+                <div style="margin-top: 6px; font-size: 12px; color: #888;">
+                  Messages sent using (248) 331-9492
+                </div>
+                <button onclick="parent.returnToMessageList()" style="margin-top: 20px;">View All</button>
+              </body>
+            </html>
+          `;
+        
+          container.innerHTML = '';
+          container.appendChild(iframe);
+        }
 
-  // === MODAL VIEW ===
-  function viewSingleMessage(index) {
-    index = Number(index); // Ensure it's a number
-    const selected = window.demoMessages?.[index];
-    if (!selected) return console.error('Invalid index:', index);
 
-    const container = document.getElementById('cv-message-wrapper');
-    if (!container) return;
+    
 
-    const iframe = document.createElement('iframe');
-    iframe.id = 'cv-message-modal';
-    iframe.style.width = '100%';
-    iframe.style.minHeight = '500px';
-    iframe.style.border = 'none';
-    iframe.style.display = 'block';
-    iframe.style.margin = '0 auto';
-    iframe.setAttribute('sandbox', 'allow-same-origin allow-scripts');
+    // === RESTORE MESSAGE LIST (force refresh) ===
+        window.returnToMessageList = function () {
+          const MSG_PATH = '/portal/messages';
+        
+          // Clean up the inline modal iframe if present (optional)
+          try { document.getElementById('cv-message-modal')?.remove(); } catch (e) {}
+        
+          // If we're not on /portal/messages, navigate there
+          if (!/\/portal\/messages(?:[\/?#]|$)/.test(location.pathname)) {
+            location.assign(MSG_PATH);
+            return;
+          }
+        
+          // We are on /portal/messages — force a full rerender
+          // (use replace so we don't clutter history)
+          location.replace(location.href);
+          // Fallback if replace is blocked:
+          // history.go(0);
+        };
 
-    const cleanMessage = selected.message.replace(/\n/g, "<br>");
 
-    iframe.srcdoc = `
-      <html>
-        <body style="font-family: Helvetica, Arial, sans-serif; padding: 20px; font-size: 13px; color: #222;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-            <button onclick="parent.returnToMessageList()" style="padding: 4px 8px; font-size: 12px; cursor: pointer;">View All</button>
-            <div style="font-size: 12px; color: #888;">${selected.date} ${selected.time}</div>
-          </div>
-          
-          <div style="max-width: 80%; background-color: #DFF6DD; padding: 12px 14px; border-radius: 10px; margin-bottom: 12px; line-height: 1.4;">
-            ${cleanMessage}
-          </div>
-  
-          <div style="margin-top: 18px; font-size: 13px; font-weight: bold;">
-            ${selected.number || selected.sender || 'Unknown'}
-          </div>
-  
-          <div style="margin-top: 6px; font-size: 12px; color: #888;">
-            Messages sent using (248) 331-9492
-          </div>
-        </body>
-      </html>
-    `;
 
-    container.innerHTML = '';
-    container.appendChild(iframe);
-  }
+        
+    
+      (function injectDemoMessagesV3() {
+        const INTERVAL_MS = 500;
+        const MAX_ATTEMPTS = 20;
+        let attempt = 0;
+    
+        const safeAreaCodes = ['313', '248', '586', '734', '972', '214', '469'];
+        const cities = ['detroit', 'dallas'];                          
+       
 
-  // === RESTORE MESSAGE LIST (for now, still hard refresh) ===
-  window.returnToMessageList = function () {
-    try { document.getElementById('cv-message-modal')?.remove(); } catch (e) {}
-    location.replace(location.href);
-  };
+        const survey = [
+          "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
+          "We value your feedback! www.mrservicetoday.com/survey",
+          "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
+          "Your opinion matters! www.mrservicetoday.com/survey"
+        ];
+    
+        const confirmations = [
+          "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
+          "Confirming your appointment for Friday at 1:30pm.",
+          "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
+          "Appointment reminder: Wednesday at 3:00pm.",
+          "Mr. Service will see you tomorrow morning at 8:30am.",
+          "We're scheduled to visit you Friday at 2:15pm."
+        ];
+    
+        const customerReplies = [
+          "Yes, I will tell your tech when they arrive.",
+          "Thanks, I’ll be home all day.",
+          "Okay, see you then."
+        ];
+    
+        const internalMsgs = [
+          { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
+          { name: "Jake", text: "I see a note on that account for you. Take a look." }
+        ];
+    
+        const phoneAreaCodes = ['313','248','586','214','469','972'];
+        function randomPhone() {
+          const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
+          const prefix = '555'; // Safe demo prefix
+          const end = Math.floor(Math.random() * 9000 + 1000);
+          return `(${area}) ${prefix}-${end}`;
+        }
+    
+        function randomTime() {
+          const hour = Math.floor(Math.random() * 12) + 8;
+          const minute = Math.floor(Math.random() * 60);
+          const ampm = hour >= 12 ? 'PM' : 'AM';
+          const hour12 = hour > 12 ? hour - 12 : hour;
+          const minStr = minute < 10 ? `0${minute}` : minute;
+          return `${hour12}:${minStr} ${ampm}`;
+        }
+    
+        const today = new Date();
+        const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7];
+        function formatDate(daysAgo) {
+          const d = new Date(today);
+          d.setDate(d.getDate() - daysAgo);
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        }
+    
+        const messages = [];
+    
+        for (let i = 0; i < 4; i++) {
+          messages.push({
+            type: 'survey',
+            message: survey[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+    
+        for (let i = 0; i < 6; i++) {
+          messages.push({
+            type: 'confirm',
+            message: confirmations[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+    
+        for (let i = 0; i < 3; i++) {
+          messages.push({
+            type: 'reply',
+            message: customerReplies[i],
+            number: randomPhone(),
+            sender: null,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        }
+    
+        internalMsgs.forEach((m) => {
+          messages.push({
+            type: 'internal',
+            message: m.text,
+            number: null,
+            sender: m.name,
+            time: randomTime(),
+            date: formatDate(dateOffsets[messages.length])
+          });
+        });
 
-  (function injectDemoMessagesV3() {
-    const INTERVAL_MS = 500;
-    const MAX_ATTEMPTS = 20;
-    let attempt = 0;
+        window.demoMessages = messages;
 
-    const survey = [
-      "Please take a moment to complete our survey: www.mrservicetoday.com/survey",
-      "We value your feedback! www.mrservicetoday.com/survey",
-      "Help us improve by filling out a quick survey: www.mrservicetoday.com/survey",
-      "Your opinion matters! www.mrservicetoday.com/survey"
-    ];
-
-    const confirmations = [
-      "Reminder: Your Mr. Service appointment is tomorrow at 9:00am.",
-      "Confirming your appointment for Friday at 1:30pm.",
-      "Your Mr. Service appointment is scheduled for Monday at 10:00am.",
-      "Appointment reminder: Wednesday at 3:00pm.",
-      "Mr. Service will see you tomorrow morning at 8:30am.",
-      "We're scheduled to visit you Friday at 2:15pm."
-    ];
-
-    const customerReplies = [
-      "Yes, I will tell your tech when they arrive.",
-      "Thanks, I’ll be home all day.",
-      "Okay, see you then."
-    ];
-
-    const internalMsgs = [
-      { name: "Cathy", text: "Hey Cathy, can you look at Robert's account?" },
-      { name: "Jake", text: "I see a note on that account for you. Take a look." }
-    ];
-
-    const phoneAreaCodes = ['313','248','586','214','469','972'];
-    function randomPhone() {
-      const area = phoneAreaCodes[Math.floor(Math.random() * phoneAreaCodes.length)];
-      const prefix = '555';
-      const end = Math.floor(Math.random() * 9000 + 1000);
-      return `(${area}) ${prefix}-${end}`;
-    }
-
-    function randomTime() {
-      const hour = Math.floor(Math.random() * 12) + 8;
-      const minute = Math.floor(Math.random() * 60);
-      const ampm = hour >= 12 ? 'PM' : 'AM';
-      const hour12 = hour > 12 ? hour - 12 : hour;
-      const minStr = minute < 10 ? `0${minute}` : minute;
-      return `${hour12}:${minStr} ${ampm}`;
-    }
-
-    const today = new Date();
-    const dateOffsets = [1,1,1,2,2,2,2,4,4,4,5,5,7,7,7];
-    function formatDate(daysAgo) {
-      const d = new Date(today);
-      d.setDate(d.getDate() - daysAgo);
-      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-    }
-
-    const messages = [];
-
-    for (let i = 0; i < 4; i++) {
-      messages.push({
-        type: 'survey',
-        message: survey[i],
-        number: randomPhone(),
-        sender: null,
-        time: randomTime(),
-        date: formatDate(dateOffsets[messages.length])
-      });
-    }
-
-    for (let i = 0; i < 6; i++) {
-      messages.push({
-        type: 'confirm',
-        message: confirmations[i],
-        number: randomPhone(),
-        sender: null,
-        time: randomTime(),
-        date: formatDate(dateOffsets[messages.length])
-      });
-    }
-
-    for (let i = 0; i < 3; i++) {
-      messages.push({
-        type: 'reply',
-        message: customerReplies[i],
-        number: randomPhone(),
-        sender: null,
-        time: randomTime(),
-        date: formatDate(dateOffsets[messages.length])
-      });
-    }
-
-    internalMsgs.forEach((m) => {
-      messages.push({
-        type: 'internal',
-        message: m.text,
-        number: null,
-        sender: m.name,
-        time: randomTime(),
-        date: formatDate(dateOffsets[messages.length])
-      });
-    });
-
-    window.demoMessages = messages;
-
-    function buildSrcdoc(messages) {
-      const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
-      const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
-      const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
-      const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
-
+    
+        function buildSrcdoc(messages) {
+          const iconPhone = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+          const iconUser = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg';
+          const iconReply = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/reply-solid-full.svg';
+          const iconDelete = 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/red-x-10333.svg';
+    
+        
+        
       const rows = window.demoMessages.map((msg, i) => {
-        const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
-        const sender = msg.type === 'internal' ? msg.sender : msg.number;
-        const preview = msg.message.replace(/\n/g, "<br>");
-
-        return `
-          <tr onclick="parent.viewSingleMessage(${i})">
-            <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
-            <td>${sender}</td>
-            <td>${preview}</td>
-            <td class="nowrap">${msg.date} ${msg.time}</td>
-            <td class="nowrap actions">
-              <span class="msg-btn iconReply"><img src="${iconReply}" title="Reply"></span>
-              <span class="msg-btn iconDelete"><img src="${iconDelete}" title="Delete"></span>
-            </td>
-          </tr>
-        `;
-      }).join("\n");
-
-      return `
-        <html><head><style>
-          body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; }
-          table { width: 100%; border-collapse: collapse; }
-          tr { background: white; }
-          tr:hover { background: #f2f2f2; cursor: pointer; }
-          td { padding: 3px 6px; border-bottom: 1px solid #ccc; vertical-align: middle; line-height: 1.1; font-size: 12px; }
-          td.nowrap { white-space: nowrap; }
-          td.actions { text-align: right; }
-          .msg-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #f0f0f0; border-radius: 50%; border: 1px solid #cfcfcf; cursor: pointer; }
-          .msg-btn img { width: 10px; height: 10px; opacity: 0.35; transition: opacity 0.2s ease-in-out; }
-          .msg-btn:hover img { opacity: 1; }
-        </style></head><body>
-          <table>${rows}</table>
-        </body></html>`;
-    }
-
-    function showMessageModal(index, messages) {
-      const iframe = document.getElementById('cv-demo-messages-iframe');
-      if (!iframe) return;
-
-      const selected = messages[index];
-      const preview = selected.message.replace(/\n/g, "<br>");
-      const icon = selected.type === 'internal'
-        ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
-        : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
-
-      const modalHtml = `
-        <html>
-          <head>
-            <style>
-              body {
-                font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
-                margin: 0;
-                font-size: 13px;
-                color: #222;
-                font-weight: 400;
-                padding: 10px;
-              }
-              .msg-box {
-                border: 1px solid #ccc;
-                padding: 14px;
-                border-radius: 6px;
-                background: #f9f9f9;
-              }
-              .from {
-                font-weight: bold;
-                margin-bottom: 6px;
-                display: flex;
-                align-items: center;
-                gap: 6px;
-              }
-              .text {
-                white-space: pre-wrap;
-                margin-top: 8px;
-                line-height: 1.4;
-              }
-              button {
-                margin-top: 14px;
-                padding: 6px 10px;
-                border: 1px solid #ccc;
-                background: #fff;
-                border-radius: 4px;
-                cursor: pointer;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="msg-box">
-              <div class="from">
-                <img src="${icon}" style="height:16px;">${selected.type === 'internal' ? selected.sender : selected.number}
-              </div>
-              <div class="text">${preview}</div>
-              <button onclick="parent.postMessage({ type: 'returnToList' }, '*')">Return to Message List</button>
-            </div>
-          </body>
-        </html>
-        `;
-
-      iframe.style.width = '100%';
-      iframe.style.minHeight = '500px';
-      iframe.style.border = 'none';
-      iframe.style.display = 'block';
-      iframe.style.margin = '0 auto';
-
-      iframe.srcdoc = modalHtml;
-    }
-
-    function inject() {
-      const container = document.getElementById('cv-message-wrapper');
-      if (!container) return false;
-
-      container.innerHTML = '';
-      const iframe = document.createElement('iframe');
-      iframe.id = 'cv-demo-messages-iframe';
-      iframe.style.width = '100%';
-      iframe.style.minHeight = '600px';
-      iframe.style.border = 'none';
-      iframe.style.display = 'block';
-      iframe.style.margin = '0 auto';
-      iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
-      iframe.srcdoc = buildSrcdoc(window.demoMessages);
-
-      container.appendChild(iframe);
-      return true;
-    }
-
-    window.addEventListener('message', (event) => {
-      if (!event.data || !event.data.type) return;
-      if (event.data.type === 'rowClick') {
-        showMessageModal(event.data.index, demoMessages);
-      } else if (event.data.type === 'returnToList') {
-        const iframe = document.getElementById('cv-demo-messages-iframe');
-        iframe.srcdoc = buildSrcdoc(window.demoMessages);
-      }
-    });
-
-    const poll = setInterval(() => {
-      attempt++;
-      if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
-    }, INTERVAL_MS);
-  })(); // ✅ IIFE body closed and called
-}
+          const iconUrl = msg.type === 'internal' ? iconUser : iconPhone;
+          const sender = msg.type === 'internal' ? msg.sender : msg.number;
+          const preview = msg.message.replace(/\n/g, "<br>");
+        
+          return `
+            <tr onclick="parent.viewSingleMessage(${i})">
+              <td><img src="${iconUrl}" style="height:18px;" title="${msg.type === 'internal' ? 'Internal User' : 'Mobile'}"></td>
+              <td>${sender}</td>
+              <td>${preview}</td>
+              <td class="nowrap">${msg.date} ${msg.time}</td>
+              <td class="nowrap actions">
+                <span class="msg-btn iconReply"><img src="${iconReply}" title="Reply"></span>
+                <span class="msg-btn iconDelete"><img src="${iconDelete}" title="Delete"></span>
+              </td>
+            </tr>
+          `;
+        }).join("\n");
 
     
+          return `
+            <html><head><style>
+              body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; }
+              table { width: 100%; border-collapse: collapse; }
+              tr { background: white; }
+              tr:hover { background: #f2f2f2; cursor: pointer; }
+              td { padding: 3px 6px; border-bottom: 1px solid #ccc; vertical-align: middle; line-height: 1.1; font-size: 12px; }
+              td.nowrap { white-space: nowrap; }
+              td.actions { text-align: right; }
+              .msg-btn { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; background: #f0f0f0; border-radius: 50%; border: 1px solid #cfcfcf; cursor: pointer; }
+              .msg-btn img { width: 10px; height: 10px; opacity: 0.35; transition: opacity 0.2s ease-in-out; }
+              .msg-btn:hover img { opacity: 1; }
+            </style></head><body>
+              <table>${rows}</table>
+            </body></html>`;
+        }
+        
+       function showMessageModal(index, messages) {
+          const iframe = document.getElementById('cv-demo-messages-iframe');
+          if (!iframe) return;
+        
+          const selected = messages[index];
+          const preview = selected.message.replace(/\n/g, "<br>");
+          const icon = selected.type === 'internal'
+            ? 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/user-solid-full.svg'
+            : 'https://raw.githubusercontent.com/democlarityvoice-del/clickabledemo/refs/heads/main/mobile-screen-button-solid-full.svg';
+        
+          const modalHtml = `
+            <html><head><style>
+              body { font-family: "Helvetica Neue", Helvetica, Arial, sans-serif; margin: 0; font-size: 13px; color: #222; font-weight: 400; padding: 10px; }
+              .msg-box { border: 1px solid #ccc; padding: 10px; border-radius: 5px; background: #f9f9f9; }
+              .from { font-weight: bold; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+              .text { white-space: pre-wrap; margin-top: 4px; }
+              button { margin-top: 12px; padding: 6px 10px; border: 1px solid #ccc; background: #fff; border-radius: 4px; cursor: pointer; }
+            </style></head><body>
+              <div class="msg-box">
+                <div class="from"><img src="${icon}" style="height:16px;">${selected.type === 'internal' ? selected.sender : selected.number}</div>
+                <div class="text">${preview}</div>
+                <button onclick="parent.postMessage({ type: 'returnToList' }, '*')">Return to Message List</button>
+              </div>
+            </body></html>
+          `;
+        
+          iframe.srcdoc = modalHtml;
+        }
+        
+        
+       function inject() {
+          const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
+          if (!container) return false;
+        
+          container.innerHTML = '';
+          const iframe = document.createElement('iframe');
+          iframe.id = 'cv-demo-messages-iframe';
+          iframe.style.width = '100%';
+          iframe.style.height = '600px';
+          iframe.style.border = 'none';
+          iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+          iframe.srcdoc = buildSrcdoc(window.demoMessages); // use global array
+          
+          container.appendChild(iframe);
+          return true;
+        }
+
+
+
+       window.addEventListener('message', (event) => {
+          if (!event.data || !event.data.type) return;
+          if (event.data.type === 'rowClick') {
+            showMessageModal(event.data.index, demoMessages);
+          } else if (event.data.type === 'returnToList') {
+            const iframe = document.getElementById('cv-demo-messages-iframe');
+            iframe.srcdoc = buildSrcdoc(window.demoMessages);
+
+          }
+        });
+
+    
+        const poll = setInterval(() => {
+          attempt++;
+          if (inject() || attempt >= MAX_ATTEMPTS) clearInterval(poll);
+        }, INTERVAL_MS);
+    
+      })(); // ✅ IIFE body closed and called
+    }
+
+    
+
 
 
 
