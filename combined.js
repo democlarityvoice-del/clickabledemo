@@ -7382,9 +7382,16 @@ function openAgentListenModal(agentExt, row, btn) {
     // === RESTORE MESSAGE LIST ===
     window.returnToMessageList = function () {
       const container = document.querySelector('.conversation-list-table') || document.querySelector('#omp-active-body');
-      container.innerHTML = '';
-      inject(); // your existing function that rebuilds the fake message list
+      if (!container) {
+        console.error('No container found for returnToMessageList');
+        return;
+      }
+    
+      console.log('Restoring full message list...');
+      container.innerHTML = '';   // Wipe detail view
+      inject();                   // Rebuild using the original logic
     };
+
 
         
     
@@ -7611,6 +7618,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
