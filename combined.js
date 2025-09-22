@@ -2954,7 +2954,7 @@ function buildCallHistorySrcdoc() {
   }
   .icon-btn img{ width:14px; height:14px; opacity:.35; transition:opacity .12s; }
   .icon-btn:hover img, tr:hover .icon-btn img{ opacity:1; }
-  .icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#00000; }
+  .icon-btn:hover, tr:hover .icon-btn{ background:#e9e9e9; border-color:#000000; }
 
   /* Listen = plain (no circle) */
   .icon-btn--plain{ background:transparent; border:0; width:24px; height:24px; }
@@ -7762,6 +7762,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
