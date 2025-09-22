@@ -3837,7 +3837,7 @@ try {
   const AIFrom = cells[1]?.innerText.trim() || '—';      // assuming From is 2nd column
   const AITo = cells[5]?.innerText.trim() || '—';        // assuming To is 6th column
   const AIDuration = cells[8]?.innerText.trim() || '—';  // assuming Duration is 9th column
-  const AIDirection = cells[6]?.innerText.trim() || '—';      // assuming Date is 7th column
+  const AIDirection = cells[7]?.innerText.trim() || '—';      // assuming Date is 7th column
 
 const summaryBox = document.getElementById('cv-ai-summary');
 if (summaryBox) {
@@ -7762,6 +7762,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
