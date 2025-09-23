@@ -3811,6 +3811,12 @@ document.addEventListener('click', function (e) {
 function cvAiPopulateModal(row, idx) {
   if (!row || typeof idx !== 'number') return;
 
+  // ✅ Ensure direction is available for AI Transcript
+  if (!row.direction && row.ctgType) {
+    row.direction = row.ctgType;
+  }
+
+
 
 
 // --- Build AIDate from the rendered table cell (col 8) ---
@@ -7762,6 +7768,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
