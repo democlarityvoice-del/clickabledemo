@@ -3811,12 +3811,6 @@ document.addEventListener('click', function (e) {
 function cvAiPopulateModal(row, idx) {
   if (!row || typeof idx !== 'number') return;
 
-  // ✅ Ensure direction is available for AI Transcript
-  if (!row.direction && row.ctgType) {
-    row.direction = row.ctgType;
-  }
-
-
 
 
 // --- Build AIDate from the rendered table cell (col 8) ---
@@ -3944,14 +3938,17 @@ var fakeOutboundSummary =
 
   
 
-  if (segList && durationDisplay) {
-    segList.innerHTML = '';
-
-    const script = row.direction === 'inbound' ? fakeInbound : fakeOutbound;
-    const summaryEl = document.getElementById('cv-ai-summary');
-    if (summaryEl) {
-      summaryEl.textContent = row.direction === 'inbound' ? fakeInboundSummary : fakeOutboundSummary;
-    }
+    if (segList && durationDisplay) {
+      segList.innerHTML = '';
+    
+      // ✅ Determine correct direction from rows[idx]
+      const direction = rows?.[idx]?.ctgType || 'inbound';
+      const script = direction === 'inbound' ? fakeInbound : fakeOutbound;
+    
+      const summaryEl = document.getElementById('cv-ai-summary');
+      if (summaryEl) {
+        summaryEl.textContent = direction === 'inbound' ? fakeInboundSummary : fakeOutboundSummary;
+      }
 
 
 script.forEach(function (seg) {
@@ -7768,6 +7765,7 @@ function openAgentListenModal(agentExt, row, btn) {
     }
 
     
+
 
 
 
